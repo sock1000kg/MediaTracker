@@ -1,0 +1,81 @@
+###
+GET http://localhost:5000
+
+
+### POST /AUTH/REGISTER
+POST http://localhost:5000/auth/register
+Content-Type: application/json
+
+{
+    "username": "BalloonBoy",
+    "password": "123123123"
+}
+### 
+
+POST http://localhost:5000/auth/register
+Content-Type: application/json
+
+{
+    "username": "User2",
+    "password": "321321321"
+}
+
+### POST /AUTH/LOGIN
+POST http://localhost:5000/auth/login
+Content-Type: application/json
+
+{
+    "username": "BalloonBoy",
+    "password": "123123123"
+}
+### 
+
+POST http://localhost:5000/auth/login
+Content-Type: application/json
+
+{
+    "username": "User2",
+    "password": "321321321"
+}
+### 
+
+POST http://localhost:5000/auth/login
+Content-Type: application/json
+
+{
+    "username": "User",
+    "password": "32132132"
+}
+
+
+### Fetch all todos GET /LOGS (protected)
+GET http://localhost:5000/logs
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MDA4MDQwLCJleHAiOjE3NTUwMTE2NDB9.PBSnW9Bq--xWkEwmQLg0N6l2U4Ef0K4-k3qknQv3GMI
+
+### Create a log POST /LOGS (protected)
+POST http://localhost:5000/logs
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MDA4MDQwLCJleHAiOjE3NTUwMTE2NDB9.PBSnW9Bq--xWkEwmQLg0N6l2U4Ef0K4-k3qknQv3GMI
+Content-Type: application/json
+
+{
+    "mediaId": 2,
+    "status": "In progress",
+    "rating": 60,
+    "notes": "This is kinda ashy"
+}
+
+
+### Create a new media /MEDIA (protected)
+POST http://localhost:5000/media
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MDA4MDQwLCJleHAiOjE3NTUwMTE2NDB9.PBSnW9Bq--xWkEwmQLg0N6l2U4Ef0K4-k3qknQv3GMI
+Content-Type: application/json
+
+{
+    "title": "", 
+    "type": "book", 
+    "creator": "George Orwell", 
+    "year": 1984, 
+    "metadata": {
+        "pageCount": 200
+    }
+}

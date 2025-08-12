@@ -1,0 +1,55 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              Int       @id @default(autoincrement())
+  username        String    @unique
+  password        String
+  logs            UserLogs[]@relation("UserToUserLogs")
+}
+
+model Media {
+  id              Int       @id @default(autoincrement())
+  title           String
+  type            String    //book    music
+  creator         String?   //author  artist
+  year            Int?
+  metadata        Json?
+  logs            UserLogs[]@relation("MediaToUserLogs")
+}
+/* FOR DISPLAYING THE SCORES FROM OUTSIDE SOURCES IF NEEDED
+model RatingSource {
+  id        Int    @id @default(autoincrement())
+  mediaId   Int
+  media     Media  @relation(fields: [mediaId], references: [id])
+  source    String
+  value     Float
+  scale     Int
+} 
+*/
+
+model UserLogs {
+  id              Int       @id @default(autoincrement())
+  userId          Int
+  user            User      @relation(fields: [userId], references: [id], name: "UserToUserLogs")
+  mediaId         Int
+  media           Media     @relation(fields: [mediaId], references: [id], name: "MediaToUserLogs")
+  status          String?   //"Completed" "In progress" "Wishlist" "None"
+  rating          Float?    //scale 100
+  notes           String?
+  logged_at       DateTime  @default(now())
+  @@unique([userId, mediaId]) //avoid duplicate logs of the same media
+}
