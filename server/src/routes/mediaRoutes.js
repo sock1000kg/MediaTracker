@@ -4,15 +4,21 @@ import { createMedia, findMedia } from './dbRoutes/dbRoutes.js'
 
 const router = express.Router()
 
+
+function normalizeTypeName(name) {
+    return name.trim().toLowerCase().replace(/s$/, ""); // crude singularization
+}
+
 //USER CREATED MEDIA DATA
 router.post('/', async (req,res) => {
-    const {title, type, creator, year, metadata} = req.body
+    const {title, mediaType, creator, year, metadata} = req.body
+    const normalizedType = normalizeTypeName(mediaType.name)
 
     try{
-        const existingMedia = await findMedia(title, type, creator, year, metadata)
+        const existingMedia = await findMedia(title, normalizedType, creator, year, metadata, req.userId)
         if(existingMedia) return res.status(409).json({ error: "Media already exists"})
 
-        const media = await createMedia(title, type, creator, year, metadata)
+        const media = await createMedia(title, normalizedType, creator, year, metadata)
         res.status(201).json(media)
     }catch(error){
         console.log(error)
