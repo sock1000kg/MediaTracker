@@ -43,39 +43,67 @@ POST http://localhost:5000/auth/login
 Content-Type: application/json
 
 {
-    "username": "User",
+    "username": "User2",
     "password": "32132132"
 }
 
 
 ### Fetch all todos GET /LOGS (protected)
 GET http://localhost:5000/logs
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MDA4MDQwLCJleHAiOjE3NTUwMTE2NDB9.PBSnW9Bq--xWkEwmQLg0N6l2U4Ef0K4-k3qknQv3GMI
-
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywiaWF0IjoxNzU1MTEwNDgyLCJleHAiOjE3NTUxMTQwODJ9.5-Z9RzIzq8LcxIGAXDSULQ_bQxLjv869qEcfMagKUpU
 ### Create a log POST /LOGS (protected)
 POST http://localhost:5000/logs
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MDA4MDQwLCJleHAiOjE3NTUwMTE2NDB9.PBSnW9Bq--xWkEwmQLg0N6l2U4Ef0K4-k3qknQv3GMI
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywiaWF0IjoxNzU1MTEwNDgyLCJleHAiOjE3NTUxMTQwODJ9.5-Z9RzIzq8LcxIGAXDSULQ_bQxLjv869qEcfMagKUpU
 Content-Type: application/json
 
 {
-    "mediaId": 2,
-    "status": "In progress",
-    "rating": 60,
-    "notes": "This is kinda ashy"
+    
 }
 
 
 ### Create a new media /MEDIA (protected)
 POST http://localhost:5000/media
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MDA4MDQwLCJleHAiOjE3NTUwMTE2NDB9.PBSnW9Bq--xWkEwmQLg0N6l2U4Ef0K4-k3qknQv3GMI
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywiaWF0IjoxNzU1MTEwNDgyLCJleHAiOjE3NTUxMTQwODJ9.5-Z9RzIzq8LcxIGAXDSULQ_bQxLjv869qEcfMagKUpU
 Content-Type: application/json
 
 {
-    "title": "", 
-    "type": "book", 
+    "title": "1984", 
+    "mediaType": {
+        "name": "book"
+    }, 
     "creator": "George Orwell", 
     "year": 1984, 
     "metadata": {
         "pageCount": 200
     }
+}
+###
+
+POST http://localhost:5000/media
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzU1MTEwMzA0LCJleHAiOjE3NTUxMTM5MDR9.joVilkPebfjfK3d3kXMZ0PoJl6hagOtTtC8c0201vA4
+Content-Type: application/json
+
+{
+    "title": "Wow", 
+    "mediaType": {
+        "name": "Music"
+    }, 
+    "creator": "Cardi", 
+    "year": 1984, 
+    "metadata": {
+        "tracks": 9
+    }
+}
+
+### Fetch all media-types the user has GET /MEDIA-TYPE (protected)
+GET http://localhost:5000/media-type
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MTE0MzQ5LCJleHAiOjE3NTUxMTc5NDl9.7wiQVICGi9xNVOstuOjhC6UwGQCbrLscJsuYMsvAbyA
+
+### Create new media type POST/MEDIA-TYPE (protected)
+POST http://localhost:5000/media-type
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MTE0MzQ5LCJleHAiOjE3NTUxMTc5NDl9.7wiQVICGi9xNVOstuOjhC6UwGQCbrLscJsuYMsvAbyA
+Content-Type: application/json
+
+{
+    "name": "Game"
 }
