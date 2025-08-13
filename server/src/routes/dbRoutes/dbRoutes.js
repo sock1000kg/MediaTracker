@@ -17,8 +17,10 @@ export async function createUser(username, hashedPassword){
 export async function findUserByUsername(username) {
     const user = await prisma.user.findUnique({
         where: {
-            username
-        }
+            username   
+        },
+        include: { mediaType: true }
+        
     })
 
     if(!user) throw new Error('Cannot find user')
@@ -26,13 +28,19 @@ export async function findUserByUsername(username) {
 }
 
 //MEDIA
-export async function findMedia(title, type, creator, year) {
+export async function findMedia(title, type, creator, year, userId) {
     return await prisma.media.findFirst({
         where: {
             title,
-            type,
-            creator: creator || null,
-            year: year || null
+            mediaType: {
+                name: type,
+                OR: [
+                    {userId: null}, //find whether media exists, checks both global types and personal types
+                    {userId: userId}
+                ]
+            },
+            ...(creator ? { creator } : {}),
+            ...(year ? { year } : {})
         }
     })
 }
@@ -42,7 +50,8 @@ export async function findFirstMediaByTitle(title) {
     return await prisma.media.findFirst({
         where: {
             title
-        }
+        },
+        include: { mediaType: true }
     })
 }
 
@@ -50,14 +59,47 @@ export async function createMedia(title, type, creator, year, metadata) {
     return await prisma.media.create({
         data: {
             title,
-            type,
+            mediaType: {
+                connectOrCreate: {
+                    where: { name: type }, 
+                    create: { name: type }
+                }
+            },
             creator,
             year,
             metadata
+        },
+        include: {mediaType: true}
+    })
+}
+
+//MEDIA TYPE
+export async function getAllMediaTypes(userId) {
+    return await prisma.mediaType.findMany({
+        where: {
+            OR: [
+                { userId: null }, // global seed ones
+                { userId: userId } // ones this user created
+            ] 
         }
     })
 }
 
+export async function findMediaTypeForUser(name, userId) {
+    return await prisma.mediaType.findUnique({
+        where: {
+            userId_name: {userId,name} //unique composite find syntax cus wtf
+        }
+    })
+}
+export async function createMediaType(name, userId) {
+    return await prisma.mediaType.create({
+        data: {
+            name,
+            userId
+        }
+    })
+}
 
 //LOGS
 export async function createLog(userId, mediaId, status, rating, notes) {

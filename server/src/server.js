@@ -8,6 +8,7 @@ import path, { dirname } from 'path'
 import authRoutes from './routes/authRoutes.js'
 import logRoutes from './routes/logRoutes.js'
 import mediaRoutes from './routes/mediaRoutes.js'
+import mediaTypeRoutes from './routes/mediaTypeRoutes.js'
 import authMiddleWare from './middleWare/authMiddleware.js'
 
 const app = express()
@@ -30,6 +31,7 @@ app.get('/', (req,res) => {
 app.use('/auth', authRoutes)
 app.use('/logs', authMiddleWare, logRoutes)
 app.use('/media', authMiddleWare, mediaRoutes)
+app.use('/media-type', authMiddleWare, mediaTypeRoutes)
 
 app.listen(PORT, () => {
     console.log(`Server has started on port: ${PORT}, DB_URL: ${process.env.DATABASE_URL}`)
