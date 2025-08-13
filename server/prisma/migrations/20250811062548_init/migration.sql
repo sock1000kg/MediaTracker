@@ -43,3 +43,4 @@ ALTER TABLE "public"."UserLogs" ADD CONSTRAINT "UserLogs_userId_fkey" FOREIGN KE
 
 -- AddForeignKey
 ALTER TABLE "public"."UserLogs" ADD CONSTRAINT "UserLogs_mediaId_fkey" FOREIGN KEY ("mediaId") REFERENCES "public"."Media"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+

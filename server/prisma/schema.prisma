@@ -18,38 +18,63 @@ model User {
   id              Int       @id @default(autoincrement())
   username        String    @unique
   password        String
-  logs            UserLogs[]@relation("UserToUserLogs")
+
+  logs            UserLogs[]@relation("UserLogsToUser")
+  mediaType       MediaType[]@relation("MediaTypesToUser")
 }
 
 model Media {
   id              Int       @id @default(autoincrement())
-  title           String
-  type            String    //book    music
-  creator         String?   //author  artist
+  title           String 
+                            
+                                                //book    music
+  creator         String?                      //author  artist
   year            Int?
   metadata        Json?
-  logs            UserLogs[]@relation("MediaToUserLogs")
+
+  mediaTypeId     Int?
+  mediaType       MediaType? @relation(fields: [mediaTypeId], references: [id], name: "MediaToMediaTypes")
+
+  logs            UserLogs[]@relation("UserLogsToMedia")
+}
+
+model MediaType {
+  id              Int       @id @default(autoincrement())
+  name            String    
+  created_at      DateTime  @default(now())
+
+  userId          Int?
+  user            User?     @relation(fields: [userId], references: [id], name: "MediaTypesToUser")
+
+  media           Media[]   @relation("MediaToMediaTypes")
+
+  @@unique([userId, name]) //One user have only unique mediaTypes
 }
 /* FOR DISPLAYING THE SCORES FROM OUTSIDE SOURCES IF NEEDED
 model RatingSource {
-  id        Int    @id @default(autoincrement())
-  mediaId   Int
-  media     Media  @relation(fields: [mediaId], references: [id])
-  source    String
-  value     Float
-  scale     Int
+  id              Int       @id @default(autoincrement())
+  mediaId         Int
+  media           Media     @relation(fields: [mediaId], references: [id])
+  source          String
+  value           Float
+  scale           Int
 } 
 */
 
 model UserLogs {
   id              Int       @id @default(autoincrement())
-  userId          Int
-  user            User      @relation(fields: [userId], references: [id], name: "UserToUserLogs")
-  mediaId         Int
-  media           Media     @relation(fields: [mediaId], references: [id], name: "MediaToUserLogs")
+
+
   status          String?   //"Completed" "In progress" "Wishlist" "None"
   rating          Float?    //scale 100
   notes           String?
   logged_at       DateTime  @default(now())
-  @@unique([userId, mediaId]) //avoid duplicate logs of the same media
+
+  userId          Int
+  user            User      @relation(fields: [userId], references: [id], name: "UserLogsToUser")
+
+  mediaId         Int
+  media           Media     @relation(fields: [mediaId], references: [id], name: "UserLogsToMedia")
+
+  @@unique([userId, mediaId]) //avoid duplicate logs of the same media for the same user
 }
