@@ -9,6 +9,7 @@ router.get('/', async (req,res) => {
 
     try {
         const logs = await getAllLogs(req.userId)
+        console.log(logs)
         res.status(200).json(logs)
     } catch(error){
         console.error(error);
@@ -33,7 +34,9 @@ router.post('/', async (req,res) => {
     }
 })
 
-
-
+router.put('/:id', async (req,res) => {
+    const { title, type, rating, notes} = req.body
+    const id = parseInt(id)
+})
 
 export default router
