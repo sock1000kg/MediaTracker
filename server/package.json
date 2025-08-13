@@ -9,6 +9,9 @@
     "seed": "node prisma/seed.js",
     "reset": "npx prisma migrate reset --force --skip-seed && node prisma/seed.js"
   },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
