@@ -97,13 +97,26 @@ Content-Type: application/json
 
 ### Fetch all media-types the user has GET /MEDIA-TYPE (protected)
 GET http://localhost:5000/media-type
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MTE0MzQ5LCJleHAiOjE3NTUxMTc5NDl9.7wiQVICGi9xNVOstuOjhC6UwGQCbrLscJsuYMsvAbyA
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MTcyMDU3LCJleHAiOjE3NTUxNzU2NTd9.wAR97Fo8LmEGtpJnIVGCNSyXK8RVzRdTAldaXCT3mGM
 
 ### Create new media type POST/MEDIA-TYPE (protected)
 POST http://localhost:5000/media-type
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MTE0MzQ5LCJleHAiOjE3NTUxMTc5NDl9.7wiQVICGi9xNVOstuOjhC6UwGQCbrLscJsuYMsvAbyA
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MTcyMDU3LCJleHAiOjE3NTUxNzU2NTd9.wAR97Fo8LmEGtpJnIVGCNSyXK8RVzRdTAldaXCT3mGM
 Content-Type: application/json
 
 {
-    "name": "Game"
+    "name": "    movies      "
+}
+
+### Delete a media-type DELETE /MEDIA-TYPE/:NAME (protected)
+DELETE http://localhost:5000/media-type/games
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MTcyMDU3LCJleHAiOjE3NTUxNzU2NTd9.wAR97Fo8LmEGtpJnIVGCNSyXK8RVzRdTAldaXCT3mGM
+
+### Update a media-type PUT /MEDIA-TYPE/:NAME (protected)
+PUT http://localhost:5000/media-type/game
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MTcyMDU3LCJleHAiOjE3NTUxNzU2NTd9.wAR97Fo8LmEGtpJnIVGCNSyXK8RVzRdTAldaXCT3mGM
+Content-Type: application/json
+
+{
+    "newName": "GAMES      "
 }

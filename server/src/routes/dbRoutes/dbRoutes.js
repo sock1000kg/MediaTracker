@@ -74,7 +74,7 @@ export async function createMedia(title, type, creator, year, metadata) {
 }
 
 //MEDIA TYPE
-export async function getAllMediaTypes(userId) {
+export async function getAllMediaTypesForUser(userId) {
     return await prisma.mediaType.findMany({
         where: {
             OR: [
@@ -85,18 +85,40 @@ export async function getAllMediaTypes(userId) {
     })
 }
 
+// Each media type in db is uniquely tied to an user (except the global ones)
 export async function findMediaTypeForUser(name, userId) {
     return await prisma.mediaType.findUnique({
         where: {
-            userId_name: {userId,name} //unique composite find syntax cus wtf
+            userId_name: {userId,name} //unique composite find syntax wtf
         }
     })
 }
-export async function createMediaType(name, userId) {
+
+export async function createMediaTypeForUser(name, userId) {
     return await prisma.mediaType.create({
         data: {
             name,
             userId
+        }
+    })
+}
+
+// User can only delete media types that is tied to their ID (aka their own created types)
+export async function deleteMediaTypeForUser(name, userId) {
+    await prisma.mediaType.delete({
+        where: {
+            userId_name: {userId,name}
+        }
+    })
+}
+
+export async function updateMediaTypeForUser(oldName, newName, userId) {
+    return await prisma.mediaType.update({
+        where: {
+            userId_name: {userId,name: oldName}
+        },
+        data: {
+            name: newName
         }
     })
 }
