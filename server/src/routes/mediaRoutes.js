@@ -12,13 +12,13 @@ function normalizeTypeName(name) {
 //USER CREATED MEDIA DATA
 router.post('/', async (req,res) => {
     const {title, mediaType, creator, year, metadata} = req.body
-    const normalizedType = normalizeTypeName(mediaType.name)
+    const normalizedName = normalizeTypeName(mediaType.name)
 
     try{
-        const existingMedia = await findMedia(title, normalizedType, creator, year, metadata, req.userId)
+        const existingMedia = await findMedia(title, normalizedName, creator, year, metadata, req.userId)
         if(existingMedia) return res.status(409).json({ error: "Media already exists"})
 
-        const media = await createMedia(title, normalizedType, creator, year, metadata)
+        const media = await createMedia(title, normalizedName, creator, year, metadata)
         res.status(201).json(media)
     }catch(error){
         console.log(error)
