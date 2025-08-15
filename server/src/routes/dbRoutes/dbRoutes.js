@@ -28,19 +28,51 @@ export async function findUserByUsername(username) {
 }
 
 //MEDIA
-export async function findMedia(title, type, creator, year, userId) {
+export async function getAllMediasForUser(userId){
+    return await prisma.media.findMany({
+        where: {
+            OR: [
+                { userId: 0 }, // global seed ones
+                { userId: userId } // ones this user created
+            ] 
+        },
+        include: { 
+            mediaType: true,
+            logs: true,
+        }
+    })
+}
+
+
+export async function findMediaForUser(title, type, creator, year, metadata, userId) {
     return await prisma.media.findFirst({
         where: {
             title,
             mediaType: {
-                name: type,
+                id: type.id,
                 OR: [
-                    {userId: null}, //find whether media exists, checks both global types and personal types
+                    {userId: 0}, //find whether media exists, checks both global types and personal types
                     {userId: userId}
                 ]
             },
+            // Optional info
             ...(creator ? { creator } : {}),
-            ...(year ? { year } : {})
+            ...(year ? { year } : {}),
+            ...(metadata ? { metadata: { equals: metadata } } : {}) //JSON filter
+        },
+        include: { 
+            mediaType: true,
+            logs: true,
+        }
+    }) 
+}
+
+export async function findMediaById(id){
+    return await prisma.media.findUnique({
+        where: { id },
+        include: { 
+            mediaType: true,
+            logs: true,
         }
     })
 }
@@ -51,25 +83,57 @@ export async function findFirstMediaByTitle(title) {
         where: {
             title
         },
+        include: { 
+            mediaType: true,
+            logs: true,
+        }
+    })
+}
+
+export async function createMedia(title, type, creator, year, metadata, userId) {
+    return await prisma.media.create({
+        data: {
+            title,
+            mediaType: { 
+                connect: { 
+                    userId_name: {
+                        userId: type.userId,
+                        name: type.name
+                    }
+            }},
+            // Optional info
+            ...(creator ? {creator} : {}),
+            ...(year ? {year} : {}),
+            ...(metadata ? {metadata} : {}),
+            ...(userId ? { user: {connect: {id: userId}} } : {}), //Need relation syntax because media is making multiple relations 
+        },
         include: { mediaType: true }
     })
 }
 
-export async function createMedia(title, type, creator, year, metadata) {
-    return await prisma.media.create({
+export async function updateMediaForUser(title, type, creator, year, metadata, userId, mediaId) {
+    return await prisma.media.update({
+        where: { id: mediaId },
         data: {
             title,
-            mediaType: {
-                connectOrCreate: {
-                    where: { name: type }, 
-                    create: { name: type }
-                }
+            creator: creator || null,
+            year: year || null,
+            metadata: metadata || null,
+            mediaType: { 
+                connect: { id: type.id }
             },
-            creator,
-            year,
-            metadata
+            ...(userId ? { user: {connect: {id: userId}} } : {}), //Need relation syntax because media is making multiple relations 
         },
-        include: {mediaType: true}
+        include: { 
+            mediaType: true,
+            logs: true,
+        }
+    })
+}
+
+export async function deleteMediaForUser(id){
+    await prisma.media.delete({
+        where: { id }
     })
 }
 
@@ -78,7 +142,7 @@ export async function getAllMediaTypesForUser(userId) {
     return await prisma.mediaType.findMany({
         where: {
             OR: [
-                { userId: null }, // global seed ones
+                { userId: 0 }, // global seed ones
                 { userId: userId } // ones this user created
             ] 
         }
@@ -86,12 +150,28 @@ export async function getAllMediaTypesForUser(userId) {
 }
 
 // Each media type in db is uniquely tied to an user (except the global ones)
-export async function findMediaTypeForUser(name, userId) {
-    return await prisma.mediaType.findUnique({
+export async function findMediaTypeForUserOrGlobal(name, userId) {
+    return prisma.mediaType.findFirst({
         where: {
-            userId_name: {userId,name} //unique composite find syntax wtf
+            name,
+            OR: [
+                { userId: 0 }, 
+                { userId: userId}
+            ]
         }
-    })
+    });
+}
+
+export async function findMediaTypeForUserOrGlobalById(type, userId) {
+    return prisma.mediaType.findFirst({
+        where: {
+            id: type.id,
+            OR: [
+                { userId: 0 }, 
+                { userId: userId}
+            ]
+        }
+    });
 }
 
 export async function createMediaTypeForUser(name, userId) {

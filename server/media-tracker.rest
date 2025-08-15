@@ -48,12 +48,17 @@ Content-Type: application/json
 }
 
 
+
+
+
+
 ### Fetch all todos GET /LOGS (protected)
 GET http://localhost:5000/logs
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywiaWF0IjoxNzU1MTEwNDgyLCJleHAiOjE3NTUxMTQwODJ9.5-Z9RzIzq8LcxIGAXDSULQ_bQxLjv869qEcfMagKUpU
-### Create a log POST /LOGS (protected)
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MjM2NTQ2LCJleHAiOjE3NTUyNDAxNDZ9.nbSBLtwaI5Ph6yrGL8obWX9XrV2eF3I-G9MhN1cycF8
+
+###
 POST http://localhost:5000/logs
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywiaWF0IjoxNzU1MTEwNDgyLCJleHAiOjE3NTUxMTQwODJ9.5-Z9RzIzq8LcxIGAXDSULQ_bQxLjv869qEcfMagKUpU
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MjM2NTQ2LCJleHAiOjE3NTUyNDAxNDZ9.nbSBLtwaI5Ph6yrGL8obWX9XrV2eF3I-G9MhN1cycF8
 Content-Type: application/json
 
 {
@@ -61,62 +66,96 @@ Content-Type: application/json
 }
 
 
-### Create a new media /MEDIA (protected)
+
+
+
+### Fetch all medias for user GET /MEDIA (protected)
+GET http://localhost:5000/media
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MjgyOTg1LCJleHAiOjE3NTUyODY1ODV9.wWtWkamtVKS4NAzQQ5nAMZ6a7upoi0llfkMxADvQbdM
+### Create a new media POST /MEDIA (protected)
 POST http://localhost:5000/media
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywiaWF0IjoxNzU1MTEwNDgyLCJleHAiOjE3NTUxMTQwODJ9.5-Z9RzIzq8LcxIGAXDSULQ_bQxLjv869qEcfMagKUpU
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MjgyOTg1LCJleHAiOjE3NTUyODY1ODV9.wWtWkamtVKS4NAzQQ5nAMZ6a7upoi0llfkMxADvQbdM
 Content-Type: application/json
 
 {
     "title": "1984", 
     "mediaType": {
-        "name": "book"
+        "name": "Books"
     }, 
     "creator": "George Orwell", 
     "year": 1984, 
     "metadata": {
-        "pageCount": 200
+        "pageCount": 20,
+        "version": 2
     }
 }
 ###
 
 POST http://localhost:5000/media
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzU1MTEwMzA0LCJleHAiOjE3NTUxMTM5MDR9.joVilkPebfjfK3d3kXMZ0PoJl6hagOtTtC8c0201vA4
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MjgyOTg1LCJleHAiOjE3NTUyODY1ODV9.wWtWkamtVKS4NAzQQ5nAMZ6a7upoi0llfkMxADvQbdM
 Content-Type: application/json
 
 {
     "title": "Wow", 
     "mediaType": {
-        "name": "Music"
+        "name": "music"
     }, 
     "creator": "Cardi", 
+    "year": 1984, 
+    "metadata": {
+        "tracks": 10
+    }
+}
+
+### Edit media entry PUT /MEDIA/:ID (protected)
+PUT http://localhost:5000/media/8
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MjgyOTg1LCJleHAiOjE3NTUyODY1ODV9.wWtWkamtVKS4NAzQQ5nAMZ6a7upoi0llfkMxADvQbdM
+Content-Type: application/json
+
+{
+    "title": "Wow", 
+    "mediaType": {
+        "id": 2
+    }, 
+    "creator": "Cardi Aays", 
     "year": 1984, 
     "metadata": {
         "tracks": 9
     }
 }
 
-### Fetch all media-types the user has GET /MEDIA-TYPE (protected)
-GET http://localhost:5000/media-type
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MTcyMDU3LCJleHAiOjE3NTUxNzU2NTd9.wAR97Fo8LmEGtpJnIVGCNSyXK8RVzRdTAldaXCT3mGM
-
-### Create new media type POST/MEDIA-TYPE (protected)
-POST http://localhost:5000/media-type
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MTcyMDU3LCJleHAiOjE3NTUxNzU2NTd9.wAR97Fo8LmEGtpJnIVGCNSyXK8RVzRdTAldaXCT3mGM
+### Delete media entry DELETE /MEDIA/:ID (protected)
+DELETE http://localhost:5000/media/8
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MjgyOTg1LCJleHAiOjE3NTUyODY1ODV9.wWtWkamtVKS4NAzQQ5nAMZ6a7upoi0llfkMxADvQbdM
 Content-Type: application/json
 
 {
-    "name": "    movies      "
+    "confirm": false
+}
+
+
+
+### Fetch all media-types the user has GET /MEDIA-TYPE (protected)
+GET http://localhost:5000/media-type
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MjgyOTg1LCJleHAiOjE3NTUyODY1ODV9.wWtWkamtVKS4NAzQQ5nAMZ6a7upoi0llfkMxADvQbdM
+### Create new media type POST/MEDIA-TYPE (protected)
+POST http://localhost:5000/media-type
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MjgyOTg1LCJleHAiOjE3NTUyODY1ODV9.wWtWkamtVKS4NAzQQ5nAMZ6a7upoi0llfkMxADvQbdM
+Content-Type: application/json
+
+{
+    "name": "    MUSIC      "
 }
 
 ### Delete a media-type DELETE /MEDIA-TYPE/:NAME (protected)
-DELETE http://localhost:5000/media-type/games
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MTcyMDU3LCJleHAiOjE3NTUxNzU2NTd9.wAR97Fo8LmEGtpJnIVGCNSyXK8RVzRdTAldaXCT3mGM
+DELETE http://localhost:5000/media-type/book
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MjgyOTg1LCJleHAiOjE3NTUyODY1ODV9.wWtWkamtVKS4NAzQQ5nAMZ6a7upoi0llfkMxADvQbdM
 
 ### Update a media-type PUT /MEDIA-TYPE/:NAME (protected)
-PUT http://localhost:5000/media-type/game
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MTcyMDU3LCJleHAiOjE3NTUxNzU2NTd9.wAR97Fo8LmEGtpJnIVGCNSyXK8RVzRdTAldaXCT3mGM
+PUT http://localhost:5000/media-type/gaMING
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MjgyOTg1LCJleHAiOjE3NTUyODY1ODV9.wWtWkamtVKS4NAzQQ5nAMZ6a7upoi0llfkMxADvQbdM
 Content-Type: application/json
 
 {
-    "newName": "GAMES      "
+    "newName": "MUSIC      "
 }
