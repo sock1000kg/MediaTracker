@@ -1,6 +1,6 @@
 import express from 'express'
 
-import { getAllMediaTypesForUser, findMediaTypeForUser, createMediaTypeForUser, deleteMediaTypeForUser, updateMediaTypeForUser } from './dbRoutes/dbRoutes.js'
+import { getAllMediaTypesForUser, findMediaTypeForUserOrGlobal, createMediaTypeForUser, deleteMediaTypeForUser, updateMediaTypeForUser } from './dbRoutes/dbRoutes.js'
 
 const router = express.Router()
 
@@ -10,8 +10,9 @@ function normalizeTypeName(name) {
 
 //Fetch all media types for this user
 router.get('/', async (req,res) => {
+    const userId = req.userId
     try {
-        const logs = await getAllMediaTypesForUser(req.userId)
+        const logs = await getAllMediaTypesForUser(userId)
         res.status(200).json(logs)
     } catch(error){
         console.error(error);
@@ -30,7 +31,7 @@ router.post('/', async (req,res) => {
 
     const normalizedName = normalizeTypeName(name)
     try{
-        const existingMediaType = await findMediaTypeForUser(normalizedName, userId)
+        const existingMediaType = await findMediaTypeForUserOrGlobal(normalizedName, userId)
         if(existingMediaType) return res.status(404).json({ error: "Media Type already exists"})
 
         const mediaType = await createMediaTypeForUser(normalizedName, req.userId)
@@ -48,7 +49,7 @@ router.delete('/:name', async (req,res) => {
     const normalizedName = normalizeTypeName(name)
     
     try{
-        const existingMediaType = await findMediaTypeForUser(normalizedName, userId)
+        const existingMediaType = await findMediaTypeForUserOrGlobal(normalizedName, userId)
         if(!existingMediaType) return res.status(404).json({ error: "Media Type does not exist (You can only delete types that you created)"})
 
         await deleteMediaTypeForUser(normalizedName, userId)
@@ -72,11 +73,11 @@ router.put('/:name', async (req,res) => {
     const normalizedOldName = normalizeTypeName(name)
     const normalizedNewName = normalizeTypeName(newName)
     try{
-        const existingOldMediaType = await findMediaTypeForUser(normalizedOldName, userId)
+        const existingOldMediaType = await findMediaTypeForUserOrGlobal(normalizedOldName, userId)
         if(!existingOldMediaType) return res.status(404).json({ error: "Media Type does not exists (You can only rename types that you created)"})
 
-        const existingNewMediaType = await findMediaTypeForUser(normalizedNewName, userId)
-        if(existingNewMediaType) return res.status(404).json({ error: "Media Type with that name already exists"})
+        const existingNewMediaType = await findMediaTypeForUserOrGlobal(normalizedNewName, userId)
+        if(existingNewMediaType) return res.status(404).json({ error: "Media Type with that name already exists", existingNewMediaType})
 
         const updated = await updateMediaTypeForUser(normalizedOldName, normalizedNewName, userId)
         return res.status(200).json(updated)
