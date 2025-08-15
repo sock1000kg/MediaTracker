@@ -21,6 +21,7 @@ model User {
 
   logs            UserLogs[]@relation("UserLogsToUser")
   mediaType       MediaType[]@relation("MediaTypesToUser")
+  media           Media[]@relation("MediaToUser")
 }
 
 model Media {
@@ -32,8 +33,11 @@ model Media {
   year            Int?
   metadata        Json?
 
+  userId          Int?
+  user            User?     @relation(fields: [userId], references: [id], name: "MediaToUser", onDelete: Cascade)
+
   mediaTypeId     Int?
-  mediaType       MediaType? @relation(fields: [mediaTypeId], references: [id], name: "MediaToMediaTypes")
+  mediaType       MediaType? @relation(fields: [mediaTypeId], references: [id], name: "MediaToMediaTypes", onDelete: Cascade)
 
   logs            UserLogs[]@relation("UserLogsToMedia")
 }
@@ -43,8 +47,8 @@ model MediaType {
   name            String    
   created_at      DateTime  @default(now())
 
-  userId          Int?
-  user            User?     @relation(fields: [userId], references: [id], name: "MediaTypesToUser")
+  userId          Int?      
+  user            User?     @relation(fields: [userId], references: [id], name: "MediaTypesToUser", onDelete: Cascade)
 
   media           Media[]   @relation("MediaToMediaTypes")
 
@@ -71,10 +75,10 @@ model UserLogs {
   logged_at       DateTime  @default(now())
 
   userId          Int
-  user            User      @relation(fields: [userId], references: [id], name: "UserLogsToUser")
+  user            User      @relation(fields: [userId], references: [id], name: "UserLogsToUser", onDelete: Cascade)
 
   mediaId         Int
-  media           Media     @relation(fields: [mediaId], references: [id], name: "UserLogsToMedia")
+  media           Media     @relation(fields: [mediaId], references: [id], name: "UserLogsToMedia", onDelete: Cascade)
 
   @@unique([userId, mediaId]) //avoid duplicate logs of the same media for the same user
 }
