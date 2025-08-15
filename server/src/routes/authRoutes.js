@@ -18,7 +18,7 @@ router.post('/register', async (req,res) => {
     //Find the default media in db to create default log for new users
         const defaultMedia = await findFirstMediaByTitle("Default Media")
 
-        if(!defaultMedia) throw new Error("Default Media not found")
+        if(!defaultMedia) return res.status(404).json({error: "Default Media not found"})
         const defaultLog = await createLog(user.id, defaultMedia.id, "Completed", 100, "Welcome! This is your default entry :)")
         console.log(defaultLog)
 
