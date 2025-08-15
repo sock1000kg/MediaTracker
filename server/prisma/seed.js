@@ -1,6 +1,29 @@
 import prisma from "../prismaClient.js"
+import bcrypt from "bcryptjs"
 
-async function createMediaTypeSeed(name){
+async function createSystemUser() {
+    let systemUser = await prisma.user.findUnique({
+        where: { id: 0 }
+    });
+
+    if (!systemUser) {
+        const hashedPassword = await bcrypt.hash("system", 12);
+        systemUser = await prisma.user.create({
+            data: {
+                id: 0, 
+                username: "system",
+                password: hashedPassword
+            }
+        });
+        console.log("System user created");
+    } else {
+        console.log("System user already exists");
+    }
+
+    return systemUser;
+}
+
+async function createMediaTypeSeed(name, userId){
     const existing = await prisma.mediaType.findFirst({
         where: {
             name
@@ -11,9 +34,10 @@ async function createMediaTypeSeed(name){
             data: {
                 name,
                 created_at: new Date(),
+                userId
             }
         })
-        console.log("Default media type:" + name + "created")
+        console.log("Default media type: " + name + " created")
         return mediatype
     }
     else console.log("Default media type:" + name + " already exists")
@@ -21,14 +45,17 @@ async function createMediaTypeSeed(name){
 }
 
 async function main() {
+    const systemUser = await createSystemUser();
+
     //CREATE SEED MEDIA TYPE
-    const book = await createMediaTypeSeed("book")
-    const music = await createMediaTypeSeed("music")
+    const book = await createMediaTypeSeed("book", systemUser.id)
+    const music = await createMediaTypeSeed("music", systemUser.id)
 
     //CREATE SEED MEDIA
     const defaultMedia = await prisma.media.findFirst({
         where: {
-            title: "Default Media"
+            title: "Default Media",
+            userId: systemUser.id
         }
     })
 
@@ -39,7 +66,8 @@ async function main() {
                 mediaTypeId: 1,
                 creator: "Unknown",
                 year: new Date().getFullYear(),
-                metadata: {}
+                metadata: {},
+                userId: systemUser.id
             }
         })
         console.log("Default Media created")
