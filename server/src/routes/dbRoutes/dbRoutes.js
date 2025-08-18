@@ -49,11 +49,7 @@ export async function findMediaForUser(title, type, creator, year, metadata, use
         where: {
             title,
             mediaType: {
-                id: type.id,
-                OR: [
-                    {userId: 0}, //find whether media exists, checks both global types and personal types
-                    {userId: userId}
-                ]
+                id: type.id
             },
             // Optional info
             ...(creator ? { creator } : {}),
@@ -96,11 +92,9 @@ export async function createMedia(title, type, creator, year, metadata, userId) 
             title,
             mediaType: { 
                 connect: { 
-                    userId_name: {
-                        userId: type.userId,
-                        name: type.name
-                    }
-            }},
+                    id: type.id
+                }
+            },
             // Optional info
             ...(creator ? {creator} : {}),
             ...(year ? {year} : {}),
@@ -120,7 +114,9 @@ export async function updateMediaForUser(title, type, creator, year, metadata, u
             year: year || null,
             metadata: metadata || null,
             mediaType: { 
-                connect: { id: type.id }
+                connect: { 
+                    id: type.id
+                }
             },
             ...(userId ? { user: {connect: {id: userId}} } : {}), //Need relation syntax because media is making multiple relations 
         },
@@ -145,32 +141,32 @@ export async function getAllMediaTypesForUser(userId) {
                 { userId: 0 }, // global seed ones
                 { userId: userId } // ones this user created
             ] 
-        }
+        },
+        include: { media: true }
     })
 }
 
 // Each media type in db is uniquely tied to an user (except the global ones)
-export async function findMediaTypeForUserOrGlobal(name, userId) {
+export async function findMediaTypeForUserOrGlobal(typeName, userId) {
     return prisma.mediaType.findFirst({
         where: {
-            name,
+            name: typeName,
             OR: [
                 { userId: 0 }, 
                 { userId: userId}
             ]
-        }
+        },
+        include: { media: true }
     });
 }
 
-export async function findMediaTypeForUserOrGlobalById(type, userId) {
+export async function findMediaTypeForUser(name, userId){
     return prisma.mediaType.findFirst({
         where: {
-            id: type.id,
-            OR: [
-                { userId: 0 }, 
-                { userId: userId}
-            ]
-        }
+            name,
+            userId
+        },
+        include: { media: true }
     });
 }
 
