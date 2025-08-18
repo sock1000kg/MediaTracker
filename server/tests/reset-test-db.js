@@ -26,4 +26,7 @@ export default async function resetTestDb() {
   }
 }
 
-resetTestDb()
+// if run directly from `node reset-test-db.js`
+if (import.meta.url === `file://${process.argv[1]}`) {
+    resetTestDb().then(() => process.exit(0))
+}
