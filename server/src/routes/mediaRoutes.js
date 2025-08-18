@@ -1,4 +1,5 @@
 import express from 'express'
+import { normalizeTypeName } from '../utilities.js'
 
 import { 
     createMedia, 
@@ -7,16 +8,12 @@ import {
     findMediaTypeForUserOrGlobal, 
     getAllMediasForUser, 
     updateMediaForUser, 
-    deleteMediaForUser, 
-    findMediaTypeForUserOrGlobalById 
+    deleteMediaForUser
 } from './dbRoutes/dbRoutes.js'
 
 const router = express.Router()
 
 
-function normalizeTypeName(name) {
-    return name.trim().toLowerCase().replace(/s$/, ""); // crude singularization
-}
 
 //Get all media data tied to user
 router.get('/', async (req,res) => {
@@ -38,13 +35,14 @@ router.post('/', async (req,res) => {
     const normalizedTypeName = normalizeTypeName(mediaType.name)
 
     try{
-        //Check if media exists for this user (global or user-added)
-        const existingMedia = await findMediaForUser(title, normalizedTypeName, creator, year, metadata, userId) 
-        if(existingMedia) return res.status(409).json({ error: "Media already exists", existingMedia})
-        
         //Check if type exists for user
         const existingType = await findMediaTypeForUserOrGlobal(normalizedTypeName, userId)
         if(!existingType) return res.status(404).json({ error: "Media Type does not exists"})
+
+        //Check if media exists for this user (global or user-added)
+        const existingMedia = await findMediaForUser(title, existingType, creator, year, metadata, userId) 
+        if(existingMedia) return res.status(409).json({ error: "Media already exists", existingMedia})
+        
 
         const media = await createMedia(title, existingType, creator, year, metadata, userId)
         res.status(201).json(media)
@@ -95,21 +93,24 @@ router.put('/:id', async (req,res) => {
         return res.status(400).json({ error: "Title and Media Type is required" });
     }
     
+    const normalizedTypeName = normalizeTypeName(newMediaType.name)
+
     try{
-        //Check if media in this id exists or belongs to the user
+        //Check if this media exists or belongs to the user
         const existing = await findMediaById(id)
         if (!existing) return res.status(404).json({ error: "Media not found" });
         if (existing.userId !== userId) return res.status(403).json({ error: "You do not own this media" });
         
-        //Check if new media exists for this user (global or user-added)
-        const existingMedia = await findMediaForUser(newTitle, newMediaType, newCreator, newYear, newMetadata, userId) 
-        if(existingMedia) return res.status(409).json({ error: "Media already exists", existingMedia})
-
-        //Check if type exists for user
-        const existingType = await findMediaTypeForUserOrGlobalById(newMediaType, userId)
+        //Check if new type exists for user
+        const existingType = await findMediaTypeForUserOrGlobal(normalizedTypeName, userId)
         if(!existingType) return res.status(404).json({ error: "Media Type does not exists"})
 
-        const updated = await updateMediaForUser(newTitle, newMediaType, newCreator, newYear, newMetadata, userId, id)
+        //Check if new media exists for this user (global or user-added)
+        const existingMedia = await findMediaForUser(newTitle, existingType, newCreator, newYear, newMetadata, userId) 
+        if(existingMedia) return res.status(409).json({ error: "Media already exists", existingMedia})
+
+
+        const updated = await updateMediaForUser(newTitle, existingType, newCreator, newYear, newMetadata, userId, id)
         res.status(200).json(updated)
     }catch(error){
         console.log(error)
