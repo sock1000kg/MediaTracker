@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 
 import { createUser, findFirstMediaByTitle, createLog, findUserByUsername } from './dbRoutes/dbRoutes.js'
+import { checkPasswordStrength } from './utilities.js'
 
 
 const router = express.Router()
@@ -10,6 +11,7 @@ const router = express.Router()
 router.post('/register', async (req,res) => {
     const {username, password} = req.body
     if(!username || !password) return res.status(400).json({ error: 'Invalid input' })
+    if(!checkPasswordStrength(password)) return res.status(400).json({ error: "Password must contain at least 8 characters, includingg 1 uppercase, 1 lowercase, 1 number, 1 special"})
     const hashedPassword = bcrypt.hashSync(password, 12)
 
     try{
