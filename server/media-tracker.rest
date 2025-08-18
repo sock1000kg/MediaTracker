@@ -17,7 +17,7 @@ Content-Type: application/json
 
 {
     "username": "User2",
-    "password": "Password1234!"
+    "password": "Password1234"
 }
 
 ### POST /AUTH/LOGIN
@@ -26,7 +26,7 @@ Content-Type: application/json
 
 {
     "username": "BalloonBoy",
-    "password": "123123123"
+    "password": "Password123!"
 }
 ### 
 
@@ -54,15 +54,15 @@ Content-Type: application/json
 
 ### Fetch all todos GET /LOGS (protected)
 GET http://localhost:5000/logs
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1NDUwOTk4LCJleHAiOjE3NTU0NTQ1OTh9.xgdWQViIqXCe19pQc-nNr0W829jdDq8Wf5lXF79lEuM
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1NTQwMjg1LCJleHAiOjE3NTU1NDM4ODV9.3Vgmx_-n_zEc4QmjLsE--tpX7Igvp0zUqFW1j_ffna4
 
 ### Create a log entry  POST /LOGS (protected)
 POST http://localhost:5000/logs
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1NDUwOTk4LCJleHAiOjE3NTU0NTQ1OTh9.xgdWQViIqXCe19pQc-nNr0W829jdDq8Wf5lXF79lEuM
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1NTQwMjg1LCJleHAiOjE3NTU1NDM4ODV9.3Vgmx_-n_zEc4QmjLsE--tpX7Igvp0zUqFW1j_ffna4
 Content-Type: application/json
 
 {
-    "mediaId": 2,
+    "mediaId": 3,
     "status": "Watching",
     "rating": 50,
     "notes": "This is a note"
@@ -74,18 +74,18 @@ Content-Type: application/json
 
 ### Fetch all medias for user GET /MEDIA (protected)
 GET http://localhost:5000/media
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1NDUwOTk4LCJleHAiOjE3NTU0NTQ1OTh9.xgdWQViIqXCe19pQc-nNr0W829jdDq8Wf5lXF79lEuM
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1NTQwMjg1LCJleHAiOjE3NTU1NDM4ODV9.3Vgmx_-n_zEc4QmjLsE--tpX7Igvp0zUqFW1j_ffna4
 
 ### Create new media entry  POST /MEDIA (protected)
 POST http://localhost:5000/media
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1NDUwOTk4LCJleHAiOjE3NTU0NTQ1OTh9.xgdWQViIqXCe19pQc-nNr0W829jdDq8Wf5lXF79lEuM
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1NTQwMjg1LCJleHAiOjE3NTU1NDM4ODV9.3Vgmx_-n_zEc4QmjLsE--tpX7Igvp0zUqFW1j_ffna4
 Content-Type: application/json
 
 {
-    "title": "1984", 
+    "title": "198", 
     "mediaType": {
-        "name": "Books"
-    }, 
+        "name": "books"
+    },
     "creator": "George Orwell", 
     "year": 1984, 
     "metadata": {
@@ -96,13 +96,13 @@ Content-Type: application/json
 ###
 
 POST http://localhost:5000/media
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzU1NDQ1OTE3LCJleHAiOjE3NTU0NDk1MTd9.nu6l80gXltnYO0X3SQEsgzGV3waZnw2mzppsLLrBOrw
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1NTQwMjg1LCJleHAiOjE3NTU1NDM4ODV9.3Vgmx_-n_zEc4QmjLsE--tpX7Igvp0zUqFW1j_ffna4
 Content-Type: application/json
 
 {
-    "title": "Wow", 
+    "title": "Won", 
     "mediaType": {
-        "name": "music"
+        "name": "games"
     }, 
     "creator": "Cardi", 
     "year": 1984, 
@@ -113,13 +113,13 @@ Content-Type: application/json
 
 ### Edit media entry PUT /MEDIA/:ID (protected)
 PUT http://localhost:5000/media/3
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzU1NDQ1OTE3LCJleHAiOjE3NTU0NDk1MTd9.nu6l80gXltnYO0X3SQEsgzGV3waZnw2mzppsLLrBOrw
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1NTQwMjg1LCJleHAiOjE3NTU1NDM4ODV9.3Vgmx_-n_zEc4QmjLsE--tpX7Igvp0zUqFW1j_ffna4
 Content-Type: application/json
 
 {
     "title": "Wow", 
     "mediaType": {
-        "id": 2
+        "name": "book"
     }, 
     "creator": "Cardi Aays", 
     "year": 1984, 
@@ -130,7 +130,7 @@ Content-Type: application/json
 
 ### Delete media entry DELETE /MEDIA/:ID (protected)
 DELETE http://localhost:5000/media/3
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzU1NDQ1OTE3LCJleHAiOjE3NTU0NDk1MTd9.nu6l80gXltnYO0X3SQEsgzGV3waZnw2mzppsLLrBOrw
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1NTQwMjg1LCJleHAiOjE3NTU1NDM4ODV9.3Vgmx_-n_zEc4QmjLsE--tpX7Igvp0zUqFW1j_ffna4
 Content-Type: application/json
 
 {
@@ -141,25 +141,37 @@ Content-Type: application/json
 
 ### Fetch all media-types the user has GET /MEDIA-TYPE (protected)
 GET http://localhost:5000/media-type
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MjgyOTg1LCJleHAiOjE3NTUyODY1ODV9.wWtWkamtVKS4NAzQQ5nAMZ6a7upoi0llfkMxADvQbdM
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1NTQwMjg1LCJleHAiOjE3NTU1NDM4ODV9.3Vgmx_-n_zEc4QmjLsE--tpX7Igvp0zUqFW1j_ffna4
 ### Create new media type POST/MEDIA-TYPE (protected)
 POST http://localhost:5000/media-type
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MjgyOTg1LCJleHAiOjE3NTUyODY1ODV9.wWtWkamtVKS4NAzQQ5nAMZ6a7upoi0llfkMxADvQbdM
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1NTQwMjg1LCJleHAiOjE3NTU1NDM4ODV9.3Vgmx_-n_zEc4QmjLsE--tpX7Igvp0zUqFW1j_ffna4
 Content-Type: application/json
 
 {
-    "name": "    MUSIC      "
+    "name": "   gamES      "
 }
 
 ### Delete a media-type DELETE /MEDIA-TYPE/:NAME (protected)
-DELETE http://localhost:5000/media-type/book
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MjgyOTg1LCJleHAiOjE3NTUyODY1ODV9.wWtWkamtVKS4NAzQQ5nAMZ6a7upoi0llfkMxADvQbdM
-
-### Update a media-type PUT /MEDIA-TYPE/:NAME (protected)
-PUT http://localhost:5000/media-type/gaMING
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1MjgyOTg1LCJleHAiOjE3NTUyODY1ODV9.wWtWkamtVKS4NAzQQ5nAMZ6a7upoi0llfkMxADvQbdM
+DELETE http://localhost:5000/media-type/HAHAHAHHA
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1NTQwMjg1LCJleHAiOjE3NTU1NDM4ODV9.3Vgmx_-n_zEc4QmjLsE--tpX7Igvp0zUqFW1j_ffna4
 Content-Type: application/json
 
 {
-    "newName": "MUSIC      "
+    "confirm": true
+}
+### Update a media-type PUT /MEDIA-TYPE/:NAME (protected)
+PUT http://localhost:5000/media-type/games
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1NTQwMjg1LCJleHAiOjE3NTU1NDM4ODV9.3Vgmx_-n_zEc4QmjLsE--tpX7Igvp0zUqFW1j_ffna4
+Content-Type: application/json
+
+{
+    "newName": "Gaming      "
+}
+###
+PUT http://localhost:5000/media-type/gaming
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1NTQwMjg1LCJleHAiOjE3NTU1NDM4ODV9.3Vgmx_-n_zEc4QmjLsE--tpX7Igvp0zUqFW1j_ffna4
+Content-Type: application/json
+
+{
+    "newName": "games      "
 }
