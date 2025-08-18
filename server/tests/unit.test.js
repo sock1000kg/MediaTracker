@@ -1,38 +1,38 @@
 // __tests__/utils.test.js
-import { checkPasswordStrength, normalizeTypeName } from "../src/utilities.js"
+import { checkPasswordStrength, normalizeTypeName } from "../src/utiltesties.js"
 
 describe("checkPasswordStrength", () => {
-  it("returns false for empty string", () => {
+  test("returns false for empty string", () => {
     expect(checkPasswordStrength("")).toBe(false)
   })
 
-  it("fails if missing uppercase", () => {
+  test("fails if missing uppercase", () => {
     expect(checkPasswordStrength("password1!")).toBe(false)
   })
 
-  it("fails if missing number", () => {
+  test("fails if missing number", () => {
     expect(checkPasswordStrength("Password!")).toBe(false)
   })
 
-  it("passes for valid strong password", () => {
+  test("passes for valid strong password", () => {
     expect(checkPasswordStrength("StrongPass1!")).toBe(true)
   })
 })
 
 describe("normalizeTypeName", () => {
-  it("trims whitespace", () => {
+  test("trims whtestespace", () => {
     expect(normalizeTypeName("  Movie ")).toBe("movie")
   })
 
-  it("lowercases the string", () => {
+  test("lowercases the string", () => {
     expect(normalizeTypeName("BOOK")).toBe("book")
   })
 
-  it("removes trailing 's'", () => {
+  test("removes trailing 's'", () => {
     expect(normalizeTypeName("Games")).toBe("game")
   })
 
-  it("leaves non-plural words unchanged", () => {
+  test("leaves non-plural words unchanged", () => {
     expect(normalizeTypeName("anime")).toBe("anime")
   })
 })
