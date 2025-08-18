@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 
 import { createUser, findFirstMediaByTitle, createLog, findUserByUsername } from './dbRoutes/dbRoutes.js'
-import { checkPasswordStrength } from './utilities.js'
+import { checkPasswordStrength } from '../utilities.js'
 
 
 const router = express.Router()
