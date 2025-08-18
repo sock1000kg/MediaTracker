@@ -6,9 +6,9 @@ const router = express.Router()
 
 //Get all logs upon login
 router.get('/', async (req,res) => {
-
+    const userId = req.userId
     try {
-        const logs = await getAllLogs(req.userId)
+        const logs = await getAllLogs(userId)
         console.log(logs)
         res.status(200).json(logs)
     } catch(error){
@@ -20,13 +20,14 @@ router.get('/', async (req,res) => {
 //Create a log
 router.post('/', async (req,res) => {
     const { mediaId, status, rating, notes } = req.body
+    const userId = req.userId
 
     try {
         //Check for existing log for the same media
-        const existingLog = await findLogOfUser(req.userId, mediaId)
+        const existingLog = await findLogOfUser(userId, mediaId)
         if(existingLog) return res.status(409).json({ error: 'Your log of this media already exists'})
 
-        const log = await createLog(req.userId, mediaId, status, rating, notes)
+        const log = await createLog(userId, mediaId, status, rating, notes)
         res.status(201).json(log)
     } catch(error){
         console.error(error);
