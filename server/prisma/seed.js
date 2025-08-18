@@ -1,3 +1,4 @@
+
 import prisma from "../prismaClient.js"
 import bcrypt from "bcryptjs"
 
@@ -75,10 +76,10 @@ async function main() {
     else console.log("Default Media already exists")
 }
 
-main()
-    .then(() => prisma.$disconnect())
-    .catch(error => {
-        console.error(error)
-        prisma.$disconnect()
-        process.exit(1)
-    })
+await main()
+        .then(() => prisma.$disconnect())
+        .catch(error => {
+            console.error(error)
+            prisma.$disconnect()
+            process.exit(1)
+        })
