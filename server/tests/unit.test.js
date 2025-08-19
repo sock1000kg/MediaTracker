@@ -1,5 +1,5 @@
 // __tests__/utils.test.js
-import { checkPasswordStrength, normalizeTypeName } from "../src/utiltesties.js"
+import { checkPasswordStrength, normalizeTypeName } from "../src/utilities.js"
 
 describe("checkPasswordStrength", () => {
   test("returns false for empty string", () => {
