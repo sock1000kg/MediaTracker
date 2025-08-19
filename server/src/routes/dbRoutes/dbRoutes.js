@@ -49,8 +49,12 @@ export async function findMediaForUser(title, type, creator, year, metadata, use
         where: {
             title,
             mediaType: {
-                id: type.id
+                name: type.name
             },
+            OR: [
+                { userId: 0 }, // global seed ones
+                { userId: userId } // ones this user created
+            ],
             // Optional info
             ...(creator ? { creator } : {}),
             ...(year ? { year } : {}),
@@ -61,6 +65,22 @@ export async function findMediaForUser(title, type, creator, year, metadata, use
             logs: true,
         }
     }) 
+}
+
+export async function findMediaForUserById(mediaId, userId){
+    return await prisma.media.findFirst({
+        where: { 
+            id: mediaId,
+            OR: [
+                { userId: 0 }, // global seed ones
+                { userId: userId } // ones this user created
+            ],
+        },
+        include: { 
+            mediaType: true,
+            logs: true,
+        }
+    })
 }
 
 export async function findMediaById(id){
@@ -146,7 +166,7 @@ export async function getAllMediaTypesForUser(userId) {
     })
 }
 
-// Each media type in db is uniquely tied to an user (except the global ones)
+// Each user has uniquely tied mediaType names (except the global ones)
 export async function findMediaTypeForUserOrGlobal(typeName, userId) {
     return prisma.mediaType.findFirst({
         where: {
@@ -216,15 +236,44 @@ export async function getAllLogs(userId) {
     return await prisma.userLogs.findMany({
         where: {
             userId
+        },
+        include: {
+            media: {
+                include: {
+                    mediaType: true
+                }
+            }
         }
     })
 }
 
-export async function findLogOfUser(userId, mediaId) {
+export async function findLogOfUserByMediaId(userId, mediaId) {
     return await prisma.userLogs.findFirst({
         where: {
             userId,
             mediaId
+        },
+        include: {
+            media: {
+                include: {
+                    mediaType: true
+                }
+            }
+        }
+    })
+}
+
+export async function findLogOfUserById(logId) {
+    return await prisma.userLogs.findFirst({
+        where: {
+            id: logId
+        },
+        include: {
+            media: {
+                include: {
+                    mediaType: true
+                }
+            }
         }
     })
 }
