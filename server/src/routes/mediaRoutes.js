@@ -32,6 +32,11 @@ router.get('/', async (req,res) => {
 router.post('/', async (req,res) => {
     const {title, mediaType, creator, year, metadata} = req.body
     const userId = req.userId
+
+    if(!title || !title.trim() || !mediaType) {
+        return res.status(400).json({ error: "Title and Media Type is required" });
+    }
+
     const normalizedTypeName = normalizeTypeName(mediaType.name)
 
     try{
