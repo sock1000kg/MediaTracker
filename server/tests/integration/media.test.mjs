@@ -9,6 +9,7 @@ describe('Media Routes', () => {
     let token, user, mediaType
 
     beforeAll(async () => {
+        //refresh the db and creates a new user
         await prisma.user.deleteMany({ where: { username } })
         await request(app)
             .post('/auth/register')
@@ -20,6 +21,7 @@ describe('Media Routes', () => {
             .set('Content-Type', 'application/json')
         token = res.body.token
         user = await prisma.user.findUnique({ where: { username } })
+
         // Create a media type for this user
         mediaType = await prisma.mediaType.create({
             data: { name: mediaTypeName.toLowerCase(), userId: user.id }
@@ -93,6 +95,20 @@ describe('Media Routes', () => {
                 year: 2024,
                 metadata: { foo: 'bar' }
             })
+        expect(res.statusCode).toBe(400)
+    })
+
+    test('Create media with invalid year fails', async () => {
+    const res = await request(app)
+        .post('/media')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+            title: 'BadYear',
+            mediaType: { name: mediaTypeName },
+            creator: 'Bad',
+            year: 'abcd', // invalid
+            metadata: {}
+        })
         expect(res.statusCode).toBe(400)
     })
 
