@@ -43,8 +43,8 @@ POST http://localhost:5000/auth/login
 Content-Type: application/json
 
 {
-    "username": "User2",
-    "password": "32132132"
+    "username": "system",
+    "password": "System1000KG!"
 }
 
 

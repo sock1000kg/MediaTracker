@@ -8,7 +8,7 @@ async function createSystemUser() {
     });
 
     if (!systemUser) {
-        const hashedPassword = await bcrypt.hash("system", 12);
+        const hashedPassword = await bcrypt.hash(process.env.SYSTEM_USER_PASSWORD, 12);
         systemUser = await prisma.user.create({
             data: {
                 id: 0, 
