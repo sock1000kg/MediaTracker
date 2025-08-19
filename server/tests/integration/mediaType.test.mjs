@@ -2,6 +2,8 @@ import request from 'supertest'
 import app from '../../src/app.js'
 import { prisma } from '../jest.setup.mjs'
 
+import { normalizeTypeName } from '../../src/utilities.js'
+
 describe('MediaType Routes', () => {
     const username = 'MediaTypeTestUser'
     const password = 'StrongPass1!'
@@ -38,7 +40,7 @@ describe('MediaType Routes', () => {
             .set('Authorization', `Bearer ${token}`)
             .send({ name: mediaTypeName })
         expect(res.statusCode).toBe(201)
-        expect(res.body.name).toBe(mediaTypeName.toLowerCase())
+        expect(res.body.name).toBe(normalizeTypeName(mediaTypeName))
     })
 
     test('Create media type with missing name fails', async () => {
@@ -73,7 +75,7 @@ describe('MediaType Routes', () => {
             .set('Authorization', `Bearer ${token}`)
         expect(res.statusCode).toBe(200)
         expect(Array.isArray(res.body)).toBe(true)
-        expect(res.body.some(mt => mt.name === mediaTypeName.toLowerCase())).toBe(true)
+        expect(res.body.some(mt => mt.name === normalizeTypeName(mediaTypeName))).toBe(true)
     })
 
     test('Delete media type succeeds', async () => {
@@ -85,7 +87,7 @@ describe('MediaType Routes', () => {
 
         // Create a media associated with that type
         const user = await prisma.user.findUnique({ where: { username } })
-        const mediaType = await prisma.mediaType.findFirst({ where: { name: mediaTypeName.toLowerCase(), userId: user.id } })
+        const mediaType = await prisma.mediaType.findFirst({ where: { name: normalizeTypeName(mediaTypeName), userId: user.id } })
         await prisma.media.create({
             data: {
                 title: 'Test Media',
@@ -173,7 +175,7 @@ describe('MediaType Routes', () => {
 
         // Create a media associated with that type
         const user = await prisma.user.findUnique({ where: { username } })
-        const mediaType = await prisma.mediaType.findFirst({ where: { name: mediaTypeName.toLowerCase(), userId: user.id } })
+        const mediaType = await prisma.mediaType.findFirst({ where: { name: normalizeTypeName(mediaTypeName), userId: user.id } })
         await prisma.media.create({
             data: {
                 title: 'Test Media',
