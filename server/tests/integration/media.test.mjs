@@ -2,6 +2,8 @@ import request from 'supertest'
 import app from '../../src/app.js'
 import { prisma } from '../jest.setup.mjs'
 
+import { normalizeTypeName } from '../../src/utilities.js'
+
 describe('Media Routes', () => {
     const username = 'MediaTestUser'
     const password = 'StrongPass1!'
@@ -24,7 +26,7 @@ describe('Media Routes', () => {
 
         // Create a media type for this user
         mediaType = await prisma.mediaType.create({
-            data: { name: mediaTypeName.toLowerCase(), userId: user.id }
+            data: { name: normalizeTypeName(mediaTypeName), userId: user.id }
         })
     })
 
