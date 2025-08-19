@@ -192,4 +192,17 @@ describe('MediaType Routes', () => {
         expect(res.body.message).toMatch(/confirm deletion/i)
         expect(res.body.mediaCount).toBe(1)
     })
+
+    test('Creation fails with empty string after trimming', async () => {
+        const res = await request(app)
+            .post('/media-type')
+            .set('Authorization', `Bearer ${token}`)
+            .send({ name: '    ' })
+        expect(res.statusCode).toBe(400)
+    })
+
+    test('Unauthorized request fails', async () => {
+        const res = await request(app).post('/media-type').send({ name: 'Test' })
+        expect(res.statusCode).toBe(401) 
+    })
 })
