@@ -1,5 +1,5 @@
 import express from 'express'
-import { normalizeTypeName } from '../utilities.js'
+import { normalizeTypeName, sanitizeCreator, sanitizeMetadata, sanitizeTitle, sanitizeYear } from '../utilities.js'
 
 import { 
     createMedia, 
@@ -30,12 +30,19 @@ router.get('/', async (req,res) => {
 
 //Create a media data tied to user
 router.post('/', async (req,res) => {
-    const {title, mediaType, creator, year, metadata} = req.body
+    const {title: rawTitle, mediaType, creator: rawCreator, year: rawYear, metadata: rawMetadata} = req.body
     const userId = req.userId
 
-    if(!title || !title.trim() || !mediaType) {
-        return res.status(400).json({ error: "Title and Media Type is required" });
-    }
+    //Sanitization
+    const title = sanitizeTitle(rawTitle)
+    if(!title || !title.trim() || !mediaType) return res.status(400).json({ error: "Title and Media Type is required" })
+
+    const creator = sanitizeCreator(rawCreator)
+
+    const metadata = sanitizeMetadata(rawMetadata)
+
+    const year = sanitizeYear(rawYear)
+    if (rawYear != null && year === null) return res.status(400).json({ error: "Year must be a number" })
 
     const normalizedTypeName = normalizeTypeName(mediaType.name)
 
@@ -57,6 +64,7 @@ router.post('/', async (req,res) => {
     }
 })
 
+//Delete a media tied to user
 router.delete('/:id', async (req,res) => {
     const id = parseInt(decodeURIComponent(req.params.id))
     const userId = req.userId
@@ -83,22 +91,30 @@ router.delete('/:id', async (req,res) => {
     }
 })
 
+//Update media tied to user
 router.put('/:id', async (req,res) => {
     const id = parseInt(decodeURIComponent(req.params.id))
     const userId = req.userId
     const {
-        title: newTitle,
-        mediaType: newMediaType,
-        creator: newCreator,
-        year: newYear,
-        metadata: newMetadata
+        title: rawTitle,
+        mediaType: rawMediaType,
+        creator: rawCreator,
+        year: rawYear,
+        metadata: rawMetadata
         } = req.body;
 
-    if(!newTitle || !newTitle.trim() || !newMediaType) {
-        return res.status(400).json({ error: "Title and Media Type is required" });
-    }
+    //Sanitization
+    const newTitle = sanitizeTitle(rawTitle)
+    if(!newTitle || !newTitle.trim() || !rawMediaType) return res.status(400).json({ error: "Title and Media Type is required" })
+
+    const newCreator = sanitizeCreator(rawCreator)
+
+    const newMetadata = sanitizeMetadata(rawMetadata)
+
+    const newYear = sanitizeYear(rawYear)
+    if (rawYear != null && newYear === null) return res.status(400).json({ error: "Year must be a number" })
     
-    const normalizedTypeName = normalizeTypeName(newMediaType.name)
+    const normalizedTypeName = normalizeTypeName(rawMediaType.name)
 
     try{
         //Check if this media exists or belongs to the user
