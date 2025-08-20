@@ -39,6 +39,7 @@ describe('Media Routes', () => {
         await prisma.user.deleteMany({ where: { username } })
     })
 
+    //CREATE
     test('Create media with global type succeeds', async () => {
         const res = await request(app)
             .post('/media')
@@ -175,6 +176,7 @@ describe('Media Routes', () => {
         )
     })
 
+    // FETCH
     test('Fetch all media returns array', async () => {
         await request(app)
             .post('/media')
@@ -194,6 +196,7 @@ describe('Media Routes', () => {
         expect(res.body.some(m => m.title === 'Test Media')).toBe(true)
     })
 
+    //UPDATE
     test('Update media succeeds', async () => {
         const createRes = await request(app)
             .post('/media')
@@ -219,6 +222,31 @@ describe('Media Routes', () => {
         expect(res.statusCode).toBe(200)
         expect(res.body.title).toBe('Updated Media')
         expect(res.body.creator).toBe('New Author')
+    })
+
+    test('Update media missing fields fails', async () => {
+        const createRes = await request(app)
+            .post('/media')
+            .set('Authorization', `Bearer ${token}`)
+            .send({
+                title: 'Test Media',
+                mediaType: { name: mediaTypeName },
+                creator: 'Author',
+                year: 2024,
+                metadata: { foo: 'bar' }
+            })
+        const mediaId = createRes.body.id
+        const res = await request(app)
+            .put(`/media/${mediaId}`)
+            .set('Authorization', `Bearer ${token}`)
+            .send({
+                mediaType: { name: mediaTypeName },
+                creator: 'New Author',
+                year: 2025,
+                metadata: { foo: 'baz' }
+            })
+        expect(res.statusCode).toBe(400)
+        expect(res.body.error).toMatch(/is required/i)
     })
 
     test('Update media to duplicate fails', async () => {
@@ -259,6 +287,7 @@ describe('Media Routes', () => {
         expect(res.body.error).toMatch(/already exists/i)
     })
 
+    //DELETE
     test('Delete media succeeds', async () => {
         const createRes = await request(app)
             .post('/media')
