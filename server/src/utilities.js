@@ -5,12 +5,12 @@ export function checkPasswordStrength(password) {
     return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/.test(password)
 }
 
-//Used in Media Type and Media
+//Used in Media Type and Media to normalize names of media types
 export function normalizeTypeName(name) {
     return name.trim().toLowerCase().replace(/s$/, "") // crude singularization
 }
 
-//Sanitization
+//INPUT SANITIZATION
 // Sanitize rating between 0 and 100
 export function sanitizeRating(rating) {
     if (rating == null) return null

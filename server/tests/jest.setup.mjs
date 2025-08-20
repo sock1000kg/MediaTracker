@@ -8,7 +8,7 @@ const prisma = new PrismaClient()
 
 import resetTestDb from './reset-test-db.js' //reset+seed test db
 
-
+//Check if Jest is connected to the correct db
 beforeAll(async () => {
     if (process.env.NODE_ENV !== 'test') {
         throw new Error('Tests must be run with NODE_ENV=test')

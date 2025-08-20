@@ -11,6 +11,7 @@ describe('Auth Routes', () => {
         expect(res.statusCode).toBe(200);
         expect(res.body).toHaveProperty('token');
         expect(res.body.user.username).toBe('TestUser123');
+
         //Clean up
         await prisma.user.deleteMany({
             where: { username: 'TestUser123' }
@@ -48,6 +49,7 @@ describe('Auth Routes', () => {
             .set('Content-Type', 'application/json') 
         expect(res.statusCode).toBe(400) 
         expect(res.body.error).toMatch(/Username already taken/i)
+        
         //Clean up
         await prisma.user.deleteMany({
             where: { username: 'DupUser' }
