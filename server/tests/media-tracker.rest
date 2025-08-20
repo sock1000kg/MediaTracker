@@ -68,8 +68,20 @@ Content-Type: application/json
     "notes": "This is a note"
 }
 
+### Update a log entry  PUT /LOGS/:ID (protected)
+PUT http://localhost:5000/logs/2
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1NjAzNjU1LCJleHAiOjE3NTU2MDcyNTV9.DWxmxDtHLN6M8_2Zmiq4uqzmgmauP68-RCqhYNZmU18
+Content-Type: application/json
 
+{
+    "status": "In progress",
+    "rating": 70,
+    "notes": ""
+}
 
+### DELETE A LOG DELETE /LOGS/:ID (protected)
+POST http://localhost:5000/logs/2
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzU1NjAzNjU1LCJleHAiOjE3NTU2MDcyNTV9.DWxmxDtHLN6M8_2Zmiq4uqzmgmauP68-RCqhYNZmU18
 
 
 ### Fetch all medias for user GET /MEDIA (protected)
