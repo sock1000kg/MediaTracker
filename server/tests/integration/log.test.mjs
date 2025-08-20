@@ -9,7 +9,7 @@ describe('Log routes', () => {
     const password = 'StrongPass1!'
     const mediaTypeName = 'TestType'
     const mediaName = 'TestMedia'
-    let token, user, mediaType, media
+    let token, user, mediaType, media, log
 
     beforeAll(async () => {
         //refresh the db and creates a new user
@@ -42,7 +42,7 @@ describe('Log routes', () => {
 
     afterEach(async () => {
         await prisma.userLogs.deleteMany({
-            where: { userId: user.id }
+            where: { userId: user.id, mediaId: media.id } 
         })
     })
 
@@ -52,120 +52,310 @@ describe('Log routes', () => {
         await prisma.user.delete({ where: { username } })
     })
 
-    test('Create log succeeds', async () => {
-        const res = await request(app)
-            .post('/logs')
-            .set('Authorization', `Bearer ${token}`)
-            .send({
-                mediaId: media.id,
-                status: 'Completed',
-                rating: 95,
-                notes: 'Great media!'
+    describe('Create and fetch logs', () => {
+        //FETCH
+        test('Fetch all logs returns array', async () => {
+            await prisma.userLogs.create({
+                data: {
+                    userId: user.id,
+                    mediaId: media.id,
+                    status: 'Completed',
+                    rating: 100,
+                    notes: 'Existing log'
+                }
             })
-        expect(res.statusCode).toBe(201)
-        expect(res.body.userId).toBe(user.id)
-        expect(res.body.mediaId).toBe(media.id)
-        expect(res.body.status).toBe('Completed')
+    
+            const res = await request(app)
+                .get('/logs')
+                .set('Authorization', `Bearer ${token}`)
+            expect(res.statusCode).toBe(200)
+            expect(Array.isArray(res.body)).toBe(true)
+            expect(res.body.some(log => log.mediaId === media.id)).toBe(true)
+        })
+    
+        //CREATE
+        test('Create log succeeds', async () => {
+            const res = await request(app)
+                .post('/logs')
+                .set('Authorization', `Bearer ${token}`)
+                .send({
+                    mediaId: media.id,
+                    status: 'Completed',
+                    rating: 95,
+                    notes: 'Great media!'
+                })
+            expect(res.statusCode).toBe(201)
+            expect(res.body.userId).toBe(user.id)
+            expect(res.body.mediaId).toBe(media.id)
+            expect(res.body.status).toBe('Completed')
+        })
+    
+        test('Create log without mediaId fails', async () => {
+            const res = await request(app)
+                .post('/logs')
+                .set('Authorization', `Bearer ${token}`)
+                .send({
+                    status: 'Completed',
+                    rating: 80,
+                    notes: 'Missing mediaId'
+                })
+            expect(res.statusCode).toBe(400)
+            expect(res.body.error).toMatch(/media/i)
+        })
+    
+        test('Create duplicate log fails', async () => {
+            await prisma.userLogs.create({
+                data: {
+                    userId: user.id,
+                    mediaId: media.id,
+                    status: 'Completed',
+                    rating: 100,
+                    notes: 'Existing log'
+                }
+            })
+    
+            const res = await request(app)
+                .post('/logs')
+                .set('Authorization', `Bearer ${token}`)
+                .send({
+                    mediaId: media.id,
+                    status: 'In Progress',
+                    rating: 85,
+                    notes: 'Duplicate log'
+                })
+            expect(res.statusCode).toBe(409)
+            expect(res.body.error).toMatch(/already exists/i)
+        })
+    
+        test('Create log for non-existent media fails', async () => {
+            const res = await request(app)
+                .post('/logs')
+                .set('Authorization', `Bearer ${token}`)
+                .send({
+                    mediaId: 999999,
+                    status: 'Completed',
+                    rating: 80
+                })
+            expect(res.statusCode).toBe(404)
+            expect(res.body.error).toMatch(/does not exist/i)
+        })
+    
+        test('Create log without token fails', async () => {
+            const res = await request(app)
+                .post('/logs')
+                .send({
+                    mediaId: media.id,
+                    status: 'Completed',
+                    rating: 50
+                })
+            expect(res.statusCode).toBe(401)
+        })
+    
+        test('Response for creating log includes expected fields', async () => {
+            const res = await request(app)
+                .post('/logs')
+                .set('Authorization', `Bearer ${token}`)
+                .send({
+                    mediaId: media.id,
+                    status: 'Completed',
+                    rating: 88,
+                    notes: 'Check schema'
+                })
+            expect(res.body).toEqual(
+                expect.objectContaining({
+                    id: expect.any(Number),
+                    userId: user.id,
+                    mediaId: media.id,
+                    status: expect.any(String),
+                    rating: expect.any(Number),
+                    notes: expect.any(String)
+                })
+            )
+        })     
     })
 
-    test('Create log without mediaId fails', async () => {
-        const res = await request(app)
-            .post('/logs')
-            .set('Authorization', `Bearer ${token}`)
-            .send({
-                status: 'Completed',
-                rating: 80,
-                notes: 'Missing mediaId'
+    //UPDATE
+    describe('Update logs', () => {
+        beforeEach(async () => {
+            // Create a fresh log before each test
+            log = await prisma.userLogs.create({
+                data: {
+                    userId: user.id,
+                    mediaId: media.id,
+                    status: 'In progress',
+                    rating: 70,
+                    notes: 'Initial notes'
+                }
             })
-        expect(res.statusCode).toBe(400)
-        expect(res.body.error).toMatch(/media/i)
-    })
+        })
+    
+        test('Successfully updates all fields', async () => {
+            const res = await request(app)
+                .put(`/logs/${log.id}`)
+                .set('Authorization', `Bearer ${token}`)
+                .send({
+                    status: 'Completed',
+                    rating: 95,
+                    notes: 'Updated notes'
+                })
 
-    test('Create duplicate log fails', async () => {
-        await request(app)
-            .post('/logs')
-            .set('Authorization', `Bearer ${token}`)
-            .send({
-                mediaId: media.id,
-                status: 'Completed',
-                rating: 90,
-                notes: 'First log'
-            })
-        const res = await request(app)
-            .post('/logs')
-            .set('Authorization', `Bearer ${token}`)
-            .send({
-                mediaId: media.id,
-                status: 'In Progress',
-                rating: 85,
-                notes: 'Duplicate log'
-            })
-        expect(res.statusCode).toBe(409)
-        expect(res.body.error).toMatch(/already exists/i)
-    })
-
-    test('Create log for non-existent media fails', async () => {
-        const res = await request(app)
-            .post('/logs')
-            .set('Authorization', `Bearer ${token}`)
-            .send({
-                mediaId: 999999,
-                status: 'Completed',
-                rating: 80
-            })
-        expect(res.statusCode).toBe(404)
-        expect(res.body.error).toMatch(/does not exist/i)
-    })
-
-    test('Fetch all logs returns array', async () => {
-        await prisma.userLogs.create({
-            data: {
-                userId: user.id,
-                mediaId: media.id,
-                status: 'Completed',
-                rating: 100,
-                notes: 'Existing log'
-            }
+            expect(res.statusCode).toBe(200)
+            expect(res.body.id).toBe(log.id)
+            expect(res.body.status).toBe('Completed')
+            expect(res.body.rating).toBe(95)
+            expect(res.body.notes).toBe('Updated notes')
         })
 
-        const res = await request(app)
-            .get('/logs')
-            .set('Authorization', `Bearer ${token}`)
-        expect(res.statusCode).toBe(200)
-        expect(Array.isArray(res.body)).toBe(true)
-        expect(res.body.some(log => log.mediaId === media.id)).toBe(true)
+        test('Partial update only changes provided fields', async () => {
+            const res = await request(app)
+                .put(`/logs/${log.id}`)
+                .set('Authorization', `Bearer ${token}`)
+                .send({ rating: 85 }) // only rating
+
+            expect(res.statusCode).toBe(200)
+            expect(res.body.rating).toBe(85)
+            expect(res.body.status).toBe('In progress') // unchanged
+            expect(res.body.notes).toBe('Initial notes') // unchanged
+        })
+
+        test('Fails to update non-existent log', async () => {
+            const res = await request(app)
+                .put('/logs/999999')
+                .set('Authorization', `Bearer ${token}`)
+                .send({ status: 'Completed' })
+
+            expect(res.statusCode).toBe(404)
+            expect(res.body.error).toMatch(/does not exist/i)
+        })
+
+        test('Fails to update log belonging to another user', async () => {
+            const otherUser = await prisma.user.create({ data: { username: 'OtherUser', password: 'Pass123!' } })
+            const otherLog = await prisma.userLogs.create({
+                data: {
+                    userId: otherUser.id,
+                    mediaId: media.id,
+                    status: 'In progress',
+                    rating: 50
+                }
+            })
+
+            const res = await request(app)
+                .put(`/logs/${otherLog.id}`)
+                .set('Authorization', `Bearer ${token}`)
+                .send({ status: 'Completed' })
+
+            expect(res.statusCode).toBe(401)
+            expect(res.body.error).toMatch(/do not own/i)
+
+            await prisma.userLogs.delete({ where: { id: otherLog.id } })
+            await prisma.user.delete({ where: { id: otherUser.id } })
+        })
+
+        test('Fails without token', async () => {
+            const res = await request(app)
+                .put(`/logs/${log.id}`)
+                .send({ status: 'Completed' })
+
+            expect(res.statusCode).toBe(401)
+        })
+
+        test('Sanitization nullifies invalid rating', async () => {
+            const res = await request(app)
+                .put(`/logs/${log.id}`)
+                .set('Authorization', `Bearer ${token}`)
+                .send({ rating: 9999 })
+
+            // sanitizeRating clamps/returns null
+            expect(res.statusCode).toBe(200)
+            expect(res.body.rating).toBe(70) // unchanged because invalid was ignored
+        })
+
+        test('Sanitization nullifies invalid status', async () => {
+            const res = await request(app)
+                .put(`/logs/${log.id}`)
+                .set('Authorization', `Bearer ${token}`)
+                .send({ status: 'NotAStatus' })
+
+            expect(res.statusCode).toBe(200)
+            expect(res.body.status).toBe('In progress') // unchanged
+        })
+
+        test('Sanitization trims notes and limits length', async () => {
+            const longNotes = 'a'.repeat(6000) // >5000 chars
+            const res = await request(app)
+                .put(`/logs/${log.id}`)
+                .set('Authorization', `Bearer ${token}`)
+                .send({ notes: longNotes })
+
+            expect(res.statusCode).toBe(200)
+            expect(res.body.notes.length).toBe(5000)
+        })
     })
 
-    test('Create log without token fails', async () => {
-        const res = await request(app)
-            .post('/logs')
-            .send({
-                mediaId: media.id,
-                status: 'Completed',
-                rating: 50
+    describe('Delete logs', () => {
+        beforeEach(async () => {
+            // Create a fresh log before each test
+            log = await prisma.userLogs.create({
+                data: {
+                    userId: user.id,
+                    mediaId: media.id,
+                    status: 'In progress',
+                    rating: 70,
+                    notes: 'Initial notes'
+                }
             })
-        expect(res.statusCode).toBe(401)
-    })
+        })
 
-    test('Response includes expected fields', async () => {
-        const res = await request(app)
-            .post('/logs')
-            .set('Authorization', `Bearer ${token}`)
-            .send({
-                mediaId: media.id,
-                status: 'Completed',
-                rating: 88,
-                notes: 'Check schema'
+        test('Successfully deletes a log', async () => {
+            const res = await request(app)
+                .delete(`/logs/${log.id}`)
+                .set('Authorization', `Bearer ${token}`)
+
+            expect(res.statusCode).toBe(200)
+            expect(res.body).toEqual({ message: 'Log deleted' })
+
+            // Ensure log is actually deleted
+            const deleted = await prisma.userLogs.findUnique({ where: { id: log.id } })
+            expect(deleted).toBeNull()
+        })
+
+        test('Fails to delete non-existent log', async () => {
+            const res = await request(app)
+                .delete('/logs/999999')
+                .set('Authorization', `Bearer ${token}`)
+
+            expect(res.statusCode).toBe(404)
+            expect(res.body.error).toMatch(/does not exist/i)
+        })
+
+        test('Fails to delete log belonging to another user', async () => {
+            const otherUser = await prisma.user.create({ data: { username: 'OtherUser', password: 'Pass123!' } })
+            const otherLog = await prisma.userLogs.create({
+                data: {
+                    userId: otherUser.id,
+                    mediaId: media.id,
+                    status: 'In progress',
+                    rating: 50
+                }
             })
-        expect(res.body).toEqual(
-            expect.objectContaining({
-                id: expect.any(Number),
-                userId: user.id,
-                mediaId: media.id,
-                status: expect.any(String),
-                rating: expect.any(Number),
-                notes: expect.any(String)
-            })
-        )
+
+            const res = await request(app)
+                .delete(`/logs/${otherLog.id}`)
+                .set('Authorization', `Bearer ${token}`)
+
+            expect(res.statusCode).toBe(401)
+            expect(res.body.error).toMatch(/do not own/i)
+
+            await prisma.userLogs.delete({ where: { id: otherLog.id } })
+            await prisma.user.delete({ where: { id: otherUser.id } })
+        })
+
+        test('Fails without token', async () => {
+            const res = await request(app)
+                .delete(`/logs/${log.id}`)
+
+            expect(res.statusCode).toBe(401)
+        })
     })
 })
+
