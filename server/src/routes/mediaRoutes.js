@@ -8,7 +8,7 @@ import {
     findMediaTypeForUserOrGlobal, 
     getAllMediasForUser, 
     updateMediaForUser, 
-    deleteMediaForUser
+    deleteMedia
 } from './dbRoutes/dbRoutes.js'
 
 const router = express.Router()
@@ -82,7 +82,7 @@ router.delete('/:id', async (req,res) => {
             logsCount: media.logs.length
         })
 
-        await deleteMediaForUser(id)
+        await deleteMedia(id)
         res.status(200).json({ message: "Media deleted" });
 
     }catch(error){
