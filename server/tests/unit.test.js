@@ -58,12 +58,9 @@ describe("sanitizeRating", () => {
     expect(sanitizeRating("75")).toBe(75)
   })
 
-  test("caps numbers to 0-100", () => {
-    expect(sanitizeRating(200)).toBe(100)
-    expect(sanitizeRating(-5)).toBe(0)
-  })
-
-  test("returns null for invalid number", () => {
+  test("invalid numbers return null", () => {
+    expect(sanitizeRating(200)).toBeNull()
+    expect(sanitizeRating(-5)).toBeNull()
     expect(sanitizeRating("abc")).toBeNull()
   })
 })
