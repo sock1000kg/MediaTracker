@@ -16,7 +16,8 @@ export function sanitizeRating(rating) {
     if (rating == null) return null
     const num = Number(rating)
     if (isNaN(num)) return null
-    return Math.min(Math.max(num, 0), 100)
+    if (num < 0 || num > 100) return null // ignore invalid
+    return num
 }
 
 // Sanitize notes: trim whitespace, limit length to 5000 chars
