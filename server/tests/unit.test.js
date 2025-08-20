@@ -102,8 +102,8 @@ describe("sanitizeCreator", () => {
 
 describe("sanitizeStatus", () => {
   test("returns valid status only", () => {
-    expect(sanitizeStatus("Completed")).toBe("Completed")
-    expect(sanitizeStatus("Wishlist")).toBe("Wishlist")
+    expect(sanitizeStatus("Completed")).toBe("completed")
+    expect(sanitizeStatus("Wishlist")).toBe("wishlist")
   })
 
   test("returns null for invalid status", () => {
