@@ -115,11 +115,15 @@ export async function createMedia(title, type, creator, year, metadata, userId) 
                     id: type.id
                 }
             },
+            user: {
+                connect: {
+                    id: userId
+                }
+            },
             // Optional info
             ...(creator ? {creator} : {}),
             ...(year ? {year} : {}),
             ...(metadata ? {metadata} : {}),
-            ...(userId ? { user: {connect: {id: userId}} } : {}), //Need relation syntax because media is making multiple relations 
         },
         include: { mediaType: true }
     })
@@ -130,15 +134,19 @@ export async function updateMediaForUser(title, type, creator, year, metadata, u
         where: { id: mediaId },
         data: {
             title,
-            creator: creator || null,
-            year: year || null,
-            metadata: metadata || null,
+            ...(creator ? {creator} : {}),
+            ...(year ? {year} : {}),
+            ...(metadata ? {metadata} : {}),
             mediaType: { 
                 connect: { 
                     id: type.id
                 }
             },
-            ...(userId ? { user: {connect: {id: userId}} } : {}), //Need relation syntax because media is making multiple relations 
+            user: {
+                connect: {
+                    id: userId
+                }
+            },
         },
         include: { 
             mediaType: true,
@@ -147,7 +155,7 @@ export async function updateMediaForUser(title, type, creator, year, metadata, u
     })
 }
 
-export async function deleteMediaForUser(id){
+export async function deleteMedia(id){
     await prisma.media.delete({
         where: { id }
     })
@@ -248,10 +256,12 @@ export async function getAllLogs(userId) {
 }
 
 export async function findLogOfUserByMediaId(userId, mediaId) {
-    return await prisma.userLogs.findFirst({
+    return await prisma.userLogs.findUnique({
         where: {
-            userId,
-            mediaId
+            userId_mediaId: {
+                userId,
+                mediaId
+            }
         },
         include: {
             media: {
@@ -263,7 +273,7 @@ export async function findLogOfUserByMediaId(userId, mediaId) {
     })
 }
 
-export async function findLogOfUserById(logId) {
+export async function findLogById(logId) {
     return await prisma.userLogs.findFirst({
         where: {
             id: logId
@@ -275,5 +285,31 @@ export async function findLogOfUserById(logId) {
                 }
             }
         }
+    })
+}
+
+export async function updateLog(logId, newStatus, newRating, newNotes) {
+    return await prisma.userLogs.update({
+        where: {
+            id: logId
+        },
+        data: {
+            ...(newStatus ? {status: newStatus} : {}),
+            ...(newNotes ? {notes: newNotes} : {}),
+            ...(newRating ? {rating: newRating} : {})
+        },
+        include: {
+            media: {
+                include: {
+                    mediaType: true
+                }
+            }
+        }
+    })
+}
+
+export async function deleteLog(id) {
+    await prisma.userLogs.delete({
+        where: { id }
     })
 }
