@@ -35,6 +35,7 @@ router.post('/', async (req,res) => {
 
     const normalizedName = normalizeTypeName(name) // Normalize after check input
     try{
+        //Check if user already has this type
         const existingMediaType = await findMediaTypeForUserOrGlobal(normalizedName, userId)
         if(existingMediaType) return res.status(409).json({ error: "Media Type already exists"})
 
@@ -54,9 +55,11 @@ router.delete('/:name', async (req,res) => {
     const {confirm} = req.body  //boolean
     
     try{
+        //Check if user owns or have this media type
         const existingMediaType = await findMediaTypeForUser(normalizedName, userId)
         if(!existingMediaType) return res.status(404).json({ error: "Media Type does not exist (You can only delete types that you created)"})
 
+        //Check for confirmation if medias are tied to this type
         if(existingMediaType.media.length > 0 && !confirm) return res.status(400).json({ 
             message: `Deleting this media will also delete ${existingMediaType.media.length} media(s) and all logs tied to them. Confirm deletion?`,
             mediaCount: existingMediaType.media.length
