@@ -25,19 +25,20 @@ const limiter = rateLimit({
 const app = express()
 
 //Middleware
-app.use(cors())
+app.use(cors({
+    origin: "http://localhost:5173", //Vite dev server
+    credentials: true
+}))
 app.use(express.json())
 app.use(limiter)
 
 //Serves Vite frontend when i have it eventually
 //app.use(express.static(path.join(__dirname, '../../client/dist')))
-
-const __filename = fileURLToPath(import.meta.url) //get url to file
-const __dirname = dirname(__filename) //get the dir from file url (src)
-
-app.get('/', (req,res) => {
-    res.sendFile(path.join(__dirname, "..", "..", "client", "index.html"))
-})
+// const __filename = fileURLToPath(import.meta.url) //get url to file
+// const __dirname = dirname(__filename) //get the dir from file url (src)
+// app.get('/', (req,res) => {
+//     res.sendFile(path.join(__dirname, "..", "..", "client", "index.html"))
+// })
 
 //Routes
 app.use('/auth', authRoutes)
