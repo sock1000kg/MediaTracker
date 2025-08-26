@@ -13,9 +13,10 @@ async function createSystemUser() {
             data: {
                 id: 0, 
                 username: "system",
-                password: hashedPassword
+                password: hashedPassword,
+                displayName: 'System User'
             }
-        });
+        })
         console.log("System user created");
     } else {
         console.log("System user already exists");

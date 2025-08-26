@@ -17,6 +17,8 @@ datasource db {
 model User {
   id              Int       @id @default(autoincrement())
   username        String    @unique
+  displayName     String    @default("")
+
   password        String
 
   logs            UserLogs[]@relation("UserLogsToUser")
