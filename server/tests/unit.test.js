@@ -8,7 +8,8 @@ import { checkPasswordStrength,
   sanitizeStatus,
   sanitizeYear,
   sanitizeMetadata,
-  sanitizeUsername
+  sanitizeUsername,
+  sanitizeDisplayName
 } from "../src/utilities.js"
 
 describe("checkPasswordStrength", () => {
@@ -145,8 +146,48 @@ describe("sanitizeUsername", () => {
   test("trims, limits length, and enforces min 3 chars", () => {
     expect(sanitizeUsername("  Alice  ")).toBe("Alice")
     expect(sanitizeUsername("a".repeat(50)).length).toBe(30)
-    expect(sanitizeUsername("ab")).toBeNull()
+    expect(sanitizeUsername("   ab   ")).toBeNull()
     expect(sanitizeUsername("")).toBeNull()
     expect(sanitizeUsername(null)).toBeNull()
+  })
+
+  test("rejects whitespace inside username", () => {
+    expect(sanitizeUsername("Test User")).toBeNull()
+    expect(sanitizeUsername("Test\tUser")).toBeNull()
+    expect(sanitizeUsername("Line\nBreak")).toBeNull()
+  })
+
+  test("accepts usernames without whitespace", () => {
+    expect(sanitizeUsername("Alice123")).toBe("Alice123")
+    expect(sanitizeUsername("Bob_")).toBe("Bob_")
+  })
+})
+
+describe('sanitizeDisplayName', () => {
+  test('trims leading/trailing whitespace', () => {
+    expect(sanitizeDisplayName('   Alice   ')).toBe('Alice')
+  })
+
+  test('collapses multiple spaces into one', () => {
+    expect(sanitizeDisplayName('John    Doe')).toBe('John Doe')
+  })
+
+  test('rejects empty string', () => {
+    expect(sanitizeDisplayName('')).toBeNull()
+  })
+  test('rejects string with only spaces', () => {
+    expect(sanitizeDisplayName('     ')).toBeNull()
+  })
+
+  test('rejects non-string values', () => {
+    expect(sanitizeDisplayName(null)).toBeNull()
+    expect(sanitizeDisplayName(undefined)).toBeNull()
+    expect(sanitizeDisplayName(123)).toBeNull()
+  })
+
+  test('limits length to 50 characters', () => {
+    const longName = 'a'.repeat(100)
+    const result = sanitizeDisplayName(longName)
+    expect(result.length).toBe(50)
   })
 })

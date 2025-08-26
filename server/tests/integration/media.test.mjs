@@ -8,6 +8,7 @@ describe('Media Routes', () => {
     const username = 'MediaTestUser'
     const password = 'StrongPass1!'
     const mediaTypeName = 'TestMediaType'
+    const displayName = 'Tester'
     let token, user, mediaType
 
     beforeAll(async () => {
@@ -15,7 +16,7 @@ describe('Media Routes', () => {
         await prisma.user.deleteMany({ where: { username } })
         await request(app)
             .post('/auth/register')
-            .send({ username, password })
+            .send({ username, password, displayName })
             .set('Content-Type', 'application/json')
         const res = await request(app)
             .post('/auth/login')

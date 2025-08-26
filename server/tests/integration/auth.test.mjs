@@ -6,7 +6,7 @@ describe('Auth Routes', () => {
     test('Register with valid credentials succeeds', async () => {
         const res = await request(app)
             .post('/auth/register')
-            .send({ username: 'TestUser123', password: 'StrongPass1!' })
+            .send({ username: 'TestUser123', password: 'StrongPass1!', displayName: 'Tester' })
             .set('Content-Type', 'application/json');
         expect(res.statusCode).toBe(200);
         expect(res.body).toHaveProperty('token');
@@ -30,7 +30,7 @@ describe('Auth Routes', () => {
     test('Register with weak password fails', async () => {
         const res = await request(app)
             .post('/auth/register')
-            .send({ username: 'WeakUser', password: '123' })
+            .send({ username: 'WeakUser', password: '123', displayName: 'Tester' })
             .set('Content-Type', 'application/json') 
         expect(res.statusCode).toBe(400) 
         expect(res.body.error).toMatch(/password/i) 
@@ -40,12 +40,12 @@ describe('Auth Routes', () => {
         // Register once
         await request(app)
             .post('/auth/register')
-            .send({ username: 'DupUser', password: 'StrongPass1!' })
+            .send({ username: 'DupUser', password: 'StrongPass1!', displayName: 'Tester' })
             .set('Content-Type', 'application/json') 
         // Register again
         const res = await request(app)
             .post('/auth/register')
-            .send({ username: 'DupUser', password: 'StrongPass1!' })
+            .send({ username: 'DupUser', password: 'StrongPass1!', displayName: 'Tester' })
             .set('Content-Type', 'application/json') 
         expect(res.statusCode).toBe(400) 
         expect(res.body.error).toMatch(/Username already taken/i)
@@ -60,7 +60,7 @@ describe('Auth Routes', () => {
         // Register user first
         await request(app)
             .post('/auth/register')
-            .send({ username: 'LoginUser', password: 'StrongPass1!' })
+            .send({ username: 'LoginUser', password: 'StrongPass1!', displayName: 'Tester' })
             .set('Content-Type', 'application/json') 
         // Login
         const res = await request(app)
@@ -81,12 +81,12 @@ describe('Auth Routes', () => {
         // Register user first
         await request(app)
             .post('/auth/register')
-            .send({ username: 'LoginUser', password: 'StrongPass1!' })
+            .send({ username: 'LoginUser', password: 'StrongPass1!', displayName: 'Tester' })
             .set('Content-Type', 'application/json') 
 
         const res = await request(app)
             .post('/auth/login')
-            .send({ username: 'LoginUser', password: 'WrongPass123!' })
+            .send({ username: 'LoginUser', password: 'WrongPass123!'})
             .set('Content-Type', 'application/json') 
         expect(res.statusCode).toBe(401) 
         expect(res.body.error).toMatch(/Invalid password/i) 
