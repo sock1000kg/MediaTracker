@@ -50,7 +50,9 @@ A solo fullstack media logging webapp to help media lovers track everything in o
 
 ### Notes / Sanitization Rules
 #### Auth
-- Username: Max 30 chars, min 3 chars
+- Username: Max 30 chars, min 3 chars, no whitespaces
+- Display name: Max 50 chars, no empty names
+- Password: At least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
 
 #### Logs
 - Rating: Must be 0–100. Invalid → ignored.
