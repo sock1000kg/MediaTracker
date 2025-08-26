@@ -66,8 +66,24 @@ export function sanitizeMetadata(metadata) {
 
 // Sanitize username: max 30 chars, min 3 chars
 export function sanitizeUsername(username) {
-    if (!username) return null
-    let clean = String(username).trim().slice(0, 30)
-    // require at least 3 chars
-    return clean.length >= 3 ? clean : null
+    if (!username) return null;
+    let clean = String(username).trim().slice(0, 30);
+
+    // Reject if contains any whitespace (spaces, tabs, etc.)
+    if (/\s/.test(clean)) return null;
+
+    // Require at least 3 chars
+    return clean.length >= 3 ? clean : null;
+}
+
+export function sanitizeDisplayName(name) {
+    if (typeof name !== 'string') return null
+
+    // Trim whitespace and collapse multiple spaces
+    let clean = name.trim().replace(/\s+/g, ' ')
+
+    if (clean.length === 0) return null  // reject empty/just spaces
+    if (clean.length > 50) clean = clean.slice(0, 50) // limit length
+
+    return clean
 }

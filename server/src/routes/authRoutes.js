@@ -3,23 +3,25 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 
 import { createUser, findFirstMediaByTitle, createLog, findUserByUsername } from './dbRoutes/dbRoutes.js'
-import { checkPasswordStrength, sanitizeUsername } from '../utilities.js'
+import { checkPasswordStrength, sanitizeUsername, sanitizeDisplayName } from '../utilities.js'
 
 
 const router = express.Router()
 
 router.post('/register', async (req,res) => {
-    const {username: rawUsername, password} = req.body
+    const {username: rawUsername, password, displayName: rawDisplayName} = req.body
+    console.log(req.body)
 
     const username = sanitizeUsername(rawUsername)
-    if(!username || !password) return res.status(400).json({ error: 'Invalid input' })
+    const displayName = sanitizeDisplayName(rawDisplayName)
+    if(!username || !password || !displayName) return res.status(400).json({ error: 'Invalid input' })
     
     if(!checkPasswordStrength(password)) return res.status(400).json({ error: "Password must contain at least 8 characters, includingg 1 uppercase, 1 lowercase, 1 number, 1 special"})
     const hashedPassword = bcrypt.hashSync(password, 12)
 
 
     try{
-        const user = await createUser(username, hashedPassword)
+        const user = await createUser(username, displayName, hashedPassword)
 
     //Find the default media in db to create default log for new users
         const defaultMedia = await findFirstMediaByTitle("Default Media")

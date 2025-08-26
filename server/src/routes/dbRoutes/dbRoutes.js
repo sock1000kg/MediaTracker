@@ -1,7 +1,7 @@
 import prisma from "../../../prismaClient.js"
 
 //USERS
-export async function createUser(username, hashedPassword){
+export async function createUser(username, displayName, hashedPassword){
     const existingUser = await prisma.user.findUnique({ where: { username } });
     if (existingUser) throw new Error('Username already taken');
     
@@ -9,6 +9,7 @@ export async function createUser(username, hashedPassword){
     return await prisma.user.create({
         data: {
             username,
+            displayName,
             password: hashedPassword
         }
     })
