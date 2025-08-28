@@ -84,11 +84,6 @@ export default function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-            </div>
-
-            <Button type="submit" className="w-full bg-stone-800 hover:bg-stone-700">Sign in</Button>
-
-          </form>
 
           {/* Error message */}
           {error && (
@@ -97,8 +92,12 @@ export default function Login() {
             </p>
           )}
 
+            </div>
+            <Button type="submit" className="w-full bg-stone-800 hover:bg-stone-700">Sign in</Button>
+          </form>
+
           {/* Switch to register */}
-          <p className="mt-4 text-center text-sm text-muted-foreground">
+          <p className="mt-4 text-center text-sm text-stone-900">
             Don’t have an account? <a href="/register" className="underline">Sign up</a>
           </p>
         </CardContent>

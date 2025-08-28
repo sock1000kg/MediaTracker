@@ -106,9 +106,6 @@ export default function Register() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                 />
-                </div>
-                <Button type="submit" className="w-full bg-stone-800 hover:bg-stone-700">Sign up</Button>
-            </form>
 
             {/* Error message */}
             {error && (
@@ -116,9 +113,14 @@ export default function Register() {
                 {error}
                 </p>
             )}
+            
+                </div>
+                <Button type="submit" className="w-full bg-stone-800 hover:bg-stone-700">Sign up</Button>
+            </form>
+
 
             {/* Switch to login */}
-            <p className="mt-4 text-center text-sm text-muted-foreground">
+            <p className="mt-4 text-center text-sm text-stone-900">
                 Already have an account? <a href="/login" className="underline">Sign in</a>
             </p>
             </CardContent>
