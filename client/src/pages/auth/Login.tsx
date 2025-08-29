@@ -42,7 +42,7 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-stone-200">
+    <div className="flex min-h-screen items-center justify-center  bg-stone-100">
       <Card className="w-full max-w-sm shadow-2xl">
 
         <CardHeader>
@@ -93,7 +93,7 @@ export default function Login() {
           )}
 
             </div>
-            <Button type="submit" className="w-full bg-stone-800 hover:bg-stone-700">Sign in</Button>
+            <Button type="submit" variant="amber" className="w-full">Sign in</Button>
           </form>
 
           {/* Switch to register */}

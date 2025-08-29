@@ -43,7 +43,7 @@ export default function Register() {
     }
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-stone-200">
+        <div className="flex min-h-screen items-center justify-center  bg-stone-100">
         <Card className="w-full max-w-sm shadow-2xl">
             
             <CardHeader>
@@ -115,7 +115,7 @@ export default function Register() {
             )}
             
                 </div>
-                <Button type="submit" className="w-full bg-stone-800 hover:bg-stone-700">Sign up</Button>
+                <Button type="submit" variant="amber" className="w-full">Sign up</Button>
             </form>
 
 
