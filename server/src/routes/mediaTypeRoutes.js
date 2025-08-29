@@ -20,7 +20,7 @@ router.get('/', async (req,res) => {
         res.status(200).json(logs)
     } catch(error){
         console.error(error)
-        res.status(500).json({ error: 'Failed to fetch user media types' })
+        res.status(500).json({ message: 'Failed to fetch user media types' })
     }
 })
 
@@ -30,14 +30,14 @@ router.post('/', async (req,res) => {
     const userId = req.userId
 
     if(!name || !name.trim()) {
-        return res.status(400).json({ error: "Name is required" })
+        return res.status(400).json({ message: "Name is required" })
     }
 
     const normalizedName = normalizeTypeName(name) // Normalize after check input
     try{
         //Check if user already has this type
         const existingMediaType = await findMediaTypeForUserOrGlobal(normalizedName, userId)
-        if(existingMediaType) return res.status(409).json({ error: "Media Type already exists"})
+        if(existingMediaType) return res.status(409).json({ message: "Media Type already exists"})
 
         const mediaType = await createMediaTypeForUser(normalizedName, userId)
         res.status(201).json(mediaType)
@@ -57,7 +57,7 @@ router.delete('/:name', async (req,res) => {
     try{
         //Check if user owns or have this media type
         const existingMediaType = await findMediaTypeForUser(normalizedName, userId)
-        if(!existingMediaType) return res.status(404).json({ error: "Media Type does not exist (You can only delete types that you created)"})
+        if(!existingMediaType) return res.status(404).json({ message: "Media Type does not exist (You can only delete types that you created)"})
 
         //Check for confirmation if medias are tied to this type
         if(existingMediaType.media.length > 0 && !confirm) return res.status(400).json({ 
@@ -80,7 +80,7 @@ router.put('/:name', async (req,res) => {
     const userId = req.userId
     
     if(!newName || !newName.trim()) {
-        return res.status(400).json({ error: "Name is required" })
+        return res.status(400).json({ message: "Name is required" })
     }
     
     const normalizedOldName = normalizeTypeName(name)
@@ -88,11 +88,11 @@ router.put('/:name', async (req,res) => {
     try{
         //Check if mediaType belongs to user
         const existingOldMediaType = await findMediaTypeForUserOrGlobal(normalizedOldName, userId)
-        if(!existingOldMediaType) return res.status(404).json({ error: "Media Type does not exist (You can only rename types that you created)"})
+        if(!existingOldMediaType) return res.status(404).json({ message: "Media Type does not exist (You can only rename types that you created)"})
         
         //Check if new mediaType already exists
         const existingNewMediaType = await findMediaTypeForUserOrGlobal(normalizedNewName, userId)
-        if(existingNewMediaType) return res.status(409).json({ error: "Media Type with that name already exists", existingNewMediaType})
+        if(existingNewMediaType) return res.status(409).json({ message: "Media Type with that name already exists", existingNewMediaType})
 
         const updated = await updateMediaTypeForUser(normalizedOldName, normalizedNewName, userId)
         return res.status(200).json(updated)

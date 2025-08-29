@@ -35,25 +35,25 @@ router.post('/', async (req,res) => {
 
     //Sanitization
     const title = sanitizeTitle(rawTitle)
-    if(!title || !title.trim() || !mediaType) return res.status(400).json({ error: "Title and Media Type is required" })
+    if(!title || !title.trim() || !mediaType) return res.status(400).json({ message: "Title and Media Type is required" })
 
     const creator = sanitizeCreator(rawCreator)
 
     const metadata = sanitizeMetadata(rawMetadata)
 
     const year = sanitizeYear(rawYear)
-    if (rawYear != null && year === null) return res.status(400).json({ error: "Year must be a number" })
+    if (rawYear != null && year === null) return res.status(400).json({ message: "Year must be a number" })
 
     const normalizedTypeName = normalizeTypeName(mediaType.name)
 
     try{
         //Check if type exists for user
         const existingType = await findMediaTypeForUserOrGlobal(normalizedTypeName, userId)
-        if(!existingType) return res.status(404).json({ error: "Media Type does not exists"})
+        if(!existingType) return res.status(404).json({ message: "Media Type does not exists"})
 
         //Check if media exists for this user (global or user-added)
         const existingMedia = await findMediaForUser(title, existingType, creator, year, metadata, userId) 
-        if(existingMedia) return res.status(409).json({ error: "Media already exists", existingMedia})
+        if(existingMedia) return res.status(409).json({ message: "Media already exists", existingMedia})
         
 
         const media = await createMedia(title, existingType, creator, year, metadata, userId)
@@ -73,8 +73,8 @@ router.delete('/:id', async (req,res) => {
     try{
         const media = await findMediaById(id)
 
-        if(!media) return res.status(404).json({ error: "Media not found"})
-        if(media.userId !== userId) return res.status(403).json({ error: "You do not own this media" });
+        if(!media) return res.status(404).json({ message: "Media not found"})
+        if(media.userId !== userId) return res.status(403).json({ message: "You do not own this media" });
 
         //If there are logs for this media, prompt for confirmation
         if(media.logs.length !== 0 && !confirm) return res.status(400).json({ 
@@ -105,30 +105,30 @@ router.put('/:id', async (req,res) => {
 
     //Sanitization
     const newTitle = sanitizeTitle(rawTitle)
-    if(!newTitle || !newTitle.trim() || !rawMediaType) return res.status(400).json({ error: "Title and Media Type is required" })
+    if(!newTitle || !newTitle.trim() || !rawMediaType) return res.status(400).json({ message: "Title and Media Type is required" })
 
     const newCreator = sanitizeCreator(rawCreator)
 
     const newMetadata = sanitizeMetadata(rawMetadata)
 
     const newYear = sanitizeYear(rawYear)
-    if (rawYear != null && newYear === null) return res.status(400).json({ error: "Year must be a number" })
+    if (rawYear != null && newYear === null) return res.status(400).json({ message: "Year must be a number" })
     
     const normalizedTypeName = normalizeTypeName(rawMediaType.name)
 
     try{
         //Check if this media exists or belongs to the user
         const existing = await findMediaById(id)
-        if (!existing) return res.status(404).json({ error: "Media not found" });
-        if (existing.userId !== userId) return res.status(403).json({ error: "You do not own this media" });
+        if (!existing) return res.status(404).json({ message: "Media not found" });
+        if (existing.userId !== userId) return res.status(403).json({ message: "You do not own this media" });
         
         //Check if new type exists for user
         const existingType = await findMediaTypeForUserOrGlobal(normalizedTypeName, userId)
-        if(!existingType) return res.status(404).json({ error: "Media Type does not exists"})
+        if(!existingType) return res.status(404).json({ message: "Media Type does not exists"})
 
         //Check if new media exists for this user (global or user-added)
         const existingMedia = await findMediaForUser(newTitle, existingType, newCreator, newYear, newMetadata, userId) 
-        if(existingMedia) return res.status(409).json({ error: "Media already exists", existingMedia})
+        if(existingMedia) return res.status(409).json({ message: "Media already exists", existingMedia})
 
 
         const updated = await updateMediaForUser(newTitle, existingType, newCreator, newYear, newMetadata, userId, id)

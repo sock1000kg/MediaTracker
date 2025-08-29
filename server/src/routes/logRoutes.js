@@ -23,7 +23,7 @@ router.get('/', async (req,res) => {
         res.status(200).json(logs)
     } catch(error){
         console.error(error)
-        res.status(500).json({ error: 'Failed to fetch user log' })
+        res.status(500).json({ message: 'Failed to fetch user log' })
     }
 })
 
@@ -33,7 +33,7 @@ router.post('/', async (req,res) => {
     const { mediaId, status: rawStatus, rating: rawRating, notes: rawNotes } = req.body
     const userId = req.userId
 
-    if(!mediaId) return res.status(400).json({ error: 'Log needs a media'})
+    if(!mediaId) return res.status(400).json({ message: 'Log needs a media'})
 
     //Sanitization
     const status = sanitizeStatus(rawStatus)
@@ -45,11 +45,11 @@ router.post('/', async (req,res) => {
     try {
         //Check for existing log of the same media
         const existingLog = await findLogOfUserByMediaId(userId, mediaId)
-        if(existingLog) return res.status(409).json({ error: 'Your log of this media already exists'})
+        if(existingLog) return res.status(409).json({ message: 'Your log of this media already exists'})
             
         //Check if this media exists for user (global/user-added)
         const media = await findMediaForUserById(mediaId, userId)
-        if(!media) return res.status(404).json({ error: 'Media does not exist or you do not own it'})
+        if(!media) return res.status(404).json({ message: 'Media does not exist or you do not own it'})
             
         //Check if user has the media's type, if not create a new type
         const mediaType = await findMediaTypeForUserOrGlobal(media.mediaType.name, userId)
@@ -59,7 +59,7 @@ router.post('/', async (req,res) => {
         res.status(201).json(log)
     } catch(error){
         console.error(error)
-        res.status(500).json({ error: 'Failed to create user log' })
+        res.status(500).json({ message: 'Failed to create user log' })
     }
 })
 
@@ -78,14 +78,14 @@ router.put('/:id', async (req,res) => {
     try{
         //Check if log exists or belong to that user id
         const existingLog = await findLogById(logId)
-        if(!existingLog) return res.status(404).json({ error: 'Log does not exist'})
-        if(existingLog.userId !== userId) return res.status(401).json({ error: 'You do not own this log'})
+        if(!existingLog) return res.status(404).json({ message: 'Log does not exist'})
+        if(existingLog.userId !== userId) return res.status(401).json({ message: 'You do not own this log'})
 
         const updated = await updateLog(logId, newStatus, newRating, newNotes)
         return res.status(200).json(updated)
     }catch(error){
         console.error(error)
-        res.status(500).json({ error: 'Failed to update user log' })
+        res.status(500).json({ message: 'Failed to update user log' })
     }
 })
 
@@ -97,8 +97,8 @@ router.delete('/:id', async (req,res) => {
     try{
         //Check if log exists or belong to user
         const existingLog = await findLogById(logId)
-        if(!existingLog) return res.status(404).json({ error: 'Log does not exist'})
-        if(existingLog.userId !== userId) return res.status(401).json({ error: 'You do not own this log'})
+        if(!existingLog) return res.status(404).json({ message: 'Log does not exist'})
+        if(existingLog.userId !== userId) return res.status(401).json({ message: 'You do not own this log'})
 
         await deleteLog(logId)
         res.status(200).json({ message: 'Log deleted' })
