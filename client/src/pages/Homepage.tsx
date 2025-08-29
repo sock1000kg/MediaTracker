@@ -1,51 +1,50 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom" 
 
+import { fetchLogs } from "@/api/logs"
+
 import { Button } from "@/components/ui/button"
 import { LogCard } from "@/components/LogCard"
 import { MediaTypeCard } from "@/components/MediaTypeCard"
+import MediaTypeForm from "@/components/MediaTypeForm"
+
 import type { Log } from "@/types/media.ts"
+import type { DialogName } from "@/types/media.ts"
 
 export default function Homepage() {
+  const [openDialog, setOpenDialog] = useState<DialogName>(null)
   const [logs, setLogs] = useState<Log[]>([])
   const [loading, setLoading] = useState(true)
+  const [mediaTypeError, setMediaTypeError] = useState<string | null>(null)
+
   const navigate = useNavigate()
 
   // fetch logs on mount
   useEffect(() => {
     const token = localStorage.getItem("token")
-    if(!token) {
+    if (!token) {
       navigate("/login")
       return
     }
 
-    const fetchLogs = async () => {
+    const loadLogs = async () => {
       try {
-        const res = await fetch("http://localhost:5000/logs", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-
-        // handle expired/invalid token
-        if (!res.ok) {
-          if (res.status === 401) {
-            localStorage.removeItem("token")
-            navigate("/login")
-          }
-          return
-        }
-
-        const data = await res.json()
+        const data = await fetchLogs(token)
         setLogs(data)
-      } catch (error) {
-        console.error("Unexpected error:", error)
+      } catch (err: any) {
+        if (err.status === 401) {
+          localStorage.removeItem("token")
+          navigate("/login")
+        } else {
+          console.error("Unexpected error:", err.message)
+        }
       } finally {
         setLoading(false)
       }
     }
 
-    //Fetch once upon page load
-    fetchLogs()
-  }, [])
+    loadLogs()
+  }, [navigate])
 
 
   // Group logs by media type
@@ -86,7 +85,18 @@ export default function Homepage() {
           {/* Adding button  */}
           <Button variant="outline">+ Add Log</Button>
           <Button variant="outline">+ Add Media</Button>
-          <Button variant="outline">+ Add Media Type</Button>
+          <Button variant="outline" onClick={() => setOpenDialog("mediaTypeForm")}>+ Add Media Type</Button>
+
+          <MediaTypeForm 
+            open={openDialog}
+            onOpenChange={setOpenDialog}
+            onCreated={(newType) => {
+              console.log("Created new Media Type:", newType)
+              setMediaTypeError(null) // clear errors if successful
+            }}
+            error={mediaTypeError}
+            setError={setMediaTypeError}
+          />
         </div>
       }
     </>
