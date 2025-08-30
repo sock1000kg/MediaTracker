@@ -4,7 +4,7 @@ A solo fullstack media logging webapp to help media lovers track everything in o
 
 ## Tech Stack
 - Backend: Node.js, Express, Prisma, PostgreSQL
-- Frontend: React, Vite, CSS
+- Frontend: React, Vite, TailwindCSS, Shadcn/ui
 - Testing: Jest, Supertest
 - Auth: JWT, bcrypt, express-rate-limit
 
@@ -56,7 +56,7 @@ A solo fullstack media logging webapp to help media lovers track everything in o
 
 #### Logs
 - Rating: Must be 0–100. Invalid → ignored.
-- Status: Only "Completed", "In progress", "Wishlist", "None" are valid. Invalid → ignored.
+- Status: Only "completed", "in progress", "wishlist", "none" are valid. Invalid → ignored.
 - Notes: Trimmed and max length 5000 characters.
 
 #### Media
