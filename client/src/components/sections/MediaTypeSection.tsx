@@ -1,17 +1,14 @@
 import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
+import MediaTypeForm from "@/components/forms/MediaTypeForm"
 
 import { fetchMediaTypes } from "@/api/mediaType"
 
 import type { MediaType, DialogName } from "@/types/media"
 
-interface MediaTypesSectionProps {
-    dialog: DialogName
-    setOpenDialog: (dialog: DialogName) => void
-}
-
-export default function MediaTypesSection( {setOpenDialog, dialog}: MediaTypesSectionProps) {
+export default function MediaTypesSection() {
+  const [openDialog, setOpenDialog] = useState<DialogName>(null)
   const [mediaTypes, setMediaTypes] = useState<MediaType[]>([])
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -40,6 +37,10 @@ export default function MediaTypesSection( {setOpenDialog, dialog}: MediaTypesSe
     loadMediaTypes()
   }, [])
 
+  const handleCreated = (newType: MediaType) => {
+    setMediaTypes(prev => [ ...prev, newType])
+  }
+
   return (
     <div className="p-4 space-y-4">
 
@@ -49,7 +50,7 @@ export default function MediaTypesSection( {setOpenDialog, dialog}: MediaTypesSe
           <p className="text-lg font-semibold">Your Media Types</p>
           <p className="text-sm text-gray-600">List of categories you have created</p>
         </div>
-        <Button size="sm" variant="amber" onClick={() => setOpenDialog(dialog)}>
+        <Button size="sm" variant="amber" onClick={() => setOpenDialog("mediaTypeForm")}>
           + Add Media Type
         </Button>
       </div>
@@ -86,6 +87,13 @@ export default function MediaTypesSection( {setOpenDialog, dialog}: MediaTypesSe
           ))}
         </ul>
       )}
+
+      {/* Dialog */}
+          <MediaTypeForm 
+            open={openDialog}
+            onOpenChange={setOpenDialog}
+            onCreated={handleCreated}
+          />
     </div>
 
   )

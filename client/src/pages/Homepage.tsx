@@ -4,17 +4,14 @@ import { useNavigate } from "react-router-dom"
 import { fetchLogs } from "@/api/logs"
 
 import { Button } from "@/components/ui/button"
-import MediaTypeForm from "@/components/forms/MediaTypeForm"
 import LogsSection from "@/components/sections/LogSection"
 import MediasSection from "@/components/sections/MediaSection"
 import MediaTypesSection from "@/components/sections/MediaTypeSection"
 
 import type { Log } from "@/types/media.ts"
-import type { DialogName } from "@/types/media.ts"
 import type { Tab } from "@/types/media.ts"
 
 export default function Homepage() {
-  const [openDialog, setOpenDialog] = useState<DialogName>(null)
   const [logs, setLogs] = useState<Log[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<Tab>("logs")
@@ -80,17 +77,8 @@ export default function Homepage() {
           <div className="space-y-8">
             {activeTab === "logs" && <LogsSection groupedLogs={groupedLogs} />}
             {activeTab === "medias" && <MediasSection />}
-            {activeTab === "mediaTypes" && <MediaTypesSection dialog="mediaTypeForm" setOpenDialog={setOpenDialog} />}
+            {activeTab === "mediaTypes" && <MediaTypesSection />}
           </div>
-
-          {/* Dialogs */}
-          <MediaTypeForm 
-            open={openDialog}
-            onOpenChange={setOpenDialog}
-            onCreated={(newType) => {
-              console.log("Created new Media Type:", newType)
-            }}
-          />
 
           {/* Right side bar */}
           <div className="w-64 bg-stone-300 p-4 space-y-4">
