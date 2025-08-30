@@ -7,6 +7,7 @@ interface MediaTypeCardProps {
     children: React.ReactNode
 }
 
+// Cards with media type as header, renders whatever children that is in it (basically sorting the children by type)
 export function MediaTypeCard({ type, children }: MediaTypeCardProps) {
     return ( 
         <Card key={type} className="bg-transparent border-none shadow-none">
