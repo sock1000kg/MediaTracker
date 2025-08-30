@@ -1,4 +1,4 @@
-export async function fetchLogs(token: string) {
+export async function fetchLogs(token: string | null) {
     const res = await fetch("http://localhost:5000/logs", {
         headers: { Authorization: `Bearer ${token}` },
     })
