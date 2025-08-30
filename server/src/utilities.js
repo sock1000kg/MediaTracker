@@ -7,7 +7,13 @@ export function checkPasswordStrength(password) {
 
 //Used in Media Type and Media to normalize names of media types
 export function normalizeTypeName(name) {
-    return name.trim().toLowerCase().replace(/s$/, "") // crude singularization
+    //Sanitize name: no spaces, lowercase, only trim if length > 1, remove the last "s"
+    const trimmed = name.trim().toLowerCase()
+    if (trimmed.length > 1 && trimmed.endsWith("s")) {
+        return trimmed.slice(0, -1)
+    }
+
+    return trimmed
 }
 
 //INPUT SANITIZATION
