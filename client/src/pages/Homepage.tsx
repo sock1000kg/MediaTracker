@@ -4,39 +4,45 @@ import { useNavigate } from "react-router-dom"
 import { fetchLogs } from "@/api/logs"
 
 import { Button } from "@/components/ui/button"
-import { LogCard } from "@/components/LogCard"
-import { MediaTypeCard } from "@/components/MediaTypeCard"
-import MediaTypeForm from "@/components/MediaTypeForm"
+import MediaTypeForm from "@/components/forms/MediaTypeForm"
+import LogsSection from "@/components/sections/LogSection"
+import MediasSection from "@/components/sections/MediaSection"
+import MediaTypesSection from "@/components/sections/MediaTypeSection"
 
 import type { Log } from "@/types/media.ts"
 import type { DialogName } from "@/types/media.ts"
+import type { Tab } from "@/types/media.ts"
 
 export default function Homepage() {
   const [openDialog, setOpenDialog] = useState<DialogName>(null)
   const [logs, setLogs] = useState<Log[]>([])
   const [loading, setLoading] = useState(true)
-  const [mediaTypeError, setMediaTypeError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<Tab>("logs")
 
   const navigate = useNavigate()
 
-  // fetch logs on mount
+  const token = localStorage.getItem("token")
+  //Check authorization
   useEffect(() => {
-    const token = localStorage.getItem("token")
+    // Check authorization 
     if (!token) {
       navigate("/login")
       return
     }
+  }, [activeTab])
 
+  // Fetch logs on mount
+  useEffect(() => {
     const loadLogs = async () => {
       try {
         const data = await fetchLogs(token)
         setLogs(data)
-      } catch (err: any) {
-        if (err.status === 401) {
+      } catch (error: any) {
+        if (error.status === 401) {
           localStorage.removeItem("token")
           navigate("/login")
         } else {
-          console.error("Unexpected error:", err.message)
+          console.error("Unexpected error:", error.message)
         }
       } finally {
         setLoading(false)
@@ -70,34 +76,50 @@ export default function Homepage() {
       {!loading && 
         <div className="p-6 space-y-8 min-h-screen bg-stone-100"> 
 
-          {/* Display user's logs */}
+          {/* Display user's contents */}
           <div className="space-y-8">
-            {/* Sort logs according to type, groupedLogs is converted into an array of [key,value] */}
-            {Object.entries(groupedLogs).map(([type, typeLogs]) => (
-              <MediaTypeCard key={type} type={type}>
-                {typeLogs.map((log) => (
-                  <LogCard key={log.id} log={log} />
-                ))}
-              </MediaTypeCard>
-            ))}
+            {activeTab === "logs" && <LogsSection groupedLogs={groupedLogs} />}
+            {activeTab === "medias" && <MediasSection />}
+            {activeTab === "mediaTypes" && <MediaTypesSection dialog="mediaTypeForm" setOpenDialog={setOpenDialog} />}
           </div>
 
-          {/* Adding button  */}
-          <Button variant="outline">+ Add Log</Button>
-          <Button variant="outline">+ Add Media</Button>
-          <Button variant="outline" onClick={() => setOpenDialog("mediaTypeForm")}>+ Add Media Type</Button>
-
+          {/* Dialogs */}
           <MediaTypeForm 
             open={openDialog}
             onOpenChange={setOpenDialog}
             onCreated={(newType) => {
               console.log("Created new Media Type:", newType)
-              setMediaTypeError(null) // clear errors if successful
             }}
-            error={mediaTypeError}
-            setError={setMediaTypeError}
           />
+
+          {/* Right side bar */}
+          <div className="w-64 bg-stone-300 p-4 space-y-4">
+            <Button 
+              variant={activeTab === "logs" ? "underlinedLink" : "link"}
+              className="text-stone-600 hover:underline" 
+              onClick={() => { setActiveTab("logs")}}
+            >
+                Your Logs
+            </Button>
+
+            <Button 
+              variant={activeTab === "medias" ? "underlinedLink" : "link"}
+              className="text-stone-600 hover:underline" 
+              onClick={() => { setActiveTab("medias")}}
+            >
+                Your Medias
+            </Button>
+
+            <Button 
+              variant={activeTab === "mediaTypes" ? "underlinedLink" : "link"}
+              className="text-stone-600 hover:underline" 
+              onClick={() => { setActiveTab("mediaTypes")}}
+            >
+                Your Media Types
+            </Button>
+          </div>
         </div>
+
       }
     </>
   )
