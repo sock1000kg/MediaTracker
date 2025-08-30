@@ -24,7 +24,7 @@ describe('Auth Routes', () => {
             .send({ password: 'StrongPass1!' })
             .set('Content-Type', 'application/json') 
         expect(res.statusCode).toBe(400) 
-        expect(res.body.error).toMatch(/Invalid input/i) 
+        expect(res.body.message).toMatch(/Invalid input/i) 
     }) 
 
     test('Register with weak password fails', async () => {
@@ -33,7 +33,7 @@ describe('Auth Routes', () => {
             .send({ username: 'WeakUser', password: '123', displayName: 'Tester' })
             .set('Content-Type', 'application/json') 
         expect(res.statusCode).toBe(400) 
-        expect(res.body.error).toMatch(/password/i) 
+        expect(res.body.message).toMatch(/password/i) 
     }) 
 
     test('Register with duplicate username fails', async () => {
@@ -48,7 +48,7 @@ describe('Auth Routes', () => {
             .send({ username: 'DupUser', password: 'StrongPass1!', displayName: 'Tester' })
             .set('Content-Type', 'application/json') 
         expect(res.statusCode).toBe(400) 
-        expect(res.body.error).toMatch(/Username already taken/i)
+        expect(res.body.message).toMatch(/Username already taken/i)
         
         //Clean up
         await prisma.user.deleteMany({
@@ -89,7 +89,7 @@ describe('Auth Routes', () => {
             .send({ username: 'LoginUser', password: 'WrongPass123!'})
             .set('Content-Type', 'application/json') 
         expect(res.statusCode).toBe(401) 
-        expect(res.body.error).toMatch(/Invalid password/i) 
+        expect(res.body.message).toMatch(/Invalid password/i) 
 
         //Clean up
         await prisma.user.deleteMany({
@@ -103,7 +103,7 @@ describe('Auth Routes', () => {
             .send({ username: 'NoSuchUser', password: 'SomePass1!' })
             .set('Content-Type', 'application/json') 
         expect(res.statusCode).toBe(404) 
-        expect(res.body.error).toMatch(/Cannot find user/i) 
+        expect(res.body.message).toMatch(/Cannot find user/i) 
     }) 
 
     test('Login with missing fields fails', async () => {
@@ -112,6 +112,6 @@ describe('Auth Routes', () => {
             .send({ username: 'LoginUser' })
             .set('Content-Type', 'application/json') 
         expect(res.statusCode).toBe(400) 
-        expect(res.body.error).toMatch(/Invalid input/i) 
+        expect(res.body.message).toMatch(/Invalid input/i) 
     }) 
 }) 

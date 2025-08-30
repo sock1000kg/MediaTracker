@@ -50,7 +50,7 @@ describe('MediaType Routes', () => {
             .set('Authorization', `Bearer ${token}`)
             .send({})
         expect(res.statusCode).toBe(400)
-        expect(res.body.error).toMatch(/name is required/i)
+        expect(res.body.message).toMatch(/name is required/i)
     })
 
     test('Create duplicate media type fails', async () => {
@@ -63,7 +63,7 @@ describe('MediaType Routes', () => {
             .set('Authorization', `Bearer ${token}`)
             .send({ name: mediaTypeName })
         expect(res.statusCode).toBe(409)
-        expect(res.body.error).toMatch(/already exists/i)
+        expect(res.body.message).toMatch(/already exists/i)
     })
 
     test('Fetch all media types returns array', async () => {
@@ -112,7 +112,7 @@ describe('MediaType Routes', () => {
             .set('Authorization', `Bearer ${token}`)
             .send( { confirm: true })
         expect(res.statusCode).toBe(404)
-        expect(res.body.error).toMatch(/does not exist/i)
+        expect(res.body.message).toMatch(/does not exist/i)
     })
 
     test('Rename media type succeeds', async () => {
@@ -142,7 +142,7 @@ describe('MediaType Routes', () => {
             .set('Authorization', `Bearer ${token}`)
             .send({ newName: 'TypeB' })
         expect(res.statusCode).toBe(409)
-        expect(res.body.error).toMatch(/already exists/i)
+        expect(res.body.message).toMatch(/already exists/i)
     })
 
     test('Rename non-existent media type fails', async () => {
@@ -151,7 +151,7 @@ describe('MediaType Routes', () => {
             .set('Authorization', `Bearer ${token}`)
             .send({ newName: 'Anything' })
         expect(res.statusCode).toBe(404)
-        expect(res.body.error).toMatch(/does not exist/i)
+        expect(res.body.message).toMatch(/does not exist/i)
     })
 
     test('Rename media type with missing newName fails', async () => {
@@ -164,7 +164,7 @@ describe('MediaType Routes', () => {
             .set('Authorization', `Bearer ${token}`)
             .send({})
         expect(res.statusCode).toBe(400)
-        expect(res.body.error).toMatch(/name is required/i)
+        expect(res.body.message).toMatch(/name is required/i)
     })
 
     test('Delete media type with associated media without confirmation fails with prompt', async () => {

@@ -138,7 +138,7 @@ describe('Media Routes', () => {
                 metadata: { foo: 'bar' }
             })
         expect(res.statusCode).toBe(409)
-        expect(res.body.error).toMatch(/already exists/i)
+        expect(res.body.message).toMatch(/already exists/i)
     })
 
     test('Create media without token fails', async () => {
@@ -247,7 +247,7 @@ describe('Media Routes', () => {
                 metadata: { foo: 'baz' }
             })
         expect(res.statusCode).toBe(400)
-        expect(res.body.error).toMatch(/is required/i)
+        expect(res.body.message).toMatch(/is required/i)
     })
 
     test('Update media to duplicate fails', async () => {
@@ -285,7 +285,7 @@ describe('Media Routes', () => {
                 metadata: {}
             })
         expect(res.statusCode).toBe(409)
-        expect(res.body.error).toMatch(/already exists/i)
+        expect(res.body.message).toMatch(/already exists/i)
     })
 
     //DELETE
@@ -315,7 +315,7 @@ describe('Media Routes', () => {
             .set('Authorization', `Bearer ${token}`)
             .send({ confirm: true })
         expect(res.statusCode).toBe(404)
-        expect(res.body.error).toMatch(/not found/i)
+        expect(res.body.message).toMatch(/not found/i)
     })
 
     test('Delete media with logs without confirmation fails with prompt', async () => {
@@ -371,7 +371,7 @@ describe('Media Routes', () => {
                 mediaType: null
             })
         expect(res.statusCode).toBe(400)
-        expect(res.body.error).toMatch(/required/i)
+        expect(res.body.message).toMatch(/required/i)
     })
 
     test('User cannot delete media they do not own', async () => {
@@ -395,7 +395,7 @@ describe('Media Routes', () => {
             .set('Authorization', `Bearer ${token}`)
             .send({ confirm: true })
         expect(res.statusCode).toBe(403)
-        expect(res.body.error).toMatch(/do not own/i)
+        expect(res.body.message).toMatch(/do not own/i)
         // Cleanup
         await prisma.media.delete({ where: { id: otherMedia.id } })
         await prisma.mediaType.delete({ where: { id: otherType.id } })

@@ -101,7 +101,7 @@ describe('Log routes', () => {
                 notes: 'Missing mediaId'
             })
         expect(res.statusCode).toBe(400)
-        expect(res.body.error).toMatch(/media/i)
+        expect(res.body.message).toMatch(/media/i)
     })
 
     test('Create duplicate log fails', async () => {
@@ -125,7 +125,7 @@ describe('Log routes', () => {
                 notes: 'Duplicate log'
             })
         expect(res.statusCode).toBe(409)
-        expect(res.body.error).toMatch(/already exists/i)
+        expect(res.body.message).toMatch(/already exists/i)
     })
 
     test('Create log for non-existent media fails', async () => {
@@ -138,7 +138,7 @@ describe('Log routes', () => {
                 rating: 80
             })
         expect(res.statusCode).toBe(404)
-        expect(res.body.error).toMatch(/does not exist/i)
+        expect(res.body.message).toMatch(/does not exist/i)
     })
 
     test('Create log without token fails', async () => {
@@ -226,7 +226,7 @@ describe('Log routes', () => {
             .send({ status: 'completed' })
 
         expect(res.statusCode).toBe(404)
-        expect(res.body.error).toMatch(/does not exist/i)
+        expect(res.body.message).toMatch(/does not exist/i)
     })
 
     test('Fails to update log belonging to another user', async () => {
@@ -246,7 +246,7 @@ describe('Log routes', () => {
             .send({ status: 'completed' })
 
         expect(res.statusCode).toBe(401)
-        expect(res.body.error).toMatch(/do not own/i)
+        expect(res.body.message).toMatch(/do not own/i)
 
         await prisma.userLogs.delete({ where: { id: otherLog.id } })
         await prisma.user.delete({ where: { id: otherUser.id } })
@@ -326,7 +326,7 @@ describe('Log routes', () => {
                 .set('Authorization', `Bearer ${token}`)
 
             expect(res.statusCode).toBe(404)
-            expect(res.body.error).toMatch(/does not exist/i)
+            expect(res.body.message).toMatch(/does not exist/i)
         })
 
         test('Fails to delete log belonging to another user', async () => {
@@ -345,7 +345,7 @@ describe('Log routes', () => {
                 .set('Authorization', `Bearer ${token}`)
 
             expect(res.statusCode).toBe(401)
-            expect(res.body.error).toMatch(/do not own/i)
+            expect(res.body.message).toMatch(/do not own/i)
 
             await prisma.userLogs.delete({ where: { id: otherLog.id } })
             await prisma.user.delete({ where: { id: otherUser.id } })

@@ -34,6 +34,7 @@ router.post('/', async (req,res) => {
     }
 
     const normalizedName = normalizeTypeName(name) // Normalize after check input
+    
     try{
         //Check if user already has this type
         const existingMediaType = await findMediaTypeForUserOrGlobal(normalizedName, userId)

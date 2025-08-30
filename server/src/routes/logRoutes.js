@@ -104,7 +104,7 @@ router.delete('/:id', async (req,res) => {
         res.status(200).json({ message: 'Log deleted' })
     }catch(error) {
         console.error(error)
-        res.status(500).json({ error: 'Failed to delete user log' })
+        res.status(500).json({ message: 'Failed to delete user log' })
     }
 })
 
