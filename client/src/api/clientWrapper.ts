@@ -27,19 +27,22 @@ export async function apiFetch<T>(url: string, options: RequestInit = {}): Promi
     }) 
 
     if (!res.ok) {
-      if (res.status === 401) {
-        localStorage.removeItem("token")
-        if (navigateFunction) {
-          navigateFunction("/login")
-          return Promise.reject(new Error("Unauthorized"))
-        }
-      }   
-      const errorMessage = await res.text()
-      throw new Error(errorMessage)
+        if (res.status === 401) {
+            localStorage.removeItem("token")
+            if (navigateFunction) {
+            navigateFunction("/login")
+            return Promise.reject(new Error("Unauthorized"))
+            }
+        }   
+        
+        let errorMessage = "Unknown error"
+        const data = await res.json()
+        errorMessage = data.message || JSON.stringify(data)
+        throw new Error(errorMessage)
     }
 
-    return res.json()
-  } catch(error: any) {
-    throw new Error(error.message)
+        return res.json()
+    } catch(error: any) {
+        throw new Error(error.message)
   }
 }
