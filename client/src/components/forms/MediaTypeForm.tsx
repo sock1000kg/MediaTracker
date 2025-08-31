@@ -24,8 +24,7 @@ export default function MediaTypeForm({ open, onOpenChange, onCreated  }: MediaT
 
     try {
       setLoading(true)
-      const token = localStorage.getItem("token")
-      const data = await createMediaType(name, token)
+      const data = await createMediaType(name)
       if (onCreated) onCreated(data)
 
       setName("")
