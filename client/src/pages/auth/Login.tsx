@@ -33,7 +33,7 @@ export default function Login() {
 
             navigate("/dashboard")
           } else {
-            setError(data.error || "Login failed")
+            setError(data.message || "Login failed")
           }
       } catch (error) {
           console.error("Error:", error)
