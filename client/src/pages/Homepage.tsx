@@ -71,36 +71,34 @@ export default function Homepage() {
         </div>}
         
       {!loading && 
-        <div className="p-6 space-y-8 min-h-screen bg-stone-100"> 
+        <div className="flex min-h-screen bg-stone-100"> 
 
           {/* Display user's contents */}
-          <div className="space-y-8">
+          <div className="flex-1 space-y-8">
             {activeTab === "logs" && <LogsSection groupedLogs={groupedLogs} />}
             {activeTab === "medias" && <MediasSection />}
             {activeTab === "mediaTypes" && <MediaTypesSection />}
           </div>
 
           {/* Right side bar */}
-          <div className="w-64 bg-stone-300 p-4 space-y-4">
+          <div className="flex flex-col w-40 bg-stone-300 space-y-4">
             <Button 
-              variant={activeTab === "logs" ? "underlinedLink" : "link"}
-              className="text-stone-600 hover:underline" 
+              variant={activeTab === "logs" ? "boldedLink" : "link"}
+              className="text-stone-600 w-full rounded-none shadow-[0_2px_2px_-2px_rgba(0,0,0,0.2)] hover:underline" 
               onClick={() => { setActiveTab("logs")}}
             >
                 Your Logs
             </Button>
-
             <Button 
-              variant={activeTab === "medias" ? "underlinedLink" : "link"}
-              className="text-stone-600 hover:underline" 
+              variant={activeTab === "medias" ? "boldedLink" : "link"}
+              className="text-stone-600 w-full rounded-none shadow-[0_2px_2px_-2px_rgba(0,0,0,0.2)] hover:underline" 
               onClick={() => { setActiveTab("medias")}}
             >
                 Your Medias
             </Button>
-
             <Button 
-              variant={activeTab === "mediaTypes" ? "underlinedLink" : "link"}
-              className="text-stone-600 hover:underline" 
+              variant={activeTab === "mediaTypes" ? "boldedLink" : "link"}
+              className="text-stone-600 w-full rounded-none shadow-[0_2px_2px_-2px_rgba(0,0,0,0.2)] hover:underline" 
               onClick={() => { setActiveTab("mediaTypes")}}
             >
                 Your Media Types
