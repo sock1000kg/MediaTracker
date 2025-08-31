@@ -24,7 +24,7 @@ export default function MediaTypesSection() {
 
     const loadMediaTypes = async () => {
       try {
-        const data = await fetchMediaTypes(token)
+        const data = await fetchMediaTypes()
         console.log("Fetched media types:", data)
         setMediaTypes(data)
       } catch (error: any) {
@@ -40,6 +40,8 @@ export default function MediaTypesSection() {
   const handleCreated = (newType: MediaType) => {
     setMediaTypes(prev => [ ...prev, newType])
   }
+
+  
 
   return (
     <div className="p-4 space-y-4">
