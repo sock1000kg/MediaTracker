@@ -6,7 +6,7 @@ export default function MediasSection() {
       <p className="text-lg font-semibold">Your Medias</p>
       <p className="text-sm text-gray-600">Template for media list will go here...</p>
 
-      <Button variant="outline">+ Add Media</Button>
+      <Button size="default" variant="outline">+ Add Media</Button>
     </div>
   )
 }
