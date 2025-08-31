@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import MediaTypeForm from "@/components/forms/MediaTypeForm"
 
 import { fetchMediaTypes } from "@/api/mediaType"
+import { deleteMediaType } from "@/api/mediaType"
 
 import type { MediaType, DialogName } from "@/types/media"
 
@@ -13,7 +14,7 @@ export default function MediaTypesSection() {
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  // Fetch for media types
+  // Fetch for media types on load
   useEffect(() => {
     const loadMediaTypes = async () => {
       try {
@@ -34,7 +35,23 @@ export default function MediaTypesSection() {
     setMediaTypes(prev => [ ...prev, newType])
   }
 
-  
+  const handleDelete = async (name: string) => {
+    try {
+      const result = await deleteMediaType(name, false)
+      alert(result.message)
+    }catch(error:any){
+      setErrorMessage(error.message)
+      if(error.message.includes("Confirm deletion")) {
+        const confirmDelete = window.confirm(error.message)
+        if(confirmDelete) {
+          const result = await deleteMediaType(name, true)
+          alert(result.message)
+
+          setMediaTypes(prev => prev.filter(mediaType => mediaType.name !== name))
+        }
+      }
+    }
+  }
 
   return (
     <div className="p-4 space-y-4">
@@ -60,7 +77,7 @@ export default function MediaTypesSection() {
       )}
 
       {/* Media Type list */}
-      {!loading && !errorMessage && (
+      {!loading && (
         <ul className="space-y-2">
           {mediaTypes.map((mediaType) => (
             <li 
@@ -77,6 +94,13 @@ export default function MediaTypesSection() {
                     day: "numeric",
                   })}
                 </span>
+                <Button 
+                  size="sm" 
+                  variant="destructive"
+                  onClick={() => handleDelete(mediaType.name)}
+                >
+                  Delete
+                </Button>
               </div>
             </li>
           ))}
