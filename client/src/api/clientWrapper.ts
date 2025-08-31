@@ -1,33 +1,45 @@
-export async function apiFetch<T>(
-  url: string,
-  options: RequestInit = {}
-): Promise<T> {
+//Allow apiFetch to access navigate() depsite being outside of React
+let navigateFunction: ((path: string) => void) | null = null
+
+export function setNavigate(navigate: (path: string) => void) {
+  navigateFunction = navigate
+}
+
+export async function apiFetch<T>(url: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem("token")
 
   if (!token) {
-    throw new Error("No token found") // Frontend UX: parent can handle this
+    if (navigateFunction) {
+      navigateFunction("/login")
+      return Promise.reject(new Error("No token found"))
+    }
+    throw new Error("No token found")
   }
 
-  try{
+  try {
     const res = await fetch(`http://localhost:5000${url}`, {
-        ...options,
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-            ...(options.headers || {}),
-        },
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        ...(options.headers || {}),
+      },
     }) 
+
     if (!res.ok) {
-        if (res.status === 401) {
-            localStorage.removeItem("token")
-        }   
-        const errorMessage = await res.text()
-        throw new Error(errorMessage)
+      if (res.status === 401) {
+        localStorage.removeItem("token")
+        if (navigateFunction) {
+          navigateFunction("/login")
+          return Promise.reject(new Error("Unauthorized"))
+        }
+      }   
+      const errorMessage = await res.text()
+      throw new Error(errorMessage)
     }
 
     return res.json()
-  }catch(error: any) {
+  } catch(error: any) {
     throw new Error(error.message)
   }
-
 }

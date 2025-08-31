@@ -15,13 +15,6 @@ export default function MediaTypesSection() {
 
   // Fetch for media types
   useEffect(() => {
-    const token = localStorage.getItem("token")
-    if (!token) {
-      setErrorMessage("No token found")
-      setLoading(false)
-      return
-    }
-
     const loadMediaTypes = async () => {
       try {
         const data = await fetchMediaTypes()
@@ -52,7 +45,7 @@ export default function MediaTypesSection() {
           <p className="text-lg font-semibold">Your Media Types</p>
           <p className="text-sm text-gray-600">List of categories you have created</p>
         </div>
-        <Button size="sm" variant="amber" onClick={() => setOpenDialog("mediaTypeForm")}>
+        <Button size="default" variant="amber" onClick={() => setOpenDialog("mediaTypeForm")}>
           + Add Media Type
         </Button>
       </div>

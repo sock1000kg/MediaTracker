@@ -1,18 +1,9 @@
-export async function fetchLogs(token: string | null) {
-    const res = await fetch("http://localhost:5000/logs", {
-        headers: { Authorization: `Bearer ${token}` },
-    })
+import { apiFetch } from "./clientWrapper"
 
-    if (!res.ok) {
-        
-        const errData = await res.json().catch(() => ({}))
-        throw {
-            status: res.status,
-            message: errData.message || "Failed to fetch logs",
-        }
-    }
+import type { Log } from "@/types/media"
 
-    return res.json() // returns the parsed logs
+export async function fetchLogs(): Promise<Log[]> {
+    return apiFetch("/logs")
 }
 
 
