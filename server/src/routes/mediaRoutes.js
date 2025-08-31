@@ -77,8 +77,8 @@ router.delete('/:id', async (req,res) => {
         if(media.userId !== userId) return res.status(403).json({ message: "You do not own this media" });
 
         //If there are logs for this media, prompt for confirmation
-        if(media.logs.length !== 0 && !confirm) return res.status(400).json({ 
-            message: `Deleting this media will also delete ${media.logs.length} log(s). Confirm deletion?`,
+        if(!confirm) return res.status(400).json({ 
+            message: `Deleting this Media will also delete ${media.logs.length} Log(s). Confirm deletion?`,
             logsCount: media.logs.length
         })
 
