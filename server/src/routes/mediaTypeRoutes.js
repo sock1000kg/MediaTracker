@@ -58,7 +58,7 @@ router.delete('/:name', async (req,res) => {
     try{
         //Check if user owns or have this media type
         const existingMediaType = await findMediaTypeForUser(normalizedName, userId)
-        if(!existingMediaType) return res.status(404).json({ message: "Media Type does not exist (You can only delete types that you created)"})
+        if(!existingMediaType) return res.status(404).json({ message: "You can only delete types that you created"})
 
         //Check for confirmation if medias are tied to this type
         if(!confirm) return res.status(200).json({ 
@@ -89,8 +89,8 @@ router.put('/:name', async (req,res) => {
     const normalizedNewName = normalizeTypeName(newName)
     try{
         //Check if mediaType belongs to user
-        const existingOldMediaType = await findMediaTypeForUserOrGlobal(normalizedOldName, userId)
-        if(!existingOldMediaType) return res.status(404).json({ message: "Media Type does not exist (You can only rename types that you created)"})
+        const existingOldMediaType = await findMediaTypeForUser(normalizedOldName, userId)
+        if(!existingOldMediaType) return res.status(404).json({ message: "You can only rename types that you created"})
         
         //Check if new mediaType already exists
         const existingNewMediaType = await findMediaTypeForUserOrGlobal(normalizedNewName, userId)

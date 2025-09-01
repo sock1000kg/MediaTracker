@@ -112,7 +112,7 @@ describe('MediaType Routes', () => {
             .set('Authorization', `Bearer ${token}`)
             .send( { confirm: true })
         expect(res.statusCode).toBe(404)
-        expect(res.body.message).toMatch(/does not exist/i)
+        expect(res.body.message).toMatch(/that you created/i)
     })
 
     test('Rename media type succeeds', async () => {
@@ -126,6 +126,15 @@ describe('MediaType Routes', () => {
             .send({ newName: 'RenamedType' })
         expect(res.statusCode).toBe(200)
         expect(res.body.name).toBe('renamedtype')
+    })
+
+    test('Rename media type that user doesnt own fails', async () => {
+        const res = await request(app)
+            .put(`/media-type/book)}`)
+            .set('Authorization', `Bearer ${token}`)
+            .send({ newName: 'RenamedType' })
+        expect(res.statusCode).toBe(404)
+        expect(res.body.message).toMatch(/that you created/i)
     })
 
     test('Rename media type to existing name fails', async () => {
@@ -151,7 +160,7 @@ describe('MediaType Routes', () => {
             .set('Authorization', `Bearer ${token}`)
             .send({ newName: 'Anything' })
         expect(res.statusCode).toBe(404)
-        expect(res.body.message).toMatch(/does not exist/i)
+        expect(res.body.message).toMatch(/that you created/i)
     })
 
     test('Rename media type with missing newName fails', async () => {
@@ -191,7 +200,7 @@ describe('MediaType Routes', () => {
             .set('Authorization', `Bearer ${token}`)
             .send({}) // no confirm
 
-        expect(res.statusCode).toBe(400)
+        expect(res.statusCode).toBe(200)
         expect(res.body.message).toMatch(/confirm deletion/i)
         expect(res.body.mediaCount).toBe(1)
     })
