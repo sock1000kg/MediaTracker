@@ -1,18 +1,19 @@
 import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
-import MediaTypeForm from "@/components/forms/MediaTypeForm"
+import MediaTypeCreateDialog from "@/components/dialogs/MediaTypeCreateDialog"
 
-import { fetchMediaTypes } from "@/api/mediaType"
-import { deleteMediaType } from "@/api/mediaType"
+import { fetchMediaTypes, deleteMediaType, editMediaType } from "@/api/mediaType"
 
 import type { MediaType, DialogName } from "@/types/media"
-import { ConfirmDeleteDialog } from "../ui/ConfirmDeleteDialog"
+import { ConfirmDeleteDialog } from "../dialogs/ConfirmDeleteDialog"
+import EditDialog  from "../dialogs/EditDialog"
 
 export default function MediaTypesSection() {
   const [openDialog, setOpenDialog] = useState<DialogName>(null)
   const [mediaTypes, setMediaTypes] = useState<MediaType[]>([])
-  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [target, setTarget] = useState<MediaType | null>(null)
+
 
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -34,19 +35,50 @@ export default function MediaTypesSection() {
     loadMediaTypes()
   }, [])
 
+  // ACTIONS
+  // Create new type
   const handleCreated = (newType: MediaType) => {
     setMediaTypes(prev => [ ...prev, newType])
   }
 
   // Delete media type
-  const handleDeleteClick = async (name: string) => {
-    setDeleteTarget(name)
+  const handleDeleteClick = async (mediaType: MediaType) => {
+    setTarget(mediaType)
     setOpenDialog("deleteConfirm")
   }
-  const handleDeleted = (deletedType: string) => {
-    setMediaTypes(prev => prev.filter((mediaType) => mediaType.name !== deletedType))
+  const handleDeleted = (deletedType: MediaType) => {
+    setMediaTypes(prev => prev.filter((mediaType) => mediaType.name !== deletedType.name))
   }
+
+  // Edit type
+  const handleEditClick = async (mediaType: MediaType) => {
+    setTarget(mediaType)
+    setOpenDialog("editForm")
+  }
+  const handleEdited = (editedType: MediaType) => {
+    setMediaTypes(prev => prev.map((mediaType) => mediaType.id === editedType.id ? editedType : mediaType))
+  }
+  // Define fields for the edit forms
+  const renderEditField = (
+    formData: Partial<MediaType>,
+    setFormData: React.Dispatch<React.SetStateAction<Partial<MediaType>>> //state setter for formData
+  ) => (
+    <div className="space-y-4">
+      <label className="block">
+        <span className="text-sm">Name (ID: {formData.id})</span>
+        <input
+          type="text"
+          value={formData.name ?? ""}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, name: e.target.value }))
+          }
+          className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none focus:ring-amber-300"
+        />
+      </label>
+    </div>
+  )
     
+  // MEDIA TYPE TAB RENDERING
   return (
     <div className="p-4 space-y-4">
 
@@ -74,10 +106,7 @@ export default function MediaTypesSection() {
       {!loading && (
         <ul className="space-y-2">
           {mediaTypes.map((mediaType) => (
-            <li 
-              key={mediaType.id} 
-              className="p-3 bg-white rounded-xl shadow-sm border border-stone-200"
-            >
+            <li key={mediaType.id} className="p-3 bg-white rounded-xl shadow-sm border border-stone-200">
               <div className="flex justify-between items-center">
                 {/* Left side info */}
                 <div className="flex items-center gap-1">
@@ -88,19 +117,28 @@ export default function MediaTypesSection() {
                 {/* Right side info */}
                 <div className="flex items-center gap-4">
                   {/* Creation date display */}
-                  <span className="text-sm rounded-2xl px-2 py-0.5 bg-amber-100 text-amber-800 capitalize">
+                  <span className="text-xs rounded-2xl px-2 py-0.5 bg-amber-100 text-amber-800 capitalize">
                     {new Date(mediaType.created_at).toLocaleDateString("en-US", {
                       year: "numeric",
                       month: "short",
                       day: "numeric",
                     })}
                   </span>
+                    
+                  {/* Edit button */}
+                  <Button
+                    size="sm" 
+                    variant="amber"
+                    onClick={() => handleEditClick(mediaType)}
+                  >
+                    Edit
+                  </Button>
 
                   {/* Delete Button */}
                   <Button 
                     size="sm" 
                     variant="destructive"
-                    onClick={() => handleDeleteClick(mediaType.name)}
+                    onClick={() => handleDeleteClick(mediaType)}
                   >
                     Delete
                   </Button>
@@ -112,7 +150,7 @@ export default function MediaTypesSection() {
       )}
 
       {/* Dialog */}
-          <MediaTypeForm 
+          <MediaTypeCreateDialog 
             open={openDialog === "mediaTypeForm"}
             onOpenChange={(isOpen) => setOpenDialog(isOpen ? "mediaTypeForm" : null)}
             onCreated={handleCreated}
@@ -121,10 +159,19 @@ export default function MediaTypesSection() {
           <ConfirmDeleteDialog 
             open={openDialog === "deleteConfirm"} 
             onOpenChange={(isOpen) => setOpenDialog(isOpen ? "deleteConfirm" : null)}
-            target={deleteTarget}
-            description={`Are you sure you want to delete '${deleteTarget}'?`}
+            target={target}
+            description={`Are you sure you want to delete '${target}'?`}
             onDelete={deleteMediaType}
             onDeleted={handleDeleted}
+          />
+
+          <EditDialog
+            open={openDialog === "editForm"}
+            onOpenChange={(isOpen) => setOpenDialog(isOpen ? "editForm" : null)}
+            target={target}
+            onEdit={(target, updatedData) => editMediaType(target, {...target, ...updatedData})} 
+            onEdited={handleEdited}
+            renderForm={renderEditField}
           />
     </div>
 

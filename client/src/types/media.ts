@@ -1,6 +1,9 @@
-export type DialogName = "mediaTypeForm" | "logForm" | "mediaForm" | "deleteConfirm" | null //Dialogs in homepage tabs
+export type DialogName = "mediaTypeForm" | "logForm" | "mediaForm" | "editForm" | "deleteConfirm" | null //Dialogs in homepage tabs
 export type Tab = "logs" | "medias" | "mediaTypes" //Tabs in homepage
+export type EditableEntity = Log | Media | MediaType
 
+
+// MAIN TYPES
 export interface MediaType {
   id: number
   name: string
