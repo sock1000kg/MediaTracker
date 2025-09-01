@@ -61,7 +61,7 @@ router.delete('/:name', async (req,res) => {
         if(!existingMediaType) return res.status(404).json({ message: "Media Type does not exist (You can only delete types that you created)"})
 
         //Check for confirmation if medias are tied to this type
-        if(!confirm) return res.status(400).json({ 
+        if(!confirm) return res.status(200).json({ 
             message: `Deleting this Media Type will also delete ${existingMediaType.media.length} Media(s) and all Logs tied to them. Confirm deletion?`,
             mediaCount: existingMediaType.media.length
         })

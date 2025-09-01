@@ -15,7 +15,7 @@ export function createMediaType(name: string): Promise<MediaType> {
   })
 }
 
-export function deleteMediaType(name: string, confirm: boolean): Promise<{ message: string}> {
+export function deleteMediaType(name: string, confirm: boolean): Promise<{ message: string }> {
   return apiFetch(`/media-type/${encodeURIComponent(name)}`, {
     method: "DELETE",
     body: JSON.stringify({ confirm })

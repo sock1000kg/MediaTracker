@@ -1,11 +1,11 @@
-export type DialogName = "mediaTypeForm" | "logForm" | "mediaForm" | null 
-
-export type Tab = "logs" | "medias" | "mediaTypes" //tabs in homepage
+export type DialogName = "mediaTypeForm" | "logForm" | "mediaForm" | "deleteConfirm" | null //Dialogs in homepage tabs
+export type Tab = "logs" | "medias" | "mediaTypes" //Tabs in homepage
 
 export interface MediaType {
   id: number
   name: string
   created_at: string
+  userId: number
 }
 
 type JsonPrimitive = string | number | boolean | null
