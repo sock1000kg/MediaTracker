@@ -7,10 +7,13 @@ import { fetchMediaTypes } from "@/api/mediaType"
 import { deleteMediaType } from "@/api/mediaType"
 
 import type { MediaType, DialogName } from "@/types/media"
+import { ConfirmDeleteDialog } from "../ui/ConfirmDeleteDialog"
 
 export default function MediaTypesSection() {
   const [openDialog, setOpenDialog] = useState<DialogName>(null)
   const [mediaTypes, setMediaTypes] = useState<MediaType[]>([])
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
@@ -35,24 +38,15 @@ export default function MediaTypesSection() {
     setMediaTypes(prev => [ ...prev, newType])
   }
 
-  const handleDelete = async (name: string) => {
-    try {
-      const result = await deleteMediaType(name, false)
-      alert(result.message)
-    }catch(error:any){
-      setErrorMessage(error.message)
-      if(error.message.includes("Confirm deletion")) {
-        const confirmDelete = window.confirm(error.message)
-        if(confirmDelete) {
-          const result = await deleteMediaType(name, true)
-          alert(result.message)
-
-          setMediaTypes(prev => prev.filter(mediaType => mediaType.name !== name))
-        }
-      }
-    }
+  // Delete media type
+  const handleDeleteClick = async (name: string) => {
+    setDeleteTarget(name)
+    setOpenDialog("deleteConfirm")
   }
-
+  const handleDeleted = (deletedType: string) => {
+    setMediaTypes(prev => prev.filter((mediaType) => mediaType.name !== deletedType))
+  }
+    
   return (
     <div className="p-4 space-y-4">
 
@@ -85,22 +79,32 @@ export default function MediaTypesSection() {
               className="p-3 bg-white rounded-xl shadow-sm border border-stone-200"
             >
               <div className="flex justify-between items-center">
-                <p className="font-medium">{mediaType.name}</p>
+                {/* Left side info */}
+                <div className="flex items-center gap-1">
+                  <p className="font-medium">{mediaType.name}</p>
+                  {mediaType.userId == 0 && <p className="text-xs">(system)</p>}
+                </div>
 
-                <span className="text-sm rounded-2xl px-1.5 bg-amber-100 text-amber-800 capitalize">
-                  {new Date(mediaType.created_at).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </span>
-                <Button 
-                  size="sm" 
-                  variant="destructive"
-                  onClick={() => handleDelete(mediaType.name)}
-                >
-                  Delete
-                </Button>
+                {/* Right side info */}
+                <div className="flex items-center gap-4">
+                  {/* Creation date display */}
+                  <span className="text-sm rounded-2xl px-2 py-0.5 bg-amber-100 text-amber-800 capitalize">
+                    {new Date(mediaType.created_at).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
+
+                  {/* Delete Button */}
+                  <Button 
+                    size="sm" 
+                    variant="destructive"
+                    onClick={() => handleDeleteClick(mediaType.name)}
+                  >
+                    Delete
+                  </Button>
+                </div>
               </div>
             </li>
           ))}
@@ -109,9 +113,18 @@ export default function MediaTypesSection() {
 
       {/* Dialog */}
           <MediaTypeForm 
-            open={openDialog}
-            onOpenChange={setOpenDialog}
+            open={openDialog === "mediaTypeForm"}
+            onOpenChange={(isOpen) => setOpenDialog(isOpen ? "mediaTypeForm" : null)}
             onCreated={handleCreated}
+          />
+
+          <ConfirmDeleteDialog 
+            open={openDialog === "deleteConfirm"} 
+            onOpenChange={(isOpen) => setOpenDialog(isOpen ? "deleteConfirm" : null)}
+            target={deleteTarget}
+            description={`Are you sure you want to delete '${deleteTarget}'?`}
+            onDelete={deleteMediaType}
+            onDeleted={handleDeleted}
           />
     </div>
 
