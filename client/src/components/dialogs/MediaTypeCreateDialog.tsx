@@ -11,7 +11,7 @@ interface MediaTypeFormProps {
   onCreated?: (newType: any) => void
 }
 
-export default function MediaTypeForm({ open, onOpenChange, onCreated  }: MediaTypeFormProps) {
+export default function MediaTypeCreateDialog({ open, onOpenChange, onCreated  }: MediaTypeFormProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [name, setName] = useState("")
   const [loading, setLoading] = useState(false)

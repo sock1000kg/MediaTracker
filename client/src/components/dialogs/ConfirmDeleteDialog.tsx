@@ -1,6 +1,5 @@
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -9,6 +8,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
+import type { MediaType } from "@/types/media"
 import { useState, useEffect } from "react"
 
 interface ConfirmDeleteDialogProps<T = string> {
@@ -25,7 +25,7 @@ interface ConfirmDeleteDialogProps<T = string> {
   onDeleted?: (target: T) => void
 }
 
-export function ConfirmDeleteDialog<T = string>({
+export function ConfirmDeleteDialog<T = MediaType>({
   open,
   onOpenChange,
   title = "Confirm Deletion",
