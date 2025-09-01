@@ -5,11 +5,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 
-import type { DialogName } from "@/types/media"
-
 interface MediaTypeFormProps {
-  open: DialogName
-  onOpenChange: (open: DialogName) => void
+  open: boolean
+  onOpenChange: (open: boolean) => void
   onCreated?: (newType: any) => void
 }
 
@@ -28,11 +26,11 @@ export default function MediaTypeForm({ open, onOpenChange, onCreated  }: MediaT
       if (onCreated) onCreated(data)
 
       setName("")
-      onOpenChange(null)
+      onOpenChange(false)
       setErrorMessage(null)
 
     } catch (error: any) {
-      setErrorMessage?.(error.message || "Failed to create media type")
+      setErrorMessage(error.message || "Failed to create media type")
     } finally {
       setLoading(false)
     }
@@ -40,7 +38,7 @@ export default function MediaTypeForm({ open, onOpenChange, onCreated  }: MediaT
 
   return (
     // the first onOpenChange is the Dialog's, and the second is the MediaTypeForm's. Shadcn's Diaglog only opens if open={open === "mediaTypeForm"} returns true
-    <Dialog open={open === "mediaTypeForm"} onOpenChange={(isOpen) => onOpenChange(isOpen ? "mediaTypeForm" : null)}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create a new Media Type</DialogTitle>
