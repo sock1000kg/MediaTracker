@@ -15,9 +15,16 @@ export function createMediaType(name: string): Promise<MediaType> {
   })
 }
 
-export function deleteMediaType(name: string, confirm: boolean): Promise<{ message: string }> {
-  return apiFetch(`/media-type/${encodeURIComponent(name)}`, {
+export function deleteMediaType(mediaType: MediaType, confirm: boolean): Promise<{ message: string }> {
+  return apiFetch(`/media-type/${encodeURIComponent(mediaType.name)}`, {
     method: "DELETE",
     body: JSON.stringify({ confirm })
+  })
+}
+
+export function editMediaType(mediaType: MediaType, newMediaType: MediaType): Promise<MediaType> {
+  return apiFetch(`/media-type/${mediaType.name}`, {
+    method: "PUT",
+    body: JSON.stringify({ newName: newMediaType.name })
   })
 }
