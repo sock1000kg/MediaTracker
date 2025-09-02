@@ -122,7 +122,7 @@ export default function MediaTypesSection() {
       )}
 
       {/* Media Type list */}
-      {!(mediaTypes.length > 0) && <p className=" text-gray-600">You have no media types. Create one!</p>}
+      {!(mediaTypes.length > 0) && !loading && <p className=" text-gray-600">You have no media types. Create one!</p>}
       {!loading && (
         <ul className="space-y-2">
           {mediaTypes.map((mediaType) => (
