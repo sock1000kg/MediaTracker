@@ -7,7 +7,10 @@ import { Button } from "@/components/ui/button"
 import { MediaTypeCard } from "@/components/cards/MediaTypeGroupCard"
 import { MediaCard } from "@/components/cards/MediaCard"
 
-import { fetchMedias } from "@/api/media"
+import { createMedia, deleteMedia, fetchMedias } from "@/api/media"
+import CreateDialog from "../dialogs/CreateDialog"
+import { CreateMediaForm } from "@/forms/CreateMediaForm"
+import { ConfirmDeleteDialog } from "../dialogs/ConfirmDeleteDialog"
 
 export default function MediasSection() {
   const [openDialog, setOpenDialog] = useState<DialogName>(null)
@@ -45,19 +48,34 @@ export default function MediasSection() {
 
 
   // ACTIONS
-    // Delete media type
-    const handleDeleteClick = async (media: Media) => {
-    }
+  const handleCreated = (newMedia: Media) => {
+      setMedias(prev => [ ...prev, newMedia])
+  }
+  const renderCreateField = (
+      formData: Partial<Media>,
+      setFormData: React.Dispatch<React.SetStateAction<Partial<Media>>> //state setter for formData
+  ) => (
+    <CreateMediaForm formData={formData} setFormData={setFormData}/>
+  )
   
-    // Edit type
-    const handleEditClick = async (media: Media) => {
-    }
+
+  // Delete media type
+  const handleDeleteClick = async (media: Media) => {
+    setTarget(media)
+    setOpenDialog("deleteConfirm")
+  }
+  const handleDeleted = (deletedMedia: Media) => {
+    setMedias(prev => prev.filter(media => media !== deletedMedia))
+  }
+
+  // Edit type
+  const handleEditClick = async (media: Media) => {
+  }
 
   return (
-    <div className="p-4 space-y-4">
-
+    <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between p-4 items-center bg-stone-200">
         <div>
           <p className="text-lg font-semibold">Your Medias</p>
           <p className="text-sm text-gray-600">List of medias you have</p>
@@ -76,24 +94,43 @@ export default function MediasSection() {
           </p>
       )}
 
-      {/* Media Type list */}
-      {!(medias.length > 0) && !loading && <p className=" text-gray-600">You have no medias. Create one!</p>}
-      {!loading && (medias.length > 0) && (
-        <ul className="space-y-2">
-          {Object.entries(groupedMedias).map(([type, typeMedias]) => (
-            <MediaTypeCard key={type} type={type}>
-              {typeMedias.map((media) => (
-                <MediaCard
-                  key={media.id}
-                  media={media}
-                  onEdit={handleEditClick}
-                  onDelete={handleDeleteClick}
-                />
-              ))}
-            </MediaTypeCard>
-          ))}
-        </ul>
-      )}
+      {/* Media list */}
+      <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
+        {!(medias.length > 0) && !loading && <p className=" text-gray-600">You have no medias. Create one!</p>}
+        {!loading && (medias.length > 0) && (
+          <ul className="space-y-2">
+            {Object.entries(groupedMedias).map(([type, typeMedias]) => (
+              <MediaTypeCard key={type} type={type}>
+                {typeMedias.map((media) => (
+                  <MediaCard
+                    key={media.id}
+                    media={media}
+                    onEdit={handleEditClick}
+                    onDelete={handleDeleteClick}
+                  />
+                ))}
+              </MediaTypeCard>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* Dialog */}
+      <CreateDialog
+        open={openDialog === "mediaForm"}
+        onOpenChange={(isOpen) => setOpenDialog(isOpen ? "mediaForm" : null)}
+        onCreate={createMedia}
+        onCreated={handleCreated}
+        renderForm={renderCreateField}
+      />
+
+      <ConfirmDeleteDialog
+        open={openDialog === "deleteConfirm"}
+        onOpenChange={(isOpen) => setOpenDialog(isOpen ? "deleteConfirm" : null)}
+        target={target}
+        onDelete={deleteMedia}
+        onDeleted={handleDeleted}
+      />
     </div>
   )
 }
