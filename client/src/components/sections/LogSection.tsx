@@ -4,7 +4,7 @@ import { fetchLogs } from "@/api/logs"
 
 import { Button } from "@/components/ui/button"
 import { LogCard } from "@/components/cards/LogCard"
-import { MediaTypeCard } from "@/components/cards/MediaTypeCard"
+import { MediaTypeCard } from "@/components/cards/MediaTypeGroupCard"
 import type { Log } from "@/types/media"
 
 export default function LogsSection() {
@@ -44,9 +44,9 @@ export default function LogsSection() {
   }, {} as Record<string, Log[]>) //<key,value> object
 
   return (
-    <div className="space-y-4">
+    <div className="p-4 space-y-4">
       {/* Header */}
-      <div className="flex p-4 justify-between w-full items-center">
+      <div className="flex justify-between items-center">
         <div>
           <p className="text-lg font-semibold">Your Logs</p>
           <p className="text-sm text-gray-600">List of Logs you have created</p>

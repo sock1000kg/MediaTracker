@@ -4,6 +4,8 @@ import type { DialogName } from "@/types/media"
 import type { Media } from "@/types/media"
 
 import { Button } from "@/components/ui/button"
+import { MediaTypeCard } from "@/components/cards/MediaTypeGroupCard"
+import { MediaCard } from "@/components/cards/MediaCard"
 
 import { fetchMedias } from "@/api/media"
 
@@ -14,6 +16,16 @@ export default function MediasSection() {
 
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  // Group Medias by type
+  const groupedMedias = medias.reduce((acc, media) => {
+      const type = media.mediaType.name
+  
+      if (!acc[type]) acc[type] = [] //Create empty type array if type doesnt exist
+      acc[type].push(media)
+  
+      return acc
+    }, {} as Record<string, Media[]>) //<key,value> object
 
   useEffect(() => {
       const loadMedias = async () => {
@@ -40,6 +52,7 @@ export default function MediasSection() {
     // Edit type
     const handleEditClick = async (media: Media) => {
     }
+
   return (
     <div className="p-4 space-y-4">
 
@@ -64,49 +77,20 @@ export default function MediasSection() {
       )}
 
       {/* Media Type list */}
-      {!(medias.length > 0) && <p className=" text-gray-600">You have no medias. Create one!</p>}
+      {!(medias.length > 0) && !loading && <p className=" text-gray-600">You have no medias. Create one!</p>}
       {!loading && (medias.length > 0) && (
         <ul className="space-y-2">
-          {medias.map((media) => (
-            <li key={media.id} className="p-3 bg-white rounded-xl shadow-sm border border-stone-200">
-              <div className="flex justify-between items-center">
-                {/* Left side info */}
-                <div className="flex items-center gap-1">
-                  <p className="font-medium">{media.title}</p>
-                  {media.userId == 0 && <p className="text-xs">(system)</p>}
-                </div>
-
-                {/* Right side info */}
-                <div className="flex items-center gap-4">
-                  {/* Creation date display */}
-                  <span className="text-xs rounded-2xl px-2 py-0.5 bg-amber-100 text-amber-800 capitalize">
-                    {new Date(media.created_at).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </span>
-                    
-                  {/* Edit button */}
-                  <Button
-                    size="sm" 
-                    variant="amber"
-                    onClick={() => handleEditClick(media)}
-                  >
-                    Edit
-                  </Button>
-
-                  {/* Delete Button */}
-                  <Button 
-                    size="sm" 
-                    variant="destructive"
-                    onClick={() => handleDeleteClick(media)}
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </div>
-            </li>
+          {Object.entries(groupedMedias).map(([type, typeMedias]) => (
+            <MediaTypeCard key={type} type={type}>
+              {typeMedias.map((media) => (
+                <MediaCard
+                  key={media.id}
+                  media={media}
+                  onEdit={handleEditClick}
+                  onDelete={handleDeleteClick}
+                />
+              ))}
+            </MediaTypeCard>
           ))}
         </ul>
       )}
