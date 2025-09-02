@@ -44,9 +44,9 @@ export default function LogsSection() {
   }, {} as Record<string, Log[]>) //<key,value> object
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between p-4 items-center bg-stone-200">
         <div>
           <p className="text-lg font-semibold">Your Logs</p>
           <p className="text-sm text-gray-600">List of Logs you have created</p>
@@ -56,19 +56,20 @@ export default function LogsSection() {
         </Button>
       </div>
 
-      {loading && <p className="text-gray-500">Loading logs...</p>}
-      
-      {!loading && (
-        <ul className="space-y-2">
-          {Object.entries(groupedLogs).map(([type, typeLogs]) => (
-            <MediaTypeCard key={type} type={type}>
-              {typeLogs.map((log) => (
-                <LogCard key={log.id} log={log} />
-              ))}
-            </MediaTypeCard>
-          ))}
-        </ul>
-      )}
+      <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
+        {loading && <p className="text-gray-500">Loading logs...</p>}
+        {!loading && (
+          <ul className="space-y-2">
+            {Object.entries(groupedLogs).map(([type, typeLogs]) => (
+              <MediaTypeCard key={type} type={type}>
+                {typeLogs.map((log) => (
+                  <LogCard key={log.id} log={log} />
+                ))}
+              </MediaTypeCard>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   )
 }

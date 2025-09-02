@@ -40,7 +40,7 @@ export default function MediaTypesSection() {
   const handleCreated = (newType: MediaType) => {
     setMediaTypes(prev => [ ...prev, newType])
   }
-  const renderCreateField= (
+  const renderCreateField = (
     formData: Partial<MediaType>,
     setFormData: React.Dispatch<React.SetStateAction<Partial<MediaType>>> //state setter for formData
   ) => (
@@ -99,10 +99,9 @@ export default function MediaTypesSection() {
     
   // MEDIA TYPE TAB RENDERING
   return (
-    <div className="p-4 space-y-4">
-
+    <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between p-4 items-center bg-stone-200">
         <div>
           <p className="text-lg font-semibold">Your Media Types</p>
           <p className="text-sm text-gray-600">List of categories you have created</p>
@@ -122,52 +121,54 @@ export default function MediaTypesSection() {
       )}
 
       {/* Media Type list */}
-      {!(mediaTypes.length > 0) && !loading && <p className=" text-gray-600">You have no media types. Create one!</p>}
-      {!loading && (
-        <ul className="space-y-2">
-          {mediaTypes.map((mediaType) => (
-            <li key={mediaType.id} className="p-3 bg-white rounded-xl shadow-sm border border-stone-200">
-              <div className="flex justify-between items-center">
-                {/* Left side info */}
-                <div className="flex items-center gap-1">
-                  <p className="font-medium">{mediaType.name}</p>
-                  {mediaType.userId == 0 && <p className="text-xs">(system)</p>}
-                </div>
+      <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
+        {!(mediaTypes.length > 0) && !loading && <p className=" text-gray-600">You have no media types. Create one!</p>}
+        {!loading && (
+          <ul className="space-y-2">
+            {mediaTypes.map((mediaType) => (
+              <li key={mediaType.id} className="p-3 bg-white rounded-xl shadow-sm border border-stone-200 m-4">
+                <div className="flex justify-between items-center">
+                  {/* Left side info */}
+                  <div className="flex items-center gap-1">
+                    <p className="font-medium">{mediaType.name}</p>
+                    {mediaType.userId == 0 && <p className="text-xs">(system)</p>}
+                  </div>
 
-                {/* Right side info */}
-                <div className="flex items-center gap-4">
-                  {/* Creation date display */}
-                  <span className="text-xs rounded-2xl px-2 py-0.5 bg-amber-100 text-amber-800 capitalize">
-                    {new Date(mediaType.created_at).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </span>
-                    
-                  {/* Edit button */}
-                  <Button
-                    size="sm" 
-                    variant="amber"
-                    onClick={() => handleEditClick(mediaType)}
-                  >
-                    Edit
-                  </Button>
+                  {/* Right side info */}
+                  <div className="flex items-center gap-4">
+                    {/* Creation date display */}
+                    <span className="text-xs rounded-2xl px-2 py-0.5 bg-amber-100 text-amber-800 capitalize">
+                      {new Date(mediaType.created_at).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </span>
+                      
+                    {/* Edit button */}
+                    <Button
+                      size="sm" 
+                      variant="amber"
+                      onClick={() => handleEditClick(mediaType)}
+                    >
+                      Edit
+                    </Button>
 
-                  {/* Delete Button */}
-                  <Button 
-                    size="sm" 
-                    variant="destructive"
-                    onClick={() => handleDeleteClick(mediaType)}
-                  >
-                    Delete
-                  </Button>
+                    {/* Delete Button */}
+                    <Button 
+                      size="sm" 
+                      variant="destructive"
+                      onClick={() => handleDeleteClick(mediaType)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
       {/* Dialog */}
           <ConfirmDeleteDialog 
