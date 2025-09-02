@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
-import MediaTypeCreateDialog from "@/components/dialogs/MediaTypeCreateDialog"
 
-import { fetchMediaTypes, deleteMediaType, editMediaType } from "@/api/mediaType"
+import { fetchMediaTypes, deleteMediaType, editMediaType, createMediaType } from "@/api/mediaType"
 
 import type { MediaType, DialogName } from "@/types/media"
 import { ConfirmDeleteDialog } from "../dialogs/ConfirmDeleteDialog"
+import CreateDialog from "@/components/dialogs/CreateDialog"
 import EditDialog  from "../dialogs/EditDialog"
 
 export default function MediaTypesSection() {
@@ -35,11 +35,30 @@ export default function MediaTypesSection() {
     loadMediaTypes()
   }, [])
 
-  // ACTIONS
+  // CRUD ACTIONS
   // Create new type
   const handleCreated = (newType: MediaType) => {
     setMediaTypes(prev => [ ...prev, newType])
   }
+  const renderCreateField= (
+    formData: Partial<MediaType>,
+    setFormData: React.Dispatch<React.SetStateAction<Partial<MediaType>>> //state setter for formData
+  ) => (
+    <div className="space-y-4">
+      <label className="block">
+        <span className="text-sm">Name</span>
+        <input
+          type="text"
+          value={formData.name ?? ""}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, name: e.target.value }))
+          }
+          className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none focus:ring-amber-300"
+          placeholder="Media type name (e.g. Book, Movie, Game)"
+        />
+      </label>
+    </div>
+  )
 
   // Delete media type
   const handleDeleteClick = async (mediaType: MediaType) => {
@@ -103,6 +122,7 @@ export default function MediaTypesSection() {
       )}
 
       {/* Media Type list */}
+      {!(mediaTypes.length > 0) && <p className=" text-gray-600">You have no media types. Create one!</p>}
       {!loading && (
         <ul className="space-y-2">
           {mediaTypes.map((mediaType) => (
@@ -150,12 +170,6 @@ export default function MediaTypesSection() {
       )}
 
       {/* Dialog */}
-          <MediaTypeCreateDialog 
-            open={openDialog === "mediaTypeForm"}
-            onOpenChange={(isOpen) => setOpenDialog(isOpen ? "mediaTypeForm" : null)}
-            onCreated={handleCreated}
-          />
-
           <ConfirmDeleteDialog 
             open={openDialog === "deleteConfirm"} 
             onOpenChange={(isOpen) => setOpenDialog(isOpen ? "deleteConfirm" : null)}
@@ -172,6 +186,13 @@ export default function MediaTypesSection() {
             onEdit={(target, updatedData) => editMediaType(target, {...target, ...updatedData})} 
             onEdited={handleEdited}
             renderForm={renderEditField}
+          />
+          <CreateDialog
+            open={openDialog === "mediaTypeForm"}
+            onOpenChange={(isOpen) => setOpenDialog(isOpen ? "mediaTypeForm" : null)}
+            onCreate={createMediaType}
+            onCreated={handleCreated}
+            renderForm={renderCreateField}
           />
     </div>
 

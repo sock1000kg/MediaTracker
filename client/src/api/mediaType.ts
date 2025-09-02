@@ -8,10 +8,10 @@ export async function fetchMediaTypes(): Promise<MediaType[]> {
 }
 
 
-export function createMediaType(name: string): Promise<MediaType> {
+export function createMediaType(mediaType: Partial<MediaType>): Promise<MediaType> {
   return apiFetch("/media-type", {
     method: "POST",
-    body: JSON.stringify({ name }),
+    body: JSON.stringify({ name: mediaType.name }),
   })
 }
 
