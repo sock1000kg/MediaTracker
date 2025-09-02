@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 html {
-  font-size: 150%; /* 24px if default is 16px */
+  font-size: 120%; /* 24px if default is 16px */
 }
 
 @theme inline {
