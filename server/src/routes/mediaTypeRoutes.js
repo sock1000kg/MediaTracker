@@ -90,7 +90,7 @@ router.put('/:name', async (req,res) => {
     try{
         //Check if mediaType belongs to user
         const existingOldMediaType = await findMediaTypeForUser(normalizedOldName, userId)
-        if(!existingOldMediaType) return res.status(404).json({ message: "You can only rename types that you created"})
+        if(!existingOldMediaType) return res.status(404).json({ message: "You can only rename types that you created", existingOldMediaType})
         
         //Check if new mediaType already exists
         const existingNewMediaType = await findMediaTypeForUserOrGlobal(normalizedNewName, userId)

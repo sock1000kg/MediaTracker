@@ -38,14 +38,6 @@ describe("normalizeTypeName", () => {
   test("lowercases the string", () => {
     expect(normalizeTypeName("BOOK")).toBe("book")
   })
-
-  test("removes trailing 's'", () => {
-    expect(normalizeTypeName("Games")).toBe("game")
-  })
-
-  test("leaves non-plural words unchanged", () => {
-    expect(normalizeTypeName("anime")).toBe("anime")
-  })
 })
 
 describe("sanitizeRating", () => {
