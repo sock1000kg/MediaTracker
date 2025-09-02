@@ -36,27 +36,25 @@ export default function EditDialog<T extends EditableEntity = EditableEntity>({
 }: EditFormDialogProps<T>) {
     const [formData, setFormData] = useState<Partial<T>>({})
     const [loading, setLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
+    const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
     useEffect(() => {
         if (open && target) {
         setFormData(target)
-        setError(null)
+        setErrorMessage(null)
         }
     }, [open, target])
 
     const handleConfirm = async () => {
         if (!target) return
         setLoading(true)
-        setError(null
-
-        )
+        setErrorMessage(null)
         try {
             const result = await onEdit(target, formData)
             onEdited?.(result)
             onOpenChange(false)
         } catch (err: any) {
-            setError(err.message)
+            setErrorMessage(err.message)
         } finally {
             setLoading(false)
         }
@@ -66,21 +64,26 @@ export default function EditDialog<T extends EditableEntity = EditableEntity>({
         <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent>
             <DialogHeader>
-            <DialogTitle>{title}</DialogTitle>
-                {error && <p className="text-sm text-red-500">{error}</p>}
+                <DialogTitle>{title}</DialogTitle>
+                    {errorMessage && <p className="text-sm text-red-500">{errorMessage}</p>}
             </DialogHeader>
+            <form onSubmit={(e) => {
+                e.preventDefault() 
+                handleConfirm()
+                }}
+            >
+                {/* Form passed from outside */}
+                <div className="py-2">{renderForm(formData, setFormData)}</div>
 
-            {/* Form passed from outside */}
-            <div className="py-2">{renderForm(formData, setFormData)}</div>
-
-            <DialogFooter>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
-            </Button>
-            <Button variant="amber" disabled={loading} onClick={handleConfirm}>
-                {loading ? "Saving..." : confirmText}
-            </Button>
-            </DialogFooter>
+                <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                        Cancel
+                    </Button>
+                    <Button type="submit" variant="amber" disabled={loading} onClick={handleConfirm}>
+                        {loading ? "Saving..." : confirmText}
+                    </Button>
+                </DialogFooter>
+            </form>
         </DialogContent>
         </Dialog>
     )

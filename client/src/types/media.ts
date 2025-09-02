@@ -20,11 +20,13 @@ export interface MediaMetadata {
 }
 export interface Media {
   id: number
+  userId: number
   title: string
   mediaType: MediaType
   creator?: string | null
   year?: number | null
   metadata?: MediaMetadata
+  created_at: string
 }
 
 export interface Log {

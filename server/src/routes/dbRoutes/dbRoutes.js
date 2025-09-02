@@ -29,6 +29,17 @@ export async function findUserByUsername(username) {
 }
 
 //MEDIA
+export async function getAllMediasUserCreated(userId){
+    return await prisma.media.findMany({
+        where: {
+            userId: userId
+        },
+        include: { 
+            mediaType: true,
+            logs: true,
+        }
+    })
+}
 export async function getAllMediasForUser(userId){
     return await prisma.media.findMany({
         where: {
