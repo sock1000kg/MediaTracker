@@ -1,4 +1,4 @@
-export type DialogName = "mediaTypeForm" | "logForm" | "mediaForm" | "editForm" | "deleteConfirm" | null //Dialogs in homepage tabs
+export type DialogName = "createForm" | "editForm" | "deleteConfirm" | null //Dialogs in homepage tabs
 export type Tab = "logs" | "medias" | "mediaTypes" //Tabs in homepage
 export type EditableEntity = Log | Media | MediaType
 

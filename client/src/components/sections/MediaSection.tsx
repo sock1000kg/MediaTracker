@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button"
 import { MediaTypeCard } from "@/components/cards/MediaTypeGroupCard"
 import { MediaCard } from "@/components/cards/MediaCard"
 
-import { createMedia, deleteMedia, fetchMedias } from "@/api/media"
-import CreateDialog from "../dialogs/CreateDialog"
-import { CreateMediaForm } from "@/forms/CreateMediaForm"
+import { createMedia, deleteMedia, editMedia, fetchMedias } from "@/api/media"
+import { CreateMediaForm } from "@/forms/MediaForm"
 import { ConfirmDeleteDialog } from "../dialogs/ConfirmDeleteDialog"
+import EntityDialog from "../dialogs/EntityDialog"
 
 export default function MediasSection() {
   const [openDialog, setOpenDialog] = useState<DialogName>(null)
@@ -51,16 +51,9 @@ export default function MediasSection() {
   const handleCreated = (newMedia: Media) => {
       setMedias(prev => [ ...prev, newMedia])
   }
-  const renderCreateField = (
-      formData: Partial<Media>,
-      setFormData: React.Dispatch<React.SetStateAction<Partial<Media>>> //state setter for formData
-  ) => (
-    <CreateMediaForm formData={formData} setFormData={setFormData}/>
-  )
   
-
   // Delete media type
-  const handleDeleteClick = async (media: Media) => {
+  const handleDeleteClick = (media: Media) => {
     setTarget(media)
     setOpenDialog("deleteConfirm")
   }
@@ -69,8 +62,21 @@ export default function MediasSection() {
   }
 
   // Edit type
-  const handleEditClick = async (media: Media) => {
+  const handleEditClick = (media: Media) => {
+    setTarget(media)
+    setOpenDialog("editForm")
   }
+  const handleEdited = (editedMedia: Media) => {
+    setMedias(prev => prev.map((media) => media.id === editedMedia.id ? editedMedia : media))
+  }
+
+  // Media Form
+  const renderMediaForm = (
+      formData: Partial<Media>,
+      setFormData: React.Dispatch<React.SetStateAction<Partial<Media>>> //state setter for formData
+  ) => (
+    <CreateMediaForm formData={formData} setFormData={setFormData}/>
+  )
 
   return (
     <div className="flex flex-col h-full">
@@ -80,7 +86,7 @@ export default function MediasSection() {
           <p className="text-lg font-semibold">Your Medias</p>
           <p className="text-sm text-gray-600">List of medias you have</p>
         </div>
-        <Button size="default" variant="amber" onClick={() => setOpenDialog("mediaForm")}>
+        <Button size="default" variant="amber" onClick={() => setOpenDialog("createForm")}>
           + Add Media
         </Button>
       </div>
@@ -116,12 +122,13 @@ export default function MediasSection() {
       </div>
 
       {/* Dialog */}
-      <CreateDialog
-        open={openDialog === "mediaForm"}
-        onOpenChange={(isOpen) => setOpenDialog(isOpen ? "mediaForm" : null)}
-        onCreate={createMedia}
-        onCreated={handleCreated}
-        renderForm={renderCreateField}
+      <EntityDialog
+        mode="create"
+        open={openDialog === "createForm"}
+        onOpenChange={(isOpen) => setOpenDialog(isOpen ? "createForm" : null)}
+        onSubmit={createMedia}
+        onSubmitted={handleCreated}
+        renderForm={renderMediaForm}
       />
 
       <ConfirmDeleteDialog
@@ -130,6 +137,16 @@ export default function MediasSection() {
         target={target}
         onDelete={deleteMedia}
         onDeleted={handleDeleted}
+      />
+
+      <EntityDialog
+        mode="edit"
+        open={openDialog === "editForm"}
+        onOpenChange={(isOpen) => setOpenDialog(isOpen ? "editForm" : null)} 
+        target={target}
+        onSubmit={editMedia}
+        onSubmitted={handleEdited}
+        renderForm={renderMediaForm}
       />
     </div>
   )

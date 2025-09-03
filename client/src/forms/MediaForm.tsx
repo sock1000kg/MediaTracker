@@ -13,7 +13,7 @@ import { fetchMediaTypes } from "@/api/mediaType"
 import type { Media, MediaType } from "@/types/media"
 
 
-const AVAILABLE_METADATA_FIELDS = ["pages", "genre", "platform", "duration", "language", "edition"]
+const AVAILABLE_METADATA_FIELDS = ["duration", "edition", "genre", "language", "pages", "platform",]
 
 interface CreateMediaFormProps {
     formData: Partial<Media>,

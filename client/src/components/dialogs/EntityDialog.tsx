@@ -5,56 +5,64 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button"
 import type { EditableEntity } from "@/types/media"
 
-interface CreateDialogProps <T extends EditableEntity> {
+type Mode = "create" | "edit"
+
+interface EntityDialogProps<T extends EditableEntity> {
+  mode: Mode
   open: boolean
   onOpenChange: (open: boolean) => void
-  onCreate: (data: Partial<T>) => Promise<T>
-  onCreated?: (newType: T) => void
   title?: string
   confirmText?: string
   cancelText?: string
   initialData?: Partial<T>
+  target?: T | null
+  onSubmit: (data: Partial<T>, target?: T) => Promise<T>
+  onSubmitted?: (result: T) => void
   renderForm: (
     formData: Partial<T>,
     setFormData: React.Dispatch<React.SetStateAction<Partial<T>>>
   ) => React.ReactNode
 }
 
-export default function CreateDialog<T extends EditableEntity>({
+export default function EntityDialog<T extends EditableEntity>({
+  mode,
   open,
   onOpenChange,
-  title = "Create",
-  confirmText = "Create",
+  title,
+  confirmText,
   cancelText = "Cancel",
   initialData = {},
-  onCreate,
-  onCreated,
-  renderForm,  
-}: CreateDialogProps<T>) {
+  target,
+  onSubmit,
+  onSubmitted,
+  renderForm,
+}: EntityDialogProps<T>) {
   const [formData, setFormData] = useState<Partial<T>>(initialData)
-
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  // Reset form when opening
   useEffect(() => {
     if (open) {
-      setFormData(initialData)
+      if (mode === "edit" && target) {
+        setFormData(target)
+      } else {
+        setFormData(initialData)
+      }
       setErrorMessage(null)
     }
-  }, [open])
+  }, [open, target, mode])
 
   const handleConfirm = async () => {
+    if (mode === "edit" && !target) return
     setLoading(true)
     setErrorMessage(null)
 
     try {
-      const result = await onCreate(formData)
-      onCreated?.(result)
+      const result = await onSubmit(formData, target ?? undefined)
+      onSubmitted?.(result)
       onOpenChange(false)
-      setFormData(initialData)
     } catch (err: any) {
-      setErrorMessage(err.message || "Failed to create")
+      setErrorMessage(err.message || "Failed to save")
     } finally {
       setLoading(false)
     }
@@ -64,29 +72,29 @@ export default function CreateDialog<T extends EditableEntity>({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-
-          <DialogTitle>{title}</DialogTitle>
-          {errorMessage && <p className="text-sm text-red-500">{errorMessage}</p>}
+          <DialogTitle>
+            {title ?? (mode === "edit" ? "Edit" : "Create")}
+          </DialogTitle>
+          {errorMessage && (
+            <p className="text-sm text-red-500">{errorMessage}</p>
+          )}
         </DialogHeader>
 
-        <form onSubmit={(e) => { 
-          e.preventDefault()
-          handleConfirm() 
+        <form onSubmit={(e) => {
+            e.preventDefault()
+            handleConfirm()
           }}
         >
-          {/* Form fields provided by parent */}
           <div className="py-2">{renderForm(formData, setFormData)}</div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {cancelText}
             </Button>
             <Button type="submit" variant="amber" disabled={loading}>
-              {loading ? "Creating..." : confirmText}
+              {loading
+                ? mode === "edit" ? "Saving..." : "Creating..."
+                : confirmText ?? (mode === "edit" ? "Save" : "Create")}
             </Button>
           </DialogFooter>
         </form>

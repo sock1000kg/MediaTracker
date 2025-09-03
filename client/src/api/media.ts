@@ -25,3 +25,16 @@ export function deleteMedia(media: Media, confirm: boolean): Promise<{ message: 
     body: JSON.stringify({ confirm })
   })
 }
+
+export function editMedia(media: Partial<Media>): Promise<Media> {
+  return apiFetch(`/media/${media.id}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      title: media.title,
+      mediaType: media.mediaType,
+      creator: media.creator,
+      year: media.year,
+      metadata: media.metadata
+    })
+  })
+}

@@ -6,8 +6,7 @@ import { fetchMediaTypes, deleteMediaType, editMediaType, createMediaType } from
 
 import type { MediaType, DialogName } from "@/types/media"
 import { ConfirmDeleteDialog } from "../dialogs/ConfirmDeleteDialog"
-import CreateDialog from "@/components/dialogs/CreateDialog"
-import EditDialog  from "../dialogs/EditDialog"
+import EntityDialog from "@/components/dialogs/EntityDialog"
 
 export default function MediaTypesSection() {
   const [openDialog, setOpenDialog] = useState<DialogName>(null)
@@ -61,7 +60,7 @@ export default function MediaTypesSection() {
   )
 
   // Delete media type
-  const handleDeleteClick = async (mediaType: MediaType) => {
+  const handleDeleteClick = (mediaType: MediaType) => {
     setTarget(mediaType)
     setOpenDialog("deleteConfirm")
   }
@@ -70,7 +69,7 @@ export default function MediaTypesSection() {
   }
 
   // Edit type
-  const handleEditClick = async (mediaType: MediaType) => {
+  const handleEditClick = (mediaType: MediaType) => {
     setTarget(mediaType)
     setOpenDialog("editForm")
   }
@@ -106,7 +105,7 @@ export default function MediaTypesSection() {
           <p className="text-lg font-semibold">Your Media Types</p>
           <p className="text-sm text-gray-600">List of categories you have created</p>
         </div>
-        <Button size="default" variant="amber" onClick={() => setOpenDialog("mediaTypeForm")}>
+        <Button size="default" variant="amber" onClick={() => setOpenDialog("createForm")}>
           + Add Media Type
         </Button>
       </div>
@@ -180,19 +179,24 @@ export default function MediaTypesSection() {
             onDeleted={handleDeleted}
           />
 
-          <EditDialog
+          <EntityDialog
+            mode="edit"
             open={openDialog === "editForm"}
             onOpenChange={(isOpen) => setOpenDialog(isOpen ? "editForm" : null)}
             target={target}
-            onEdit={(target, updatedData) => editMediaType(target, {...target, ...updatedData})} 
-            onEdited={handleEdited}
+            onSubmit={(updatedData, target) => {
+              if (!target) throw new Error("No target to edit")
+              return editMediaType(target, {...target, ...updatedData})
+            }}
+            onSubmitted={handleEdited}
             renderForm={renderEditField}
           />
-          <CreateDialog
-            open={openDialog === "mediaTypeForm"}
-            onOpenChange={(isOpen) => setOpenDialog(isOpen ? "mediaTypeForm" : null)}
-            onCreate={createMediaType}
-            onCreated={handleCreated}
+          <EntityDialog
+            mode="create"
+            open={openDialog === "createForm"}
+            onOpenChange={(isOpen) => setOpenDialog(isOpen ? "createForm" : null)}
+            onSubmit={createMediaType}
+            onSubmitted={handleCreated}
             renderForm={renderCreateField}
           />
     </div>
