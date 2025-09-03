@@ -58,7 +58,10 @@ export default function LogsSection() {
 
       <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
         {loading && <p className="text-gray-500">Loading logs...</p>}
-        {!loading && (
+      
+
+        {!(logs.length > 0) && !loading && <p className=" text-gray-600">You have no logs. Create one!</p>}
+        {!loading && (logs.length > 0) && (
           <ul className="space-y-2">
             {Object.entries(groupedLogs).map(([type, typeLogs]) => (
               <MediaTypeCard key={type} type={type}>

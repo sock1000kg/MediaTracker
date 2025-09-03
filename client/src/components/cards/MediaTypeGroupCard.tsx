@@ -16,7 +16,7 @@ export function MediaTypeCard({ type, children }: MediaTypeCardProps) {
                 <CardHeader className="flex flex-row justify-between items-center">
                     <h2 className="text-2xl font-bold text-stone-800 capitalize">{type}</h2>
                     <Button size="sm" variant="amber">
-                        Add {type}
+                        Add a {type}
                     </Button>
                 </CardHeader>
 
