@@ -110,7 +110,7 @@ export default function MediaTypesSection() {
         </Button>
       </div>
 
-      {loading && <p className="text-gray-500">Loading media types...</p>}
+      {loading && <p className="text-gray-500 m-4">Loading media types...</p>}
 
       {/* Error message */}
       {errorMessage && (
@@ -125,7 +125,7 @@ export default function MediaTypesSection() {
         {!loading && (
           <ul className="space-y-2">
             {mediaTypes.map((mediaType) => (
-              <li key={mediaType.id} className="p-3 bg-white rounded-xl shadow-sm border border-stone-200 m-4">
+              <li key={mediaType.id} className="p-3 bg-white rounded-xl shadow-sm border border-stone-200 m-4 capitalize">
                 <div className="flex justify-between items-center">
                   {/* Left side info */}
                   <div className="flex items-center gap-1">
@@ -136,7 +136,7 @@ export default function MediaTypesSection() {
                   {/* Right side info */}
                   <div className="flex items-center gap-4">
                     {/* Creation date display */}
-                    <span className="text-xs rounded-2xl px-2 py-0.5 bg-amber-100 text-amber-800 capitalize">
+                    <span className="text-xs rounded-2xl px-2 py-0.5 bg-amber-100 text-amber-800">
                       {new Date(mediaType.created_at).toLocaleDateString("en-US", {
                         year: "numeric",
                         month: "short",

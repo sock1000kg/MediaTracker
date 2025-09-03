@@ -91,7 +91,7 @@ export default function MediasSection() {
         </Button>
       </div>
 
-      {loading && <p className="text-gray-500">Loading medias...</p>}
+      {loading && <p className="text-gray-500 m-4">Loading medias...</p>}
 
       {/* Error message */}
       {errorMessage && (

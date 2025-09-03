@@ -57,7 +57,7 @@ export default function LogsSection() {
       </div>
 
       <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
-        {loading && <p className="text-gray-500">Loading logs...</p>}
+        {loading && <p className="text-gray-50 m-4">Loading logs...</p>}
       
 
         {!(logs.length > 0) && !loading && <p className=" text-gray-600">You have no logs. Create one!</p>}
