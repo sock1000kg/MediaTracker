@@ -34,7 +34,8 @@ router.post('/', async (req,res) => {
     }
 
     const normalizedName = normalizeTypeName(name) // Normalize after check input
-    
+
+    console.log("POST →", { name, normalizedName, userId })
     try{
         //Check if user already has this type
         const existingMediaType = await findMediaTypeForUserOrGlobal(normalizedName, userId)
@@ -55,6 +56,7 @@ router.delete('/:name', async (req,res) => {
     const normalizedName = normalizeTypeName(name)
     const {confirm} = req.body  //boolean
     
+    console.log("DELETE →", { name, normalizedName, userId })
     try{
         //Check if user owns or have this media type
         const existingMediaType = await findMediaTypeForUser(normalizedName, userId)
@@ -87,6 +89,8 @@ router.put('/:name', async (req,res) => {
     
     const normalizedOldName = normalizeTypeName(name)
     const normalizedNewName = normalizeTypeName(newName)
+
+    console.log("PUT →", { name, normalizedOldName, newName, normalizedNewName, userId })
     try{
         //Check if mediaType belongs to user
         const existingOldMediaType = await findMediaTypeForUser(normalizedOldName, userId)

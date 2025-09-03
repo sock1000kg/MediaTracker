@@ -46,6 +46,7 @@ router.post('/', async (req,res) => {
 
     const normalizedTypeName = normalizeTypeName(mediaType.name)
 
+    console.log("POST →", { title, mediaType, creator, year, metadata, userId })
     try{
         //Check if type exists for user
         const existingType = await findMediaTypeForUserOrGlobal(normalizedTypeName, userId)
@@ -70,6 +71,7 @@ router.delete('/:id', async (req,res) => {
     const userId = req.userId
     const {confirm} = req.body  //boolean
 
+    console.log("DELETE →", { id, userId, confirm })
     try{
         const media = await findMediaById(id)
 
@@ -116,6 +118,7 @@ router.put('/:id', async (req,res) => {
     
     const normalizedTypeName = normalizeTypeName(rawMediaType.name)
 
+    console.log("PUT →", { newTitle, normalizedTypeName, newCreator, newYear, newMetadata, userId })
     try{
         //Check if this media exists or belongs to the user
         const existing = await findMediaById(id)

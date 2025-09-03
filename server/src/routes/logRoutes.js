@@ -42,6 +42,7 @@ router.post('/', async (req,res) => {
 
     const notes = sanitizeNotes(rawNotes)
 
+    console.log("POST →", { mediaId, status, rating, notes, userId })
     try {
         //Check for existing log of the same media
         const existingLog = await findLogOfUserByMediaId(userId, mediaId)
@@ -75,6 +76,8 @@ router.put('/:id', async (req,res) => {
     const newRating = sanitizeRating(rawRating)
 
     const newNotes = sanitizeNotes(rawNotes)
+
+    console.log("POST →", { logId, newStatus, newRating, newNotes, userId })
     try{
         //Check if log exists or belong to that user id
         const existingLog = await findLogById(logId)
@@ -94,6 +97,7 @@ router.delete('/:id', async (req,res) => {
     const logId = parseInt(req.params.id)
     const userId = req.userId
 
+    console.log("POST →", { logId, userId })
     try{
         //Check if log exists or belong to user
         const existingLog = await findLogById(logId)

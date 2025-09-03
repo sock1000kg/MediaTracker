@@ -66,7 +66,7 @@ A solo fullstack media logging webapp to help media lovers track everything in o
 - Media: User can only log media they created or global media.
 
 #### Media Types
-- Name: Trimed and lowercased
+- Name: Trimmed and lowercased
 
 ## Planned Features
 
