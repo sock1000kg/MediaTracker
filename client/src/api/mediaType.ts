@@ -22,8 +22,8 @@ export function deleteMediaType(mediaType: MediaType, confirm: boolean): Promise
   })
 }
 
-export function editMediaType(mediaType: Partial<MediaType>, newMediaType: Partial<MediaType>): Promise<MediaType> {
-  return apiFetch(`/media-type/${mediaType.name}`, {
+export function editMediaType(name: string, newMediaType: Partial<MediaType>): Promise<MediaType> {
+  return apiFetch(`/media-type/${encodeURIComponent(name)}`, {
     method: "PUT",
     body: JSON.stringify({ newName: newMediaType.name })
   })
