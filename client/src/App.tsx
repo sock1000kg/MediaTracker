@@ -19,7 +19,7 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
-      <Route path="/dashboard" element={<Homepage />} />
+      <Route path="/homepage" element={<Homepage />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   )
