@@ -41,7 +41,7 @@ export function sanitizeCreator(creator) {
 }
 
 // Sanitize status: only allow known statuses
-const allowedStatuses = ["completed", "in progress", "wishlist", "none"]
+const allowedStatuses = ["completed", "in progress", "wishlist"]
 export function sanitizeStatus(status) {
     if (!status) return null
     const cleaned = String(status).trim().toLowerCase()
