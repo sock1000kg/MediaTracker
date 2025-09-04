@@ -53,7 +53,7 @@ router.post('/', async (req,res) => {
         if(!media) return res.status(404).json({ message: 'Media does not exist or you do not own it'})
             
         //Check if user has the media's type, if not create a new type
-        const mediaType = await findMediaTypeForUserOrGlobal(media.mediaType.name, userId)
+        let mediaType = await findMediaTypeForUserOrGlobal(media.mediaType.name, userId)
         if(!mediaType) mediaType = await createMediaTypeForUser(media.mediaType.name, userId) 
 
         const log = await createLog(userId, mediaId, status, rating, notes)
@@ -82,7 +82,7 @@ router.put('/:id', async (req,res) => {
         //Check if log exists or belong to that user id
         const existingLog = await findLogById(logId)
         if(!existingLog) return res.status(404).json({ message: 'Log does not exist'})
-        if(existingLog.userId !== userId) return res.status(401).json({ message: 'You do not own this log'})
+        if(existingLog.userId !== userId) return res.status(401).json({ message: 'You can only edit logs that you created'})
 
         const updated = await updateLog(logId, newStatus, newRating, newNotes)
         return res.status(200).json(updated)
@@ -96,13 +96,18 @@ router.put('/:id', async (req,res) => {
 router.delete('/:id', async (req,res) => {
     const logId = parseInt(req.params.id)
     const userId = req.userId
+    const {confirm} = req.body
 
     console.log("POST →", { logId, userId })
     try{
         //Check if log exists or belong to user
         const existingLog = await findLogById(logId)
         if(!existingLog) return res.status(404).json({ message: 'Log does not exist'})
-        if(existingLog.userId !== userId) return res.status(401).json({ message: 'You do not own this log'})
+        if(existingLog.userId !== userId) return res.status(401).json({ message: 'You can only delete logs that you created'})
+
+        if(!confirm) return res.status(200).json({ 
+            message: `Confirm deletion?`,
+        })
 
         await deleteLog(logId)
         res.status(200).json({ message: 'Log deleted' })
