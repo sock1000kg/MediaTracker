@@ -52,7 +52,7 @@ export default function MediaTypesSection() {
           onChange={(e) =>
             setFormData((prev) => ({ ...prev, name: e.target.value }))
           }
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none focus:ring-amber-300"
+          className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none "
           placeholder="Media type name (e.g. Book, Movie, Game)"
         />
       </label>
@@ -90,7 +90,7 @@ export default function MediaTypesSection() {
           onChange={(e) =>
             setFormData((prev) => ({ ...prev, name: e.target.value }))
           }
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none focus:ring-amber-300"
+          className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none "
         />
       </label>
     </div>
@@ -121,15 +121,15 @@ export default function MediaTypesSection() {
 
       {/* Media Type list */}
       <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
-        {!(mediaTypes.length > 0) && !loading && <p className=" text-gray-600">You have no media types. Create one!</p>}
+        {!(mediaTypes.length > 0) && !loading && <p className=" text-gray-600 m-4">You have no media types. Create one!</p>}
         {!loading && (
           <ul className="space-y-2">
             {mediaTypes.map((mediaType) => (
               <li key={mediaType.id} className="p-3 bg-white rounded-xl shadow-sm border border-stone-200 m-4 capitalize">
                 <div className="flex justify-between items-center">
                   {/* Left side info */}
-                  <div className="flex items-center gap-1">
-                    <p className="font-medium">{mediaType.name}</p>
+                  <div className="flex-col items-center gap-1">
+                    <p className="font-bold text-stone-800">{mediaType.name}</p>
                     {mediaType.userId == 0 && <p className="text-xs">(system)</p>}
                   </div>
 
@@ -186,7 +186,7 @@ export default function MediaTypesSection() {
             target={target}
             onSubmit={(updatedData, target) => {
               if (!target) throw new Error("No target to edit")
-              return editMediaType(target, {...target, ...updatedData})
+              return editMediaType(target.name, {...target, ...updatedData})
             }}
             onSubmitted={handleEdited}
             renderForm={renderEditField}
