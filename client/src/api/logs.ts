@@ -3,26 +3,35 @@ import { apiFetch } from "./clientWrapper"
 import type { Log } from "@/types/media"
 
 export async function fetchLogs(): Promise<Log[]> {
-    return apiFetch("/logs")
+    return apiFetch(`/logs`)
 }
 
-
-export async function createLog(log: { mediaId: number, status: string, rating: number | null, notes: string }, token: string) {
-    const res = await fetch("http://localhost:5000/api/logs", {
+export async function createLog(log: Partial<Log>): Promise<Log> {
+    return apiFetch(`/logs`, {
         method: "POST",
-        headers: { 
-            "Content-Type": "application/json", 
-            Authorization: `Bearer ${token}`},
-        body: JSON.stringify(log),
+        body: JSON.stringify({
+            mediaId: log.media?.id,
+            status: log.status,
+            rating: log.rating,
+            notes: log.notes
+        })
     })
-    if (!res.ok) {
+}
 
-        const errData = await res.json().catch(() => ({}))
-        throw {
-            status: res.status,
-            message: errData.message || "Failed to create logs",
-        }
-    }
-        
-    return res.json()
+export async function editLog(log: Partial<Log>): Promise<Log> {
+    return apiFetch(`/logs/${log.id}`, {
+        method: "PUT",
+        body: JSON.stringify({
+            status: log.status,
+            rating: log.rating,
+            notes: log.notes
+        })
+    })
+}
+
+export async function deleteLog(log: Partial<Log>, confirm: boolean): Promise<{ message: string }> {
+    return apiFetch(`/logs/${log.id}`, {
+    method: "DELETE",
+    body: JSON.stringify({ confirm })
+  })
 }
