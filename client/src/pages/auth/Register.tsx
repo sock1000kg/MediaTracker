@@ -32,7 +32,7 @@ export default function Register() {
 
             console.log("Login success:", data)
 
-            navigate("/dashboard")
+            navigate("/homepage")
             } else {
             setError(data.message || "Login failed")
             }

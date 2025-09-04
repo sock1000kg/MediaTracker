@@ -31,7 +31,7 @@ export default function Login() {
 
             console.log("Login success:", data)
 
-            navigate("/dashboard")
+            navigate("/homepage")
           } else {
             setError(data.message || "Login failed")
           }
