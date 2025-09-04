@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 
-import type { DialogName } from "@/types/media"
+import type { DialogName, Log } from "@/types/media"
 import type { Media } from "@/types/media"
 
 import { Button } from "@/components/ui/button"
@@ -8,17 +8,34 @@ import { MediaTypeCard } from "@/components/cards/MediaTypeGroupCard"
 import { MediaCard } from "@/components/cards/MediaCard"
 
 import { createMedia, deleteMedia, editMedia, fetchMedias } from "@/api/media"
-import { CreateMediaForm } from "@/forms/MediaForm"
+import { MediaForm } from "@/forms/MediaForm"
 import { ConfirmDeleteDialog } from "../dialogs/ConfirmDeleteDialog"
 import EntityDialog from "../dialogs/EntityDialog"
+import { LogForm } from "@/forms/LogForm"
+import { createLog, editLog, fetchLogs } from "@/api/logs"
 
 export default function MediasSection() {
   const [openDialog, setOpenDialog] = useState<DialogName>(null)
   const [medias, setMedias] = useState<Media[]>([])
   const [target, setTarget] = useState<Media | null>(null)
+  const [targetLog, setTargetLog] = useState<Log | null>(null)
 
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  const [logs, setLogs] = useState<Log[]>([])
+
+    useEffect(() => {
+      const loadLogs = async () => {
+        try {
+          const data = await fetchLogs()
+          setLogs(data)
+        } catch (err: any) {
+          console.error("Failed to fetch logs:", err)
+        }
+      }
+      loadLogs()
+  }, [])
 
   // Group Medias by type
   const groupedMedias = medias.reduce((acc, media) => {
@@ -47,12 +64,12 @@ export default function MediasSection() {
     }, [])
 
 
-  // ACTIONS
+  // MEDIA
   const handleCreated = (newMedia: Media) => {
-      setMedias(prev => [ ...prev, newMedia])
+    setMedias(prev => [ ...prev, newMedia])
   }
   
-  // Delete media type
+  // Delete media
   const handleDeleteClick = (media: Media) => {
     setTarget(media)
     setOpenDialog("deleteConfirm")
@@ -66,8 +83,29 @@ export default function MediasSection() {
     setTarget(media)
     setOpenDialog("editForm")
   }
+  
   const handleEdited = (editedMedia: Media) => {
     setMedias(prev => prev.map((media) => media.id === editedMedia.id ? editedMedia : media))
+  }
+
+  // LOG
+  const handleLogged = (newLog: Log) => {
+    setLogs(prev => {
+      const exists = prev.find(log => log.id === newLog.id)
+      if (exists) {
+        // update existing
+        return prev.map(log => log.id === newLog.id ? newLog : log)
+      }
+      // add new
+      return [...prev, newLog]
+    })
+  }
+  const handleLogClick = async (media: Media) => {
+    const existingLog = logs.find(l => l.media.id === media.id)
+
+    setTarget(media)
+    setTargetLog(existingLog ?? null)
+    setOpenDialog("logForm")
   }
 
   // Media Form
@@ -75,7 +113,15 @@ export default function MediasSection() {
       formData: Partial<Media>,
       setFormData: React.Dispatch<React.SetStateAction<Partial<Media>>> //state setter for formData
   ) => (
-    <CreateMediaForm formData={formData} setFormData={setFormData}/>
+    <MediaForm formData={formData} setFormData={setFormData}/>
+  )
+
+  //Log form
+  const renderLogForm = (
+        formData: Partial<Log>,
+        setFormData: React.Dispatch<React.SetStateAction<Partial<Log>>> //state setter for formData
+    ) => (
+      <LogForm formData={formData} setFormData={setFormData} targetMedia={target ?? undefined}/>
   )
 
   return (
@@ -102,7 +148,7 @@ export default function MediasSection() {
 
       {/* Media list */}
       <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
-        {!(medias.length > 0) && !loading && <p className=" text-gray-600">You have no medias. Create one!</p>}
+        {!(medias.length > 0) && !loading && <p className=" text-gray-600 m-4">You have no medias. Create one!</p>}
         {!loading && (medias.length > 0) && (
           <ul className="space-y-2">
             {Object.entries(groupedMedias).map(([type, typeMedias]) => (
@@ -113,6 +159,7 @@ export default function MediasSection() {
                     media={media}
                     onEdit={handleEditClick}
                     onDelete={handleDeleteClick}
+                    onLog={handleLogClick}
                   />
                 ))}
               </MediaTypeCard>
@@ -147,6 +194,16 @@ export default function MediasSection() {
         onSubmit={editMedia}
         onSubmitted={handleEdited}
         renderForm={renderMediaForm}
+      />
+
+      <EntityDialog 
+        mode={targetLog ? "edit" : "create"}
+        open={openDialog === "logForm"}
+        onOpenChange={(isOpen) => setOpenDialog(isOpen ? "logForm" : null)}
+        target={targetLog ?? undefined}
+        onSubmit={targetLog ? editLog : createLog}
+        onSubmitted={handleLogged}
+        renderForm={renderLogForm}
       />
     </div>
   )
