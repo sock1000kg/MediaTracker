@@ -43,7 +43,7 @@ export default function EntityDialog<T extends EditableEntity>({
 
   useEffect(() => {
     if (open) {
-      if (mode === "edit" && target) {
+      if (target) {
         setFormData(target)
       } else {
         setFormData(initialData)

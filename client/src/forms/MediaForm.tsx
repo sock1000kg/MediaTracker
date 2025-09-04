@@ -15,15 +15,15 @@ import type { Media, MediaType } from "@/types/media"
 
 const AVAILABLE_METADATA_FIELDS = ["duration", "edition", "genre", "language", "pages", "platform",]
 
-interface CreateMediaFormProps {
+interface MediaFormProps {
     formData: Partial<Media>,
     setFormData: React.Dispatch<React.SetStateAction<Partial<Media>>> //state setter for formData
 }
 
-export function CreateMediaForm({
+export function MediaForm({
     formData,
     setFormData
-}: CreateMediaFormProps) {
+}: MediaFormProps) {
     const [selectedMetadata, setSelectedMetadata] = useState<string>("")
     const [mediaTypes, setMediaTypes] = useState<MediaType[]>([])
 
@@ -52,7 +52,7 @@ export function CreateMediaForm({
                 [selectedMetadata]: ""
             }
         }))
-    setSelectedMetadata("") // reset dropdown
+        setSelectedMetadata("") // reset dropdown
     }
 
     const updateMetadataValue = (key: string, value: string) => {
@@ -91,7 +91,7 @@ export function CreateMediaForm({
                     onChange={(e) =>
                     setFormData((prev) => ({ ...prev, title: e.target.value }))
                     }
-                    className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none focus:ring-amber-300"
+                    className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none "
                     placeholder="e.g. The Lord of the Rings"
                 />
             </label>
@@ -100,15 +100,17 @@ export function CreateMediaForm({
             <label className="block">
                 <span className="text-sm">Media Type*</span>
                 <Select value={formData.mediaType?.id?.toString()} onValueChange={(val) => {
-                    const selectedType = mediaTypes.find(mediaType => mediaType.id === Number(val))
+                        const selectedType = mediaTypes.find(
+                            mediaType => mediaType.id === Number(val)
+                        )
                         setFormData(prev => ({ ...prev, mediaType: selectedType }))
                     }}>
 
-                    <SelectTrigger className="mt-1 flex w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none focus:ring-amber-300">
+                    <SelectTrigger className="mt-1 flex w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none ">
                         <SelectValue placeholder="Select a type" />
                     </SelectTrigger>
 
-                    <SelectContent>
+                    <SelectContent> 
                         {mediaTypes.map(mediaType => (
                         <SelectItem key={mediaType.id} value={mediaType.id.toString()}>
                             {mediaType.name}
@@ -127,7 +129,7 @@ export function CreateMediaForm({
                     onChange={(e) =>
                         setFormData((prev) => ({ ...prev, creator: e.target.value }))
                     }
-                    className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none focus:ring-amber-300"
+                    className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none "
                     placeholder="e.g. J.R.R. Tolkien"
                 />
             </label>
@@ -144,7 +146,7 @@ export function CreateMediaForm({
                         year: e.target.value ? Number(e.target.value) : undefined,
                     }))
                     }
-                    className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none focus:ring-amber-300"
+                    className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none "
                     placeholder="e.g. 1954"
                 />
             </label>
@@ -160,7 +162,7 @@ export function CreateMediaForm({
                     onValueChange={(val) => setSelectedMetadata(val)}
                     >
                     <SelectTrigger
-                        className="w-[280px] rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none focus:ring-amber-300"
+                        className="w-[280px] flex rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none "
                     >
                         <SelectValue placeholder="Select metadata field" />
                     </SelectTrigger>
@@ -197,7 +199,7 @@ export function CreateMediaForm({
                             type="text"
                             value={value as string}
                             onChange={(e) => updateMetadataValue(key, e.target.value)}
-                            className="flex-1 rounded-md border border-gray-300 bg-gray-50 px-2 py-1 text-sm focus:ring-2 focus:ring-amber-300"
+                            className="flex-1 rounded-md border border-gray-300 bg-gray-50 px-2 py-1 text-sm focus:ring-2 "
                             placeholder={`Enter ${key}`}
                         />
                         <button
