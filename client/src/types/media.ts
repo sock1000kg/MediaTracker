@@ -1,4 +1,4 @@
-export type DialogName = "createForm" | "editForm" | "deleteConfirm" | null //Dialogs in homepage tabs
+export type DialogName = "createForm" | "editForm" | "logForm" | "deleteConfirm" | null //Dialogs in homepage tabs
 export type Tab = "logs" | "medias" | "mediaTypes" //Tabs in homepage
 export type EditableEntity = Log | Media | MediaType
 
@@ -29,9 +29,10 @@ export interface Media {
   created_at: string
 }
 
+export type LogStatus = "completed" | "in progress" | "wishlist"
 export interface Log {
   id: number
-  status: string
+  status: LogStatus
   rating: number
   notes: string
   logged_at: string
