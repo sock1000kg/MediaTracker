@@ -76,7 +76,7 @@ router.delete('/:id', async (req,res) => {
         const media = await findMediaById(id)
 
         if(!media) return res.status(404).json({ message: "Media not found"})
-        if(media.userId !== userId) return res.status(403).json({ message: "You do not own this media" });
+        if(media.userId !== userId) return res.status(403).json({ message: "You can only delete medias that you created" });
 
         //If there are logs for this media, prompt for confirmation
         if(!confirm) return res.status(200).json({ 
@@ -123,7 +123,7 @@ router.put('/:id', async (req,res) => {
         //Check if this media exists or belongs to the user
         const existing = await findMediaById(id)
         if (!existing) return res.status(404).json({ message: "Media not found" });
-        if (existing.userId !== userId) return res.status(403).json({ message: "You do not own this media" });
+        if (existing.userId !== userId) return res.status(403).json({ message: "You can only edit medias that you created" });
         
         //Check if new type exists for user
         const existingType = await findMediaTypeForUserOrGlobal(normalizedTypeName, userId)
