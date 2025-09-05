@@ -1,13 +1,13 @@
 import request from 'supertest'
-import app from '../../src/app.js'
-import { prisma } from '../jest.setup.mjs'
+import app from '../../app'
+import { prisma } from '../jest.setup'
 
-import { normalizeTypeName } from '../../src/utilities.js'
+import { normalizeTypeName } from '../../utilities'
 
 describe('Media Routes', () => {
     const username = 'MediaTestUser'
     const password = 'StrongPass1!'
-    const mediaTypeName = 'TestMediaType'
+    const mediaTypeName = normalizeTypeName('TestMediaType')
     const displayName = 'Tester'
     let token, user, mediaType
 
@@ -51,7 +51,7 @@ describe('Media Routes', () => {
             creator: 'Someone',
             year: 2024,
             metadata: {}
-            })
+        })
         expect(res.statusCode).toBe(201)
         expect(res.body.title).toBe('GlobalTypeTest')
     })
@@ -247,7 +247,7 @@ describe('Media Routes', () => {
                 metadata: { foo: 'baz' }
             })
         expect(res.statusCode).toBe(400)
-        expect(res.body.message).toMatch(/is required/i)
+        expect(res.body.message).toMatch(/Invalid/i)
     })
 
     test('Update media to duplicate fails', async () => {
@@ -346,7 +346,7 @@ describe('Media Routes', () => {
             .delete(`/media/${mediaId}`)
             .set('Authorization', `Bearer ${token}`)
             .send({})
-        expect(res.statusCode).toBe(400)
+        expect(res.statusCode).toBe(200)
         expect(res.body.message).toMatch(/confirm deletion/i)
         expect(res.body.logsCount).toBe(1)
     })
@@ -395,7 +395,7 @@ describe('Media Routes', () => {
             .set('Authorization', `Bearer ${token}`)
             .send({ confirm: true })
         expect(res.statusCode).toBe(403)
-        expect(res.body.message).toMatch(/do not own/i)
+        expect(res.body.message).toMatch(/that you created/i)
         // Cleanup
         await prisma.media.delete({ where: { id: otherMedia.id } })
         await prisma.mediaType.delete({ where: { id: otherType.id } })

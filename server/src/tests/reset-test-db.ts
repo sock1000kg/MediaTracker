@@ -14,19 +14,19 @@ export default async function resetTestDb() {
       env: { ...process.env }
     })
     
-    execSync('node prisma/seed.js', {
+    execSync('tsx src/prisma/seed.ts', {
       stdio: 'inherit',
       env: { ...process.env } 
     })
     
     console.log('Test database reset and seeded!')
 
-  }catch(error) {
+  }catch(error: any) {
     console.error('Error:', error.message)
   }
 }
 
 // if run directly from `node reset-test-db.js`
 if (import.meta.url === `file://${process.argv[1]}`) {
-    resetTestDb().then(() => process.exit(0))
+  resetTestDb().then(() => process.exit(0))
 }

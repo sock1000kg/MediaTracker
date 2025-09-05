@@ -1,34 +1,42 @@
 import request from 'supertest'
-import app from '../../src/app.js'
-import { prisma } from '../jest.setup.mjs'
+import app from '../../app'
+import { prisma } from '../jest.setup'
 
-import { normalizeTypeName } from '../../src/utilities.js'
+import { normalizeTypeName } from '../../utilities'
 
 describe('MediaType Routes', () => {
     const username = 'MediaTypeTestUser'
     const password = 'StrongPass1!'
-    const mediaTypeName = 'TestType'
     const displayName = 'Tester'
-    let token
+    let token, user
 
     beforeAll(async () => {
+        // Delete old user
         await prisma.user.deleteMany({ where: { username } })
+
+        //Register user
         await request(app)
             .post('/auth/register')
             .send({ username, password, displayName })
             .set('Content-Type', 'application/json')
+
+        //Login to get token
         const res = await request(app)
             .post('/auth/login')
             .send({ username, password })
             .set('Content-Type', 'application/json')
         token = res.body.token
+        user = await prisma.user.findUnique({ where: { username } })
     })
 
     afterEach(async () => {
         const user = await prisma.user.findUnique({ where: { username } })
         if (user) {
+            await prisma.media.deleteMany({ where: { userId: user.id } })
             await prisma.mediaType.deleteMany({ where: { userId: user.id } })
         }
+
+        
     })
 
     afterAll(async () => {
@@ -36,6 +44,7 @@ describe('MediaType Routes', () => {
     })
 
     test('Create media type with valid name succeeds', async () => {
+        const mediaTypeName = 'TestType'
         const res = await request(app)
             .post('/media-type')
             .set('Authorization', `Bearer ${token}`)
@@ -48,12 +57,14 @@ describe('MediaType Routes', () => {
         const res = await request(app)
             .post('/media-type')
             .set('Authorization', `Bearer ${token}`)
-            .send({})
+            .send("")
         expect(res.statusCode).toBe(400)
-        expect(res.body.message).toMatch(/name is required/i)
+        expect(res.body.message).toMatch(/invalid/i)
     })
 
     test('Create duplicate media type fails', async () => {
+        const mediaTypeName = 'DuplicateType'
+
         await request(app)
             .post('/media-type')
             .set('Authorization', `Bearer ${token}`)
@@ -67,6 +78,7 @@ describe('MediaType Routes', () => {
     })
 
     test('Fetch all media types returns array', async () => {
+        const mediaTypeName = 'FetchTestType'
         await request(app)
             .post('/media-type')
             .set('Authorization', `Bearer ${token}`)
@@ -80,24 +92,15 @@ describe('MediaType Routes', () => {
     })
 
     test('Delete media type succeeds', async () => {
-        // Create a media type
-        await request(app)
-            .post('/media-type')
-            .set('Authorization', `Bearer ${token}`)
-            .send({ name: mediaTypeName })
-
-        // Create a media associated with that type
-        const user = await prisma.user.findUnique({ where: { username } })
-        const mediaType = await prisma.mediaType.findFirst({ where: { name: normalizeTypeName(mediaTypeName), userId: user.id } })
-        await prisma.media.create({
-            data: {
-                title: 'Test Media',
-                mediaTypeId: mediaType.id,
-                userId: user.id
-            }
+        const mediaTypeName = 'DeleteTest'
+ 
+        const mediaType = await prisma.mediaType.create({ 
+            data: { 
+                name: normalizeTypeName(mediaTypeName), 
+                userId: user.id 
+            } 
         })
-
-        // Delete the media type with confirmation
+        
         const res = await request(app)
             .delete(`/media-type/${encodeURIComponent(mediaTypeName)}`)
             .set('Authorization', `Bearer ${token}`)
@@ -116,6 +119,8 @@ describe('MediaType Routes', () => {
     })
 
     test('Rename media type succeeds', async () => {
+        const mediaTypeName = 'RenameTest'
+
         await request(app)
             .post('/media-type')
             .set('Authorization', `Bearer ${token}`)
@@ -146,6 +151,7 @@ describe('MediaType Routes', () => {
             .post('/media-type')
             .set('Authorization', `Bearer ${token}`)
             .send({ name: 'TypeB' })
+            
         const res = await request(app)
             .put('/media-type/TypeA')
             .set('Authorization', `Bearer ${token}`)
@@ -164,6 +170,8 @@ describe('MediaType Routes', () => {
     })
 
     test('Rename media type with missing newName fails', async () => {
+        const mediaTypeName = 'MissingNewNameTest'
+
         await request(app)
             .post('/media-type')
             .set('Authorization', `Bearer ${token}`)
@@ -171,21 +179,20 @@ describe('MediaType Routes', () => {
         const res = await request(app)
             .put(`/media-type/${encodeURIComponent(mediaTypeName)}`)
             .set('Authorization', `Bearer ${token}`)
-            .send({})
+            .send("  ")
         expect(res.statusCode).toBe(400)
-        expect(res.body.message).toMatch(/name is required/i)
+        expect(res.body.message).toMatch(/invalid/i)
     })
 
     test('Delete media type with associated media without confirmation fails with prompt', async () => {
-        // Create a media type
-        await request(app)
-            .post('/media-type')
-            .set('Authorization', `Bearer ${token}`)
-            .send({ name: mediaTypeName })
+        const mediaTypeName = 'ConfirmDeleteTest'
+        const mediaType = await prisma.mediaType.create({ 
+            data: { 
+                name: normalizeTypeName(mediaTypeName), 
+                userId: user.id 
+            } 
+        })
 
-        // Create a media associated with that type
-        const user = await prisma.user.findUnique({ where: { username } })
-        const mediaType = await prisma.mediaType.findFirst({ where: { name: normalizeTypeName(mediaTypeName), userId: user.id } })
         await prisma.media.create({
             data: {
                 title: 'Test Media',

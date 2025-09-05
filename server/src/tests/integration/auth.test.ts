@@ -1,6 +1,6 @@
 import request from 'supertest' 
-import app from '../../src/app.js' 
-import { prisma } from '../jest.setup.mjs' 
+import app from '../../app' 
+import { prisma } from '../jest.setup' 
 
 describe('Auth Routes', () => {
     test('Register with valid credentials succeeds', async () => {

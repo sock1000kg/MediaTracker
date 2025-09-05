@@ -6,7 +6,7 @@ dotenv.config({ path: '.env.test' })
 const { PrismaClient } = await import('@prisma/client')
 const prisma = new PrismaClient()
 
-import resetTestDb from './reset-test-db.js' //reset+seed test db
+import resetTestDb from './reset-test-db'  //reset+seed test db
 
 //Check if Jest is connected to the correct db
 beforeAll(async () => {
@@ -14,12 +14,17 @@ beforeAll(async () => {
         throw new Error('Tests must be run with NODE_ENV=test')
     }
 
-    console.log('Using database:', process.env.DATABASE_URL)
-    if (!process.env.DATABASE_URL.includes('_test')) {
+    
+        const dbUrl = process.env.DATABASE_URL;
+    if (!dbUrl) throw new Error('DATABASE_URL is not defined');
+
+    console.log('Using database:', dbUrl);
+    if (!dbUrl.includes('_test')) {
         throw new Error('DATABASE_URL must point to test database')
     }
-    await prisma.$connect()
-    await resetTestDb()
+
+    await prisma.$connect();
+    await resetTestDb();
 })
 
 afterEach(async () => {

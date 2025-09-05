@@ -73,7 +73,7 @@ model UserLogs {
   id              Int       @id @default(autoincrement())
 
 
-  status          String?   //"Completed" "In progress" "Wishlist" "None"
+  status          String?   //"Completed" "In progress" "Wishlist"
   rating          Float?    //scale 100
   notes           String?
   logged_at       DateTime  @default(now())
