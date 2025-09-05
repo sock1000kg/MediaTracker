@@ -1,6 +1,6 @@
 # Media Tracker (WIP)
 
-A solo fullstack media logging webapp to help media lovers track everything in one place. Users won't have to switch between multiple apps to log what they've seen. This app supports music, books, movies,... It can be your very own personal hub where you can log, rate and store notes of your favourite medias. You can also add you own medias if the app doesn't have them!
+A solo fullstack media logging webapp to help media lovers track everything in one place. Users won't have to switch between multiple apps to log what they've seen. This app supports music, books, movies,... It can be your very own personal hub where you can log, rate and store notes of your favourite medias. You can also add you own custom medias if the app doesn't have them!
 
 ## Tech Stack
 - Backend: Node.js, Express, Prisma, PostgreSQL
