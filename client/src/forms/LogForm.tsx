@@ -58,6 +58,7 @@ export function LogForm({
             <SelectItem value="completed">Completed</SelectItem>
             <SelectItem value="in progress">In Progress</SelectItem>
             <SelectItem value="wishlist">Wishlist</SelectItem>
+            <SelectItem value="dropped">Dropped</SelectItem>
           </SelectContent>
         </Select>
       </label>

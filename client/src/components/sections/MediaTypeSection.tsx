@@ -83,7 +83,7 @@ export default function MediaTypesSection() {
   ) => (
     <div className="space-y-4">
       <label className="block">
-        <span className="text-sm">Name (ID: {formData.id})</span>
+        <span className="text-sm">Name</span>
         <input
           type="text"
           value={formData.name ?? ""}
@@ -121,7 +121,7 @@ export default function MediaTypesSection() {
 
       {/* Media Type list */}
       <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
-        {!(mediaTypes.length > 0) && !loading && <p className=" text-gray-600 m-4">You have no media types. Create one!</p>}
+        {!(mediaTypes.length > 0) && !loading && <p className="text-gray-600 m-4">You have no media types. Create one!</p>}
         {!loading && (
           <ul className="space-y-2">
             {mediaTypes.map((mediaType) => (
