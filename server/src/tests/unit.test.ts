@@ -10,7 +10,7 @@ import { checkPasswordStrength,
   sanitizeMetadata,
   sanitizeUsername,
   sanitizeDisplayName
-} from "../src/utilities.js"
+} from "../utilities"
 
 describe("checkPasswordStrength", () => {
   test("returns false for empty string", () => {
@@ -41,7 +41,7 @@ describe("normalizeTypeName", () => {
 })
 
 describe("sanitizeRating", () => {
-  test("returns null for null/undefined", () => {
+  test("returns undefined for null/undefined", () => {
     expect(sanitizeRating(null)).toBeNull()
     expect(sanitizeRating(undefined)).toBeNull()
   })
@@ -62,10 +62,10 @@ describe("sanitizeNotes", () => {
   test("trims whitespace and limits length", () => {
     const input = " ".repeat(5) + "Hello World" + " ".repeat(5)
     expect(sanitizeNotes(input)).toBe("Hello World")
-    expect(sanitizeNotes("a".repeat(6000)).length).toBe(5000)
+    expect(sanitizeNotes("a".repeat(6000))!.length).toBe(5000)
   })
 
-  test("returns null for empty or falsy values", () => {
+  test("returns undefined for empty or falsy values", () => {
     expect(sanitizeNotes("")).toBeNull()
     expect(sanitizeNotes(null)).toBeNull()
   })
@@ -74,10 +74,10 @@ describe("sanitizeNotes", () => {
 describe("sanitizeTitle", () => {
   test("trims and limits length", () => {
     expect(sanitizeTitle("  My Title  ")).toBe("My Title")
-    expect(sanitizeTitle("a".repeat(200)).length).toBe(100)
+    expect(sanitizeTitle("a".repeat(200))!.length).toBe(100)
   })
 
-  test("returns null for empty input", () => {
+  test("returns undefined for empty input", () => {
     expect(sanitizeTitle("")).toBeNull()
   })
 })
@@ -85,10 +85,10 @@ describe("sanitizeTitle", () => {
 describe("sanitizeCreator", () => {
   test("trims and limits length", () => {
     expect(sanitizeCreator("  John Doe  ")).toBe("John Doe")
-    expect(sanitizeCreator("a".repeat(200)).length).toBe(100)
+    expect(sanitizeCreator("a".repeat(200))!.length).toBe(100)
   })
 
-  test("returns null for empty input", () => {
+  test("returns undefined for empty input", () => {
     expect(sanitizeCreator("")).toBeNull()
   })
 })
@@ -99,7 +99,7 @@ describe("sanitizeStatus", () => {
     expect(sanitizeStatus("Wishlist")).toBe("wishlist")
   })
 
-  test("returns null for invalid status", () => {
+  test("returns undefined for invalid status", () => {
     expect(sanitizeStatus("Unknown")).toBeNull()
     expect(sanitizeStatus("")).toBeNull()
   })
@@ -111,7 +111,7 @@ describe("sanitizeYear", () => {
     expect(sanitizeYear("1999")).toBe(1999)
   })
 
-  test("returns null for non-integer", () => {
+  test("returns undefined for non-integer", () => {
     expect(sanitizeYear(2020.5)).toBeNull()
     expect(sanitizeYear("abc")).toBeNull()
   })
@@ -128,7 +128,7 @@ describe("sanitizeMetadata", () => {
     expect(sanitizeMetadata('{"key":"value"}')).toEqual({ key: "value" })
   })
 
-  test("returns null for invalid JSON", () => {
+  test("returns undefined for invalid JSON", () => {
     expect(sanitizeMetadata("{key: value}")).toBeNull()
     expect(sanitizeMetadata(null)).toBeNull()
   })
@@ -137,7 +137,7 @@ describe("sanitizeMetadata", () => {
 describe("sanitizeUsername", () => {
   test("trims, limits length, and enforces min 3 chars", () => {
     expect(sanitizeUsername("  Alice  ")).toBe("Alice")
-    expect(sanitizeUsername("a".repeat(50)).length).toBe(30)
+    expect(sanitizeUsername("a".repeat(50))!.length).toBe(30)
     expect(sanitizeUsername("   ab   ")).toBeNull()
     expect(sanitizeUsername("")).toBeNull()
     expect(sanitizeUsername(null)).toBeNull()
@@ -180,6 +180,6 @@ describe('sanitizeDisplayName', () => {
   test('limits length to 50 characters', () => {
     const longName = 'a'.repeat(100)
     const result = sanitizeDisplayName(longName)
-    expect(result.length).toBe(50)
+    expect(result!.length).toBe(50)
   })
 })

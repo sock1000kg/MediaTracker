@@ -1,13 +1,13 @@
 import request from 'supertest' 
-import app from '../../src/app.js' 
-import { prisma } from '../jest.setup.mjs' 
+import app from '../../app' 
+import { prisma } from '../jest.setup' 
 
-import { normalizeTypeName } from '../../src/utilities.js'
+import { normalizeTypeName } from '../../utilities'
 
 describe('Log routes', () => {
     const username = 'LogTestUser'
     const password = 'StrongPass1!'
-    const mediaTypeName = 'TestType'
+    const mediaTypeName = normalizeTypeName('TestType')
     const mediaName = 'TestMedia'
     const displayName = 'Tester'
     let token, user, mediaType, media, log
@@ -101,7 +101,7 @@ describe('Log routes', () => {
                 notes: 'Missing mediaId'
             })
         expect(res.statusCode).toBe(400)
-        expect(res.body.message).toMatch(/media/i)
+        expect(res.body.message).toMatch(/expected number/i)
     })
 
     test('Create duplicate log fails', async () => {
@@ -246,7 +246,7 @@ describe('Log routes', () => {
             .send({ status: 'completed' })
 
         expect(res.statusCode).toBe(401)
-        expect(res.body.message).toMatch(/do not own/i)
+        expect(res.body.message).toMatch(/that you created/i)
 
         await prisma.userLogs.delete({ where: { id: otherLog.id } })
         await prisma.user.delete({ where: { id: otherUser.id } })
@@ -311,6 +311,7 @@ describe('Log routes', () => {
             const res = await request(app)
                 .delete(`/logs/${log.id}`)
                 .set('Authorization', `Bearer ${token}`)
+                .send({ confirm: true })
 
             expect(res.statusCode).toBe(200)
             expect(res.body).toEqual({ message: 'Log deleted' })
@@ -324,6 +325,7 @@ describe('Log routes', () => {
             const res = await request(app)
                 .delete('/logs/999999')
                 .set('Authorization', `Bearer ${token}`)
+                .send({ confirm: true })
 
             expect(res.statusCode).toBe(404)
             expect(res.body.message).toMatch(/does not exist/i)
@@ -343,9 +345,10 @@ describe('Log routes', () => {
             const res = await request(app)
                 .delete(`/logs/${otherLog.id}`)
                 .set('Authorization', `Bearer ${token}`)
+                .send({ confirm: true })
 
             expect(res.statusCode).toBe(401)
-            expect(res.body.message).toMatch(/do not own/i)
+            expect(res.body.message).toMatch(/that you created/i)
 
             await prisma.userLogs.delete({ where: { id: otherLog.id } })
             await prisma.user.delete({ where: { id: otherUser.id } })

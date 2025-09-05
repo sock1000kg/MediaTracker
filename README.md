@@ -6,14 +6,14 @@ A solo fullstack media logging webapp to help media lovers track everything in o
 - Backend: Node.js, Express, Prisma, PostgreSQL
 - Frontend: React, Vite, TailwindCSS, Shadcn/ui
 - Testing: Jest, Supertest
-- Auth: JWT, bcrypt, express-rate-limit
+- Auth and Sanitization: JWT, bcrypt, express-rate-limit, Zod
 
 ## Features
 ### Authentication and Security
 - User authentication with JWT token
 - Password storage with bcryptjs
-- Input sanitization and validation (Prevents XSS and injections)
-- Rate limiting per user or IP to prevent abuse
+- Input sanitization and validation with Zod
+- Rate limiting per user or with a fallback to IP to prevent abuse
 
 ### Media and Logs Management
 - User-tied media types, medias, and logging
@@ -51,7 +51,7 @@ A solo fullstack media logging webapp to help media lovers track everything in o
 ### Notes / Sanitization Rules
 #### Auth
 - Username: Max 30 chars, min 3 chars, no whitespaces
-- Display name: Max 50 chars, no empty names
+- Display name: Max 50 chars, min 3 chars
 - Password: At least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
 
 #### Logs
