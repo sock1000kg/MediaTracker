@@ -15,10 +15,16 @@ export function createMediaType(mediaType: Partial<MediaType>): Promise<MediaTyp
   })
 }
 
-export function deleteMediaType(mediaType: MediaType, confirm: boolean): Promise<{ message: string }> {
+export function deleteMediaType(mediaType: MediaType): Promise<{ message: string }> {
   return apiFetch(`/media-type/${encodeURIComponent(mediaType.name)}`, {
     method: "DELETE",
-    body: JSON.stringify({ confirm })
+    body: JSON.stringify({ confirm: true })
+  })
+}
+export function deleteWarningMediaType(mediaType: MediaType): Promise<{ message: string }> {
+  return apiFetch(`/media-type/${encodeURIComponent(mediaType.name)}`, {
+    method: "DELETE",
+    body: JSON.stringify({ confirm: false })
   })
 }
 

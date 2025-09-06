@@ -29,9 +29,16 @@ export async function editLog(log: Partial<Log>): Promise<Log> {
     })
 }
 
-export async function deleteLog(log: Partial<Log>, confirm: boolean): Promise<{ message: string }> {
+export async function deleteLog(log: Partial<Log>): Promise<{ message: string }> {
     return apiFetch(`/logs/${log.id}`, {
     method: "DELETE",
-    body: JSON.stringify({ confirm })
+    body: JSON.stringify({ confirm: true })
+  })
+}
+
+export async function deleteWarningLog(log: Partial<Log>): Promise<{ message: string }> {
+    return apiFetch(`/logs/${log.id}`, {
+    method: "DELETE",
+    body: JSON.stringify({ confirm: false })
   })
 }
