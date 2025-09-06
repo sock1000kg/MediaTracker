@@ -19,10 +19,16 @@ export function createMedia(newMedia: Partial<Media>): Promise<Media> {
   })
 }
 
-export function deleteMedia(media: Media, confirm: boolean): Promise<{ message: string }> {
+export function deleteMedia(media: Media): Promise<{ message: string }> {
   return apiFetch(`/media/${media.id}`,{
     method: "DELETE",
-    body: JSON.stringify({ confirm })
+    body: JSON.stringify({ confirm: true })
+  })
+}
+export function deleteWarningMedia(media: Media): Promise<{ message: string }> {
+  return apiFetch(`/media/${media.id}`,{
+    method: "DELETE",
+    body: JSON.stringify({ confirm: false })
   })
 }
 
