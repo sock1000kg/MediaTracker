@@ -4,42 +4,40 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { useMutation } from "@tanstack/react-query"
 
 export default function Register() {
+    const navigate = useNavigate()
+
     const [username, setUsername] = useState("")
     const [displayName, setDisplayName] = useState("")
     const [password, setPassword] = useState("")
-    const [error, setError] = useState<string | null>(null)
 
-    const navigate = useNavigate()
+    const registerMutation = useMutation({
+        mutationFn: async ({ username, password, displayName }: {username: string, password: string, displayName: string}) => {
+        const res = await fetch("http://localhost:5000/auth/register", { 
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password, displayName}),
+            credentials: "include",
+        })
+            const data = await res.json()
+
+            if (!res.ok) throw new Error(data.message || "Login failed")
+            return data
+        },
+        onSuccess: (data) => {
+            localStorage.setItem("token", data.token)
+            navigate("/homepage")
+        },
+        onError: (error: any) => {
+            console.error(error.message)
+        },
+    })
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        setError(null)
-
-        try {
-            const res = await fetch("http://localhost:5000/auth/register", { 
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, password, displayName }),
-            credentials: "include",
-            })
-
-            const data = await res.json()
-
-            if (res.ok && data.token) {
-            localStorage.setItem("token", data.token)
-
-            console.log("Login success:", data)
-
-            navigate("/homepage")
-            } else {
-            setError(data.message || "Login failed")
-            }
-        } catch (error) {
-            console.error("Error:", error)
-            setError("Something went wrong")
-        }
+        registerMutation.mutate({ username, password, displayName })
     }
 
     return (
@@ -59,17 +57,7 @@ export default function Register() {
                     type="username"
                     placeholder="YourUsername"
                     value={username}
-                    onChange={(e) => {
-                        const value = e.target.value
-                        setUsername(value)
-
-                        // Check if there are spaces
-                        if(/\s/.test(value)) {
-                            setError("Username cannot contain spaces")
-                        } else {
-                            setError(null)
-                        }
-                    }}
+                    onChange={(e) => { setUsername(e.target.value) }}
                     required
                 />
                 </div>
@@ -81,18 +69,9 @@ export default function Register() {
                     type="text"
                     placeholder="Your Display Name"
                     value={displayName}
-                    onChange={(e) => {
-                        const value = e.target.value
-                        setDisplayName(value)
-
-                        // check if the whole thing is just spaces
-                        if (value.trim() === "") {
-                            setError("Display name cannot be just spaces")
-                        } else {
-                            setError(null)
-                        }
-                    }}
+                    onChange={(e) => { setDisplayName(e.target.value) }}
                     required
+                    disabled={registerMutation.isPending}
                 />
                 </div>
 
@@ -105,17 +84,24 @@ export default function Register() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    disabled={registerMutation.isPending}
                 />
 
             {/* Error message */}
-            {error && (
+            {registerMutation.isError && (
                 <p className="mt-2 text-center text-sm text-red-500">
-                {error}
+                {registerMutation.error?.message}
                 </p>
             )}
             
                 </div>
-                <Button type="submit" variant="amber" className="w-full">Sign up</Button>
+                <Button 
+                    type="submit" 
+                    variant="amber" 
+                    className="w-full"
+                >
+                    {registerMutation.isPending ? "Signing up..." : "Sign up"}
+                </Button>
             </form>
 
 

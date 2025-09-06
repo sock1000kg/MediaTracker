@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
-import { deleteLog, editLog, fetchLogs } from "@/api/logs"
+import { deleteLog, deleteWarningLog, editLog, fetchLogs } from "@/api/logs"
 
 import { LogCard } from "@/components/cards/LogCard"
 import { MediaTypeCard } from "@/components/cards/MediaTypeGroupCard"
@@ -12,11 +13,24 @@ import { ConfirmDeleteDialog } from "../dialogs/ConfirmDeleteDialog"
 
 export default function LogsSection() {
   const [openDialog, setOpenDialog] = useState<DialogName>(null)
-  const [logs, setLogs] = useState<Log[]>([])
   const [targetLog, setTargetLog] = useState<Log | null>(null)
 
-  const [loading, setLoading] = useState(true)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const queryClient = useQueryClient()
+  // Fetch logs on mount
+  const { data: logs = [], error, isLoading } = useQuery({
+      queryKey: ["logs"],
+      queryFn: fetchLogs
+    }
+  )
+  const deleteMutation = useMutation({
+    mutationFn: deleteLog,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["logs"] }),
+  })
+
+  const editMutation = useMutation({
+    mutationFn: editLog,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["logs"] }),
+  })
 
   // Group logs by media type
   // Go through each log and see if the array acc contains its type, ex: acc["book"]
@@ -30,39 +44,17 @@ export default function LogsSection() {
     return acc
   }, {} as Record<string, Log[]>) //<key,value> object
 
-  // Fetch logs on mount
-  useEffect(() => {
-    const loadLogs = async () => {
-      try {
-        const data = await fetchLogs()
-        setLogs(data)
-      } catch (error: any) {
-          setErrorMessage(error.message)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadLogs()
-  }, [])
 
   const handleDeleteClick = (log: Log) => {
     setTargetLog(log)
     setOpenDialog("deleteConfirm")
-  }
-  const handleDeleted= (deletedLog: Log) => {
-    setLogs(prev => prev.filter(log => log !== deletedLog))
   }
 
   const handleEditClick= (log: Log) => {
     setTargetLog(log)
     setOpenDialog("editForm")
   }
-  const handleEditLog = (editedLog: Log) => {
-    setLogs(prev => 
-      prev.map(log => log.id === editedLog.id ? editedLog : log)
-    )
-  }
+
   //Log form
   const renderLogForm = (
     formData: Partial<Log>,
@@ -82,16 +74,16 @@ export default function LogsSection() {
       </div>
 
       <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
-        {loading && <p className="text-gray-500 m-4">Loading logs...</p>}
+        {isLoading && <p className="text-gray-500 m-4">Loading logs...</p>}
         {/* Error message */}
-          {errorMessage && (
+          {error && (
               <p className="mt-2 text-center text-sm text-red-500">
-                  {errorMessage}
+                  {error.message}
               </p>
           )}
 
-        {!(logs.length > 0) && !loading && <p className=" text-gray-600 m-4">You have no logs. Create one!</p>}
-        {!loading && (logs.length > 0) && (
+        {logs.length === 0 && !isLoading && <p className=" text-gray-600 m-4">You have no logs. Create one!</p>}
+        {!isLoading && (logs.length > 0) && (
           <ul className="space-y-2">
             {Object.entries(groupedLogs).map(([type, typeLogs]) => (
               <MediaTypeCard key={type} type={type}>
@@ -116,7 +108,7 @@ export default function LogsSection() {
         onOpenChange={(isOpen) => setOpenDialog(isOpen ? "editForm" : null)}
         target={targetLog}
         onSubmit={editLog}
-        onSubmitted={handleEditLog}
+        onSubmitted={editMutation.mutateAsync}
         renderForm={renderLogForm}
       />
 
@@ -124,8 +116,9 @@ export default function LogsSection() {
         open={openDialog === "deleteConfirm"}
         onOpenChange={(isOpen) => setOpenDialog(isOpen ? "deleteConfirm" : null)}
         target={targetLog}
+        onWarning={deleteWarningLog}
         onDelete={deleteLog}
-        onDeleted={handleDeleted}
+        onDeleted={deleteMutation.mutateAsync}
       />
     </div>
   )

@@ -4,41 +4,39 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { useMutation } from "@tanstack/react-query"
 
 export default function Login() {
-    const [username, setUsername] = useState("")
-    const [password, setPassword] = useState("")
-    const [error, setError] = useState<string | null>(null)
+  const navigate = useNavigate()
 
-    const navigate = useNavigate()
+  const [username, setUsername] = useState("")
+  const [password, setPassword] = useState("")
 
-    const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault()
-      setError(null)
-
-      try {
-          const res = await fetch("http://localhost:5000/auth/login", { 
+  const loginMutation = useMutation({
+    mutationFn: async ({ username, password }: {username: string, password: string}) => {
+      const res = await fetch("http://localhost:5000/auth/login", { 
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, password }),
             credentials: "include",
-          })
+      })
+      const data = await res.json()
 
-          const data = await res.json()
+      if (!res.ok) throw new Error(data.message || "Login failed")
+      return data
+    },
+    onSuccess: (data) => {
+      localStorage.setItem("token", data.token)
+      navigate("/homepage")
+    },
+    onError: (error: any) => {
+      console.error(error.message)
+    },
+  })
 
-          if (res.ok && data.token) {
-            localStorage.setItem("token", data.token)
-
-            console.log("Login success:", data)
-
-            navigate("/homepage")
-          } else {
-            setError(data.message || "Login failed")
-          }
-      } catch (error) {
-          console.error("Error:", error)
-          setError("Something went wrong")
-      }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    loginMutation.mutate({ username, password })
   }
 
   return (
@@ -59,18 +57,9 @@ export default function Login() {
                     type="username"
                     placeholder="YourUsername"
                     value={username}
-                    onChange={(e) => {
-                        const value = e.target.value
-                        setUsername(value)
-
-                        // Check if there are spaces
-                        if(/\s/.test(value)) {
-                            setError("Username cannot contain spaces")
-                        } else {
-                            setError(null)
-                        }
-                    }}
+                    onChange={(e) => { setUsername(e.target.value) }}
                     required
+                    disabled={loginMutation.isPending}
                 />
                 </div>
 
@@ -83,17 +72,25 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                disabled={loginMutation.isPending}
               />
 
           {/* Error message */}
-          {error && (
+          {loginMutation.error && (
             <p className="mt-2 text-center text-sm text-red-500">
-              {error}
+              {loginMutation.error?.message}
             </p>
           )}
 
             </div>
-            <Button type="submit" variant="amber" className="w-full">Sign in</Button>
+            <Button 
+              type="submit" 
+              variant="amber" 
+              className="w-full" 
+              disabled={loginMutation.isPending}
+            >
+              {loginMutation.isPending ? "Signing in..." : "Sign in"}
+            </Button>
           </form>
 
           {/* Switch to register */}

@@ -30,8 +30,8 @@ export async function apiFetch<T>(url: string, options: RequestInit = {}): Promi
         if (res.status === 401) {
             localStorage.removeItem("token")
             if (navigateFunction) {
-            navigateFunction("/login")
-            return Promise.reject(new Error("Unauthorized"))
+              navigateFunction("/login")
+              return Promise.reject(new Error("Unauthorized"))
             }
         }   
         
@@ -41,8 +41,9 @@ export async function apiFetch<T>(url: string, options: RequestInit = {}): Promi
         throw new Error(errorMessage)
     }
 
-        return res.json()
-    } catch(error: any) {
-        throw new Error(error.message)
+    return res.json()
+
+  } catch(error: any) {
+    throw new Error(error.message)
   }
 }

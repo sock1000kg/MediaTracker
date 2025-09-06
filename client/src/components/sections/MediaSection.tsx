@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { MediaTypeCard } from "@/components/cards/MediaTypeGroupCard"
 import { MediaCard } from "@/components/cards/MediaCard"
 
-import { createMedia, deleteMedia, editMedia, fetchMedias } from "@/api/media"
+import { createMedia, deleteMedia, deleteWarningMedia, editMedia, fetchMedias } from "@/api/media"
 import { MediaForm } from "@/forms/MediaForm"
 import { ConfirmDeleteDialog } from "../dialogs/ConfirmDeleteDialog"
 import EntityDialog from "../dialogs/EntityDialog"
@@ -25,18 +25,33 @@ export default function MediasSection() {
 
   const [logs, setLogs] = useState<Log[]>([])
 
-    useEffect(() => {
-      const loadLogs = async () => {
-        try {
-          const data = await fetchLogs()
-          setLogs(data)
-        } catch (err: any) {
-          console.error("Failed to fetch logs:", err)
-        }
+  useEffect(() => {
+    const loadLogs = async () => {
+      try {
+        const data = await fetchLogs()
+        setLogs(data)
+      } catch (err: any) {
+        console.error("Failed to fetch logs:", err)
       }
-      loadLogs()
+    }
+    loadLogs()
   }, [])
 
+  useEffect(() => {
+    const loadMedias = async () => {
+      try {
+        const data = await fetchMedias()
+        console.log("Fetched media types:", data)
+        setMedias(data)
+      } catch (error: any) {
+        setErrorMessage(error.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadMedias()
+  }, [])
   // Group Medias by type
   const groupedMedias = medias.reduce((acc, media) => {
       const type = media.mediaType.name
@@ -46,22 +61,6 @@ export default function MediasSection() {
   
       return acc
     }, {} as Record<string, Media[]>) //<key,value> object
-
-  useEffect(() => {
-      const loadMedias = async () => {
-        try {
-          const data = await fetchMedias()
-          console.log("Fetched media types:", data)
-          setMedias(data)
-        } catch (error: any) {
-          setErrorMessage(error.message)
-        } finally {
-          setLoading(false)
-        }
-      }
-  
-      loadMedias()
-    }, [])
 
 
   // MEDIA
@@ -182,6 +181,7 @@ export default function MediasSection() {
         open={openDialog === "deleteConfirm"}
         onOpenChange={(isOpen) => setOpenDialog(isOpen ? "deleteConfirm" : null)}
         target={target}
+        onWarning={deleteWarningMedia}
         onDelete={deleteMedia}
         onDeleted={handleDeleted}
       />

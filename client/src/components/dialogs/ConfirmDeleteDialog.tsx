@@ -20,7 +20,8 @@ interface ConfirmDeleteDialogProps<T = string> {
   cancelText?: string
   target: T | null
   /** Function that performs the delete (target, confirm: bool) */
-  onDelete: (target: T, confirm: boolean) => Promise<{ message: string }>
+  onWarning: (target: T) => Promise<{ message: string }>
+  onDelete: (target: T) => Promise<{ message: string }>
   /** Callback when successful delete */
   onDeleted?: (target: T) => void
 }
@@ -33,6 +34,7 @@ export function ConfirmDeleteDialog<T = MediaType>({
   confirmText = "Delete",
   cancelText = "Cancel",
   target,
+  onWarning,
   onDelete,
   onDeleted,
 }: ConfirmDeleteDialogProps<T>) {
@@ -40,12 +42,13 @@ export function ConfirmDeleteDialog<T = MediaType>({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null) //For when sth went wrong or bad request
 
-  //Make sure the request is sent upon opening the dialog (if done in handOpenChange instead, the target is somehow out of sync with 'open' and req is never sent)
+  //Make sure the request is sent upon opening the dialog to fetch warning 
+  //(if done in handOpenChange instead, the target is somehow out of sync with 'open' and req is never sent)
   useEffect(() => {
   if (open && target) {
     setLoading(true)
     setError(null)
-    onDelete(target, false)
+    onWarning(target)
       .then((result) => setWarning(result.message))
       .catch((err: any) => setError(err.message))
       .finally(() => setLoading(false))
@@ -70,7 +73,7 @@ export function ConfirmDeleteDialog<T = MediaType>({
     setLoading(true)
     setError(null)
     try {
-      const result = await onDelete(target, true)
+      const result = await onDelete(target)
       onDeleted?.(target)
       onOpenChange(false)
       alert(result.message)

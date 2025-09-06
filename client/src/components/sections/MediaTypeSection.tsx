@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 
-import { fetchMediaTypes, deleteMediaType, editMediaType, createMediaType } from "@/api/mediaType"
+import { fetchMediaTypes, deleteMediaType, editMediaType, createMediaType, deleteWarningMediaType } from "@/api/mediaType"
 
 import type { MediaType, DialogName } from "@/types/media"
 import { ConfirmDeleteDialog } from "../dialogs/ConfirmDeleteDialog"
@@ -175,6 +175,7 @@ export default function MediaTypesSection() {
             onOpenChange={(isOpen) => setOpenDialog(isOpen ? "deleteConfirm" : null)}
             target={target}
             description={`Are you sure you want to delete '${target}'?`}
+            onWarning={deleteWarningMediaType}
             onDelete={deleteMediaType}
             onDeleted={handleDeleted}
           />
