@@ -25,7 +25,7 @@ export function MediaCard({ media, onEdit, onDelete, onLog}: MediaCardProps) {
 
                 {/* Info */}
                 <div className="flex-col text-xs text-stone-600 gap-2">
-                    <div className="flex gap-2 ">
+                    <div className="flex gap-2 items-center capitalize">
                         {media.creator && <span>{media.creator}</span>}
                         {media.creator && media.year && <span>•</span>}
                         {media.year && <span>{media.year}</span>}

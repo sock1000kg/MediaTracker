@@ -20,7 +20,7 @@ export function LogCard({log, onDelete, onEdit}: LogCardProps ) {
 
           <div className="flex flex-col text-xs text-stone-600 ">
             {/* Creator & year */}
-            <div className="flex gap-2 items-center">
+            <div className="flex gap-2 items-center capitalize">
               {log.media.creator && <span>{log.media.creator}</span>}
               {log.media.creator && log.media.year && <span>•</span>}
               {log.media.year && <span>{log.media.year}</span>}
