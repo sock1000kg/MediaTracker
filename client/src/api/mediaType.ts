@@ -28,6 +28,7 @@ export function deleteWarningMediaType(mediaType: MediaType): Promise<{ message:
   })
 }
 
+//Partial cus it's using the same form as creating
 export function editMediaType(name: string, newMediaType: Partial<MediaType>): Promise<MediaType> {
   return apiFetch(`/media-type/${encodeURIComponent(name)}`, {
     method: "PUT",

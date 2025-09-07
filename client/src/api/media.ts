@@ -32,6 +32,7 @@ export function deleteWarningMedia(media: Media): Promise<{ message: string }> {
   })
 }
 
+//Partial cus it's using the same form as creating
 export function editMedia(media: Partial<Media>): Promise<Media> {
   return apiFetch(`/media/${media.id}`, {
     method: "PUT",
