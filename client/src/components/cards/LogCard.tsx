@@ -64,7 +64,8 @@ export function LogCard({log, onDelete, onEdit}: LogCardProps ) {
         </div>
       </div>
 
-      <p className="text-md text-stone-800"> {log.notes} </p>
+      {/* Notes */}
+      <p className="text-md text-stone-800 whitespace-pre-line max-h-32 overflow-y-auto"> {log.notes} </p>
 
       <div className='flex justify-end gap-2'>
         {/* Edit button */}
