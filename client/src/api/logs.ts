@@ -18,6 +18,7 @@ export async function createLog(log: Partial<Log>): Promise<Log> {
     })
 }
 
+//Partial cus it's using the same form as creating
 export async function editLog(log: Partial<Log>): Promise<Log> {
     return apiFetch(`/logs/${log.id}`, {
         method: "PUT",
@@ -29,14 +30,14 @@ export async function editLog(log: Partial<Log>): Promise<Log> {
     })
 }
 
-export async function deleteLog(log: Partial<Log>): Promise<{ message: string }> {
+export async function deleteLog(log: Log): Promise<{ message: string }> {
     return apiFetch(`/logs/${log.id}`, {
     method: "DELETE",
     body: JSON.stringify({ confirm: true })
   })
 }
 
-export async function deleteWarningLog(log: Partial<Log>): Promise<{ message: string }> {
+export async function deleteWarningLog(log: Log): Promise<{ message: string }> {
     return apiFetch(`/logs/${log.id}`, {
     method: "DELETE",
     body: JSON.stringify({ confirm: false })
