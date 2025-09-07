@@ -107,7 +107,7 @@ export const deleteExistingLog = async (req: Request, res: Response) => {
         return res.status(401).json({ message: "You can only delete logs that you created" })
 
         if (!confirm)
-        return res.status(200).json({ message: "Confirm deletion?" })
+        return res.status(200).json({ message: `Confirm deletion of ${existingLog.media.title} Log?` })
 
         await deleteLog(logId)
         res.status(200).json({ message: "Log deleted" })
