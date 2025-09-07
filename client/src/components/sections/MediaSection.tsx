@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query"
 
 import type { DialogName, Log } from "@/types/media"
 import type { Media } from "@/types/media"
@@ -7,54 +8,39 @@ import { Button } from "@/components/ui/button"
 import { MediaTypeCard } from "@/components/cards/MediaTypeGroupCard"
 import { MediaCard } from "@/components/cards/MediaCard"
 
-import { createMedia, deleteMedia, deleteWarningMedia, editMedia, fetchMedias } from "@/api/media"
+import { createMedia, deleteMedia, deleteWarningMedia, editMedia } from "@/api/media"
+import { createLog, editLog } from "@/api/logs"
+import { fetchLogsQueryOptions } from "@/queryOptions/fetchLogsQueryOptions"
+import { fetchMediasQueryOptions } from "@/queryOptions/fetchMediasQueryOptions"
+
 import { MediaForm } from "@/forms/MediaForm"
 import { ConfirmDeleteDialog } from "../dialogs/ConfirmDeleteDialog"
 import EntityDialog from "../dialogs/EntityDialog"
 import { LogForm } from "@/forms/LogForm"
-import { createLog, editLog, fetchLogs } from "@/api/logs"
 
 export default function MediasSection() {
+  const queryClient = useQueryClient()
+
   const [openDialog, setOpenDialog] = useState<DialogName>(null)
-  const [medias, setMedias] = useState<Media[]>([])
+
   const [target, setTarget] = useState<Media | null>(null)
   const [targetLog, setTargetLog] = useState<Log | null>(null)
 
-  const [loading, setLoading] = useState(true)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [logsQuery, mediasQuery] = useQueries({
+    queries:[
+      fetchLogsQueryOptions(),
+      fetchMediasQueryOptions()
+    ]
+  })
 
-  const [logs, setLogs] = useState<Log[]>([])
+  const logs = logsQuery.data ?? []
+  const medias = mediasQuery.data ?? []
+  const pending = logsQuery.isPending || mediasQuery.isPending
+  const errorMessage = logsQuery.error?.message || mediasQuery.error?.message || null
 
-  useEffect(() => {
-    const loadLogs = async () => {
-      try {
-        const data = await fetchLogs()
-        setLogs(data)
-      } catch (err: any) {
-        console.error("Failed to fetch logs:", err)
-      }
-    }
-    loadLogs()
-  }, [])
-
-  useEffect(() => {
-    const loadMedias = async () => {
-      try {
-        const data = await fetchMedias()
-        console.log("Fetched media types:", data)
-        setMedias(data)
-      } catch (error: any) {
-        setErrorMessage(error.message)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadMedias()
-  }, [])
   // Group Medias by type
   const groupedMedias = medias.reduce((acc, media) => {
-      const type = media.mediaType.name
+      const type = media.mediaType.name ?? "Unknown"
   
       if (!acc[type]) acc[type] = [] //Create empty type array if type doesnt exist
       acc[type].push(media)
@@ -62,51 +48,69 @@ export default function MediasSection() {
       return acc
     }, {} as Record<string, Media[]>) //<key,value> object
 
-
+  //MUTATIONS
   // MEDIA
-  const handleCreated = (newMedia: Media) => {
-    setMedias(prev => [ ...prev, newMedia])
-  }
+  const createMediaMutation = useMutation({
+    mutationFn: createMedia,
+    onSuccess: () => {
+      queryClient.refetchQueries(fetchMediasQueryOptions())
+      queryClient.refetchQueries(fetchLogsQueryOptions())
+    }
+  })
   
+  const deleteMediaMutation = useMutation({
+    mutationFn: deleteMedia,
+    onSuccess: () => {
+      queryClient.refetchQueries(fetchMediasQueryOptions())
+      queryClient.refetchQueries(fetchLogsQueryOptions())
+    }
+  })
+  
+  const editMediaMutation = useMutation({
+    mutationFn: editMedia,
+    onSuccess: () => {
+      queryClient.refetchQueries(fetchMediasQueryOptions())
+      queryClient.refetchQueries(fetchLogsQueryOptions())
+    }
+  })
+  // LOG
+  const createLogMutation = useMutation({
+    mutationFn: createLog,
+    onSuccess: () => queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey}),
+  })
+  
+  const editLogMutation = useMutation({
+    mutationFn: editLog,
+    onSuccess: () => queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey}),
+  })
+  
+  //HANDLERS
+  // Edit type
+  const handleEditClick = (media: Media) => {
+    setTarget(media)
+    setOpenDialog("mediaForm")
+  }
+
+  const handleCreateClick = () => {
+    setTarget(null)
+    setOpenDialog("mediaForm")
+  }
+
   // Delete media
   const handleDeleteClick = (media: Media) => {
     setTarget(media)
     setOpenDialog("deleteConfirm")
   }
-  const handleDeleted = (deletedMedia: Media) => {
-    setMedias(prev => prev.filter(media => media !== deletedMedia))
-  }
-
-  // Edit type
-  const handleEditClick = (media: Media) => {
-    setTarget(media)
-    setOpenDialog("editForm")
-  }
-  
-  const handleEdited = (editedMedia: Media) => {
-    setMedias(prev => prev.map((media) => media.id === editedMedia.id ? editedMedia : media))
-  }
-
-  // LOG
-  const handleLogged = (newLog: Log) => {
-    setLogs(prev => {
-      const exists = prev.find(log => log.id === newLog.id)
-      if (exists) {
-        // update existing
-        return prev.map(log => log.id === newLog.id ? newLog : log)
-      }
-      // add new
-      return [...prev, newLog]
-    })
-  }
+  //Edit or create logs
   const handleLogClick = async (media: Media) => {
     const existingLog = logs.find(l => l.media.id === media.id)
-
+    
     setTarget(media)
     setTargetLog(existingLog ?? null)
     setOpenDialog("logForm")
   }
 
+  //FORMS
   // Media Form
   const renderMediaForm = (
       formData: Partial<Media>,
@@ -131,12 +135,12 @@ export default function MediasSection() {
           <p className="text-lg font-semibold">Your Medias</p>
           <p className="text-sm text-gray-600">List of medias you have</p>
         </div>
-        <Button size="default" variant="amber" onClick={() => setOpenDialog("createForm")}>
+        <Button size="default" variant="amber" onClick={() => handleCreateClick()}>
           + Add Media
         </Button>
       </div>
 
-      {loading && <p className="text-gray-500 m-4">Loading medias...</p>}
+      {pending && <p className="text-gray-500 m-4">Loading medias...</p>}
 
       {/* Error message */}
       {errorMessage && (
@@ -147,10 +151,10 @@ export default function MediasSection() {
 
       {/* Media list */}
       <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
-        {!(medias.length > 0) && !loading && <p className=" text-gray-600 m-4">You have no medias. Create one!</p>}
-        {!loading && (medias.length > 0) && (
+        {!(medias.length > 0) && !pending && <p className=" text-gray-600 m-4">You have no medias. Create one!</p>}
+        {!pending && (medias.length > 0) && (
           <ul className="space-y-2">
-            {Object.entries(groupedMedias).map(([type, typeMedias]) => (
+            {Object.entries(groupedMedias).sort().map(([type, typeMedias]) => (
               <MediaTypeCard key={type} type={type}>
                 {typeMedias.map((media) => (
                   <MediaCard
@@ -167,32 +171,23 @@ export default function MediasSection() {
         )}
       </div>
 
-      {/* Dialog */}
-      <EntityDialog
-        mode="create"
-        open={openDialog === "createForm"}
-        onOpenChange={(isOpen) => setOpenDialog(isOpen ? "createForm" : null)}
-        onSubmit={createMedia}
-        onSubmitted={handleCreated}
-        renderForm={renderMediaForm}
-      />
-
       <ConfirmDeleteDialog
         open={openDialog === "deleteConfirm"}
         onOpenChange={(isOpen) => setOpenDialog(isOpen ? "deleteConfirm" : null)}
         target={target}
         onWarning={deleteWarningMedia}
-        onDelete={deleteMedia}
-        onDeleted={handleDeleted}
+        onDelete={deleteMediaMutation.mutateAsync}
       />
 
       <EntityDialog
-        mode="edit"
-        open={openDialog === "editForm"}
-        onOpenChange={(isOpen) => setOpenDialog(isOpen ? "editForm" : null)} 
-        target={target}
-        onSubmit={editMedia}
-        onSubmitted={handleEdited}
+        mode={target ? "edit" : "create"}
+        open={openDialog === "mediaForm"}
+        onOpenChange={(isOpen) => setOpenDialog(isOpen ? "mediaForm" : null)} 
+        target={target ?? undefined}
+        onSubmit={target ? 
+          (formData) => editMediaMutation.mutateAsync(formData) :
+          (formData) => createMediaMutation.mutateAsync(formData)
+        }
         renderForm={renderMediaForm}
       />
 
@@ -201,8 +196,9 @@ export default function MediasSection() {
         open={openDialog === "logForm"}
         onOpenChange={(isOpen) => setOpenDialog(isOpen ? "logForm" : null)}
         target={targetLog ?? undefined}
-        onSubmit={targetLog ? editLog : createLog}
-        onSubmitted={handleLogged}
+        onSubmit={targetLog ? 
+          (formData) => editLogMutation.mutateAsync(formData) : 
+          (formData) => createLogMutation.mutateAsync(formData)}
         renderForm={renderLogForm}
       />
     </div>
