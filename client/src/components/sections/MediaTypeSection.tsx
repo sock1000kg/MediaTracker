@@ -1,45 +1,74 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
 
-import { fetchMediaTypes, deleteMediaType, editMediaType, createMediaType, deleteWarningMediaType } from "@/api/mediaType"
+import { deleteMediaType, editMediaType, createMediaType, deleteWarningMediaType } from "@/api/mediaType"
 
 import type { MediaType, DialogName } from "@/types/media"
 import { ConfirmDeleteDialog } from "../dialogs/ConfirmDeleteDialog"
 import EntityDialog from "@/components/dialogs/EntityDialog"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { fetchMediaTypesQueryOptions } from "@/queryOptions/fetchMediaTypesQueryOptions"
+import { fetchMediasQueryOptions } from "@/queryOptions/fetchMediasQueryOptions"
+import { fetchLogsQueryOptions } from "@/queryOptions/fetchLogsQueryOptions"
 
 export default function MediaTypesSection() {
+  const queryClient = useQueryClient()
+
   const [openDialog, setOpenDialog] = useState<DialogName>(null)
-  const [mediaTypes, setMediaTypes] = useState<MediaType[]>([])
   const [target, setTarget] = useState<MediaType | null>(null)
-
-
-  const [loading, setLoading] = useState(true)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-
+  
   // Fetch for media types on load
-  useEffect(() => {
-    const loadMediaTypes = async () => {
-      try {
-        const data = await fetchMediaTypes()
-        console.log("Fetched media types:", data)
-        setMediaTypes(data)
-      } catch (error: any) {
-        setErrorMessage(error.message)
-      } finally {
-        setLoading(false)
-      }
+  const  { data: mediaTypes = [], error, isPending } = useQuery(fetchMediaTypesQueryOptions())
+
+  //Mutations
+  const createMutation = useMutation({
+    mutationFn: createMediaType,
+    onSuccess: () => { 
+      queryClient.fetchQuery(fetchLogsQueryOptions())
+      queryClient.fetchQuery(fetchMediaTypesQueryOptions())
+      queryClient.fetchQuery(fetchMediasQueryOptions())
     }
+  })
 
-    loadMediaTypes()
-  }, [])
+  const deleteMutation = useMutation({
+    mutationFn: deleteMediaType,
+    onSuccess: () => { 
+      queryClient.fetchQuery(fetchLogsQueryOptions())
+      queryClient.fetchQuery(fetchMediaTypesQueryOptions())
+      queryClient.fetchQuery(fetchMediasQueryOptions())
+    }
+  })
 
-  // CRUD ACTIONS
-  // Create new type
-  const handleCreated = (newType: MediaType) => {
-    setMediaTypes(prev => [ ...prev, newType])
+  const editMutation = useMutation({
+    mutationFn: ({name, newMediaType} : {name: string, newMediaType: Partial<MediaType>}) => editMediaType(name, newMediaType),
+    onSuccess: () => { 
+      queryClient.fetchQuery(fetchLogsQueryOptions())
+      queryClient.fetchQuery(fetchMediaTypesQueryOptions())
+      queryClient.fetchQuery(fetchMediasQueryOptions())
+    }
+  })
+
+  
+  // Handlers
+  const handleDeleteClick = (mediaType: MediaType) => {
+    setTarget(mediaType)
+    setOpenDialog("deleteConfirm")
   }
-  const renderCreateField = (
+
+  const handleEditClick = (mediaType: MediaType) => {
+    setTarget(mediaType)
+    setOpenDialog("mediaTypeForm")
+  }
+  
+  const handleCreateClick = () => {
+    setTarget(null)
+    setOpenDialog("mediaTypeForm")
+  }
+  
+  // Forms
+  // Define fields for the edit forms
+  const renderEditField = (
     formData: Partial<MediaType>,
     setFormData: React.Dispatch<React.SetStateAction<Partial<MediaType>>> //state setter for formData
   ) => (
@@ -58,43 +87,6 @@ export default function MediaTypesSection() {
       </label>
     </div>
   )
-
-  // Delete media type
-  const handleDeleteClick = (mediaType: MediaType) => {
-    setTarget(mediaType)
-    setOpenDialog("deleteConfirm")
-  }
-  const handleDeleted = (deletedType: MediaType) => {
-    setMediaTypes(prev => prev.filter((mediaType) => mediaType.name !== deletedType.name))
-  }
-
-  // Edit type
-  const handleEditClick = (mediaType: MediaType) => {
-    setTarget(mediaType)
-    setOpenDialog("editForm")
-  }
-  const handleEdited = (editedType: MediaType) => {
-    setMediaTypes(prev => prev.map((mediaType) => mediaType.id === editedType.id ? editedType : mediaType))
-  }
-  // Define fields for the edit forms
-  const renderEditField = (
-    formData: Partial<MediaType>,
-    setFormData: React.Dispatch<React.SetStateAction<Partial<MediaType>>> //state setter for formData
-  ) => (
-    <div className="space-y-4">
-      <label className="block">
-        <span className="text-sm">Name</span>
-        <input
-          type="text"
-          value={formData.name ?? ""}
-          onChange={(e) =>
-            setFormData((prev) => ({ ...prev, name: e.target.value }))
-          }
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none "
-        />
-      </label>
-    </div>
-  )
     
   // MEDIA TYPE TAB RENDERING
   return (
@@ -105,26 +97,29 @@ export default function MediaTypesSection() {
           <p className="text-lg font-semibold">Your Media Types</p>
           <p className="text-sm text-gray-600">List of categories you have created</p>
         </div>
-        <Button size="default" variant="amber" onClick={() => setOpenDialog("createForm")}>
+        <Button size="default" variant="amber" onClick={() => handleCreateClick()}>
           + Add Media Type
         </Button>
       </div>
 
-      {loading && <p className="text-gray-500 m-4">Loading media types...</p>}
+      {isPending && <p className="text-gray-500 m-4">Loading media types...</p>}
 
       {/* Error message */}
-      {errorMessage && (
+      {error && (
           <p className="mt-2 text-center text-sm text-red-500">
-              {errorMessage}
+              {error.message}
           </p>
       )}
 
       {/* Media Type list */}
       <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
-        {!(mediaTypes.length > 0) && !loading && <p className="text-gray-600 m-4">You have no media types. Create one!</p>}
-        {!loading && (
+        {!(mediaTypes.length > 0) && !isPending && <p className="text-gray-600 m-4">You have no media types. Create one!</p>}
+        {!isPending && (
           <ul className="space-y-2">
-            {mediaTypes.map((mediaType) => (
+            {mediaTypes
+              .slice() //copy so we dont mess with cache
+              .sort((a,b) => a.name.localeCompare(b.name)) // alphabetical sort
+              .map((mediaType) => (
               <li key={mediaType.id} className="p-3 bg-white rounded-xl shadow-sm border border-stone-200 m-4 capitalize">
                 <div className="flex justify-between items-center">
                   {/* Left side info */}
@@ -177,28 +172,18 @@ export default function MediaTypesSection() {
             description={`Are you sure you want to delete '${target}'?`}
             onWarning={deleteWarningMediaType}
             onDelete={deleteMediaType}
-            onDeleted={handleDeleted}
+            onDeleted={deleteMutation.mutateAsync}
           />
 
           <EntityDialog
-            mode="edit"
-            open={openDialog === "editForm"}
-            onOpenChange={(isOpen) => setOpenDialog(isOpen ? "editForm" : null)}
-            target={target}
-            onSubmit={(updatedData, target) => {
-              if (!target) throw new Error("No target to edit")
-              return editMediaType(target.name, {...target, ...updatedData})
-            }}
-            onSubmitted={handleEdited}
+            mode={target ? "edit" : "create"}
+            open={openDialog === "mediaTypeForm"}
+            onOpenChange={(isOpen) => setOpenDialog(isOpen ? "mediaTypeForm" : null)}
+            target={target ?? undefined}
+            onSubmit={target ? 
+              (formData) => editMutation.mutateAsync({ name: target.name, newMediaType: formData }) : 
+              (formData) => createMutation.mutateAsync(formData)}
             renderForm={renderEditField}
-          />
-          <EntityDialog
-            mode="create"
-            open={openDialog === "createForm"}
-            onOpenChange={(isOpen) => setOpenDialog(isOpen ? "createForm" : null)}
-            onSubmit={createMediaType}
-            onSubmitted={handleCreated}
-            renderForm={renderCreateField}
           />
     </div>
 

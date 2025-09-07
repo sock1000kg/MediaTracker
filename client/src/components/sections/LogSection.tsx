@@ -1,7 +1,8 @@
 import { useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
-import { deleteLog, deleteWarningLog, editLog, fetchLogs } from "@/api/logs"
+import { deleteLog, deleteWarningLog, editLog } from "@/api/logs"
+import { fetchLogsQueryOptions } from "@/queryOptions/fetchLogsQueryOptions"
 
 import { LogCard } from "@/components/cards/LogCard"
 import { MediaTypeCard } from "@/components/cards/MediaTypeGroupCard"
@@ -17,19 +18,15 @@ export default function LogsSection() {
 
   const queryClient = useQueryClient()
   // Fetch logs on mount
-  const { data: logs = [], error, isLoading } = useQuery({
-      queryKey: ["logs"],
-      queryFn: fetchLogs
-    }
-  )
+  const { data: logs = [], error, isPending } = useQuery(fetchLogsQueryOptions())
   const deleteMutation = useMutation({
     mutationFn: deleteLog,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["logs"] }),
+    onSuccess: () => queryClient.refetchQueries(fetchLogsQueryOptions()),
   })
 
   const editMutation = useMutation({
     mutationFn: editLog,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["logs"] }),
+    onSuccess: () => queryClient.refetchQueries(fetchLogsQueryOptions()),
   })
 
   // Group logs by media type
@@ -52,7 +49,7 @@ export default function LogsSection() {
 
   const handleEditClick= (log: Log) => {
     setTargetLog(log)
-    setOpenDialog("editForm")
+    setOpenDialog("logForm")
   }
 
   //Log form
@@ -74,7 +71,7 @@ export default function LogsSection() {
       </div>
 
       <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
-        {isLoading && <p className="text-gray-500 m-4">Loading logs...</p>}
+        {isPending && <p className="text-gray-500 m-4">Loading logs...</p>}
         {/* Error message */}
           {error && (
               <p className="mt-2 text-center text-sm text-red-500">
@@ -82,10 +79,10 @@ export default function LogsSection() {
               </p>
           )}
 
-        {logs.length === 0 && !isLoading && <p className=" text-gray-600 m-4">You have no logs. Create one!</p>}
-        {!isLoading && (logs.length > 0) && (
+        {logs.length === 0 && !isPending && <p className=" text-gray-600 m-4">You have no logs. Create one!</p>}
+        {!isPending && (logs.length > 0) && (
           <ul className="space-y-2">
-            {Object.entries(groupedLogs).map(([type, typeLogs]) => (
+            {Object.entries(groupedLogs).sort().map(([type, typeLogs]) => (
               <MediaTypeCard key={type} type={type}>
                 {typeLogs.map((log) => (
                   <LogCard 
@@ -104,11 +101,10 @@ export default function LogsSection() {
       {/* Dialog */}
       <EntityDialog
         mode="edit"
-        open={openDialog === "editForm"}
-        onOpenChange={(isOpen) => setOpenDialog(isOpen ? "editForm" : null)}
+        open={openDialog === "logForm"}
+        onOpenChange={(isOpen) => setOpenDialog(isOpen ? "logForm" : null)}
         target={targetLog}
-        onSubmit={editLog}
-        onSubmitted={editMutation.mutateAsync}
+        onSubmit={(formData) => editMutation.mutateAsync(formData)}
         renderForm={renderLogForm}
       />
 
@@ -117,8 +113,7 @@ export default function LogsSection() {
         onOpenChange={(isOpen) => setOpenDialog(isOpen ? "deleteConfirm" : null)}
         target={targetLog}
         onWarning={deleteWarningLog}
-        onDelete={deleteLog}
-        onDeleted={deleteMutation.mutateAsync}
+        onDelete={deleteMutation.mutateAsync}
       />
     </div>
   )
