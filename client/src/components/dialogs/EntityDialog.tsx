@@ -16,8 +16,12 @@ interface EntityDialogProps<T extends EditableEntity> {
   cancelText?: string
   initialData?: Partial<T>
   target?: T | null
-  onSubmit: (data: Partial<T>, target?: T) => Promise<T>
-  onSubmitted?: (result: T) => void
+
+  onSubmit: (data: Partial<T>, target?: T) => Promise<T> //Submit the form to the DB
+  //deprecated when React Queries took care of caching -- manual UI update if needed --
+  onSubmitted?: (result: T) => void 
+
+  //Form passed down from parents
   renderForm: (
     formData: Partial<T>,
     setFormData: React.Dispatch<React.SetStateAction<Partial<T>>>
@@ -33,8 +37,8 @@ export default function EntityDialog<T extends EditableEntity>({
   cancelText = "Cancel",
   initialData = {},
   target,
-  onSubmit,
-  onSubmitted,
+  onSubmit, 
+  onSubmitted, 
   renderForm,
 }: EntityDialogProps<T>) {
   const [formData, setFormData] = useState<Partial<T>>(initialData)
@@ -43,8 +47,9 @@ export default function EntityDialog<T extends EditableEntity>({
 
   useEffect(() => {
     if (open) {
+      // Edit mode
       if (target) {
-        setFormData(target)
+        setFormData(target) //Render target's info
       } else {
         setFormData(initialData)
       }
@@ -58,7 +63,7 @@ export default function EntityDialog<T extends EditableEntity>({
     setErrorMessage(null)
 
     try {
-      const result = await onSubmit(formData, target ?? undefined)
+      const result = await onSubmit(formData)
       onSubmitted?.(result)
       onOpenChange(false)
     } catch (err: any) {

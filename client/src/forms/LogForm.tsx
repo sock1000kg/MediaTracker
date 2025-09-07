@@ -43,7 +43,7 @@ export function LogForm({
         )}
       {/* Status */}
       <label className="block">
-        <span className="text-sm">Status*</span>
+        <span className="text-sm">Status</span>
         <Select
           value={formData.status ?? undefined}
           onValueChange={(val: LogStatus) =>
