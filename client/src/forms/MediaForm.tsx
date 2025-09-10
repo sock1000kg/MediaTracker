@@ -10,7 +10,7 @@ import { useState, useEffect } from "react"
 
 import { fetchMediaTypes } from "@/api/mediaType"
 
-import type { Media, MediaType } from "@/types/media"
+import type { Media, MediaType } from "@/types/main"
 
 
 const AVAILABLE_METADATA_FIELDS = ["duration", "edition", "genre", "language", "pages", "platform",]
@@ -99,7 +99,7 @@ export function MediaForm({
             {/* Media Type (dropdown) */}
             <label className="block">
                 <span className="text-sm">Media Type*</span>
-                <Select value={formData.mediaType?.id?.toString()} onValueChange={(val) => {
+                <Select value={formData.mediaType?.id?.toString() ?? ""} onValueChange={(val) => {
                         const selectedType = mediaTypes.find(
                             mediaType => mediaType.id === Number(val)
                         )
@@ -149,6 +149,19 @@ export function MediaForm({
                     className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none "
                     placeholder="e.g. 1954"
                 />
+            </label>
+
+            {/* Description */}
+            <label className="block">
+                <span className="text-sm">Description</span>
+                <textarea
+                    value={formData.description ?? ""}
+                    onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, description: e.target.value }))
+                    }
+                    className="mt-1 block w-full h-40 rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none "
+                    placeholder="Descibe this media"
+                    />
             </label>
 
             {/* Metadata */}
