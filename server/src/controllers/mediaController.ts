@@ -1,5 +1,5 @@
 import { Request, Response } from "express"
-import { z } from "zod"
+import { z, ZodError } from "zod"
 import { 
   getAllMediasForUser,
   findMediaById,
@@ -32,21 +32,66 @@ export const createNewMedia = async (req: Request, res: Response) => {
   const userId = req.userId
   if (!userId) return res.status(401).json({ message: "Unauthorized: missing userId" })
 
-  //Sanitization
-  const { title, mediaType, creator, year, metadata } = validateSchema(createMediaSchema, req.body)
-
+    
   try {
+    //Sanitization
+    const { 
+      title, 
+      mediaType, 
+      creator, 
+      year, 
+      source, 
+      sourceId, 
+      sourceRating,
+      ratingsCount, 
+      description, 
+      metadata,
+      imageUrl
+      } = validateSchema(createMediaSchema, req.body)
+
       const existingType = await findMediaTypeForUserOrGlobal(mediaType.name, userId)
       if (!existingType) return res.status(404).json({ message: "Media Type does not exist" })
 
-      const existingMedia = await findMediaForUser(title, userId, existingType, creator, year, metadata)
+      const existingMedia = await findMediaForUser(
+        title, 
+        userId, 
+        existingType, 
+        creator, year, 
+        metadata, source, 
+        sourceId, 
+        sourceRating, 
+        ratingsCount, 
+        description, 
+        imageUrl
+      )
       if (existingMedia) return res.status(409).json({ message: "Media already exists", existingMedia })
 
-      const media = await createMedia(title, existingType, creator, year, metadata, userId)
+      const media = await createMedia(
+        title, 
+        existingType, 
+        creator, 
+        year, 
+        source, 
+        sourceId, 
+        sourceRating,
+        ratingsCount, 
+        description, 
+        metadata, 
+        imageUrl,
+        userId
+      )
+
       res.status(201).json(media)
   } catch (error) {
-      console.error(error)
-      res.status(500).json({ message: "Failed to create media" })
+    if (error instanceof ZodError) {
+      // return first validation error as JSON
+      return res.status(400).json({
+          message: error.issues[0]?.message || "Validation failed",
+          errors: error.issues
+      })
+    }
+    console.error(error)
+    res.status(500).json({ message: "Failed to create media" })
   }
 }
 
@@ -55,13 +100,28 @@ export const updateExistingMedia = async (req: Request, res: Response) => {
   const userId = req.userId
   if (!userId) return res.status(401).json({ message: "Unauthorized: missing userId" })
   
-  const mediaId = parseInt(req.params.id)
-  if (!mediaId) return res.status(400).json({ message: "Invalid params" })
+  const mediaId = Number(req.params.id)
+  if (Number.isNaN(mediaId)) {
+    return res.status(400).json({ message: "Invalid params" })
+  }
 
-  //Sanitization
-  const { title, mediaType, creator, year, metadata } = validateSchema(updateMediaSchema, req.body)
-
+  
   try {
+    //Sanitization
+    const { 
+      title, 
+      mediaType, 
+      creator, 
+      year, 
+      source, 
+      sourceId, 
+      sourceRating,
+      ratingsCount, 
+      description, 
+      metadata,
+      imageUrl
+    } = validateSchema(updateMediaSchema, req.body)
+
     const existing = await findMediaById(mediaId)
     if (!existing) return res.status(404).json({ message: "Media not found" })
     if (existing.userId !== userId) return res.status(403).json({ message: "You can only edit medias that you created" })
@@ -69,12 +129,44 @@ export const updateExistingMedia = async (req: Request, res: Response) => {
     const existingType = await findMediaTypeForUserOrGlobal(mediaType.name, userId)
     if (!existingType) return res.status(404).json({ message: "Media Type does not exist" })
 
-    const duplicate = await findMediaForUser(title, userId, existingType, creator, year, metadata)
+    const duplicate = await findMediaForUser(
+      title, 
+      userId, 
+      existingType, 
+      creator, year, 
+      metadata, source, 
+      sourceId, 
+      sourceRating, 
+      ratingsCount, 
+      description, 
+      imageUrl
+    )
     if (duplicate) return res.status(409).json({ message: "Media already exists, please enter new information", duplicate })
 
-    const updated = await updateMediaForUser(title, existingType, creator, year, metadata, userId, mediaId)
+    const updated = await updateMediaForUser(
+        title, 
+        existingType, 
+        creator, 
+        year, 
+        source, 
+        sourceId, 
+        sourceRating,
+        ratingsCount, 
+        description, 
+        metadata, 
+        imageUrl,
+        userId, 
+        mediaId
+      )
     res.status(200).json(updated)
   } catch (error) {
+    if (error instanceof ZodError) {
+      // return first validation error as JSON
+      return res.status(400).json({
+          message: error.issues[0]?.message || "Validation failed",
+          errors: error.issues
+      })
+    }
     console.error(error)
     res.status(500).json({ message: "Failed to update media" })
   }
@@ -88,10 +180,11 @@ export const deleteExistingMedia = async (req: Request, res: Response) => {
   const mediaId = parseInt(req.params.id)
   if (!mediaId) return res.status(400).json({ message: "Invalid params" })
 
-  //Sanitization
-  const { confirm } = validateSchema(deleteMediaSchema, req.body)
-
+    
   try {
+    //Sanitization
+    const { confirm } = validateSchema(deleteMediaSchema, req.body)
+
     const media = await findMediaById(mediaId)
     if (!media) return res.status(404).json({ message: "Media not found" })
     if (media.userId !== userId) return res.status(403).json({ message: "You can only delete medias that you created" })
@@ -104,6 +197,13 @@ export const deleteExistingMedia = async (req: Request, res: Response) => {
     await deleteMedia(mediaId)
     res.status(200).json({ message: "Media deleted" })
   } catch (error) {
+    if (error instanceof ZodError) {
+      // return first validation error as JSON
+      return res.status(400).json({
+          message: error.issues[0]?.message || "Validation failed",
+          errors: error.issues
+      })
+    }
     console.error(error)
     res.status(500).json({ message: "Failed to delete media" })
   }

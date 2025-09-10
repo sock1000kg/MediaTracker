@@ -11,7 +11,7 @@ import {
     deleteLog,
 } from "@/controllers/dbCalls/dbControllers"
 
-import { z } from "zod"
+import { z, ZodError } from "zod"
 import { createLogSchema, deleteLogSchema, updateLogSchema } from "@/schemas/logSchemas"
 import { validateSchema } from "@/utilities"
 
@@ -36,11 +36,10 @@ export const createNewLog = async (req: Request, res: Response) => {
     const userId = req.userId
     if (!userId) return res.status(401).json({ message: "Unauthorized: missing userId" })
     
-
-    //Sanitization
-    const { mediaId, status, rating, notes } = validateSchema(createLogSchema, req.body)
-
     try {
+        //Sanitization
+        const { mediaId, status, rating, notes } = validateSchema(createLogSchema, req.body)
+
         const existingLog = await findLogOfUserByMediaId(userId, mediaId)
         if (existingLog)
         return res.status(409).json({ message: "Your log of this media already exists" })
@@ -58,6 +57,14 @@ export const createNewLog = async (req: Request, res: Response) => {
         const log = await createLog(userId, mediaId, status, rating, notes)
         res.status(201).json(log)
     } catch (error) {
+        if (error instanceof ZodError) {
+        // return first validation error as JSON
+            return res.status(400).json({
+                message: error.issues[0]?.message || "Validation failed",
+                errors: error.issues
+            })
+        }
+
         console.error(error)
         res.status(500).json({ message: "Failed to create user log" })
     }
@@ -71,10 +78,11 @@ export const updateExistingLog = async (req: Request, res: Response) => {
     const logId = parseInt(req.params.id)
     if(!logId) return res.status(400).json({ message: "Invalid params" })
 
-    //Sanitization
-    const { status: newStatus, rating: newRating, notes: newNotes } = validateSchema(updateLogSchema, req.body)
-
+        
     try {
+        //Sanitization
+        const { status: newStatus, rating: newRating, notes: newNotes } = validateSchema(updateLogSchema, req.body)
+
         const existingLog = await findLogById(logId)
         if (!existingLog) return res.status(404).json({ message: "Log does not exist" })
         if (existingLog.userId !== userId)
@@ -83,6 +91,13 @@ export const updateExistingLog = async (req: Request, res: Response) => {
         const updated = await updateLog(logId, newStatus, newRating, newNotes)
         res.status(200).json(updated)
     } catch (error) {
+        if (error instanceof ZodError) {
+        // return first validation error as JSON
+            return res.status(400).json({
+                message: error.issues[0]?.message || "Validation failed",
+                errors: error.issues
+            })
+        }
         console.error(error)
         res.status(500).json({ message: "Failed to update user log" })
     }
@@ -97,10 +112,11 @@ export const deleteExistingLog = async (req: Request, res: Response) => {
     const logId = parseInt(req.params.id)
     if(!logId) return res.status(400).json({ message: "Invalid params" })
         
-    //Sanitization
-    const { confirm } = validateSchema(deleteLogSchema, req.body)
-
+        
     try {
+        //Sanitization
+        const { confirm } = validateSchema(deleteLogSchema, req.body)
+
         const existingLog = await findLogById(logId)
         if (!existingLog) return res.status(404).json({ message: "Log does not exist" })
         if (existingLog.userId !== userId)
@@ -112,6 +128,13 @@ export const deleteExistingLog = async (req: Request, res: Response) => {
         await deleteLog(logId)
         res.status(200).json({ message: "Log deleted" })
     } catch (error) {
+        if (error instanceof ZodError) {
+        // return first validation error as JSON
+            return res.status(400).json({
+                message: error.issues[0]?.message || "Validation failed",
+                errors: error.issues
+            })
+        }
         console.error(error)
         res.status(500).json({ message: "Failed to delete user log" })
     }
