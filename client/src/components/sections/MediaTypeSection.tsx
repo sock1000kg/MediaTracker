@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 
 import { deleteMediaType, editMediaType, createMediaType, deleteWarningMediaType } from "@/api/mediaType"
 
-import type { MediaType, DialogName } from "@/types/media"
+import type { MediaType, DialogName } from "@/types/main"
 import { ConfirmDeleteDialog } from "../dialogs/ConfirmDeleteDialog"
 import EntityDialog from "@/components/dialogs/EntityDialog"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
@@ -25,27 +25,25 @@ export default function MediaTypesSection() {
   const createMutation = useMutation({
     mutationFn: createMediaType,
     onSuccess: () => { 
-      queryClient.fetchQuery(fetchLogsQueryOptions())
-      queryClient.fetchQuery(fetchMediaTypesQueryOptions())
-      queryClient.fetchQuery(fetchMediasQueryOptions())
+      queryClient.refetchQueries(fetchMediaTypesQueryOptions())
     }
   })
 
   const deleteMutation = useMutation({
     mutationFn: deleteMediaType,
     onSuccess: () => { 
-      queryClient.fetchQuery(fetchLogsQueryOptions())
-      queryClient.fetchQuery(fetchMediaTypesQueryOptions())
-      queryClient.fetchQuery(fetchMediasQueryOptions())
+      queryClient.refetchQueries(fetchLogsQueryOptions())
+      queryClient.refetchQueries(fetchMediaTypesQueryOptions())
+      queryClient.refetchQueries(fetchMediasQueryOptions())
     }
   })
 
   const editMutation = useMutation({
     mutationFn: ({name, newMediaType} : {name: string, newMediaType: Partial<MediaType>}) => editMediaType(name, newMediaType),
     onSuccess: () => { 
-      queryClient.fetchQuery(fetchLogsQueryOptions())
-      queryClient.fetchQuery(fetchMediaTypesQueryOptions())
-      queryClient.fetchQuery(fetchMediasQueryOptions())
+      queryClient.refetchQueries(fetchLogsQueryOptions())
+      queryClient.refetchQueries(fetchMediaTypesQueryOptions())
+      queryClient.refetchQueries(fetchMediasQueryOptions())
     }
   })
 
@@ -171,8 +169,7 @@ export default function MediaTypesSection() {
             target={target}
             description={`Are you sure you want to delete '${target}'?`}
             onWarning={deleteWarningMediaType}
-            onDelete={deleteMediaType}
-            onDeleted={deleteMutation.mutateAsync}
+            onDelete={deleteMutation.mutateAsync}
           />
 
           <EntityDialog
