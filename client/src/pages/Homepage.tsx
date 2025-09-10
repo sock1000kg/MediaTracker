@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button"
 import LogsSection from "@/components/sections/LogSection"
 import MediasSection from "@/components/sections/MediaSection"
 import MediaTypesSection from "@/components/sections/MediaTypeSection"
+import SearchSection from "@/components/sections/SearchSection"
 
-import type { Tab } from "@/types/media.ts"
+import type { Tab } from "@/types/main"
+import { Search } from "lucide-react"
 
 export default function Homepage() {
   const [activeTab, setActiveTab] = useState<Tab>("logs")
@@ -18,10 +20,18 @@ export default function Homepage() {
           {activeTab === "logs" && <LogsSection/>}
           {activeTab === "medias" && <MediasSection />}
           {activeTab === "mediaTypes" && <MediaTypesSection />}
+          {activeTab === "search" && <SearchSection/>}
         </div>
 
         {/* Right side bar */}
         <div className="flex flex-col w-40 bg-stone-300">
+          <Button 
+            variant={activeTab === "search" ? "boldedLink" : "link"}
+            className="text-stone-600 w-full rounded-none shadow-[0_2px_2px_-2px_rgba(0,0,0,0.2)] hover:underline" 
+            onClick={() => { setActiveTab("search")}}
+          >
+              <Search /> Search
+          </Button>
           <Button 
             variant={activeTab === "logs" ? "boldedLink" : "link"}
             className="text-stone-600 w-full rounded-none shadow-[0_2px_2px_-2px_rgba(0,0,0,0.2)] hover:underline" 
