@@ -8,7 +8,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
-import type { MediaType } from "@/types/media"
+import type { MediaType } from "@/types/main"
 import { useState, useEffect } from "react"
 
 interface ConfirmDeleteDialogProps<T = string> {
@@ -22,8 +22,6 @@ interface ConfirmDeleteDialogProps<T = string> {
   /** Function that performs the delete (target, confirm: bool) */
   onWarning: (target: T) => Promise<{ message: string }>
   onDelete: (target: T) => Promise<{ message: string }>
-  /** Callback when successful delete */
-  onDeleted?: (target: T) => void
 }
 
 export function ConfirmDeleteDialog<T = MediaType>({
@@ -36,7 +34,6 @@ export function ConfirmDeleteDialog<T = MediaType>({
   target,
   onWarning,
   onDelete,
-  onDeleted,
 }: ConfirmDeleteDialogProps<T>) {
   const [warning, setWarning] = useState<string | null>(null) //For confirmation
   const [loading, setLoading] = useState(false)
@@ -74,7 +71,6 @@ export function ConfirmDeleteDialog<T = MediaType>({
     setError(null)
     try {
       const result = await onDelete(target)
-      onDeleted?.(target)
       onOpenChange(false)
       alert(result.message)
     } catch (error: any) {
