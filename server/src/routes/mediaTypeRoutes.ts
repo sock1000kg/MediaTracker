@@ -1,4 +1,3 @@
-// src/routes/mediaTypeRoutes.ts
 import express from 'express'
 import { 
   getAllMediaTypes, 
