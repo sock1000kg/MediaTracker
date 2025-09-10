@@ -9,33 +9,50 @@ const allowedStatuses = ["completed", "in progress", "wishlist", "dropped"] as c
 
 // Sanitizers as transforms
 const statusSchema = z
+    .preprocess((val: string | null | undefined) => {
+            return sanitizeStatus(val)
+    }, z
     .string()
-    .transform((val) => sanitizeStatus(val))
     .nullable() 
     .default(null)
+)
 
 const ratingSchema = z
+    .preprocess((val: string | number | null | undefined) => {
+            return sanitizeRating(val)
+    }, z
     .number()
-    .transform((val) => sanitizeRating(val))
     .nullable() 
     .default(null)
+)
 
 const notesSchema = z
+    .preprocess((val: string | null | undefined) => {
+            return sanitizeNotes(val)
+    }, z
     .string()
-    .transform((val) => sanitizeNotes(val))
     .nullable() 
     .default(null)
+)
 
-const mediaIdSchema = z.preprocess(
-    (val) => {
+const mediaIdSchema = z
+    .preprocess((val) => {
         // Convert to number if possible
         if (val === undefined || val === null) return val
         const n = Number(val)
 
         return isNaN(n) ? null : n
-    },
-    z.number().int()
+    }, z
+    .number()
+    .int()
 )
+
+//for when creating a log of a searched media (no mediaId cus its not in db yet)
+export const searchLogSchema = z.object({ 
+    status: statusSchema,
+    rating: ratingSchema,
+    notes: notesSchema,
+})
 
 export const createLogSchema = z.object({
     mediaId: mediaIdSchema,

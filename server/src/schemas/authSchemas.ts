@@ -3,10 +3,11 @@ import { sanitizeUsername, sanitizeDisplayName, checkPasswordStrength } from "@/
 
 // username schema
 export const usernameSchema = z
-    .string()
-    .min(3, { message: "Username must be at least 3 characters" })
-    .transform((val) => sanitizeUsername(val) ?? "")
-    .refine((val) => val.trim().length > 0, { message: "Username is required and can not contain spaces" })
+    .preprocess((val: string | null | undefined) => {
+            return sanitizeUsername(val)
+    }, z
+    .string({ message: "Username must be at least 3 characters and at most 50" })
+)
 
 // password schema
 export const passwordSchema = z
@@ -18,10 +19,11 @@ export const passwordSchema = z
 
 // displayName schema
 export const displayNameSchema = z
-    .string()
-    .min(3, { message: "Username must be at least 3 characters" })
-    .transform((val) => sanitizeDisplayName(val) ?? "")
-    .refine((val) => val.trim().length > 0, { message: "Display name is required" })
+    .preprocess((val: string | null | undefined) => {
+            return sanitizeDisplayName(val)
+    }, z
+    .string({ message: "Username must be at least 3 characters and at most 50" })
+)
 
 export const registerSchema = z.object({
     username: usernameSchema,
