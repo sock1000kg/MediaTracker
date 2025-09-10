@@ -3,7 +3,7 @@ import { useEffect } from "react"
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import type { EditableEntity } from "@/types/media"
+import type { EditableEntity } from "@/types/main"
 
 type Mode = "create" | "edit"
 
@@ -18,8 +18,6 @@ interface EntityDialogProps<T extends EditableEntity> {
   target?: T | null
 
   onSubmit: (data: Partial<T>, target?: T) => Promise<T> //Submit the form to the DB
-  //deprecated when React Queries took care of caching -- manual UI update if needed --
-  onSubmitted?: (result: T) => void 
 
   //Form passed down from parents
   renderForm: (
@@ -38,7 +36,6 @@ export default function EntityDialog<T extends EditableEntity>({
   initialData = {},
   target,
   onSubmit, 
-  onSubmitted, 
   renderForm,
 }: EntityDialogProps<T>) {
   const [formData, setFormData] = useState<Partial<T>>(initialData)
@@ -63,8 +60,7 @@ export default function EntityDialog<T extends EditableEntity>({
     setErrorMessage(null)
 
     try {
-      const result = await onSubmit(formData)
-      onSubmitted?.(result)
+      await onSubmit(formData)
       onOpenChange(false)
     } catch (err: any) {
       setErrorMessage(err.message || "Failed to save")
