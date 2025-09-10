@@ -25,6 +25,9 @@ model User {
   logs            UserLogs[]@relation("UserLogsToUser")
   mediaType       MediaType[]@relation("MediaTypesToUser")
   media           Media[]@relation("MediaToUser")
+
+  apiKeys         UserAPIKey[]
+
 }
 
 model Media {
@@ -36,6 +39,14 @@ model Media {
   year            Int?
   metadata        Json?
   created_at      DateTime  @default(now())
+
+  source          String?
+  sourceId        String?
+  sourceRating    Int?
+  ratingsCount    Int?
+  description     String?
+  imageUrl        String?
+
 
   userId          Int?
   user            User?     @relation(fields: [userId], references: [id], name: "MediaToUser", onDelete: Cascade)
@@ -56,18 +67,11 @@ model MediaType {
 
   media           Media[]   @relation("MediaToMediaTypes")
 
+  apiKeys         UserAPIKey[]
+
   @@unique([userId, name]) //One user have only unique mediaTypes
 }
-/* FOR DISPLAYING THE SCORES FROM OUTSIDE SOURCES IF NEEDED
-model RatingSource {
-  id              Int       @id @default(autoincrement())
-  mediaId         Int
-  media           Media     @relation(fields: [mediaId], references: [id])
-  source          String
-  value           Float
-  scale           Int
-} 
-*/
+
 
 model UserLogs {
   id              Int       @id @default(autoincrement())
@@ -85,4 +89,19 @@ model UserLogs {
   media           Media     @relation(fields: [mediaId], references: [id], name: "UserLogsToMedia", onDelete: Cascade)
 
   @@unique([userId, mediaId]) //avoid duplicate logs of the same media for the same user
+}
+
+model UserAPIKey {
+  id              Int       @id @default(autoincrement())
+  key             String    // store encrypted or plain (if it's safe)
+  service         String    
+  created_at      DateTime  @default(now())
+
+  userId          Int
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  mediaTypeId     Int?     // optional: tie key to a specific media type
+  mediaType       MediaType? @relation(fields: [mediaTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, service, mediaTypeId]) // one key per user per service per media type
 }
