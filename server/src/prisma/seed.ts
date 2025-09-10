@@ -1,4 +1,5 @@
 
+import { createMedia } from "@/controllers/dbCalls/dbControllers"
 import prisma from "@/prismaClient"
 import bcrypt from "bcryptjs"
 
@@ -52,7 +53,7 @@ async function main() {
     const systemUser = await createSystemUser()
 
     // CREATE SEED MEDIA TYPES
-    await createMediaTypeSeed("book", systemUser.id)
+    const defaultType = await createMediaTypeSeed("book", systemUser.id)
     await createMediaTypeSeed("music", systemUser.id)
 
     // CREATE SEED MEDIA
@@ -60,17 +61,21 @@ async function main() {
         where: { title: "Default Media", userId: systemUser.id },
     })
 
-    if (!defaultMedia) {
-        await prisma.media.create({
-        data: {
-            title: "Default Media",
-            mediaTypeId: 1,
-            creator: "Unknown",
-            year: new Date().getFullYear(),
-            metadata: {},
-            userId: systemUser.id,
-        },
-        })
+    if (!defaultMedia && defaultType) {
+        await createMedia(
+            "Default Media",
+            defaultType,
+            "System",
+            2025,
+            null,
+            null,
+            null,
+            null,
+            "This is your default  media",
+            null,
+            null,
+            0
+        )
         console.log("Default Media created")
     } else {
         console.log("Default Media already exists")
