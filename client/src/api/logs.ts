@@ -1,6 +1,6 @@
 import { apiFetch } from "./clientWrapper"
 
-import type { Log } from "@/types/media"
+import type { Log } from "@/types/main"
 
 export async function fetchLogs(): Promise<Log[]> {
     return apiFetch(`/logs`)

@@ -1,6 +1,6 @@
 import { apiFetch } from "./clientWrapper"
 
-import type { Media } from "@/types/media"
+import type { Media } from "@/types/main"
 
 export function fetchMedias(): Promise<Media[]> {
   return apiFetch("/media")
@@ -14,6 +14,11 @@ export function createMedia(newMedia: Partial<Media>): Promise<Media> {
       mediaType: newMedia.mediaType,
       creator: newMedia.creator,
       year: newMedia.year,
+      source: newMedia.source, 
+      sourceId: newMedia.sourceId, 
+      sourceRating: newMedia.sourceRating,
+      ratingsCount: newMedia.ratingsCount, 
+      description: newMedia.description, 
       metadata: newMedia.metadata
     })
   })
@@ -41,6 +46,11 @@ export function editMedia(media: Partial<Media>): Promise<Media> {
       mediaType: media.mediaType,
       creator: media.creator,
       year: media.year,
+      source: media.source, 
+      sourceId: media.sourceId, 
+      sourceRating: media.sourceRating,
+      ratingsCount: media.ratingsCount, 
+      description: media.description, 
       metadata: media.metadata
     })
   })
