@@ -1,6 +1,6 @@
 import {Fragment} from 'react'
 
-import type { Media } from "@/types/media"
+import type { Media } from "@/types/main"
 
 import { Button } from "../ui/button"
 
@@ -62,6 +62,11 @@ export function MediaCard({ media, onEdit, onDelete, onLog}: MediaCardProps) {
                 </span>
             </div>
         </div>
+
+        {/* Description */}
+        <p className="text-xs text-gray-500 whitespace-pre-line max-h-48 overflow-y-auto mt-2 pr-1">
+            {media.description}
+        </p>
 
         {/* Buttons */}
         <div className='flex justify-end gap-2'>
