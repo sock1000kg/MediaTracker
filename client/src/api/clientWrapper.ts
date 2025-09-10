@@ -26,6 +26,7 @@ export async function apiFetch<T>(url: string, options: RequestInit = {}): Promi
       },
     }) 
 
+    console.log(res.status, res.headers.get("content-type"))
     if (!res.ok) {
         if (res.status === 401) {
             localStorage.removeItem("token")
