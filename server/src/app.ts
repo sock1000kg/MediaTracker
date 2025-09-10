@@ -10,6 +10,7 @@ import logRoutes from '@/routes/logRoutes'
 import mediaRoutes from '@/routes/mediaRoutes'
 import mediaTypeRoutes from '@/routes/mediaTypeRoutes'
 import authMiddleWare from '@/middleWare/authMiddleware'
+import searchRoutes from '@/routes/searchRoutes'
 
 const limiter: RateLimitRequestHandler = rateLimit({
     windowMs: 60 * 1000, // 1 minute
@@ -45,5 +46,6 @@ app.use('/auth', authRoutes)
 app.use('/logs', authMiddleWare, logRoutes)
 app.use('/media', authMiddleWare, mediaRoutes)
 app.use('/media-type', authMiddleWare, mediaTypeRoutes)
+app.use('/search', authMiddleWare, searchRoutes)
 
 export default app

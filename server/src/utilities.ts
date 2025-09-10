@@ -1,21 +1,48 @@
 import { Prisma } from "@prisma/client"
 import { ZodSchema, ZodError } from "zod"
 
+// USERS
 // password strength check
 export function checkPasswordStrength(password: string | undefined | null): boolean {
     if (!password) return false
     // At least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
     return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/.test(password)
 }
+// Sanitize username: max 30 chars, min 3 chars
+export function sanitizeUsername(username: string | undefined | null): string | null {
+    if (!username) return null
+    let clean = String(username).trim().slice(0, 30)
+
+    // Reject if contains any whitespace (spaces, tabs, etc.)
+    if (/\s/.test(clean)) return null
+
+    // Require at least 3 chars and at most 50
+    if (clean.length > 50) clean = clean.slice(0, 50)
+
+    return clean.length >= 3 ? clean : null
+}
+
+export function sanitizeDisplayName(name: unknown): string | null {
+    if (typeof name !== "string") return null
+
+    // Trim whitespace and collapse multiple spaces
+    let clean = name.trim().replace(/\s+/g, " ")
+
+    // Require at least 3 chars and at most 50
+    if (clean.length > 50) clean = clean.slice(0, 50)
+
+    return clean.length >= 3 ? clean : null
+}
 
 //Used in Media Type and Media to normalize names of media types
-export function normalizeTypeName(name: string): string {
+export function normalizeTypeName(name: string | null | undefined): string {
     // Sanitize name: no extra spaces, lowercase
+    if (typeof name !== "string") return ""
     const trimmed = name.trim().toLowerCase()
     return trimmed
 }
 
-//INPUT SANITIZATION
+//MEDIA
 // Sanitize rating between 0 and 100
 export function sanitizeRating(rating: number | string | undefined | null): number | null {
     if (rating === undefined || rating === null) return null
@@ -89,30 +116,59 @@ export function sanitizeMetadata(input: unknown): Prisma.JsonValue | null {
     return null
 }
 
-// Sanitize username: max 30 chars, min 3 chars
-export function sanitizeUsername(username: string | undefined | null): string | null {
-    if (!username) return null
-    let clean = String(username).trim().slice(0, 30)
 
-    // Reject if contains any whitespace (spaces, tabs, etc.)
-    if (/\s/.test(clean)) return null
 
-    // Require at least 3 chars and at most 50
-    if (clean.length > 50) clean = clean.slice(0, 50)
-
-    return clean.length >= 3 ? clean : null
+// Sanitize description: trim whitespace, limit to 3000 chars
+export function sanitizeDescription(desc: string | undefined | null): string | null {
+    if (!desc) return null
+    return String(desc).trim().slice(0, 3000)
 }
 
-export function sanitizeDisplayName(name: unknown): string | null {
-    if (typeof name !== "string") return null
+// Sanitize source: only allow known sources (e.g., "google_books", "manual")
+const allowedSources = ["google_books"] as const
+export type AllowedSource = (typeof allowedSources)[number]
+export function sanitizeSource(source: string | undefined | null): AllowedSource | null {
+    if (!source) return null
+    const clean = String(source).trim().toLowerCase()
+    return allowedSources.includes(clean as AllowedSource) ? (clean as AllowedSource) : null
+}
 
-    // Trim whitespace and collapse multiple spaces
-    let clean = name.trim().replace(/\s+/g, " ")
+// Sanitize image URL: basic validation, trim, allow null
+export function sanitizeImageUrl(url: string | undefined | null): string | null {
+    if (!url) return null
+    const clean = String(url).trim()
+    // Very light URL check
+    return /^https?:\/\//.test(clean) ? clean : null
+}
 
-    // Require at least 3 chars and at most 50
-    if (clean.length > 50) clean = clean.slice(0, 50)
+// Sanitize sourceId: trim, max 200 chars
+export function sanitizeSourceId(id: string | undefined | null): string | null {
+    if (!id) return null
+    return String(id).trim().slice(0, 200)
+}
 
-    return clean.length >= 3 ? clean : null
+// Sanitize source rating: convert 0–100 scale
+export function sanitizeSourceRating(
+    rating: number | string | undefined | null,
+    scale: number = 10 // fallback to 10
+): number | null {
+    if (rating === undefined || rating === null) return null
+
+    const num = Number(rating)
+    if (isNaN(num)) return null
+
+    // Clamp to range
+    if (num < 0 || num > scale) return null
+
+    // Convert to 0–100 scale
+    return Math.round((num / scale) * 100)
+}
+
+// Sanitize ratings count: must be non-negative integer
+export function sanitizeRatingsCount(count: number | string | undefined | null): number | null {
+    if (count === undefined || count === null) return null
+    const num = Number(count)
+    return Number.isInteger(num) && num >= 0 ? num : null
 }
 
 // Validate Zod schema
