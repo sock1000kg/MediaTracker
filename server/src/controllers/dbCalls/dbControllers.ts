@@ -64,6 +64,12 @@ export async function findMediaForUser(
     creator: string | null,
     year: number | null,
     metadata: Prisma.JsonValue | null,
+    source: string | null,
+    sourceId: string | null,
+    sourceRating: number | null,
+    ratingsCount: number | null,
+    description: string | null,
+    imageUrl: string | null
 ): Promise<(Media & { mediaType: MediaType | null, logs: UserLogs[] }) | null> {
     return prisma.media.findFirst({
         where: {
@@ -73,6 +79,12 @@ export async function findMediaForUser(
             ...(creator ? { creator } : {}),
             ...(year ? { year } : {}),
             ...(metadata ? { metadata: { equals: metadata } } : {}),
+            ...(source ? { source } : {}),
+            ...(sourceId ? { sourceId } : {}),
+            ...(sourceRating ? { sourceRating } : {}),
+            ...(ratingsCount ? { ratingsCount } : {}),
+            ...(description ? { description } : {}),
+            ...(imageUrl ? { imageUrl } : {})
         },
         include: { 
             mediaType: true, 
@@ -103,6 +115,16 @@ export async function findMediaById(id: number): Promise<(Media & { mediaType: M
     })
 }
 
+export async function findMediaBySource(sourceId: string | null, source: string | null): Promise<Media | null> {
+    if(source === null || sourceId === null) return null
+    return prisma.media.findFirst({
+        where: {
+            source: source,
+            sourceId: sourceId
+        }
+    })
+}
+
 //**Used in Default Media check upon registration
 export async function findFirstMediaByTitle(title: string): Promise<(Media & { mediaType: MediaType | null, logs: UserLogs[] }) | null> {
     return prisma.media.findFirst({
@@ -113,12 +135,20 @@ export async function findFirstMediaByTitle(title: string): Promise<(Media & { m
     })
 }
 
+
+
 export async function createMedia(
     title: string,
     type: MediaType,
     creator: string | null,
     year: number | null,
+    source: string | null,
+    sourceId: string | null,
+    sourceRating: number | null,
+    ratingsCount: number | null,
+    description: string | null,
     metadata: Prisma.JsonValue | null,
+    imageUrl: string | null,
     userId: number
 ): Promise<Media & { mediaType: MediaType | null }> {
     return prisma.media.create({
@@ -126,9 +156,15 @@ export async function createMedia(
             title,
             mediaType: { connect: { id: type.id } },
             user: { connect: { id: userId } },
+            ...(source ? { source } : {}),
+            ...(sourceId ? { sourceId } : {}),
+            ...(sourceRating ? { sourceRating } : {}),
+            ...(ratingsCount ? { ratingsCount } : {}),
+            ...(description ? { description } : {}),
             ...(creator ? { creator } : {}),
             ...(year ? { year } : {}),
             ...(metadata ? { metadata } : {}),
+            ...(imageUrl ? { imageUrl } : {}),
         },
         include: { mediaType: true },
     })
@@ -139,7 +175,13 @@ export async function updateMediaForUser(
     type: MediaType,
     creator: string | null,
     year: number | null,
+    source: string | null,
+    sourceId: string | null,
+    sourceRating: number | null,
+    ratingsCount: number | null,
+    description: string | null,
     metadata: Prisma.JsonValue | null,
+    imageUrl: string | null,
     userId: number,
     mediaId: number
 ): Promise<Media & { mediaType: MediaType | null, logs: UserLogs[] }> {
@@ -147,11 +189,17 @@ export async function updateMediaForUser(
         where: { id: mediaId },
         data: {
             title,
+            mediaType: { connect: { id: type.id } },
+            user: { connect: { id: userId } },
+            ...(source ? { source } : {}),
+            ...(sourceId ? { sourceId } : {}),
+            ...(sourceRating ? { sourceRating } : {}),
+            ...(ratingsCount ? { ratingsCount } : {}),
+            ...(description ? { description } : {}),
             ...(creator ? { creator } : {}),
             ...(year ? { year } : {}),
             ...(metadata ? { metadata } : {}),
-            mediaType: { connect: { id: type.id } },
-            user: { connect: { id: userId } },
+            ...(imageUrl ? { imageUrl } : {}),
         },
         include: { mediaType: true, logs: true },
     })
