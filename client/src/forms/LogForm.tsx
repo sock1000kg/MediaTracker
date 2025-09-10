@@ -1,4 +1,4 @@
-import type { Log, Media, LogStatus } from "@/types/media"
+import type { Log, Media, LogStatus } from "@/types/main"
 
 import {
   Select,
