@@ -1,8 +1,8 @@
 import { useState } from "react"
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query"
 
-import type { DialogName, Log } from "@/types/media"
-import type { Media } from "@/types/media"
+import type { DialogName, Log } from "@/types/main"
+import type { Media } from "@/types/main"
 
 import { Button } from "@/components/ui/button"
 import { MediaTypeCard } from "@/components/cards/MediaTypeGroupCard"

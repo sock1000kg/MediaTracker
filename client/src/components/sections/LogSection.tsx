@@ -7,7 +7,7 @@ import { fetchLogsQueryOptions } from "@/queryOptions/fetchLogsQueryOptions"
 import { LogCard } from "@/components/cards/LogCard"
 import { MediaTypeCard } from "@/components/cards/MediaTypeGroupCard"
 
-import type { DialogName, Log } from "@/types/media"
+import type { DialogName, Log } from "@/types/main"
 import EntityDialog from "../dialogs/EntityDialog"
 import { LogForm } from "@/forms/LogForm"
 import { ConfirmDeleteDialog } from "../dialogs/ConfirmDeleteDialog"
