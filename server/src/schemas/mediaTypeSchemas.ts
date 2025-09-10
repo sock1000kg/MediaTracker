@@ -2,24 +2,23 @@ import { z } from "zod"
 import { normalizeTypeName } from '@/utilities'
 
 // Media Type name schema
-const trimmedString = () =>
-    z.preprocess((val) => {
-            if (typeof val === "string") return normalizeTypeName(val)
-            return val
-        }, z
-        .string()
-        .min(1, { message: "Name is required" })
-        .max(100, { message: "Name must be at most 100 characters" }) as z.ZodString
-    )
+const trimmedString = z
+    .preprocess((val: string | null | undefined) => {
+        return normalizeTypeName(val)
+    }, z
+    .string({ message: "Type name is required" })
+    .min(1, { message: "Name is required" })
+    .max(100, { message: "Name must be at most 100 characters" }) as z.ZodString
+)
 
 // schema for creating a media type
 export const createMediaTypeSchema = z.object({
-    name: trimmedString(),
+    name: trimmedString,
 })
 
 // schema for updating (renaming) a media type
 export const updateMediaTypeSchema = z.object({
-    newName: trimmedString()
+    newName: trimmedString
 })
 
 // schema for deletion (optional confirm flag)
