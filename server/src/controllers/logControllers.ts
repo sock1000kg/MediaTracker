@@ -38,6 +38,7 @@ export const createNewLog = async (req: Request, res: Response) => {
     
     try {
         //Sanitization
+        console.log("BODY RECEIVED:", req.body)
         const { mediaId, status, rating, notes } = validateSchema(createLogSchema, req.body)
 
         const existingLog = await findLogOfUserByMediaId(userId, mediaId)
@@ -57,6 +58,7 @@ export const createNewLog = async (req: Request, res: Response) => {
         const log = await createLog(userId, mediaId, status, rating, notes)
         res.status(201).json(log)
     } catch (error) {
+        console.dir(error, { depth: null })
         if (error instanceof ZodError) {
         // return first validation error as JSON
             return res.status(400).json({
