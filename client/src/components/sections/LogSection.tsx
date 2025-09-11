@@ -57,7 +57,7 @@ export default function LogsSection() {
     formData: Partial<Log>,
     setFormData: React.Dispatch<React.SetStateAction<Partial<Log>>> //state setter for formData
   ) => (
-    <LogForm formData={formData} setFormData={setFormData} targetLog={targetLog ?? undefined} targetMedia={targetLog?.media ?? undefined}/>
+    <LogForm formData={formData} setFormData={setFormData} targetMedia={targetLog?.media ?? undefined}/>
   )
 
   return (
