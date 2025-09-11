@@ -196,7 +196,7 @@ export function MediaForm({
                     <button
                     type="button"
                     onClick={addMetadataField}
-                    className="px-3 py-2 rounded-md bg-stone-500 text-sm text-white hover:bg-stone-600"
+                    className="px-3 py-2 rounded-md bg-stone-500 text-sm text-white hover:bg-stone-600 focus:ring-2 focus:outline-none"
                     >
                     Add
                     </button>

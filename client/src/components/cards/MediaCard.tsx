@@ -64,7 +64,7 @@ export function MediaCard({ media, onEdit, onDelete, onLog}: MediaCardProps) {
         </div>
 
         {/* Description */}
-        <p className="text-xs text-gray-500 whitespace-pre-line max-h-48 overflow-y-auto mt-2 pr-1">
+        <p className="text-xs text-gray-500 whitespace-pre-line max-h-48 overflow-y-auto my-2 pr-1">
             {media.description}
         </p>
 
