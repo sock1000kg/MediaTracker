@@ -14,25 +14,19 @@ interface LogFormProps {
   formData: Partial<Log>
   setFormData: React.Dispatch<React.SetStateAction<Partial<Log>>>
   targetMedia?: Media  // for create mode
-  targetLog?: Log  // for edit mode
 }
 
 export function LogForm({
   formData,
   setFormData,
   targetMedia,
-  targetLog
 }: LogFormProps) {
-  // Prefill once on mount or when target changes
-  useEffect(() => {
-    if (targetLog && !formData.id) {
-        // edit mode: fill all fields
-        setFormData(targetLog)
-    } else if (targetMedia && !formData.id && !formData.media) {
-        // create mode: just media
+  useEffect(() => { //edit mode's prefilling is handled in EntityDialog
+    if (targetMedia && !formData.id && !formData.media) {
+        // create mode: set the media to logForm
         setFormData((prev) => ({ ...prev, media: targetMedia })) 
     }
-  }, [targetLog, targetMedia, formData.id, formData.media, setFormData])
+  }, [targetMedia, formData.id, formData.media, setFormData])
 
   return (
     <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 p-2">
