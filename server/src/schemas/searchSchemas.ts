@@ -10,7 +10,10 @@ export const createMediaAndLogSchema = z.object({
 
 //Schema for ONE result of a search
 export const searchResultSchema = z.object({
-    title: z.string(),
+    title: z
+        .string()
+        .optional()
+        .transform(val => val ?? "Unknown title"),
     creator: z
         .string()
         .nullable()
@@ -46,7 +49,10 @@ export type SearchResult = z.infer<typeof searchResultSchema>
 //BOOKS SEARCH
 //For info of each book fetched from GG Books
 const bookVolumeInfoSchema = z.object({
-    title: z.string(),
+    title: z
+        .string()
+        .optional()
+        .transform(val => val ?? "Unknown title"),
     authors: z
         .array(z.string())
         .nullable()
