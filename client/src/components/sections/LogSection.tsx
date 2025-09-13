@@ -79,7 +79,7 @@ export default function LogsSection() {
               </p>
           )}
 
-        {logs.length === 0 && !isPending && <p className=" text-gray-600 m-4">You have no logs. Create one!</p>}
+        {logs.length === 0 && !isPending && <p className=" text-gray-600 m-4">You have no logs. Search for a media and create one!</p>}
         {!isPending && (logs.length > 0) && (
           <ul className="space-y-2">
             {Object.entries(groupedLogs).sort().map(([type, typeLogs]) => (
