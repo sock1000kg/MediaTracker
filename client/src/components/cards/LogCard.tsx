@@ -27,7 +27,7 @@ export function LogCard({log, onDelete, onEdit}: LogCardProps ) {
           <p className="font-bold text-stone-800">{log.media.title}</p>
 
           {/* Status + Rating + Logged Date */}
-          <div className="flex flex-col gap-2 items-end">
+          <div className="flex gap-2 items-end">
             {(log.status || log.rating != null) && (
               <span className="text-xs rounded-2xl px-2 py-0.5 bg-amber-100 text-amber-800 capitalize">
                 {log.status ?? ""}
@@ -78,7 +78,7 @@ export function LogCard({log, onDelete, onEdit}: LogCardProps ) {
         )}
 
         {/* Actions */}
-        <div className="flex gap-2 mt-2 justify-end">
+        <div className="flex gap-2 justify-end mt-auto">
           <Button size="sm" variant="amber" onClick={() => onEdit(log)}>
             Edit
           </Button>
