@@ -85,11 +85,17 @@ export async function searchBooks(req: Request, res: Response) {
 
         const response = await fetch(url.toString())
         if (!response.ok) {
-            return res.status(response.status).json({ error: "Google Books API error" })
+            //parse as JSON, returns null if fails
+            const errorBody = await response.json().catch(() => null)
+            return res.status(response.status).json({
+                error: "Google Books API error",
+                message: errorBody?.error?.message ?? null
+            })
         }
 
         //Parse raw data
         const raw = await response.json()
+        console.log("RAW RECEIVED", raw.items?.[0]?.volumeInfo)
         const parsed = validateSchema(googleBooksResponseSchema, raw)
 
         //Map the raw data to array of individual items

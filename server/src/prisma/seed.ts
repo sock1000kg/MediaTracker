@@ -30,6 +30,33 @@ async function createSystemUser(): Promise<{ id: number }> {
     return systemUser
 }
 
+async function createDemoUser(): Promise<{ id: number }> {
+    let demoUser = await prisma.user.findUnique({
+        where: { id: 1 },
+    })
+
+    if (!demoUser) {
+        if (!process.env.DEMO_USER_PASSWORD) {
+        throw new Error("DEMO_USER_PASSWORD env variable is required")
+        }
+
+        const hashedPassword = await bcrypt.hash(process.env.DEMO_USER_PASSWORD, 12)
+        demoUser = await prisma.user.create({
+        data: {
+            id: 1,
+            username: "demo",
+            password: hashedPassword,
+            displayName: "Demo User",
+        },
+        })
+        console.log("Demo user created")
+    } else {
+        console.log("Demo user already exists")
+    }
+
+    return demoUser
+}
+
 async function createMediaTypeSeed(name: string, userId: number) {
     const existing = await prisma.mediaType.findFirst({ 
         where: { name } 
@@ -51,6 +78,7 @@ async function createMediaTypeSeed(name: string, userId: number) {
 
 async function main() {
     const systemUser = await createSystemUser()
+    const demoUser = await createDemoUser()
 
     // CREATE SEED MEDIA TYPES
     const defaultType = await createMediaTypeSeed("book", systemUser.id)

@@ -123,6 +123,8 @@ export const updateExistingMedia = async (req: Request, res: Response) => {
     } = validateSchema(updateMediaSchema, req.body)
 
     const existing = await findMediaById(mediaId)
+    console.log(existing?.imageUrl)
+    console.log(imageUrl)
     if (!existing) return res.status(404).json({ message: "Media not found" })
     if (existing.userId !== userId) return res.status(403).json({ message: "You can only edit medias that you created" })
 
