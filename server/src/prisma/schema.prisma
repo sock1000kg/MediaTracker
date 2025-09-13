@@ -67,8 +67,6 @@ model MediaType {
 
   media           Media[]   @relation("MediaToMediaTypes")
 
-  apiKeys         UserAPIKey[]
-
   @@unique([userId, name]) //One user have only unique mediaTypes
 }
 
@@ -100,8 +98,5 @@ model UserAPIKey {
   userId          Int
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  mediaTypeId     Int?     // optional: tie key to a specific media type
-  mediaType       MediaType? @relation(fields: [mediaTypeId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, service, mediaTypeId]) // one key per user per service per media type
+  @@unique([userId, service]) // one key per user per service
 }
