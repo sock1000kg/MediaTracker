@@ -19,6 +19,7 @@ export function createMedia(newMedia: Partial<Media>): Promise<Media> {
       sourceRating: newMedia.sourceRating,
       ratingsCount: newMedia.ratingsCount, 
       description: newMedia.description, 
+      imageUrl: newMedia.imageUrl,
       metadata: newMedia.metadata
     })
   })
@@ -51,6 +52,7 @@ export function editMedia(media: Partial<Media>): Promise<Media> {
       sourceRating: media.sourceRating,
       ratingsCount: media.ratingsCount, 
       description: media.description, 
+      imageUrl: media.imageUrl,
       metadata: media.metadata
     })
   })
