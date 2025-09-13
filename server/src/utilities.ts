@@ -137,8 +137,11 @@ export function sanitizeSource(source: string | undefined | null): AllowedSource
 export function sanitizeImageUrl(url: string | undefined | null): string | null {
     if (!url) return null
     const clean = String(url).trim()
-    // Very light URL check
-    return /^https?:\/\//.test(clean) ? clean : null
+    // Very light URL check, only allow https
+    if (url.startsWith("https://")) {
+        return url;
+    }
+    return null
 }
 
 // Sanitize sourceId: trim, max 200 chars
