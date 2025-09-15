@@ -1,11 +1,11 @@
 import { addApiKeySchema } from "@/schemas/apiKeySchemas"
 import { validateSchema } from "@/utilities"
-import { Request, Response } from "express"
+import { NextFunction, Request, Response } from "express"
 import { ZodError } from "zod"
 import { addApiKeyForUser, deleteApiKeyForUser, findApiKeyForUser, getAllApiKeys, updateApiKeyForUser } from "./dbCalls/apiKey"
 
 //Get all api keys based on userId
-export const getApiKeys = async (req: Request, res: Response) => {
+export const getApiKeys = async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId
     if (userId == null) 
         return res.status(401).json({ message: "Unauthorized: missing userId" })
@@ -17,13 +17,12 @@ export const getApiKeys = async (req: Request, res: Response) => {
 
         return res.status(200).json(apiKeys)
     }catch(error){
-        console.error(error)
-        res.status(500).json({ message: "Failed to add api key" })
+        next(error)
     }
 }
 
 //Create api key, key and service sent in body
-export const addApiKey = async (req: Request, res: Response) => {
+export const addApiKey = async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId
     if (userId == null) 
         return res.status(401).json({ message: "Unauthorized: missing userId" })
@@ -39,21 +38,12 @@ export const addApiKey = async (req: Request, res: Response) => {
         const apiKey = await addApiKeyForUser(userId, key, service)
         res.status(201).json(apiKey)
     }catch(error){
-        if (error instanceof ZodError) {
-        // return first validation error as JSON
-            return res.status(400).json({
-                message: error.issues[0]?.message || "Validation failed",
-                errors: error.issues
-            })
-        }
-
-        console.error(error)
-        res.status(500).json({ message: "Failed to add api key" })
+        next(error)
     }
 }
 
 //Update api key, key and service sent in body
-export const updateApiKey = async (req: Request, res: Response) => {
+export const updateApiKey = async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId
     if (userId == null)
         return res.status(401).json({ message: "Unauthorized: missing userId" })
@@ -69,19 +59,12 @@ export const updateApiKey = async (req: Request, res: Response) => {
         const updatedKey = await updateApiKeyForUser(userId, service, key)
         res.status(200).json(updatedKey)
     } catch (error) {
-        if (error instanceof ZodError) {
-            return res.status(400).json({
-                message: error.issues[0]?.message || "Validation failed",
-                errors: error.issues
-            })
-        }
-        console.error(error)
-        res.status(500).json({ message: "Failed to update api key" })
+        next(error)
     }
 }
 
 //delete api key, service sent in body
-export const deleteApiKey = async (req: Request, res: Response) => {
+export const deleteApiKey = async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId
     if (userId == null)
         return res.status(401).json({ message: "Unauthorized: missing userId" })
@@ -98,7 +81,6 @@ export const deleteApiKey = async (req: Request, res: Response) => {
         await deleteApiKeyForUser(userId, service)
         res.status(200).json({ message: `${service} API deleted`})
     } catch (error) {
-        console.error(error)
-        res.status(500).json({ message: "Failed to delete api key" })
+        next(error)
     }
 }
