@@ -69,8 +69,6 @@ export const updateLogSchema = z.object({
 
 // schema for deletion (optional confirm flag)
 export const deleteLogSchema = z.object({
-    confirm: z.boolean().optional(),
+    confirm: z.boolean()
 })
 
-export type CreateLogInput = z.infer<typeof createLogSchema>
-export type UpdateLogInput = z.infer<typeof updateLogSchema>

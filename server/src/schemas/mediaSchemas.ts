@@ -1,16 +1,16 @@
 import { z } from "zod"
 import { 
-  sanitizeTitle, 
-  sanitizeCreator, 
-  sanitizeMetadata, 
-  sanitizeYear, 
-  normalizeTypeName,
-  sanitizeDescription,
-  sanitizeSource,
-  sanitizeSourceId,
-  sanitizeSourceRating,
-  sanitizeRatingsCount,
-  sanitizeImageUrl
+    sanitizeTitle, 
+    sanitizeCreator, 
+    sanitizeMetadata, 
+    sanitizeYear, 
+    normalizeTypeName,
+    sanitizeDescription,
+    sanitizeSource,
+    sanitizeSourceId,
+    sanitizeSourceRating,
+    sanitizeRatingsCount,
+    sanitizeImageUrl
 } from "@/utilities"
 
 //Schema for creating and updating medias
@@ -18,8 +18,7 @@ const titleSchema = z
     .preprocess((val: string | null | undefined) => {
         return sanitizeTitle(val)
     }, z
-    .string()
-    .refine(val => val.trim().length > 0, { error: "Title is required" })
+    .string({ message: "Title is required" })
 )
 
 const mediaTypeSchema = z.object({
@@ -143,9 +142,6 @@ export const updateMediaSchema = z.object({
 
 // Delete schema with optional confirm flag
 export const deleteMediaSchema = z.object({
-    confirm: z.boolean().optional()
+    confirm: z.boolean()
 })
 
-export type CreateMediaInput = z.infer<typeof createMediaSchema>
-export type UpdateMediaInput = z.infer<typeof updateMediaSchema>
-export type DeleteMediaInput = z.infer<typeof deleteMediaSchema>
