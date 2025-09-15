@@ -7,13 +7,12 @@ import {
 import { findFirstMediaByTitle } from "./dbCalls/mediaCalls"
 import { createLog } from "./dbCalls/logsCalls"
 
-import type { Request, Response } from "express"
+import type { NextFunction, Request, Response } from "express"
 
-import { z, ZodError } from "zod"
 import { registerSchema, loginSchema } from "@/schemas/authSchemas"
 import { validateSchema } from "@/utilities"
 
-export const registerUser = async (req: Request, res: Response) => {
+export const registerUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { username, password, displayName } = validateSchema(registerSchema, req.body)
         const hashedPassword = bcrypt.hashSync(password, 12)
@@ -42,24 +41,11 @@ export const registerUser = async (req: Request, res: Response) => {
 
         res.json({ token, user })
     } catch (error: any) {
-        if (error.message === "Username already taken") {
-            return res.status(400).json({ message: "Username already taken" })
-        }
-        
-        if (error instanceof ZodError) {
-        // return first validation error as JSON
-            return res.status(400).json({
-                message: error.issues[0]?.message || "Validation failed",
-                errors: error.issues
-            })
-        }
-
-        console.error(error.message)
-        res.sendStatus(503)
+        next(error)
     }
 }
 
-export const loginUser = async (req: Request, res: Response) => {
+export const loginUser = async (req: Request, res: Response, next: NextFunction) => {
     
     try {
         const { username, password } = validateSchema(loginSchema, req.body)
@@ -79,17 +65,6 @@ export const loginUser = async (req: Request, res: Response) => {
 
         res.json({ token, user })
     } catch (error: any) {
-        if (error.message === "Cannot find user") 
-            return res.status(404).json({ message: "Cannot find user" })
-
-        if (error instanceof ZodError) {
-        // return first validation error as JSON
-            return res.status(400).json({
-                message: error.issues[0]?.message || "Validation failed",
-                errors: error.issues
-            })
-        }
-        console.error(error.message)
-        res.sendStatus(503)
+        next(error)
     }
 }
