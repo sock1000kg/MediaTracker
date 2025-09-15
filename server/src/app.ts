@@ -1,27 +1,24 @@
 import express, { Application } from 'express'
-import { limiter } from '@/middleWare/rateLimiter'
 import cors from 'cors'
 import 'dotenv/config'
 import { fileURLToPath } from 'url'
 import path, { dirname } from 'path'
 
+// Middleware
+import limiter from '@/middleWare/rateLimiter'
+import authMiddleWare from '@/middleWare/authMiddleware'
+
 import authRoutes from '@/routes/authRoutes'
 import logRoutes from '@/routes/logRoutes'
 import mediaRoutes from '@/routes/mediaRoutes'
 import mediaTypeRoutes from '@/routes/mediaTypeRoutes'
-import authMiddleWare from '@/middleWare/authMiddleware'
 import searchRoutes from '@/routes/searchRoutes'
 import apiKeyRoutes from '@/routes/apiKeyRoutes'
+import errorHandler from './middleWare/errorHandlerMiddleware'
+import logger from './middleWare/loggingMiddleware'
 
 const app: Application = express()
 
-// Middleware
-app.use(cors({
-    origin: "http://localhost:5173", // Vite dev server
-    credentials: true
-}))
-app.use(limiter)
-app.use(express.json())
 
 // Serves Vite frontend when i have it eventually
 // app.use(express.static(path.join(__dirname, '../../client/dist')))
@@ -30,6 +27,17 @@ app.use(express.json())
 // app.get('/', (req: Request, res: Response) => {
 //     res.sendFile(path.join(__dirname, "..", "..", "client", "index.html"))
 // })
+    
+// Middleware
+app.use(
+    cors({
+        origin: "http://localhost:5173", // Vite dev server
+        credentials: true
+    })
+)
+app.use(limiter())
+app.use(express.json())
+app.use(logger)
 
 //Routes
 app.use('/auth', authRoutes)
@@ -38,5 +46,8 @@ app.use('/media', authMiddleWare, mediaRoutes)
 app.use('/media-type', authMiddleWare, mediaTypeRoutes)
 app.use('/search', authMiddleWare, searchRoutes)
 app.use('/api-key', authMiddleWare, apiKeyRoutes)
+
+//Error handling
+app.use(errorHandler)
 
 export default app
