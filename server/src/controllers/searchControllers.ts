@@ -1,11 +1,12 @@
+import { NextFunction, Request, Response } from 'express'
+
 import { createMediaAndLogSchema, googleBooksResponseSchema, SearchResult, searchResultsSchema } from '@/schemas/searchSchemas'
 import { validateSchema } from '@/utilities'
-import { Request, Response } from 'express'
-import { ZodError } from 'zod'
+
 import { createLog, findLogOfUserByMediaId, updateLog } from './dbCalls/logsCalls'
 import { createMedia, findMediaBySource } from './dbCalls/mediaCalls'
 
-export const createMediaAndLog = async (req: Request, res: Response) => {
+export const createMediaAndLog = async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId
     if (!userId) 
         return res.status(401).json({ message: "Unauthorized" })
@@ -46,23 +47,12 @@ export const createMediaAndLog = async (req: Request, res: Response) => {
         res.status(201).json({ media, newLog })
 
     } catch (error) {
-        console.dir(error, { depth: null })
-
-        if (error instanceof ZodError) {
-        // return first validation error as JSON
-            return res.status(400).json({
-                message: error.issues[0]?.message || "Validation failed",
-                errors: error.issues
-            })
-        }
-
-        console.error(error)
-        res.status(500).json({ message: "Failed to create media and log" })
+        next(error)
     }
 }
 
 // Returns the book info fetched from google books (A media shaped item without media type cus its enforced in frontend)
-export async function searchBooks(req: Request, res: Response) {
+export async function searchBooks(req: Request, res: Response, next: NextFunction) {
     const userId = req.userId
     if (!userId) 
         return res.status(401).json({ message: "Unauthorized: missing userId" })
@@ -133,14 +123,6 @@ export async function searchBooks(req: Request, res: Response) {
         if (results) console.log(results)
         res.status(200).json(results)
     }catch(error){
-        if (error instanceof ZodError) {
-        // return first validation error as JSON
-            return res.status(400).json({
-                message: error.issues[0]?.message || "Validation failed",
-                errors: error.issues
-            })
-        }
-        console.error(error)
-        res.status(500).json({ message: "Failed to search for books" })
+        next(error)
     }
 }

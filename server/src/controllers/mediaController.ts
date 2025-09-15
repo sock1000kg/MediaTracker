@@ -1,4 +1,4 @@
-import { Request, Response } from "express"
+import { NextFunction, Request, Response } from "express"
 import { z, ZodError } from "zod"
 import { 
   getAllMediasForUser,
@@ -14,7 +14,7 @@ import { createMediaSchema, updateMediaSchema, deleteMediaSchema } from "@/schem
 import { validateSchema } from "@/utilities"
 
 // Get all medias
-export const getMedias = async (req: Request, res: Response) => {
+export const getMedias = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.userId
   if (!userId)
     return res.status(401).json({ message: "Unauthorized: missing userId" })
@@ -23,13 +23,12 @@ export const getMedias = async (req: Request, res: Response) => {
       const medias = await getAllMediasForUser(userId)
       res.status(200).json(medias)
   } catch (error) {
-      console.error(error)
-      res.status(500).json({ message: "Failed to fetch media" })
+      next(error)
   }
 }
 
 // Create media
-export const createNewMedia = async (req: Request, res: Response) => {
+export const createNewMedia = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.userId
   if (!userId) 
     return res.status(401).json({ message: "Unauthorized: missing userId" })
@@ -88,20 +87,12 @@ export const createNewMedia = async (req: Request, res: Response) => {
 
       res.status(201).json(media)
   } catch (error) {
-    if (error instanceof ZodError) {
-      // return first validation error as JSON
-      return res.status(400).json({
-          message: error.issues[0]?.message || "Validation failed",
-          errors: error.issues
-      })
-    }
-    console.error(error)
-    res.status(500).json({ message: "Failed to create media" })
+    next(error)
   }
 }
 
 // UPDATE media, id is sent in params
-export const updateExistingMedia = async (req: Request, res: Response) => {
+export const updateExistingMedia = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.userId
   if (!userId) 
     return res.status(401).json({ message: "Unauthorized: missing userId" })
@@ -169,20 +160,12 @@ export const updateExistingMedia = async (req: Request, res: Response) => {
       )
     res.status(200).json(updated)
   } catch (error) {
-    if (error instanceof ZodError) {
-      // return first validation error as JSON
-      return res.status(400).json({
-          message: error.issues[0]?.message || "Validation failed",
-          errors: error.issues
-      })
-    }
-    console.error(error)
-    res.status(500).json({ message: "Failed to update media" })
+    next(error)
   }
 }
 
 // Delete media
-export const deleteExistingMedia = async (req: Request, res: Response) => {
+export const deleteExistingMedia = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.userId
   if (!userId) 
     return res.status(401).json({ message: "Unauthorized: missing userId" })
@@ -211,14 +194,6 @@ export const deleteExistingMedia = async (req: Request, res: Response) => {
     await deleteMedia(mediaId)
     res.status(200).json({ message: "Media deleted" })
   } catch (error) {
-    if (error instanceof ZodError) {
-      // return first validation error as JSON
-      return res.status(400).json({
-          message: error.issues[0]?.message || "Validation failed",
-          errors: error.issues
-      })
-    }
-    console.error(error)
-    res.status(500).json({ message: "Failed to delete media" })
+    next(error)
   }
 }

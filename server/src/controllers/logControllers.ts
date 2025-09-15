@@ -1,4 +1,4 @@
-import { Request, Response } from "express"
+import { NextFunction, Request, Response } from "express"
 import {
     getAllLogs,
     createLog,
@@ -10,12 +10,11 @@ import {
 import { findMediaForUserById } from "./dbCalls/mediaCalls"
 import { findMediaTypeForUserOrGlobal, createMediaTypeForUser } from "./dbCalls/mediaTypeCalls"
 
-import { z, ZodError } from "zod"
 import { createLogSchema, deleteLogSchema, updateLogSchema } from "@/schemas/logSchemas"
 import { validateSchema } from "@/utilities"
 
 // Get all logs
-export const getLogs = async (req: Request, res: Response) => {
+export const getLogs = async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId
     if (userId == null) {
         return res.status(401).json({ message: "Unauthorized: missing userId" })
@@ -25,13 +24,12 @@ export const getLogs = async (req: Request, res: Response) => {
         const logs = await getAllLogs(userId)
         res.status(200).json(logs)
     } catch (error) {
-        console.error(error)
-        res.status(500).json({ message: "Failed to fetch user logs" })
+        next(error)
     }
 }
 
 //Create a log
-export const createNewLog = async (req: Request, res: Response) => {
+export const createNewLog = async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId
     if (!userId) 
         return res.status(401).json({ message: "Unauthorized: missing userId" })
@@ -62,22 +60,12 @@ export const createNewLog = async (req: Request, res: Response) => {
         const log = await createLog(userId, mediaId, status, rating, notes)
         res.status(201).json(log)
     } catch (error) {
-        console.dir(error, { depth: null })
-        if (error instanceof ZodError) {
-        // return first validation error as JSON
-            return res.status(400).json({
-                message: error.issues[0]?.message || "Validation failed",
-                errors: error.issues
-            })
-        }
-
-        console.error(error)
-        res.status(500).json({ message: "Failed to create user log" })
+        next(error)
     }
 }
 
 //Update a log
-export const updateExistingLog = async (req: Request, res: Response) => {
+export const updateExistingLog = async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId
     if (!userId) 
         return res.status(401).json({ message: "Unauthorized: missing userId" })
@@ -101,21 +89,13 @@ export const updateExistingLog = async (req: Request, res: Response) => {
         const updated = await updateLog(logId, newStatus, newRating, newNotes)
         res.status(200).json(updated)
     } catch (error) {
-        if (error instanceof ZodError) {
-        // return first validation error as JSON
-            return res.status(400).json({
-                message: error.issues[0]?.message || "Validation failed",
-                errors: error.issues
-            })
-        }
-        console.error(error)
-        res.status(500).json({ message: "Failed to update user log" })
+        next(error)
     }
 }
 
 
 // Delete a log
-export const deleteExistingLog = async (req: Request, res: Response) => {
+export const deleteExistingLog = async (req: Request, res: Response, next: NextFunction) => {
     const userId = Number(req.userId)
     if (!userId) 
         return res.status(401).json({ message: "Unauthorized: missing userId" })
@@ -142,14 +122,6 @@ export const deleteExistingLog = async (req: Request, res: Response) => {
         await deleteLog(logId)
         res.status(200).json({ message: "Log deleted" })
     } catch (error) {
-        if (error instanceof ZodError) {
-        // return first validation error as JSON
-            return res.status(400).json({
-                message: error.issues[0]?.message || "Validation failed",
-                errors: error.issues
-            })
-        }
-        console.error(error)
-        res.status(500).json({ message: "Failed to delete user log" })
+        next(error)
     }
 }

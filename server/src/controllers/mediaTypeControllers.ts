@@ -1,4 +1,4 @@
-import { Request, Response } from 'express'
+import { NextFunction, Request, Response } from 'express'
 import { 
   getAllMediaTypesForUser, 
   findMediaTypeForUserOrGlobal, 
@@ -9,10 +9,9 @@ import {
 } from '@/controllers/dbCalls/mediaTypeCalls'
 import { normalizeTypeName, validateSchema } from '../utilities'
 
-import { z, ZodError } from 'zod'
 import { createMediaTypeSchema, deleteMediaTypeSchema, updateMediaTypeSchema } from '@/schemas/mediaTypeSchemas'
 
-export async function getAllMediaTypes(req: Request, res: Response) {
+export async function getAllMediaTypes(req: Request, res: Response, next: NextFunction) {
     const userId = req.userId
     if (!userId) 
         return res.status(401).json({ message: "Unauthorized: missing userId" })
@@ -21,13 +20,12 @@ export async function getAllMediaTypes(req: Request, res: Response) {
         const types = await getAllMediaTypesForUser(userId)
         res.status(200).json(types)
     } catch (error) {
-        console.error(error)
-        res.status(500).json({ message: 'Failed to fetch user media types' })
+        next(error)
     }
 }
 
 // Create a type, name sent in body
-export async function createMediaType(req: Request, res: Response) {
+export async function createMediaType(req: Request, res: Response, next: NextFunction) {
     const userId = req.userId
     if (!userId) 
         return res.status(401).json({ message: "Unauthorized: missing userId" })
@@ -43,20 +41,12 @@ export async function createMediaType(req: Request, res: Response) {
         const mediaType = await createMediaTypeForUser(normalizedName, userId)
         res.status(201).json(mediaType)
     } catch (error) {
-        if (error instanceof ZodError) {
-        // return first validation error as JSON
-            return res.status(400).json({
-                message: error.issues[0]?.message || "Validation failed",
-                errors: error.issues
-            })
-        }
-        console.error(error)
-        res.status(500).json({ message: "Failed to create Media Type" })
+        next(error)
     }
 }
 
 //Delete a type, name sent in params
-export async function deleteMediaType(req: Request, res: Response) {
+export async function deleteMediaType(req: Request, res: Response, next: NextFunction) {
     const name = decodeURIComponent(req.params.name)
     
     const userId = req.userId
@@ -82,19 +72,11 @@ export async function deleteMediaType(req: Request, res: Response) {
         await deleteMediaTypeForUser(normalizedName, userId)
         res.status(200).json({ message: "Media Type deleted successfully" })
     } catch (error) {
-        if (error instanceof ZodError) {
-        // return first validation error as JSON
-            return res.status(400).json({
-                message: error.issues[0]?.message || "Validation failed",
-                errors: error.issues
-            })
-        }
-        console.error(error)
-        res.status(500).json({ message: "Failed to delete Media Type" })
+        next(error)
     }
 }
 
-export async function updateMediaType(req: Request, res: Response) {
+export async function updateMediaType(req: Request, res: Response, next: NextFunction) {
     const name = decodeURIComponent(req.params.name)
 
     const userId = req.userId
@@ -117,14 +99,6 @@ export async function updateMediaType(req: Request, res: Response) {
         const updated = await updateMediaTypeForUser(normalizedOldName, normalizedNewName, userId)
         res.status(200).json(updated)
     } catch (error) {
-        if (error instanceof ZodError) {
-        // return first validation error as JSON
-            return res.status(400).json({
-                message: error.issues[0]?.message || "Validation failed",
-                errors: error.issues
-            })
-        }
-        console.error(error)
-        res.status(500).json({ message: "Failed to update Media Type" })
+        next(error)
     }
 }
