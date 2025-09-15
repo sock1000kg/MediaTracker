@@ -2,11 +2,13 @@ import { createMediaAndLogSchema, googleBooksResponseSchema, SearchResult, searc
 import { validateSchema } from '@/utilities'
 import { Request, Response } from 'express'
 import { ZodError } from 'zod'
-import { createLog, createMedia, findLogOfUserByMediaId, findMediaBySource, updateLog } from './dbCalls/dbControllers'
+import { createLog, findLogOfUserByMediaId, updateLog } from './dbCalls/logsCalls'
+import { createMedia, findMediaBySource } from './dbCalls/mediaCalls'
 
 export const createMediaAndLog = async (req: Request, res: Response) => {
     const userId = req.userId
-    if (!userId) return res.status(401).json({ message: "Unauthorized" })
+    if (!userId) 
+        return res.status(401).json({ message: "Unauthorized" })
 
     try {
         console.log("BODY RECEIVED:", req.body)
@@ -59,10 +61,11 @@ export const createMediaAndLog = async (req: Request, res: Response) => {
     }
 }
 
-
+// Returns the book info fetched from google books (A media shaped item without media type cus its enforced in frontend)
 export async function searchBooks(req: Request, res: Response) {
     const userId = req.userId
-    if (!userId) return res.status(401).json({ message: "Unauthorized: missing userId" })
+    if (!userId) 
+        return res.status(401).json({ message: "Unauthorized: missing userId" })
 
     const q = req.query.q as string
     if(!q) return res.status(404).json({ message: "Missing query" })
@@ -75,7 +78,7 @@ export async function searchBooks(req: Request, res: Response) {
         //Form the API call
         const url = new URL("https://www.googleapis.com/books/v1/volumes")
         url.searchParams.set("q", q)
-        url.searchParams.set("maxResults", "15")
+        url.searchParams.set("maxResults", maxResults.toString())
         url.searchParams.set("startIndex", startIndex.toString())
 
         if(process.env.GOOGLE_BOOKS_API_KEY) {
@@ -121,7 +124,11 @@ export async function searchBooks(req: Request, res: Response) {
             }
         }) ?? []
 
-        //Validate 
+        //If no results return
+        if(!rawResults.length)
+            return res.status(404).json({ message: "No item found"})
+        
+        //Validate raw searches so it match mediaSchema (searchResultSchema)
         const results = validateSchema(searchResultsSchema, rawResults)
         if (results) console.log(results)
         res.status(200).json(results)
