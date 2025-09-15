@@ -13,7 +13,7 @@ import { fetchMediaTypes } from "@/api/mediaType"
 import type { Media, MediaType } from "@/types/main"
 
 
-const AVAILABLE_METADATA_FIELDS = ["duration", "edition", "genre", "language", "pages", "platform",]
+const AVAILABLE_METADATA_FIELDS = ["duration", "edition", "categories", "language", "pageCount", "platform",]
 
 interface MediaFormProps {
     formData: Partial<Media>,
@@ -162,7 +162,7 @@ export function MediaForm({
                         setFormData((prev) => ({ ...prev, imageUrl: e.target.value }))
                     }
                     className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none "
-                    placeholder="Only allow https:/"
+                    placeholder="Only allow https:// links"
                 />
             </label>
 
