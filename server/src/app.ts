@@ -1,5 +1,5 @@
-import express, { Request, Response, Application } from 'express'
-import rateLimit, { RateLimitRequestHandler, ipKeyGenerator } from 'express-rate-limit'
+import express, { Application } from 'express'
+import { limiter } from '@/middleWare/rateLimiter'
 import cors from 'cors'
 import 'dotenv/config'
 import { fileURLToPath } from 'url'
@@ -11,17 +11,7 @@ import mediaRoutes from '@/routes/mediaRoutes'
 import mediaTypeRoutes from '@/routes/mediaTypeRoutes'
 import authMiddleWare from '@/middleWare/authMiddleware'
 import searchRoutes from '@/routes/searchRoutes'
-
-const limiter: RateLimitRequestHandler = rateLimit({
-    windowMs: 60 * 1000, // 1 minute
-    max: 30,
-    keyGenerator: (req) => {
-        if (req.userId !== null) return String(req.userId) // convert number -> string
-        if (req.ip !== undefined) return ipKeyGenerator(req.ip)
-        return ipKeyGenerator('unknown')
-    },
-    message: { error: 'Too many requests' }
-})
+import apiKeyRoutes from '@/routes/apiKeyRoutes'
 
 const app: Application = express()
 
@@ -30,8 +20,8 @@ app.use(cors({
     origin: "http://localhost:5173", // Vite dev server
     credentials: true
 }))
-app.use(express.json())
 app.use(limiter)
+app.use(express.json())
 
 // Serves Vite frontend when i have it eventually
 // app.use(express.static(path.join(__dirname, '../../client/dist')))
@@ -47,5 +37,6 @@ app.use('/logs', authMiddleWare, logRoutes)
 app.use('/media', authMiddleWare, mediaRoutes)
 app.use('/media-type', authMiddleWare, mediaTypeRoutes)
 app.use('/search', authMiddleWare, searchRoutes)
+app.use('/api-key', authMiddleWare, apiKeyRoutes)
 
 export default app
