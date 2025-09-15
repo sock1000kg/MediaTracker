@@ -2,10 +2,10 @@ import bcrypt from "bcryptjs"
 import jwt from 'jsonwebtoken'
 import {
   createUser,
-  findFirstMediaByTitle,
-  createLog,
   findUserByUsername
-} from "@/controllers/dbCalls/dbControllers"
+} from "@/controllers/dbCalls/authCalls"
+import { findFirstMediaByTitle } from "./dbCalls/mediaCalls"
+import { createLog } from "./dbCalls/logsCalls"
 
 import type { Request, Response } from "express"
 
@@ -27,11 +27,11 @@ export const registerUser = async (req: Request, res: Response) => {
         }
 
         await createLog(
-        user.id,
-        defaultMedia.id,
-        "completed",
-        100,
-        "Welcome! This is your default entry :)"
+            user.id,
+            defaultMedia.id,
+            "completed",
+            100,
+            "Welcome! This is your default entry :)"
         )
 
         const token = jwt.sign(
@@ -68,9 +68,8 @@ export const loginUser = async (req: Request, res: Response) => {
         
         const passwordIsValid = bcrypt.compareSync(password, user.password)
 
-        if (!passwordIsValid) {
+        if (!passwordIsValid) 
             return res.status(401).json({ message: "Invalid password" })
-        }
 
         const token = jwt.sign(
             { id: user.id },
@@ -80,9 +79,8 @@ export const loginUser = async (req: Request, res: Response) => {
 
         res.json({ token, user })
     } catch (error: any) {
-        if (error.message === "Cannot find user") {
+        if (error.message === "Cannot find user") 
             return res.status(404).json({ message: "Cannot find user" })
-        }
 
         if (error instanceof ZodError) {
         // return first validation error as JSON
