@@ -116,15 +116,13 @@ export function sanitizeMetadata(input: unknown): Prisma.JsonValue | null {
     return null
 }
 
-
-
 // Sanitize description: trim whitespace, limit to 3000 chars
 export function sanitizeDescription(desc: string | undefined | null): string | null {
     if (!desc) return null
     return String(desc).trim().slice(0, 3000)
 }
 
-// Sanitize source: only allow known sources (e.g., "google_books", "manual")
+// Sanitize source: only allow known sources (e.g., "google_books")
 const allowedSources = ["google_books"] as const
 export type AllowedSource = (typeof allowedSources)[number]
 export function sanitizeSource(source: string | undefined | null): AllowedSource | null {
@@ -133,13 +131,13 @@ export function sanitizeSource(source: string | undefined | null): AllowedSource
     return allowedSources.includes(clean as AllowedSource) ? (clean as AllowedSource) : null
 }
 
-// Sanitize image URL: basic validation, trim, allow null
+// Sanitize image URL: require https, trim, allow null
 export function sanitizeImageUrl(url: string | undefined | null): string | null {
     if (!url) return null
     const clean = String(url).trim()
     // Very light URL check, only allow https
     if (url.startsWith("https://")) {
-        return url;
+        return url
     }
     return null
 }
@@ -172,6 +170,12 @@ export function sanitizeRatingsCount(count: number | string | undefined | null):
     if (count === undefined || count === null) return null
     const num = Number(count)
     return Number.isInteger(num) && num >= 0 ? num : null
+}
+
+// Sanitize Api Key: trim and limit to 200 chars
+export function sanitizeApiKey(key: string | undefined | null): string | null {
+    if(key === null || key === undefined) return null
+    return key.trim().slice(0, 200)
 }
 
 // Validate Zod schema
