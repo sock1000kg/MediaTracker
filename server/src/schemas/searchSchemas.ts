@@ -1,6 +1,6 @@
 import { z } from "zod"
 import { createMediaSchema } from "./mediaSchemas"
-import { createLogSchema, searchLogSchema } from "./logSchemas"
+import { searchLogSchema } from "./logSchemas"
 
 //For when user search up a media and wanna log it
 export const createMediaAndLogSchema = z.object({
@@ -8,7 +8,7 @@ export const createMediaAndLogSchema = z.object({
     logData: searchLogSchema
 })
 
-//Schema for ONE result of a search
+//Schema for ONE result of a search (generic normaliztion for all types)
 export const searchResultSchema = z.object({
     title: z
         .string()

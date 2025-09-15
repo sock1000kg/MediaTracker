@@ -23,9 +23,6 @@ export const updateMediaTypeSchema = z.object({
 
 // schema for deletion (optional confirm flag)
 export const deleteMediaTypeSchema = z.object({
-    confirm: z.boolean().optional(),
+    confirm: z.boolean()
 })
 
-export type CreateMediaTypeInput = z.infer<typeof createMediaTypeSchema>
-export type UpdateMediaTypeInput = z.infer<typeof updateMediaTypeSchema>
-export type DeleteMediaTypeInput = z.infer<typeof deleteMediaTypeSchema>
