@@ -30,7 +30,7 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
             defaultMedia.id,
             "completed",
             100,
-            "Welcome! This is your default entry :)"
+            "Welcome! This is your default log! Search up or create a custom media to log it!"
         )
 
         const token = jwt.sign(

@@ -99,7 +99,7 @@ export const updateExistingMedia = async (req: Request, res: Response, next: Nex
   
   const mediaId = Number(req.params.id)
   if (Number.isNaN(mediaId)) 
-    return res.status(400).json({ message: "Invalid params" })
+    return res.status(400).json({ message: "Invalid mediaId params" })
 
   
   try {
