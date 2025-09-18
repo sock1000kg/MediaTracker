@@ -25,25 +25,25 @@ export default function MediaTypesSection() {
   const createMutation = useMutation({
     mutationFn: createMediaType,
     onSuccess: () => { 
-      queryClient.refetchQueries(fetchMediaTypesQueryOptions())
+      queryClient.refetchQueries({queryKey: fetchMediaTypesQueryOptions().queryKey})
     }
   })
 
   const deleteMutation = useMutation({
     mutationFn: deleteMediaType,
     onSuccess: () => { 
-      queryClient.refetchQueries(fetchLogsQueryOptions())
-      queryClient.refetchQueries(fetchMediaTypesQueryOptions())
-      queryClient.refetchQueries(fetchMediasQueryOptions())
+      queryClient.refetchQueries({queryKey: fetchLogsQueryOptions().queryKey})
+      queryClient.refetchQueries({queryKey: fetchMediaTypesQueryOptions().queryKey})
+      queryClient.refetchQueries({queryKey: fetchMediasQueryOptions().queryKey})
     }
   })
 
   const editMutation = useMutation({
     mutationFn: ({name, newMediaType} : {name: string, newMediaType: Partial<MediaType>}) => editMediaType(name, newMediaType),
     onSuccess: () => { 
-      queryClient.refetchQueries(fetchLogsQueryOptions())
-      queryClient.refetchQueries(fetchMediaTypesQueryOptions())
-      queryClient.refetchQueries(fetchMediasQueryOptions())
+      queryClient.refetchQueries({queryKey: fetchLogsQueryOptions().queryKey})
+      queryClient.refetchQueries({queryKey: fetchMediaTypesQueryOptions().queryKey})
+      queryClient.refetchQueries({queryKey: fetchMediasQueryOptions().queryKey})
     }
   })
 
