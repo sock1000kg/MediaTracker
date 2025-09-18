@@ -5,9 +5,11 @@ import LogsSection from "@/components/sections/LogSection"
 import MediasSection from "@/components/sections/MediaSection"
 import MediaTypesSection from "@/components/sections/MediaTypeSection"
 import SearchSection from "@/components/sections/SearchSection"
+import Settings from "@/components/sections/Settings"
 
-import type { Tab } from "@/types/main"
 import { Search } from "lucide-react"
+
+export type Tab = "logs" | "medias" | "mediaTypes" | "search" | "settings" //Tabs in homepage
 
 export default function Homepage() {
   const [activeTab, setActiveTab] = useState<Tab>("logs")
@@ -21,6 +23,7 @@ export default function Homepage() {
           {activeTab === "medias" && <MediasSection />}
           {activeTab === "mediaTypes" && <MediaTypesSection />}
           {activeTab === "search" && <SearchSection/>}
+          {activeTab === "settings" && <Settings/>}
         </div>
 
         {/* Right side bar */}
@@ -52,6 +55,13 @@ export default function Homepage() {
             onClick={() => { setActiveTab("mediaTypes")}}
           >
               Your Media Types
+          </Button>
+          <Button 
+            variant={activeTab === "settings" ? "boldedLink" : "link"}
+            className="text-stone-600 w-full rounded-none shadow-[0_2px_2px_-2px_rgba(0,0,0,0.2)] hover:underline" 
+            onClick={() => { setActiveTab("settings")}}
+          >
+              Settings
           </Button>
         </div>
       </div>
