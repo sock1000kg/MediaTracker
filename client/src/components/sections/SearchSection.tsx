@@ -165,7 +165,11 @@ export default function SearchSection() {
             {/* Results */}
             <div className="p-4 flex-1 overflow-y-auto">
                 {isLoading && <p>Loading...</p>}
-                {error && <p className="text-red-500">Something went wrong</p>}
+                {error && 
+                    <p className="text-red-500">
+                        {error.message}
+                    </p>
+                }
 
                 {results.length > 0 ? (
                 <div className="grid gap-4">
