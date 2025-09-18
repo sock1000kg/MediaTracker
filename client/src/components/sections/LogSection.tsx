@@ -21,12 +21,12 @@ export default function LogsSection() {
   const { data: logs = [], error, isPending } = useQuery(fetchLogsQueryOptions())
   const deleteMutation = useMutation({
     mutationFn: deleteLog,
-    onSuccess: () => queryClient.refetchQueries(fetchLogsQueryOptions()),
+    onSuccess: () => queryClient.refetchQueries({queryKey: fetchLogsQueryOptions().queryKey}),
   })
 
   const editMutation = useMutation({
     mutationFn: editLog,
-    onSuccess: () => queryClient.refetchQueries(fetchLogsQueryOptions()),
+    onSuccess: () => queryClient.refetchQueries({queryKey: fetchLogsQueryOptions().queryKey}),
   })
 
   // Group logs by media type

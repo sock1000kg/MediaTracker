@@ -53,24 +53,24 @@ export default function MediasSection() {
   const createMediaMutation = useMutation({
     mutationFn: createMedia,
     onSuccess: () => {
-      queryClient.refetchQueries(fetchMediasQueryOptions())
-      queryClient.refetchQueries(fetchLogsQueryOptions())
+      queryClient.refetchQueries({queryKey: fetchMediasQueryOptions().queryKey})
+      queryClient.refetchQueries({queryKey: fetchLogsQueryOptions().queryKey})
     }
   })
   
   const deleteMediaMutation = useMutation({
     mutationFn: deleteMedia,
     onSuccess: () => {
-      queryClient.refetchQueries(fetchMediasQueryOptions())
-      queryClient.refetchQueries(fetchLogsQueryOptions())
+      queryClient.refetchQueries({queryKey: fetchMediasQueryOptions().queryKey})
+      queryClient.refetchQueries({queryKey: fetchLogsQueryOptions().queryKey})
     }
   })
   
   const editMediaMutation = useMutation({
     mutationFn: editMedia,
     onSuccess: () => {
-      queryClient.refetchQueries(fetchMediasQueryOptions())
-      queryClient.refetchQueries(fetchLogsQueryOptions())
+      queryClient.refetchQueries({queryKey: fetchMediasQueryOptions().queryKey})
+      queryClient.refetchQueries({queryKey: fetchLogsQueryOptions().queryKey})
     }
   })
   // LOG
