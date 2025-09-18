@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client"
 import { ZodSchema, ZodError } from "zod"
+import crypto from "crypto"
 
 // USERS
 // password strength check
@@ -135,10 +136,24 @@ export function sanitizeSource(source: string | undefined | null): AllowedSource
 export function sanitizeImageUrl(url: string | undefined | null): string | null {
     if (!url) return null
     const clean = String(url).trim()
-    // Very light URL check, only allow https
-    if (url.startsWith("https://")) {
-        return url
+    // only allow https, turns http into https
+    try {
+        const parsed = new URL(clean)
+
+        // Auto-upgrade http to https
+        if (parsed.protocol === "http:") {
+            parsed.protocol = "https:"
+        }
+
+        // Only allow https after upgrade
+        if (parsed.protocol === "https:") {
+            return parsed.toString()
+        }
+    } catch {
+        // Invalid URL
+        return null
     }
+    //url is valid but is not https -> gone
     return null
 }
 
@@ -186,4 +201,25 @@ export function validateSchema<T>(schema: ZodSchema<T>, data: unknown): T {
         throw new ZodError([{ ...result.error.issues[0], message: firstError }])
     }
     return result.data
+}
+
+// API KEY ENCRYPTION
+const ALGO = "aes-256-gcm"
+const SECRET = crypto.createHash("sha256").update(process.env.API_KEY_SECRET!).digest()
+export function encryptKey(key: string) {
+    const iv = crypto.randomBytes(16)
+    const cipher = crypto.createCipheriv(ALGO, Buffer.from(SECRET), iv)
+    let encrypted = cipher.update(key, "utf8", "hex")
+    encrypted += cipher.final("hex")
+    const authTag = cipher.getAuthTag().toString("hex")
+    return `${iv.toString("hex")}:${authTag}:${encrypted}`
+}
+
+export function decryptKey(stored: string) {
+    const [ivHex, authTagHex, encrypted] = stored.split(":")
+    const decipher = crypto.createDecipheriv(ALGO, Buffer.from(SECRET), Buffer.from(ivHex, "hex"))
+    decipher.setAuthTag(Buffer.from(authTagHex, "hex"))
+    let decrypted = decipher.update(encrypted, "hex", "utf8")
+    decrypted += decipher.final("utf8")
+    return decrypted
 }

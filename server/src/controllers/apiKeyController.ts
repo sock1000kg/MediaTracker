@@ -1,10 +1,10 @@
 import { addApiKeySchema } from "@/schemas/apiKeySchemas"
-import { validateSchema } from "@/utilities"
+import { encryptKey, validateSchema } from "@/utilities"
 import { NextFunction, Request, Response } from "express"
-import { ZodError } from "zod"
+
 import { addApiKeyForUser, deleteApiKeyForUser, findApiKeyForUser, getAllApiKeys, updateApiKeyForUser } from "./dbCalls/apiKey"
 
-//Get all api keys based on userId
+//Get all api keys (encrypted) based on userId
 export const getApiKeys = async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId
     if (userId == null) 
@@ -26,6 +26,9 @@ export const addApiKey = async (req: Request, res: Response, next: NextFunction)
     const userId = req.userId
     if (userId == null) 
         return res.status(401).json({ message: "Unauthorized: missing userId" })
+
+    if(userId === 1)
+        return res.status(400).json({ message: "This feature is not available on demo account" })
     
     try{
         console.log("BODY RECEIVED:", req.body)
@@ -35,7 +38,7 @@ export const addApiKey = async (req: Request, res: Response, next: NextFunction)
         if(existingKey)
             return res.status(409).json({ message: "You already have an API key for this service"})
 
-        const apiKey = await addApiKeyForUser(userId, key, service)
+        const apiKey = await addApiKeyForUser(userId, encryptKey(key), service)
         res.status(201).json(apiKey)
     }catch(error){
         next(error)
@@ -48,6 +51,10 @@ export const updateApiKey = async (req: Request, res: Response, next: NextFuncti
     if (userId == null)
         return res.status(401).json({ message: "Unauthorized: missing userId" })
 
+    if(userId === 1)
+        return res.status(400).json({ message: "This feature is not available on demo account" })
+    
+
     try {
         const { key, service } = validateSchema(addApiKeySchema, req.body)
 
@@ -56,7 +63,7 @@ export const updateApiKey = async (req: Request, res: Response, next: NextFuncti
             return res.status(404).json({ message: "API key for this service not found" })
 
         // Update the key
-        const updatedKey = await updateApiKeyForUser(userId, service, key)
+        const updatedKey = await updateApiKeyForUser(userId, service, encryptKey(key))
         res.status(200).json(updatedKey)
     } catch (error) {
         next(error)
@@ -69,6 +76,10 @@ export const deleteApiKey = async (req: Request, res: Response, next: NextFuncti
     if (userId == null)
         return res.status(401).json({ message: "Unauthorized: missing userId" })
 
+    if(userId === 1)
+        return res.status(400).json({ message: "This feature is not available on demo account" })
+    
+
     const { service } = req.body
     if (!service)
         return res.status(400).json({ message: "Missing service in request body" })
@@ -79,7 +90,7 @@ export const deleteApiKey = async (req: Request, res: Response, next: NextFuncti
             return res.status(404).json({ message: "API key for this service not found" })
 
         await deleteApiKeyForUser(userId, service)
-        res.status(200).json({ message: `${service} API deleted`})
+        res.status(200).json({ message: `${service} API Key deleted`})
     } catch (error) {
         next(error)
     }
