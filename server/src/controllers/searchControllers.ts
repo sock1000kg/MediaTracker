@@ -1,10 +1,11 @@
 import { NextFunction, Request, Response } from 'express'
 
 import { createMediaAndLogSchema, googleBooksResponseSchema, SearchResult, searchResultsSchema } from '@/schemas/searchSchemas'
-import { validateSchema } from '@/utilities'
+import { decryptKey, validateSchema } from '@/utilities'
 
 import { createLog, findLogOfUserByMediaId, updateLog } from './dbCalls/logsCalls'
 import { createMedia, findMediaBySource } from './dbCalls/mediaCalls'
+import { findUserById } from './dbCalls/authCalls'
 
 export const createMediaAndLog = async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId
@@ -65,24 +66,38 @@ export async function searchBooks(req: Request, res: Response, next: NextFunctio
     const maxResults = 15
 
     try{
+        const user = await findUserById(userId)
+
+        const decryptedApiKeys = user?.apiKeys.map(key => ({
+            ...key,
+            key: decryptKey(key.key)
+        }))
+
+        const userGoogleBooksKey = decryptedApiKeys?.find(key => key.service === "google_books")?.key
+
         //Form the API call
         const url = new URL("https://www.googleapis.com/books/v1/volumes")
         url.searchParams.set("q", q)
         url.searchParams.set("maxResults", maxResults.toString())
         url.searchParams.set("startIndex", startIndex.toString())
 
-        if(process.env.GOOGLE_BOOKS_API_KEY) {
-            console.log("Books API key exists")
-            url.searchParams.set("key", process.env.GOOGLE_BOOKS_API_KEY)
+        if(!userGoogleBooksKey) {
+            console.log("Books API key does not exist")
         }
+        else {
+            console.log("Books API key exists")
+            url.searchParams.set("key", userGoogleBooksKey)
+        }
+        
 
         const response = await fetch(url.toString())
         if (!response.ok) {
             //parse as JSON, returns null if fails
             const errorBody = await response.json().catch(() => null)
+            console.log(errorBody)
             return res.status(response.status).json({
                 error: "Google Books API error",
-                message: errorBody?.error?.message ?? null
+                message: errorBody?.error?.message ?? "Invalid or unauthorized API key"
             })
         }
 

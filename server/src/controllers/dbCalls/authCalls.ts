@@ -1,5 +1,5 @@
 import prisma from "@/prismaClient"
-import { User, MediaType } from "@prisma/client"
+import { User, MediaType, UserAPIKey } from "@prisma/client"
 
 //USERS
 export async function createUser(
@@ -24,9 +24,20 @@ export async function findUserByUsername(username: string): Promise<User & { med
             username 
         },
         include: { 
-            mediaType: true 
+            mediaType: true,
         },
     })
     if (!user) throw new Error("Cannot find user")
     return user
+}
+
+export async function findUserById(id: number): Promise<User & { apiKeys: UserAPIKey[] } | null> {
+    return await prisma.user.findUnique({
+        where: {
+            id
+        },
+        include: { 
+            apiKeys: true 
+        },
+    })
 }
