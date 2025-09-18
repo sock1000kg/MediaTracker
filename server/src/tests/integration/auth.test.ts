@@ -24,7 +24,7 @@ describe('Auth Routes', () => {
             .send({ password: 'StrongPass1!' })
             .set('Content-Type', 'application/json') 
         expect(res.statusCode).toBe(400) 
-        expect(res.body.message).toMatch(/Invalid input/i) 
+        expect(res.body.message).toMatch(/Username must be/i) 
     }) 
 
     test('Register with weak password fails', async () => {

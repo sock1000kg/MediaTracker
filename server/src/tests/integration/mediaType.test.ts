@@ -205,7 +205,7 @@ describe('MediaType Routes', () => {
         const res = await request(app)
             .delete(`/media-type/${encodeURIComponent(mediaTypeName)}`)
             .set('Authorization', `Bearer ${token}`)
-            .send({}) // no confirm
+            .send({ confirm: false }) // no confirm
 
         expect(res.statusCode).toBe(200)
         expect(res.body.message).toMatch(/confirm deletion/i)
