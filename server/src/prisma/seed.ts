@@ -1,11 +1,12 @@
 
+import { createLog } from "@/controllers/dbCalls/logsCalls"
 import { createMedia } from "@/controllers/dbCalls/mediaCalls"
 import prisma from "@/prismaClient"
 import bcrypt from "bcryptjs"
 
 async function createSystemUser(): Promise<{ id: number }> {
     let systemUser = await prisma.user.findUnique({
-        where: { id: 0 },
+        where: { username: 'system' },
     })
 
     if (!systemUser) {
@@ -16,7 +17,6 @@ async function createSystemUser(): Promise<{ id: number }> {
         const hashedPassword = await bcrypt.hash(process.env.SYSTEM_USER_PASSWORD, 12)
         systemUser = await prisma.user.create({
         data: {
-            id: 0,
             username: "system",
             password: hashedPassword,
             displayName: "System User",
@@ -32,7 +32,7 @@ async function createSystemUser(): Promise<{ id: number }> {
 
 async function createDemoUser(): Promise<{ id: number }> {
     let demoUser = await prisma.user.findUnique({
-        where: { id: 1 },
+        where: { username: 'demo' },
     })
 
     if (!demoUser) {
@@ -43,7 +43,6 @@ async function createDemoUser(): Promise<{ id: number }> {
         const hashedPassword = await bcrypt.hash(process.env.DEMO_USER_PASSWORD, 12)
         demoUser = await prisma.user.create({
         data: {
-            id: 1,
             username: "demo",
             password: hashedPassword,
             displayName: "Demo User",
@@ -83,6 +82,10 @@ async function main() {
     // CREATE SEED MEDIA TYPES
     const defaultType = await createMediaTypeSeed("book", systemUser.id)
     await createMediaTypeSeed("music", systemUser.id)
+    await createMediaTypeSeed("game", systemUser.id)
+    await createMediaTypeSeed("movie", systemUser.id)
+    await createMediaTypeSeed("anime", systemUser.id)
+    await createMediaTypeSeed("manga", systemUser.id)
 
     // CREATE SEED MEDIA
     const defaultMedia = await prisma.media.findFirst({
@@ -102,12 +105,15 @@ async function main() {
             "This is your default  media",
             null,
             null,
-            0
+            systemUser.id
         )
         console.log("Default Media created")
     } else {
         console.log("Default Media already exists")
     }
+
+    await createLog(demoUser.id, 1, "completed", 100, "Welcome! This is your default log! Search up or create a custom media to log it!")
+    console.log("Demo log created")
 }
 
 // Execute seed script
