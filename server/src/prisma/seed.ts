@@ -1,5 +1,5 @@
 
-import { createMedia } from "@/controllers/dbCalls/logsCalls"
+import { createMedia } from "@/controllers/dbCalls/mediaCalls"
 import prisma from "@/prismaClient"
 import bcrypt from "bcryptjs"
 
