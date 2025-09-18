@@ -28,7 +28,7 @@ export interface Media {
   created_at: string
 }
 
-export type LogStatus = "completed" | "in progress" | "wishlist"
+export type LogStatus = "completed" | "in progress" | "wishlist" | "dropped"
 export interface Log {
   id: number
   status: LogStatus
@@ -49,7 +49,7 @@ export interface MediaType {
 export const Book: MediaType = {
   id: 1,
   name: "book",
-  userId: 0,
+  userId: 1, //sytem id
   created_at: "1970-01-01T00:00:00.000Z" //placeholder
 }
 
