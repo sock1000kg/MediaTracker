@@ -133,7 +133,7 @@ export default function MediasSection() {
       <div className="flex justify-between p-4 items-center bg-stone-200">
         <div>
           <p className="text-lg font-semibold">Your Medias</p>
-          <p className="text-sm text-gray-600">List of medias you have</p>
+          <p className="text-sm text-gray-600">List of medias you created</p>
         </div>
         <Button size="default" variant="amber" onClick={() => handleCreateClick()}>
           + Add Media
