@@ -5,7 +5,7 @@ import { decryptKey, validateSchema } from '@/utilities'
 
 import { createLog, findLogOfUserByMediaId, updateLog } from './dbCalls/logsCalls'
 import { createMedia, findMediaBySource } from './dbCalls/mediaCalls'
-import { findUserById } from './dbCalls/authCalls'
+import { findUserById, findUserByUsername } from './dbCalls/authCalls'
 
 export const createMediaAndLog = async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId
@@ -13,25 +13,29 @@ export const createMediaAndLog = async (req: Request, res: Response, next: NextF
         return res.status(401).json({ message: "Unauthorized" })
 
     try {
+        //Validate inputs sent from frontend
         console.log("BODY RECEIVED:", req.body)
         const { mediaData, logData } = validateSchema(createMediaAndLogSchema, req.body)
 
         // Check if media exists in db, if not create a system media
         let media = await findMediaBySource(mediaData.sourceId, mediaData.source)
-        if (!media) media = await createMedia(
-            mediaData.title,
-            mediaData.mediaType,
-            mediaData.creator,
-            mediaData.year,
-            mediaData.source,
-            mediaData.sourceId,
-            mediaData.sourceRating,
-            mediaData.ratingsCount,
-            mediaData.description,
-            mediaData.metadata,
-            mediaData.imageUrl,
-            0 //systemId
-        )
+        if (!media) {
+            const systemUser = await findUserByUsername("system")
+            media = await createMedia(
+                mediaData.title,
+                mediaData.mediaType,
+                mediaData.creator,
+                mediaData.year,
+                mediaData.source,
+                mediaData.sourceId,
+                mediaData.sourceRating,
+                mediaData.ratingsCount,
+                mediaData.description,
+                mediaData.metadata,
+                mediaData.imageUrl,
+                systemUser.id // system id
+            )
+        }
 
         //Check if log exists
         const existingLog = await findLogOfUserByMediaId(userId, media.id)

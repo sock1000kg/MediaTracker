@@ -1,5 +1,6 @@
 import prisma from "@/prismaClient"
 import { Prisma, Media, MediaType, UserLogs } from "@prisma/client"
+import { findUserByUsername } from "./authCalls"
 
 
 //MEDIA
@@ -18,7 +19,7 @@ export async function getAllMediasForUser(userId: number): Promise<(Media & { me
     return prisma.media.findMany({
         where: { 
             OR: [
-                { userId: 0 }, 
+                {  user: { username: 'system' } }, 
                 { userId }
             ] },
         include: { 
@@ -68,7 +69,7 @@ export async function findMediaForUserById(mediaId: number, userId: number): Pro
         where: { 
             id: mediaId, 
             OR: [
-                { userId: 0 }, 
+                {  user: { username: 'system' } }, 
                 { userId }
             ] },
         include: { 

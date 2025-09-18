@@ -6,7 +6,7 @@ export async function getAllMediaTypesForUser(userId: number): Promise<(MediaTyp
     return prisma.mediaType.findMany({
         where: { 
             OR: [
-                { userId: 0 }, 
+                {  user: { username: 'system' } }, 
                 { userId }
             ] 
         },
@@ -20,7 +20,7 @@ export async function findMediaTypeForUserOrGlobal(typeName: string, userId: num
         where: {
             name: typeName,
             OR: [
-                { userId: 0 }, 
+                {  user: { username: 'system' } }, 
                 { userId: userId}
             ]
         },
