@@ -1,16 +1,11 @@
 export type DialogName = "mediaForm" | "mediaTypeForm" | "logForm" | "deleteConfirm" | null //Dialogs in homepage tabs
-export type Tab = "logs" | "medias" | "mediaTypes" | "search" //Tabs in homepage
 export type EditableEntity = Log | Media | MediaType
+
+const allowedSources = ["google_books"] as const
+export type AllowedSource = (typeof allowedSources)[number]
 
 
 // MAIN TYPES
-export interface MediaType {
-  id: number
-  name: string
-  created_at: string
-  userId: number
-}
-
 type JsonPrimitive = string | number | boolean | null
 type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue }
 export interface MediaMetadata {
@@ -44,9 +39,22 @@ export interface Log {
 }
 
 //MEDIA TYPES
+export interface MediaType {
+  id: number
+  name: string
+  created_at: string
+  userId: number
+}
+//Used for adding type to media when its searched up based on what search tab youre on
 export const Book: MediaType = {
   id: 1,
   name: "book",
   userId: 0,
   created_at: "1970-01-01T00:00:00.000Z" //placeholder
+}
+
+//API KEY
+export interface ApiKey {
+  key: string
+  service: AllowedSource
 }
