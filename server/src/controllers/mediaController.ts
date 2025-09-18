@@ -1,12 +1,12 @@
 import { NextFunction, Request, Response } from "express"
-import { z, ZodError } from "zod"
+
 import { 
-  getAllMediasForUser,
   findMediaById,
   findMediaForUser,
   createMedia,
   updateMediaForUser,
   deleteMedia,
+  getAllMediasUserCreated,
 } from "@/controllers/dbCalls/mediaCalls"
 import { findMediaTypeForUserOrGlobal } from "./dbCalls/mediaTypeCalls"
 
@@ -20,7 +20,7 @@ export const getMedias = async (req: Request, res: Response, next: NextFunction)
     return res.status(401).json({ message: "Unauthorized: missing userId" })
 
   try {
-      const medias = await getAllMediasForUser(userId)
+      const medias = await getAllMediasUserCreated(userId)
       res.status(200).json(medias)
   } catch (error) {
       next(error)
