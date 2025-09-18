@@ -8,11 +8,11 @@ const config: Config.InitialOptions = {
     extensionsToTreatAsEsm: ['.ts', '.tsx'],
     setupFilesAfterEnv: ['./src/tests/jest.setup.ts'],
     testMatch: ['**/tests/**/*.{test,spec}.{ts,js,mjs}'],
-    globals: {
-        'ts-jest': {
-        useESM: true,
-        tsconfig: 'tsconfig.json',
-        },
+    transform: {
+        '^.+\\.tsx?$': ['ts-jest', {
+            useESM: true,
+            tsconfig: 'tsconfig.json',
+        }]
     },
     moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
