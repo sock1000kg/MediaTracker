@@ -6,6 +6,7 @@ import { decryptKey, validateSchema } from '@/utilities'
 import { createLog, findLogOfUserByMediaId, updateLog } from './dbCalls/logsCalls'
 import { createMedia, findMediaBySource } from './dbCalls/mediaCalls'
 import { findUserById, findUserByUsername } from './dbCalls/authCalls'
+import { findMediaTypeForUserOrGlobal } from './dbCalls/mediaTypeCalls'
 
 export const createMediaAndLog = async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId
@@ -17,13 +18,17 @@ export const createMediaAndLog = async (req: Request, res: Response, next: NextF
         console.log("BODY RECEIVED:", req.body)
         const { mediaData, logData } = validateSchema(createMediaAndLogSchema, req.body)
 
+        const bookType = await findMediaTypeForUserOrGlobal("book", userId)
+        if(!bookType)
+            return res.status(404).json({ message: "Could not find book type in system"})
+
         // Check if media exists in db, if not create a system media
         let media = await findMediaBySource(mediaData.sourceId, mediaData.source)
         if (!media) {
             const systemUser = await findUserByUsername("system")
             media = await createMedia(
                 mediaData.title,
-                mediaData.mediaType,
+                bookType,
                 mediaData.creator,
                 mediaData.year,
                 mediaData.source,

@@ -4,7 +4,7 @@ import { searchLogSchema } from "./logSchemas"
 
 //For when user search up a media and wanna log it
 export const createMediaAndLogSchema = z.object({
-    mediaData: createMediaSchema,
+    mediaData: createMediaSchema.omit({mediaType: true}), //dont need mediaType cus we know what it is based on search API
     logData: searchLogSchema
 })
 
