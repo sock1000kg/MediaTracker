@@ -45,13 +45,6 @@ export interface MediaType {
   created_at: string
   userId: number
 }
-//Used for adding type to media when its searched up based on what search tab youre on
-export const Book: MediaType = {
-  id: 1,
-  name: "book",
-  userId: 1, //sytem id
-  created_at: "1970-01-01T00:00:00.000Z" //placeholder
-}
 
 //API KEY
 export interface ApiKey {
