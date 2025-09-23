@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "module": "ESNext",
-    "moduleResolution": "node",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
@@ -22,12 +22,6 @@
       "@schemas/*": ["src/schemas/*"]
     }
   },
-  "include": [
-    "src/**/*",
-  ],
+  "include": ["src/**/*",],
   "exclude": ["node_modules", "dist"],
-  "ts-node": {
-    "esm": true,
-    "experimentalSpecifierResolution": "node"
-  }
 }
