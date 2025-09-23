@@ -3,4 +3,8 @@ node_modules
 .env
 .env.test
 
+
 /src/generated/prisma
+
+/dist
+*.tsbuildinfo
