@@ -2,24 +2,17 @@
 import type { Config } from '@jest/types'
 
 const config: Config.InitialOptions = {
-    preset: 'ts-jest/presets/default-esm', // ESM + TS support
     testEnvironment: 'node',
-    moduleFileExtensions: ['ts', 'tsx', 'js', 'mjs'],
-    extensionsToTreatAsEsm: ['.ts', '.tsx'],
-    setupFilesAfterEnv: ['./src/tests/jest.setup.ts'],
-    testMatch: ['**/tests/**/*.{test,spec}.{ts,js,mjs}'],
-    transform: {
-        '^.+\\.tsx?$': ['ts-jest', {
-            useESM: true,
-            tsconfig: 'tsconfig.json',
-        }]
-    },
+    moduleFileExtensions: ['js', 'mjs'],
+    // Run only compiled integration tests; keep setup file out of testMatch
+    setupFilesAfterEnv: ['./dist/tests/jest.setup.js'],
+    testMatch: [
+        '<rootDir>/dist/tests/**/*.test.js'
+    ],
+    transform: {},
     moduleNameMapper: {
-        '^@/(.*)$': '<rootDir>/src/$1',
-        '^@controllers/(.*)$': '<rootDir>/src/controllers/$1',
-        '^@routes/(.*)$': '<rootDir>/src/routes/$1',
-        '^@utils/(.*)$': '<rootDir>/src/utilities/$1',
-        '^@schemas/(.*)$': '<rootDir>/src/schemas/$1',
+        // Map compiled aliases to compiled output under dist
+        '^@/(.*)\\.js$': '<rootDir>/dist/$1.js',
     },
 }
 
