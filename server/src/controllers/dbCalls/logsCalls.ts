@@ -1,4 +1,4 @@
-import prisma from "@/prismaClient"
+import prisma from "@/prismaClient.js"
 import { Prisma, User, Media, MediaType, UserLogs } from "@prisma/client"
 
 //LOGS
@@ -34,7 +34,7 @@ export async function findLogOfUserByMediaId(userId: number, mediaId: number): P
         include: { 
             media: { include: { mediaType: true } } },
     })
-    }
+}
 
 export async function findLogById(logId: number): Promise<(UserLogs & { media: Media & { mediaType: MediaType | null } }) | null> {
     return prisma.userLogs.findFirst({ 

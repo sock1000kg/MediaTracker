@@ -4,7 +4,7 @@ import {
   createMediaType, 
   deleteMediaType, 
   updateMediaType 
-} from '@/controllers/mediaTypeControllers'
+} from '@/controllers/mediaTypeControllers.js'
 
 const router = express.Router()
 

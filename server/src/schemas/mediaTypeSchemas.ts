@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { normalizeTypeName } from '@/utilities'
+import { normalizeTypeName } from '@/utilities.js'
 
 // Media Type name schema
 const trimmedString = z

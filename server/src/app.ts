@@ -5,17 +5,17 @@ import { fileURLToPath } from 'url'
 import path, { dirname } from 'path'
 
 // Middleware
-import limiter from '@/middleWare/rateLimiter'
-import authMiddleWare from '@/middleWare/authMiddleware'
+import limiter from '@/middleWare/rateLimiter.js'
+import authMiddleWare from '@/middleWare/authMiddleware.js'
 
-import authRoutes from '@/routes/authRoutes'
-import logRoutes from '@/routes/logRoutes'
-import mediaRoutes from '@/routes/mediaRoutes'
-import mediaTypeRoutes from '@/routes/mediaTypeRoutes'
-import searchRoutes from '@/routes/searchRoutes'
-import apiKeyRoutes from '@/routes/apiKeyRoutes'
-import errorHandler from './middleWare/errorHandlerMiddleware'
-import logger from './middleWare/loggingMiddleware'
+import authRoutes from '@/routes/authRoutes.js'
+import logRoutes from '@/routes/logRoutes.js'
+import mediaRoutes from '@/routes/mediaRoutes.js'
+import mediaTypeRoutes from '@/routes/mediaTypeRoutes.js'
+import searchRoutes from '@/routes/searchRoutes.js'
+import apiKeyRoutes from '@/routes/apiKeyRoutes.js'
+import errorHandler from './middleWare/errorHandlerMiddleware.js'
+import logger from './middleWare/loggingMiddleware.js'
 
 const app: Application = express()
 

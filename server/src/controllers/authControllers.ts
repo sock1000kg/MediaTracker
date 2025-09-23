@@ -3,14 +3,14 @@ import jwt from 'jsonwebtoken'
 import {
   createUser,
   findUserByUsername
-} from "@/controllers/dbCalls/authCalls"
-import { findFirstMediaByTitle } from "./dbCalls/mediaCalls"
-import { createLog } from "./dbCalls/logsCalls"
+} from "@/controllers/dbCalls/authCalls.js"
+import { findFirstMediaByTitle } from "@/controllers/dbCalls/mediaCalls.js"
+import { createLog } from "@/controllers/dbCalls/logsCalls.js"
 
 import type { NextFunction, Request, Response } from "express"
 
-import { registerSchema, loginSchema } from "@/schemas/authSchemas"
-import { validateSchema } from "@/utilities"
+import { registerSchema, loginSchema } from "@/schemas/authSchemas.js"
+import { validateSchema } from "@/utilities.js"
 
 export const registerUser = async (req: Request, res: Response, next: NextFunction) => {
     try {

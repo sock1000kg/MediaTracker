@@ -1,8 +1,8 @@
 import request from 'supertest' 
-import app from '../../app' 
-import { prisma } from '../jest.setup' 
+import app from '@/app.js' 
+import { prisma } from '@/tests/jest.setup.js' 
 
-import { normalizeTypeName } from '../../utilities'
+import { normalizeTypeName } from '@/utilities.js'
 
 describe('Log routes', () => {
     const username = 'LogTestUser'

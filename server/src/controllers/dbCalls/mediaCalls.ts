@@ -1,6 +1,5 @@
-import prisma from "@/prismaClient"
+import prisma from "@/prismaClient.js"
 import { Prisma, Media, MediaType, UserLogs } from "@prisma/client"
-import { findUserByUsername } from "./authCalls"
 
 
 //MEDIA

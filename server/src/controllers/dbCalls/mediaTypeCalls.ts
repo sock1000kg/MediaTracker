@@ -1,4 +1,4 @@
-import prisma from "@/prismaClient"
+import prisma from "@/prismaClient.js"
 import { Media, MediaType } from "@prisma/client"
 
 //MEDIA TYPE

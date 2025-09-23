@@ -1,4 +1,4 @@
-import { sanitizeApiKey, sanitizeSource } from "@/utilities"
+import { sanitizeApiKey, sanitizeSource } from "@/utilities.js"
 import { z } from "zod"
 
 const keySchema = z

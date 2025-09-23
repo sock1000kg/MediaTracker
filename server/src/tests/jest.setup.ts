@@ -6,7 +6,7 @@ dotenv.config({ path: '.env.test' })
 const { PrismaClient } = await import('@prisma/client')
 const prisma = new PrismaClient()
 
-import resetTestDb from './reset-test-db'  //reset+seed test db
+import resetTestDb from '@/tests/reset-test-db.js'  //reset+seed test db
 
 //Check if Jest is connected to the correct db
 beforeAll(async () => {
