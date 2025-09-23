@@ -3,7 +3,7 @@ import {
     sanitizeStatus,
     sanitizeRating,
     sanitizeNotes,
-} from "@/utilities"
+} from "@/utilities.js"
 
 const allowedStatuses = ["completed", "in progress", "wishlist", "dropped"] as const
 

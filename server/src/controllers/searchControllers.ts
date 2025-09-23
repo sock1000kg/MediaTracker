@@ -1,12 +1,12 @@
 import { NextFunction, Request, Response } from 'express'
 
-import { createMediaAndLogSchema, googleBooksResponseSchema, SearchResult, searchResultsSchema } from '@/schemas/searchSchemas'
-import { decryptKey, validateSchema } from '@/utilities'
+import { createMediaAndLogSchema, googleBooksResponseSchema, SearchResult, searchResultsSchema } from '@/schemas/searchSchemas.js'
+import { decryptKey, validateSchema } from '@/utilities.js'
 
-import { createLog, findLogOfUserByMediaId, updateLog } from './dbCalls/logsCalls'
-import { createMedia, findMediaBySource } from './dbCalls/mediaCalls'
-import { findUserById, findUserByUsername } from './dbCalls/authCalls'
-import { findMediaTypeForUserOrGlobal } from './dbCalls/mediaTypeCalls'
+import { createLog, findLogOfUserByMediaId, updateLog } from '@/controllers/dbCalls/logsCalls.js'
+import { createMedia, findMediaBySource } from '@/controllers/dbCalls/mediaCalls.js'
+import { findUserById, findUserByUsername } from '@/controllers/dbCalls/authCalls.js'
+import { findMediaTypeForUserOrGlobal } from '@/controllers/dbCalls/mediaTypeCalls.js'
 
 export const createMediaAndLog = async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId

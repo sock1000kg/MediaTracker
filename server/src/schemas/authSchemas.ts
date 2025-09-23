@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { sanitizeUsername, sanitizeDisplayName, checkPasswordStrength } from "@/utilities"
+import { sanitizeUsername, sanitizeDisplayName, checkPasswordStrength } from "@/utilities.js"
 
 // username schema
 export const usernameSchema = z
@@ -22,7 +22,7 @@ export const displayNameSchema = z
     .preprocess((val: string | null | undefined) => {
             return sanitizeDisplayName(val)
     }, z
-    .string({ message: "Username must be at least 3 characters and at most 50" })
+    .string({ message: "Display name must be at least 3 characters and at most 50" })
 )
 
 export const registerSchema = z.object({

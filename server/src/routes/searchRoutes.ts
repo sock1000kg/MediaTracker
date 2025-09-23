@@ -1,6 +1,6 @@
 import express from 'express'
 
-import { createMediaAndLog, searchBooks } from '@/controllers/searchControllers'
+import { createMediaAndLog, searchBooks } from '@/controllers/searchControllers.js'
 
 const router = express.Router()
 

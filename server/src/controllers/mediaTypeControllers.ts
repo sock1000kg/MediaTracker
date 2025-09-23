@@ -6,10 +6,10 @@ import {
   createMediaTypeForUser, 
   deleteMediaTypeForUser, 
   updateMediaTypeForUser 
-} from '@/controllers/dbCalls/mediaTypeCalls'
-import { normalizeTypeName, validateSchema } from '../utilities'
+} from '@/controllers/dbCalls/mediaTypeCalls.js'
+import { normalizeTypeName, validateSchema } from '@/utilities.js'
 
-import { createMediaTypeSchema, deleteMediaTypeSchema, updateMediaTypeSchema } from '@/schemas/mediaTypeSchemas'
+import { createMediaTypeSchema, deleteMediaTypeSchema, updateMediaTypeSchema } from '@/schemas/mediaTypeSchemas.js'
 
 export async function getAllMediaTypes(req: Request, res: Response, next: NextFunction) {
     const userId = req.userId

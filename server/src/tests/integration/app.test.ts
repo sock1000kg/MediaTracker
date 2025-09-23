@@ -1,4 +1,4 @@
-import { prisma } from '../jest.setup'
+import { prisma } from '@/tests/jest.setup.js'
 
 describe('Database Tests', () => {
     test('should use test database URL', () => {

@@ -6,12 +6,12 @@ import {
     findLogById,
     updateLog,
     deleteLog,
-} from "@/controllers/dbCalls/logsCalls"
-import { findMediaForUserById } from "./dbCalls/mediaCalls"
-import { findMediaTypeForUserOrGlobal, createMediaTypeForUser } from "./dbCalls/mediaTypeCalls"
+} from "@/controllers/dbCalls/logsCalls.js"
+import { findMediaForUserById } from "@/controllers/dbCalls/mediaCalls.js"
+import { findMediaTypeForUserOrGlobal, createMediaTypeForUser } from "@/controllers/dbCalls/mediaTypeCalls.js"
 
-import { createLogSchema, deleteLogSchema, updateLogSchema } from "@/schemas/logSchemas"
-import { validateSchema } from "@/utilities"
+import { createLogSchema, deleteLogSchema, updateLogSchema } from "@/schemas/logSchemas.js"
+import { validateSchema } from "@/utilities.js"
 
 // Get all logs
 export const getLogs = async (req: Request, res: Response, next: NextFunction) => {

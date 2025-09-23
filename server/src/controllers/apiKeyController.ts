@@ -1,8 +1,9 @@
-import { addApiKeySchema } from "@/schemas/apiKeySchemas"
-import { encryptKey, validateSchema } from "@/utilities"
+import { addApiKeySchema } from "@/schemas/apiKeySchemas.js"
+import { encryptKey, validateSchema } from "@/utilities.js"
 import { NextFunction, Request, Response } from "express"
 
-import { addApiKeyForUser, deleteApiKeyForUser, findApiKeyForUser, getAllApiKeys, updateApiKeyForUser } from "./dbCalls/apiKey"
+import { addApiKeyForUser, deleteApiKeyForUser, findApiKeyForUser, getAllApiKeys, updateApiKeyForUser } from "@/controllers/dbCalls/apiKey.js"
+import { findUserByUsername } from "./dbCalls/authCalls.js"
 
 //Get all api keys (encrypted) based on userId
 export const getApiKeys = async (req: Request, res: Response, next: NextFunction) => {
@@ -27,7 +28,8 @@ export const addApiKey = async (req: Request, res: Response, next: NextFunction)
     if (userId == null) 
         return res.status(401).json({ message: "Unauthorized: missing userId" })
 
-    if(userId === 1)
+    const demoUser = await findUserByUsername("demo")
+    if(userId === demoUser.id)
         return res.status(400).json({ message: "This feature is not available on demo account" })
     
     try{
@@ -51,7 +53,8 @@ export const updateApiKey = async (req: Request, res: Response, next: NextFuncti
     if (userId == null)
         return res.status(401).json({ message: "Unauthorized: missing userId" })
 
-    if(userId === 1)
+    const demoUser = await findUserByUsername("demo")
+    if(userId === demoUser.id)
         return res.status(400).json({ message: "This feature is not available on demo account" })
     
 
@@ -76,7 +79,7 @@ export const deleteApiKey = async (req: Request, res: Response, next: NextFuncti
     if (userId == null)
         return res.status(401).json({ message: "Unauthorized: missing userId" })
 
-    if(userId === 1)
+    if(userId === 2)
         return res.status(400).json({ message: "This feature is not available on demo account" })
     
 

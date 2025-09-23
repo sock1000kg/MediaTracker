@@ -11,7 +11,7 @@ import {
     sanitizeSourceRating,
     sanitizeRatingsCount,
     sanitizeImageUrl
-} from "@/utilities"
+} from "@/utilities.js"
 
 //Schema for creating and updating medias
 const titleSchema = z

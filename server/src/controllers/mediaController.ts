@@ -7,11 +7,11 @@ import {
   updateMediaForUser,
   deleteMedia,
   getAllMediasUserCreated,
-} from "@/controllers/dbCalls/mediaCalls"
-import { findMediaTypeForUserOrGlobal } from "./dbCalls/mediaTypeCalls"
+} from "@/controllers/dbCalls/mediaCalls.js"
+import { findMediaTypeForUserOrGlobal } from "@/controllers/dbCalls/mediaTypeCalls.js"
 
-import { createMediaSchema, updateMediaSchema, deleteMediaSchema } from "@/schemas/mediaSchemas"
-import { validateSchema } from "@/utilities"
+import { createMediaSchema, updateMediaSchema, deleteMediaSchema } from "@/schemas/mediaSchemas.js"
+import { validateSchema } from "@/utilities.js"
 
 // Get all medias
 export const getMedias = async (req: Request, res: Response, next: NextFunction) => {

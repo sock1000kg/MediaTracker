@@ -1,4 +1,4 @@
-import prisma from "@/prismaClient"
+import prisma from "@/prismaClient.js"
 import { UserAPIKey } from "@prisma/client"
 
 export async function addApiKeyForUser(userId: number, key: string, service: string): Promise<UserAPIKey> {

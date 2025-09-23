@@ -10,7 +10,7 @@ import { checkPasswordStrength,
   sanitizeMetadata,
   sanitizeUsername,
   sanitizeDisplayName
-} from "../utilities"
+} from "@/utilities.js"
 
 describe("checkPasswordStrength", () => {
   test("returns false for empty string", () => {
