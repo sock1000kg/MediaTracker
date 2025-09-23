@@ -1,7 +1,11 @@
 
-import { createLog } from "@/controllers/dbCalls/logsCalls"
-import { createMedia } from "@/controllers/dbCalls/mediaCalls"
-import prisma from "@/prismaClient"
+import { addApiKey } from "@/controllers/apiKeyController.js"
+import { addApiKeyForUser } from "@/controllers/dbCalls/apiKey.js"
+import { createLog, findLogOfUserByMediaId } from "@/controllers/dbCalls/logsCalls.js"
+import { createMedia } from "@/controllers/dbCalls/mediaCalls.js"
+import prisma from "@/prismaClient.js"
+import { encryptKey } from "@/utilities.js"
+import { MediaType, User, UserAPIKey } from "@prisma/client"
 import bcrypt from "bcryptjs"
 
 async function createSystemUser(): Promise<{ id: number }> {
@@ -30,9 +34,12 @@ async function createSystemUser(): Promise<{ id: number }> {
     return systemUser
 }
 
-async function createDemoUser(): Promise<{ id: number }> {
+async function createDemoUser(): Promise<User & { apiKeys: UserAPIKey[] }> {
     let demoUser = await prisma.user.findUnique({
         where: { username: 'demo' },
+        include: {
+            apiKeys: true
+        }
     })
 
     if (!demoUser) {
@@ -42,11 +49,14 @@ async function createDemoUser(): Promise<{ id: number }> {
 
         const hashedPassword = await bcrypt.hash(process.env.DEMO_USER_PASSWORD, 12)
         demoUser = await prisma.user.create({
-        data: {
-            username: "demo",
-            password: hashedPassword,
-            displayName: "Demo User",
-        },
+            data: {
+                username: "demo",
+                password: hashedPassword,
+                displayName: "Demo User",
+            },
+            include: {
+                apiKeys: true
+            }
         })
         console.log("Demo user created")
     } else {
@@ -56,7 +66,7 @@ async function createDemoUser(): Promise<{ id: number }> {
     return demoUser
 }
 
-async function createMediaTypeSeed(name: string, userId: number) {
+async function createMediaTypeSeed(name: string, userId: number): Promise<MediaType> {
     const existing = await prisma.mediaType.findFirst({ 
         where: { name } 
     })
@@ -71,7 +81,7 @@ async function createMediaTypeSeed(name: string, userId: number) {
         return mediatype
     } else {
         console.log(`Default media type: ${name} already exists`)
-        return null
+        return existing
     }
 }
 
@@ -88,12 +98,11 @@ async function main() {
     await createMediaTypeSeed("manga", systemUser.id)
 
     // CREATE SEED MEDIA
-    const defaultMedia = await prisma.media.findFirst({
+    let defaultMedia = await prisma.media.findFirst({
         where: { title: "Default Media", userId: systemUser.id },
     })
-
     if (!defaultMedia && defaultType) {
-        await createMedia(
+        defaultMedia = await createMedia(
             "Default Media",
             defaultType,
             "System",
@@ -112,8 +121,44 @@ async function main() {
         console.log("Default Media already exists")
     }
 
-    await createLog(demoUser.id, 1, "completed", 100, "Welcome! This is your default log! Search up or create a custom media to log it!")
-    console.log("Demo log created")
+    //Create seed log
+    if(defaultMedia) {
+        const demoLog = await findLogOfUserByMediaId(demoUser.id, defaultMedia.id)
+        if(!demoLog) {
+            try {
+                await createLog(demoUser.id, defaultMedia.id, "completed", 100, "Welcome! This is your default log! Search up or create a custom media to log it!")
+                console.log("Demo log created")
+            } catch (error: any) {
+                if (error.code === 'P2002') {
+                    console.log("Demo log already exists")
+                } else {
+                    throw error
+                }
+            }
+        } else {
+            console.log("Demo log already exists")
+        }
+    }
+
+    //Seed Google Books key
+    console.log("Demo user API keys:", demoUser.apiKeys)
+    console.log("Google Books API Key exists:", !!process.env.GOOGLE_BOOKS_API_KEY)
+    const hasGoogleBooksKey = demoUser.apiKeys.some(
+        (key) => key.service === "google_books"
+    )
+    if(!hasGoogleBooksKey && process.env.GOOGLE_BOOKS_API_KEY) {
+        try {
+            await addApiKeyForUser(demoUser.id, encryptKey(process.env.GOOGLE_BOOKS_API_KEY), "google_books")
+            console.log("Encrypted demo key:", encryptKey(process.env.GOOGLE_BOOKS_API_KEY))
+            console.log("Google Books Demo Key created")
+        } catch (error) {
+            console.error("Failed to create Google Books API key:", error)
+        }
+    } else if (!process.env.GOOGLE_BOOKS_API_KEY) {
+        console.log("GOOGLE_BOOKS_API_KEY environment variable not set")
+    } else {
+        console.log("Google Books Demo Key already exists")
+    }
 }
 
 // Execute seed script
