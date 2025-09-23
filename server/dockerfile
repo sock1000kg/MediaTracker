@@ -1,0 +1,67 @@
+# BUILDING STAGE
+FROM node:22.17-alpine AS builder
+
+# Set working dir on Docker
+WORKDIR /app
+
+# Copy to container
+COPY package*.json ./
+COPY tsconfig*.json ./
+COPY src/prisma ./src/prisma
+
+# Install dependencies
+RUN npm install
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Copy everything
+COPY . .
+
+# Build JS files
+RUN npm run build
+
+# -------------------
+# -------------------
+# DEV STAGE
+FROM node:22.17-alpine AS dev
+
+WORKDIR /app
+
+# Copy everything from builder
+COPY --from=builder /app ./
+
+# Expose port
+EXPOSE 5000
+ENV NODE_ENV=development
+
+# Default command
+CMD sh -c "npx prisma migrate deploy && npm run seed && npm run dev"
+
+# -------------------
+# -------------------
+# PRODUCTION STAGE
+FROM node:22.17-alpine AS production
+
+WORKDIR /app
+COPY package*.json ./
+
+RUN npm install --production
+
+# Copy prisma client from builder
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+
+# Copy JS files built from TS
+COPY --from=builder /app/dist ./dist
+
+# Copy Prisma schema + migrations
+COPY --from=builder /app/src/prisma ./src/prisma
+
+# # Run by non-root user
+# USER node
+
+# Expose the port that the app listens to
+EXPOSE 5000
+ENV NODE_ENV=production
+CMD sh -c "npx prisma migrate deploy && npm run seed && npm start"

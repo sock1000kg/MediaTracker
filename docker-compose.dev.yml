@@ -1,0 +1,31 @@
+# script for composing dev
+# docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+
+services:
+  backend:
+    build: 
+      context: ./server
+      dockerfile: Dockerfile
+      target: dev
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+
+  prisma-studio:
+      image: node:lts-alpine3.17
+      working_dir: /app
+      volumes:
+        - ./server:/app
+        - postgres_data:/var/lib/postgresql/data
+      command: npx prisma studio --port 5555 --browser none
+      ports:
+        - "5555:5555"
+      env_file:
+        - .env
+      networks:
+        - prisma-network
+      depends_on:
+        database:
+          condition: service_healthy
+        backend:
+          condition: service_started
