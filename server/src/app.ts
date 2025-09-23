@@ -14,8 +14,8 @@ import mediaRoutes from '@/routes/mediaRoutes.js'
 import mediaTypeRoutes from '@/routes/mediaTypeRoutes.js'
 import searchRoutes from '@/routes/searchRoutes.js'
 import apiKeyRoutes from '@/routes/apiKeyRoutes.js'
-import errorHandler from './middleWare/errorHandlerMiddleware.js'
-import logger from './middleWare/loggingMiddleware.js'
+import errorHandler from '@/middleWare/errorHandlerMiddleware.js'
+import logger from '@/middleWare/loggingMiddleware.js'
 
 const app: Application = express()
 
