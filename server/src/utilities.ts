@@ -216,10 +216,16 @@ export function encryptKey(key: string) {
 }
 
 export function decryptKey(stored: string) {
+    console.log("ALGO:", ALGO)
+    console.log("Secret length:", Buffer.from(SECRET).length)
+
     const [ivHex, authTagHex, encrypted] = stored.split(":")
+    console.log("IV length:", Buffer.from(ivHex, "hex").length)
+    
     const decipher = crypto.createDecipheriv(ALGO, Buffer.from(SECRET), Buffer.from(ivHex, "hex"))
     decipher.setAuthTag(Buffer.from(authTagHex, "hex"))
     let decrypted = decipher.update(encrypted, "hex", "utf8")
     decrypted += decipher.final("utf8")
+
     return decrypted
 }
