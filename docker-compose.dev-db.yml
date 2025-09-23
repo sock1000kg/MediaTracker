@@ -1,0 +1,38 @@
+
+services:
+  database:
+    image: postgres:17
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 2s
+      retries: 20
+    env_file:
+      - .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432" # Host port 5432 → Container port 5432
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  prisma-studio:
+    image: node:lts-alpine3.17
+    working_dir: /app
+    volumes:
+      - ./server:/app
+      - postgres_data:/var/lib/postgresql/data
+    command: npx prisma studio --port 5555 --browser none
+    ports:
+      - "5555:5555"
+    env_file:
+      - .env
+    depends_on:
+      database:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
