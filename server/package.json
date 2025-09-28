@@ -4,7 +4,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "npx tsx watch src/server.ts",
+    "dev": "tsx watch src/server.ts",
     "build": "tsc && tsc-alias",
     "start": "node dist/server.js",
     "test": "cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
