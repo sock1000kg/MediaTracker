@@ -9,8 +9,7 @@ services:
     env_file:
       - .env
     depends_on: # Wait for database to start first
-      database:
-        condition: service_healthy
+      - database
     networks:
       - prisma-network
 
