@@ -8,6 +8,7 @@ import path, { dirname } from 'path'
 import limiter from '@/middleWare/rateLimiter.js'
 import authMiddleWare from '@/middleWare/authMiddleware.js'
 
+import healthRoutes from '@/routes/healthRoutes.js'
 import authRoutes from '@/routes/authRoutes.js'
 import logRoutes from '@/routes/logRoutes.js'
 import mediaRoutes from '@/routes/mediaRoutes.js'
@@ -36,20 +37,22 @@ app.use(
     })
 )
 
+app.use(express.json())
 if(process.env.NODE_ENV !== 'test'){
     app.use(limiter())
+    app.use(logger)
 }
 
-app.use(express.json())
-app.use(logger)
 
 //Routes
+app.use('/healthz', healthRoutes)
 app.use('/auth', authRoutes)
 app.use('/logs', authMiddleWare, logRoutes)
 app.use('/media', authMiddleWare, mediaRoutes)
 app.use('/media-type', authMiddleWare, mediaTypeRoutes)
 app.use('/search', authMiddleWare, searchRoutes)
 app.use('/api-key', authMiddleWare, apiKeyRoutes)
+
 
 //Error handling
 app.use(errorHandler)
