@@ -4,21 +4,20 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "CHOKIDAR_USEPOLLING=true CHOKIDAR_INTERVAL=1000 tsx watch src/server.ts",
     "build": "tsc && tsc-alias",
     "start": "node dist/server.js",
     "test": "cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
-    "seed": "node dist/prisma/seed.js",
+    "seed": "node dist/tests/seed.js",
     "reset": "npx prisma migrate reset --force --skip-seed && npm run seed",
     "reset-test-db": "tsx src/tests/reset-test-db.ts",
-    "dev:setup": "npx prisma migrate deploy && npm run seed && npm run dev",
-    "db:start": "docker-compose -f ../docker-compose.dev-db.yml up -d",
-    "db:stop": "docker-compose -f ../docker-compose.dev-db.yml down",
-    "db:logs": "docker-compose -f ../docker-compose.dev-db.yml logs database"
+    "db-test:start": "docker-compose -f ../docker-compose.dev-db.yml up -d",
+    "docker:start": "docker-compose -f ../docker-compose.yml up -d",
+    "dev:start": "docker-compose -f ../docker-compose.yml -f ../docker-compose.dev.yml up -d"
   },
   "prisma": {
     "schema": "src/prisma/schema.prisma",
-    "seed": "tsx src/prisma/seed.ts"
+    "seed": "tsx src/tests/seed.ts"
   },
   "keywords": [],
   "author": "",

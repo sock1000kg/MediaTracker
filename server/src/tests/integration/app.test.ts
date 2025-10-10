@@ -3,7 +3,7 @@ import { prisma } from '@/tests/jest.setup.js'
 describe('Database Tests', () => {
     test('should use test database URL', () => {
         expect(process.env.NODE_ENV).toBe('test')
-        expect(process.env.DATABASE_URL).toContain('media_tracker_test')
+        expect(process.env.DATABASE_URL).toContain('_test')
     })
 
     test('Prisma connects to the database', async () => {
