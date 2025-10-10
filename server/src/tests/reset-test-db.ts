@@ -14,7 +14,7 @@ export default async function resetTestDb() {
       env: { ...process.env }
     })
     
-    execSync('tsx src/prisma/seed.ts', {
+    execSync('tsx src/tests/seed.ts', {
       stdio: 'inherit',
       env: { ...process.env } 
     })
