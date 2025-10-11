@@ -5,10 +5,23 @@ services:
   backend:
     build: 
       context: ./server
-      dockerfile: Dockerfile
+      dockerfile: dockerfile
       target: dev
     volumes:
       - D:/JavaScript/media-tracker/server/src:/app/src
+      - /app/node_modules
+
+  frontend:
+    build:
+      context: ./client
+      dockerfile: dockerfile
+      target: dev
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:5000
+    volumes:
+      - ./client:/app
       - /app/node_modules
 
   prisma-studio:
@@ -16,7 +29,6 @@ services:
       working_dir: /app
       volumes:
         - ./server:/app
-        - postgres_data:/var/lib/postgresql/data
       command: npx prisma studio --port 5555 --browser none
       ports:
         - "5555:5555"
