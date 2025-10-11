@@ -1,3 +1,5 @@
+# docker compose -f docker-compose.yml up --build
+
 services:
   backend:
     build:
@@ -10,6 +12,20 @@ services:
       - .env
     depends_on: # Wait for database to start first
       - database
+    networks:
+      - prisma-network
+  
+  frontend:
+    build:
+      context: ./client
+      dockerfile: dockerfile
+      target: production
+    ports:
+      - "80:80"
+    environment:
+      - VITE_API_URL=http://backend:5000
+    depends_on:
+      - backend
     networks:
       - prisma-network
 
