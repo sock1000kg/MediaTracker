@@ -5,7 +5,7 @@ import { BookCard } from "../cards/BookCard"
 
 import { createMediaAndLog, searchBooks } from "@/api/search"
 import { useState } from "react"
-import { useInfiniteQuery, useMutation, useQueries, useQueryClient, type InfiniteData } from "@tanstack/react-query"
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query"
 
 import type { BookResult, MediaResults } from "@/types/searchResults"
 import { type DialogName, type Log, type Media } from "@/types/main"
@@ -48,14 +48,7 @@ export default function SearchSection() {
     })
 
     // media and logs cache
-    const [logsQuery, mediasQuery] = useQueries({
-        queries:[
-            fetchLogsQueryOptions(),
-            fetchMediasQueryOptions()
-        ]
-    })
-    const logs = logsQuery.data ?? []
-    const medias = mediasQuery.data ?? []
+    const { data: logs = [] } = useQuery(fetchLogsQueryOptions())
 
     const results = data?.pages.flatMap((page) => page) ?? []
 

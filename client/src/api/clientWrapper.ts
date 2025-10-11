@@ -17,7 +17,8 @@ export async function apiFetch<T>(url: string, options: RequestInit = {}): Promi
   }
 
   try {
-    const res = await fetch(`http://localhost:5000${url}`, {
+    const API_BASE = import.meta.env.VITE_API_URL
+    const res = await fetch(`${API_BASE}${url}`, {
       ...options,
       headers: {
         "Content-Type": "application/json",
