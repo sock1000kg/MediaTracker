@@ -33,7 +33,7 @@ A solo fullstack media logging webapp to help media lovers track everything in o
 - Integration tests for all api routes
 
 ## API Overview
-Unless noted, endpoints require an `AuthorizationL Bearer <JWT>` header
+Unless noted, endpoints require an `Authorization Bearer <JWT>` header
 
 ### Authentication
 - `POST /auth/register` - User registration
