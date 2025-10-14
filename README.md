@@ -91,3 +91,8 @@ Unless noted, endpoints require an `AuthorizationL Bearer <JWT>` header
 - Name: Trimmed and lowercased
 
 ## Planned Features
+- More API providers, allow searching multiple types of medias
+- User settings
+- Filtering search and logs
+- User stats
+- Multi-media recommendation service
