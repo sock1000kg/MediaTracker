@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url'
 import path, { dirname } from 'path'
 
 // Middleware
-import limiter from '@/middleWare/rateLimiter.js'
+import { globalLimiter } from '@/middleWare/rateLimiter.js'
 import authMiddleWare from '@/middleWare/authMiddleware.js'
 
 import healthRoutes from '@/routes/healthRoutes.js'
@@ -39,7 +39,7 @@ app.use(
 
 app.use(express.json())
 if(process.env.NODE_ENV !== 'test'){
-    app.use(limiter())
+    app.use(globalLimiter())
     app.use(logger)
 }
 
@@ -47,11 +47,11 @@ if(process.env.NODE_ENV !== 'test'){
 //Routes
 app.use('/healthz', healthRoutes)
 app.use('/auth', authRoutes)
-app.use('/logs', authMiddleWare, logRoutes)
-app.use('/media', authMiddleWare, mediaRoutes)
-app.use('/media-type', authMiddleWare, mediaTypeRoutes)
-app.use('/search', authMiddleWare, searchRoutes)
-app.use('/api-key', authMiddleWare, apiKeyRoutes)
+app.use('/logs', authMiddleWare, globalLimiter(), logRoutes)
+app.use('/media', authMiddleWare, globalLimiter(), mediaRoutes)
+app.use('/media-type', authMiddleWare, globalLimiter(), mediaTypeRoutes)
+app.use('/search', authMiddleWare, globalLimiter(), searchRoutes)
+app.use('/api-key', authMiddleWare, globalLimiter(), apiKeyRoutes)
 
 
 //Error handling
