@@ -89,8 +89,9 @@ docker compose -f docker-compose.yml up --build
 This composes:
 - Frontend: http://localhost:80
 - Backend API: http://localhost:5000 with Healthcheck: GET http://localhost:5000/healthz
+- Postgres database image
 
 Bring the stack down:
 ```bash
-docker down -v
+docker compose down
 ```
