@@ -2,9 +2,24 @@
 
 Your personal full‑stack hub to log and rate everything you watch, read, and listen to. Track books, movies, music, and custom media types—all in one place.
 
+## Table of Contents
+- [Tech Stack](#tech-stack)
+- [Monorepo Layout](#monorepo-layout)
+- [Features](#features)
+- [Quickstart](#quickstart)
+  - [Prerequisites](#prerequisites)
+  - [Environment files](#environment-files)
+  - [One‑command dev (Docker)](#onecommand-dev-docker)
+  - [Run tests (Dockerized DB)](#run-tests-dockerized-db)
+  - [Production (Docker)](#production-docker)
+- [Scripts](#scripts)
+- [API Overview](#api-overview)
+- [Deployment](#deployment)
+- [Planned Features](#planned-features)
+
 ## Tech Stack
 - Backend: Node.js, Express, Prisma, PostgreSQL
-- Frontend: React, Vite, TailwindCSS, Shadcn/ui
+- Frontend: React, Vite, TailwindCSS, shadcn/ui
 - Testing: Jest, Supertest
 - Auth and Sanitization: JWT, bcrypt, express-rate-limit, Zod
 
@@ -23,8 +38,8 @@ Your personal full‑stack hub to log and rate everything you watch, read, and l
 - Rate limiting per user or with a fallback to IP to prevent abuse
 
 ### Media and Logs Management
-- User-tied media types, medias, and logging
-- Support adding custom media types and medias
+- User-tied media types, media, and logging
+- Support adding custom media types and media
 
 ### Testing
 - Unit tests for all utility functions
@@ -111,28 +126,62 @@ docker compose -f ../docker-compose.yml down -v
 - If you run the frontend outside Docker, set `VITE_API_URL` to your backend URL (e.g., `http://localhost:5000`).
 - On some systems, you may need to adjust the backend dev volume mapping. In `docker-compose.dev.yml`, replace any absolute path with a relative one like `./server/src:/app/src`.
 
+## Scripts
+
+### Server (`server/package.json`)
+- `dev`: Run backend with TS hot reload (tsx)
+- `build`: TypeScript build + path alias rewrite
+- `start`: Start compiled server
+- `test`: Run Jest in band with `NODE_ENV=test`
+- `seed`: Seed database (uses built files)
+- `reset`: Reset DB then seed
+- `reset-test-db`: Reset test DB data
+- `dev:start`: Compose dev stack (backend+frontend+db)
+- `db-test:start`: Start test Postgres (port 5433 on host)
+- `docker:start`: Compose production stack
+
+### Client (`client/package.json`)
+- `dev`: Start Vite dev server
+- `build`: Type-check then build
+- `preview`: Preview built app
+
 ## API Overview
+Unless noted, endpoints require an `Authorization: Bearer <JWT>` header.
+
 ### Authentication
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
+- `POST /auth/register` - User registration
+- `POST /auth/login` - User login
 
 ### Media Type Management  
-- `GET /api/media-type` - Get user's media types
-- `POST /api/media-type` - Create new media type
-- `PUT /api/media-type/:name` - Update media type
-- `DELETE /api/media-type/:name` - Delete media type
+- `GET /media-type` - Get user's media types
+- `POST /media-type` - Create new media type
+- `PUT /media-type/:name` - Update media type
+- `DELETE /media-type/:name` - Delete media type
 
 ### Media Management  
-- `GET /api/media` - Get user's medias
-- `POST /api/media` - Create new media
-- `PUT /api/media/:id` - Update media
-- `DELETE /api/media/:id` - Delete media
+- `GET /media` - Get user's media
+- `POST /media` - Create new media
+- `PUT /media/:id` - Update media
+- `DELETE /media/:id` - Delete media
 
 ### Logs Management  
-- `GET /api/logs` - Get user's logs
-- `POST /api/logs` - Create new log
-- `PUT /api/logs/:id` - Update log
-- `DELETE /api/logs/:id` - Delete log
+- `GET /logs` - Get user's logs
+- `POST /logs` - Create new log
+- `PUT /logs/:id` - Update log
+- `DELETE /logs/:id` - Delete log
+
+### API Keys
+- `GET /api-key` - Get user's API keys
+- `POST /api-key` - Add new API key
+- `PUT /api-key` - Update an API key
+- `DELETE /api-key` - Delete an API key
+
+### Search
+- `PUT /search/media-log` - Create a media and an associated log in one step
+- `GET /search/books?q=...&startIndex=...` - Search books via provider
+
+### Health
+- `GET /healthz` - Liveness/readiness probe
 
 ### Notes / Sanitization Rules
 #### Auth
@@ -145,9 +194,9 @@ docker compose -f ../docker-compose.yml down -v
 - Status: Only "completed", "in progress", "wishlist", "none" are valid. Invalid → ignored.
 - Notes: Trimmed and max length 5000 characters.
 
-#### Media
+ #### Media
 - Title and creator: Trimmed and max length 100 chars
-- Year: Must be an Interger
+ - Year: Must be an Integer
 - Metadata: Must be JSON object
 - Media: User can only log media they created or global media.
 
