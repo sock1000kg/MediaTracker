@@ -24,19 +24,15 @@ services:
       - /app/node_modules
 
   prisma-studio:
-      image: node:lts-alpine3.17
-      working_dir: /app
-      volumes:
-        - ./server:/app
-      command: npx prisma studio --port 5555 --browser none
-      ports:
-        - "5555:5555"
-      env_file:
-        - .env
-      networks:
-        - prisma-network
-      depends_on:
-        database:
-          condition: service_healthy
-        backend:
-          condition: service_started
+    image: node:lts-alpine3.17
+    working_dir: /app
+    volumes:
+      - ./server:/app
+    command: npx prisma studio --port 5555 --browser none
+    ports:
+      - "5555:5555"
+    env_file:
+      - .env
+    depends_on:
+      - database
+      - backend
