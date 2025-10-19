@@ -9,7 +9,6 @@ services:
       target: dev
     volumes:
       - ./server/src:/app/src
-      - /app/node_modules
 
   frontend:
     build:
