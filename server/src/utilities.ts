@@ -96,18 +96,18 @@ export function sanitizeMetadata(input: unknown): Prisma.JsonValue | null {
     // If it's a string, try to parse as JSON
     if (typeof input === 'string') {
         try {
-        return JSON.parse(input)
+            return JSON.parse(input)
         } catch {
-        return null
+            return null
         }
     }
 
     // If it's already an object/array/primitive, make sure it's JSON-compatible
     if (typeof input === 'object') {
         try {
-        return JSON.parse(JSON.stringify(input))
+            return JSON.parse(JSON.stringify(input))
         } catch {
-        return null
+            return null
         }
     }
 

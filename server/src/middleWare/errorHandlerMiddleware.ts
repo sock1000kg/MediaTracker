@@ -9,13 +9,13 @@ function errorHandler(error: any, req: Request, res: Response, next: NextFunctio
             return res.status(404).json({ message: "Cannot find user" })
 
         
-        if (error instanceof ZodError) {
-            // return first validation error as JSON
-            return res.status(400).json({
-                message: error.issues[0]?.message || "Validation failed",
-                errors: error.issues
-            })
-        }
+    if (error instanceof ZodError) {
+        // return first validation error as JSON
+        return res.status(400).json({
+            message: error.issues[0]?.message || "Validation failed",
+            errors: error.issues
+        })
+    }
 
     console.dir(error, { depth: null })
     
