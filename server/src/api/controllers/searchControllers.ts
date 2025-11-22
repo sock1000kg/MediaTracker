@@ -33,8 +33,6 @@ export const createMediaAndLog = async (req: Request, res: Response, next: NextF
                 mediaData.year,
                 mediaData.source,
                 mediaData.sourceId,
-                mediaData.sourceRating,
-                mediaData.ratingsCount,
                 mediaData.description,
                 mediaData.metadata,
                 mediaData.imageUrl,
@@ -128,8 +126,6 @@ export async function searchBooks(req: Request, res: Response, next: NextFunctio
                     imageUrl: imageLinks ? imageLinks.thumbnail : null,
                     source: "google_books",
                     sourceId: item.id,
-                    sourceRating: averageRating !== null ? Math.round((averageRating / 5) * 100) : null,
-                    ratingsCount: ratingsCount ?? null,
                     metadata: {
                         pageCount: item.volumeInfo.pageCount,
                         categories: item.volumeInfo.categories,

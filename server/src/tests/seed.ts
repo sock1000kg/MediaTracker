@@ -109,8 +109,6 @@ async function main() {
             2025,
             null,
             null,
-            null,
-            null,
             "This is your default  media",
             null,
             null,

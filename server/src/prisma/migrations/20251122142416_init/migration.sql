@@ -19,8 +19,6 @@ CREATE TABLE "public"."Media" (
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "source" TEXT,
     "sourceId" TEXT,
-    "sourceRating" INTEGER,
-    "ratingsCount" INTEGER,
     "description" TEXT,
     "imageUrl" TEXT,
     "userId" INTEGER,

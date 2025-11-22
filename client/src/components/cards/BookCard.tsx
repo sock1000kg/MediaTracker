@@ -41,8 +41,6 @@ export function BookCard({ book, onLog }: BookCardProps) {
                 {Object.entries({
                     publisher: book.metadata?.publisher,
                     pageCount: book.metadata?.pageCount ? `${book.metadata.pageCount} pages` : null,
-                    rating: book.sourceRating !== null ? `${book.sourceRating}` : null,
-                    ratingsCount: book.ratingsCount !== null ? `${book.ratingsCount} ratings` : null,
                 })
                     .filter(([_, value]) => value != null && value !== "") //get rid of empty fields
                     .map(([key, value], index, arr) => (

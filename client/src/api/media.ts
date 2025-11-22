@@ -15,8 +15,6 @@ export function createMedia(newMedia: Partial<Media>): Promise<Media> {
       creator: newMedia.creator,
       year: newMedia.year,
       source: newMedia.source, 
-      sourceId: newMedia.sourceId, 
-      sourceRating: newMedia.sourceRating,
       ratingsCount: newMedia.ratingsCount, 
       description: newMedia.description, 
       imageUrl: newMedia.imageUrl,
@@ -49,8 +47,6 @@ export function editMedia(media: Partial<Media>): Promise<Media> {
       year: media.year,
       source: media.source, 
       sourceId: media.sourceId, 
-      sourceRating: media.sourceRating,
-      ratingsCount: media.ratingsCount, 
       description: media.description, 
       imageUrl: media.imageUrl,
       metadata: media.metadata

@@ -77,25 +77,6 @@ const sourceIdSchema = z
     .default(null)
 )
 
-const sourceRatingSchema = z
-    .preprocess((val: string | number | null | undefined) => {
-        return sanitizeSourceRating(val)
-    }, z
-    .number()
-    .transform((val) => sanitizeSourceRating(val))
-    .nullable() 
-    .default(null)
-)
-
-const ratingsCount = z
-    .preprocess((val: string | number | null | undefined) => {
-        return sanitizeRatingsCount(val)
-    }, z
-    .number()
-    .nullable() 
-    .default(null)
-)
-
 const metadataSchema = z
     .any()
     .transform((val) => sanitizeMetadata(val))
@@ -120,8 +101,6 @@ export const createMediaSchema = z.object({
     source: sourceSchema,
     imageUrl: imageUrl,
     sourceId: sourceIdSchema,
-    sourceRating: sourceRatingSchema,
-    ratingsCount: ratingsCount,
     metadata: metadataSchema
 })
 
@@ -135,8 +114,6 @@ export const updateMediaSchema = z.object({
     source: sourceSchema,
     imageUrl: imageUrl,
     sourceId: sourceIdSchema,
-    sourceRating: sourceRatingSchema,
-    ratingsCount: ratingsCount,
     metadata: metadataSchema,
 })
 

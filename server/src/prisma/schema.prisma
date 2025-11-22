@@ -42,8 +42,6 @@ model Media {
 
   source          String?
   sourceId        String?
-  sourceRating    Int?
-  ratingsCount    Int?
   description     String?
   imageUrl        String?
 

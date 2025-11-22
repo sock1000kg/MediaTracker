@@ -43,8 +43,6 @@ export const createNewMedia = async (req: Request, res: Response, next: NextFunc
         year, 
         source, 
         sourceId, 
-        sourceRating,
-        ratingsCount, 
         description, 
         metadata,
         imageUrl
@@ -62,9 +60,7 @@ export const createNewMedia = async (req: Request, res: Response, next: NextFunc
         existingType, 
         creator, year, 
         metadata, source, 
-        sourceId, 
-        sourceRating, 
-        ratingsCount, 
+        sourceId,
         description, 
         imageUrl
       )
@@ -77,8 +73,6 @@ export const createNewMedia = async (req: Request, res: Response, next: NextFunc
         year, 
         source, 
         sourceId, 
-        sourceRating,
-        ratingsCount, 
         description, 
         metadata, 
         imageUrl,
@@ -111,8 +105,6 @@ export const updateExistingMedia = async (req: Request, res: Response, next: Nex
       year, 
       source, 
       sourceId, 
-      sourceRating,
-      ratingsCount, 
       description, 
       metadata,
       imageUrl
@@ -136,8 +128,6 @@ export const updateExistingMedia = async (req: Request, res: Response, next: Nex
       creator, year, 
       metadata, source, 
       sourceId, 
-      sourceRating, 
-      ratingsCount, 
       description, 
       imageUrl
     )
@@ -149,9 +139,7 @@ export const updateExistingMedia = async (req: Request, res: Response, next: Nex
         creator, 
         year, 
         source, 
-        sourceId, 
-        sourceRating,
-        ratingsCount, 
+        sourceId,  
         description, 
         metadata, 
         imageUrl,

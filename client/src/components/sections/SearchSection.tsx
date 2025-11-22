@@ -87,8 +87,6 @@ export default function SearchSection() {
             title: item.title,
             source: item.source,
             sourceId: item.sourceId,
-            sourceRating: item.sourceRating,
-            ratingsCount: item.ratingsCount,
             creator: item.creator,
             year: item.year,
             description: item.description,

@@ -32,14 +32,6 @@ export const searchResultSchema = z.object({
         .nullable()
         .default(null),
     sourceId: z.string(),
-    sourceRating: z
-        .number()
-        .nullable()
-        .default(null),
-    ratingsCount: z
-        .number()
-        .nullable()
-        .default(null),
     metadata: z.unknown(), // raw Google volumeInfo
 })
 export const searchResultsSchema = z.array(searchResultSchema) //Schema for the results array
