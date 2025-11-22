@@ -7,8 +7,8 @@ import {
   updateMediaForUser,
   deleteMedia,
   getAllMediasUserCreated,
-} from "@/controllers/dbCalls/mediaCalls.js"
-import { findMediaTypeForUserOrGlobal } from "@/controllers/dbCalls/mediaTypeCalls.js"
+} from "@/repositories/mediaCalls.js"
+import { findMediaTypeForUserOrGlobal } from "@/repositories/mediaTypeCalls.js"
 
 import { createMediaSchema, updateMediaSchema, deleteMediaSchema } from "@/schemas/mediaSchemas.js"
 import { validateSchema } from "@/utilities.js"

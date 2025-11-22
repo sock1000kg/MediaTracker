@@ -1,6 +1,8 @@
 import request from 'supertest' 
-import app from '@/app.js' 
+import { createApp } from '@/app.js' 
 import { prisma } from '@/tests/jest.setup.js' 
+
+const app = createApp({ disableRateLimit: true});
 
 describe('Auth Routes', () => {
     test('Register with valid credentials succeeds', async () => {

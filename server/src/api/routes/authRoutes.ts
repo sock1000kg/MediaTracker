@@ -1,5 +1,5 @@
 import express from "express"
-import { registerUser, loginUser } from "@/controllers/authControllers.js"
+import { registerUser, loginUser } from "@/api/controllers/authControllers.js"
 import { loginLimiter, signupLimiter } from "@/middleWare/rateLimiter.js"
 
 const router = express.Router()

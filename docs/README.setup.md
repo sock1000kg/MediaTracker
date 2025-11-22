@@ -11,6 +11,7 @@ Create these files at the repo root if you want to run on Docker, else create th
 1) `.env` (used by dev/prod Docker Compose)
 ```bash
 NODE_ENV=development
+RATE_LIMIT_ENABLED=true
 
 # Postgres
 POSTGRES_USER=postgres
@@ -32,6 +33,7 @@ SYSTEM_USER_PASSWORD=Cooler_pass_that_has_special_chars!_and_numbers123_upperCAS
 2) `.env.test` (used by test database test runner)
 ```bash
 NODE_ENV=test
+RATE_LIMIT_ENABLED=false
 
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres

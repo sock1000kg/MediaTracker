@@ -6,7 +6,7 @@ import {
   createMediaTypeForUser, 
   deleteMediaTypeForUser, 
   updateMediaTypeForUser 
-} from '@/controllers/dbCalls/mediaTypeCalls.js'
+} from '@/repositories/mediaTypeCalls.js'
 import { normalizeTypeName, validateSchema } from '@/utilities.js'
 
 import { createMediaTypeSchema, deleteMediaTypeSchema, updateMediaTypeSchema } from '@/schemas/mediaTypeSchemas.js'

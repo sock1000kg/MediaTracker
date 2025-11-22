@@ -1,8 +1,8 @@
 
-import { addApiKey } from "@/controllers/apiKeyController.js"
-import { addApiKeyForUser } from "@/controllers/dbCalls/apiKey.js"
-import { createLog, findLogOfUserByMediaId } from "@/controllers/dbCalls/logsCalls.js"
-import { createMedia } from "@/controllers/dbCalls/mediaCalls.js"
+import { addApiKey } from "@/api/controllers/apiKeyController.js"
+import { addApiKeyForUser } from "@/repositories/apiKey.js"
+import { createLog, findLogOfUserByMediaId } from "@/repositories/logsCalls.js"
+import { createMedia } from "@/repositories/mediaCalls.js"
 import prisma from "@/prismaClient.js"
 import { encryptKey } from "@/utilities.js"
 import { MediaType, User, UserAPIKey } from "@prisma/client"

@@ -4,7 +4,7 @@ import {
   createNewMedia,
   updateExistingMedia,
   deleteExistingMedia
-} from '@/controllers/mediaController.js'
+} from '@/api/controllers/mediaController.js'
 
 const router = express.Router()
 

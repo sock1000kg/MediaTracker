@@ -4,7 +4,7 @@ import {
   createNewLog,
   updateExistingLog,
   deleteExistingLog,
-} from "@/controllers/logControllers.js"
+} from "@/api/controllers/logControllers.js"
 
 const router = express.Router()
 

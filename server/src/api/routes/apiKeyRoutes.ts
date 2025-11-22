@@ -1,4 +1,4 @@
-import { addApiKey, deleteApiKey, getApiKeys, updateApiKey } from "@/controllers/apiKeyController.js"
+import { addApiKey, deleteApiKey, getApiKeys, updateApiKey } from "@/api/controllers/apiKeyController.js"
 import express from "express"
 
 const router = express.Router()

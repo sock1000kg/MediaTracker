@@ -6,9 +6,9 @@ import {
     findLogById,
     updateLog,
     deleteLog,
-} from "@/controllers/dbCalls/logsCalls.js"
-import { findMediaForUserById } from "@/controllers/dbCalls/mediaCalls.js"
-import { findMediaTypeForUserOrGlobal, createMediaTypeForUser } from "@/controllers/dbCalls/mediaTypeCalls.js"
+} from "@/repositories/logsCalls.js"
+import { findMediaForUserById } from "@/repositories/mediaCalls.js"
+import { findMediaTypeForUserOrGlobal, createMediaTypeForUser } from "@/repositories/mediaTypeCalls.js"
 
 import { createLogSchema, deleteLogSchema, updateLogSchema } from "@/schemas/logSchemas.js"
 import { validateSchema } from "@/utilities.js"

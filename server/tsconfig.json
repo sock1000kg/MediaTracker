@@ -14,8 +14,8 @@
     "noImplicitAny": false,
     "paths": {
       "@/*": ["src/*"],
-      "@controllers/*": ["src/controllers/*"],
-      "@routes/*": ["src/routes/*"],
+      "@controllers/*": ["src/api/controllers/*"],
+      "@routes/*": ["src/api/routes/*"],
       "@utils/*": ["src/utilities/*"],
       "@schemas/*": ["src/schemas/*"]
     }
