@@ -7,13 +7,15 @@
     "dev": "cross-env CHOKIDAR_USEPOLLING=true CHOKIDAR_INTERVAL=1000 tsx watch src/server.ts",
     "build": "tsc && tsc-alias",
     "start": "node dist/server.js",
-    "test": "cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
+    "test": "npm run build && cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
     "seed": "node dist/tests/seed.js",
     "reset": "npx prisma migrate reset --force --skip-seed && npm run seed",
     "reset-test-db": "tsx src/tests/reset-test-db.ts",
     "db-test:start": "docker-compose -f ../docker-compose.test-db.yml up -d",
     "prod:start": "docker-compose -f ../docker-compose.yml up -d",
-    "dev:start": "docker-compose -f ../docker-compose.yml -f ../docker-compose.dev.yml up -d"
+    "prod:rebuild": "docker-compose -f ../docker-compose.yml build --no-cache && docker-compose -f ../docker-compose.yml up -d",
+    "dev:start": "docker-compose -f ../docker-compose.yml -f ../docker-compose.dev.yml up -d",
+    "dev:rebuild": "docker-compose -f ../docker-compose.yml -f ../docker-compose.dev.yml build --no-cache && docker-compose -f ../docker-compose.yml -f ../docker-compose.dev.yml up -d"
   },
   "prisma": {
     "schema": "src/prisma/schema.prisma",
