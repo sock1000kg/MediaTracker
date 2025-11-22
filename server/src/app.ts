@@ -30,10 +30,8 @@ app.use(
 )
 
 app.use(express.json())
-if(process.env.NODE_ENV !== 'test'){
-    app.use(globalLimiter)
-    app.use(logger)
-}
+app.use(globalLimiter)
+app.use(logger)
 
 
 //Routes

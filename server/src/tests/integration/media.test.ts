@@ -1,10 +1,8 @@
 import request from 'supertest'
-import { createApp } from '@/app.js'
+import app from '@/app.js'
 import { prisma } from '@/tests/jest.setup.js'
 
 import { normalizeTypeName } from '@/utilities.js'
-
-const app = createApp({ disableRateLimit: true});
 
 describe('Media Routes', () => {
     const username = 'MediaTestUser'

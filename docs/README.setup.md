@@ -82,7 +82,7 @@ docker compose -f ../docker-compose.test-db.yml down -v
 Build and run the production images (backend-frontend-database):
 ```bash
 cd server
-npm run docker:start
+npm run prod:start
 ```
 or in project root
 ```bash
