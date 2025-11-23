@@ -63,7 +63,11 @@ export function sanitizeNotes(notes: string | undefined | null): string | null{
 // Sanitize title: trim, limit length to 100 chars
 export function sanitizeTitle(title: string | undefined | null): string | null {
     if (!title) return null
-    return String(title).trim().slice(0, 100)
+
+    title = String(title).trim().slice(0, 100)
+    if(title === "") return null
+
+    return title
 }
 
 // Sanitize creator: trim, limit length to 100 chars
@@ -161,30 +165,6 @@ export function sanitizeImageUrl(url: string | undefined | null): string | null 
 export function sanitizeSourceId(id: string | undefined | null): string | null {
     if (!id) return null
     return String(id).trim().slice(0, 200)
-}
-
-// Sanitize source rating: convert 0–100 scale
-export function sanitizeSourceRating(
-    rating: number | string | undefined | null,
-    scale: number = 10 // fallback to 10
-): number | null {
-    if (rating === undefined || rating === null) return null
-
-    const num = Number(rating)
-    if (isNaN(num)) return null
-
-    // Clamp to range
-    if (num < 0 || num > scale) return null
-
-    // Convert to 0–100 scale
-    return Math.round((num / scale) * 100)
-}
-
-// Sanitize ratings count: must be non-negative integer
-export function sanitizeRatingsCount(count: number | string | undefined | null): number | null {
-    if (count === undefined || count === null) return null
-    const num = Number(count)
-    return Number.isInteger(num) && num >= 0 ? num : null
 }
 
 // Sanitize Api Key: trim and limit to 200 chars
