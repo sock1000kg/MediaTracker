@@ -2,6 +2,11 @@ import { Request, Response, NextFunction } from 'express'
 import { ZodError } from 'zod'
 
 function errorHandler(error: any, req: Request, res: Response, next: NextFunction) {
+    // Recognize service errors with `status`
+    if (error.status) {
+        return res.status(error.status).json({ message: error.message })
+    }
+
     //For auth routes, will cchange later
     if (error.message === "Username already taken") 
         return res.status(400).json({ message: "Username already taken" })
