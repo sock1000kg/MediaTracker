@@ -7,13 +7,6 @@ function errorHandler(error: any, req: Request, res: Response, next: NextFunctio
         return res.status(error.status).json({ message: error.message })
     }
 
-    //For auth routes, will cchange later
-    if (error.message === "Username already taken") 
-        return res.status(400).json({ message: "Username already taken" })
-    if (error.message === "Cannot find user") 
-            return res.status(404).json({ message: "Cannot find user" })
-
-        
     if (error instanceof ZodError) {
         // return first validation error as JSON
         return res.status(400).json({
