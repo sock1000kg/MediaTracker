@@ -1,23 +1,14 @@
 import { NextFunction, Request, Response } from 'express'
-import { 
-  getAllMediaTypesForUser, 
-  findMediaTypeForUserOrGlobal, 
-  findMediaTypeForUser,
-  createMediaTypeForUser, 
-  deleteMediaTypeForUser, 
-  updateMediaTypeForUser 
-} from '@/repositories/mediaTypeCalls.js'
-import { normalizeTypeName, validateSchema } from '@/utilities.js'
-
-import { createMediaTypeSchema, deleteMediaTypeSchema, updateMediaTypeSchema } from '@/schemas/mediaTypeSchemas.js'
+import { mediaTypeService } from "@/services/mediaTypeService.js"
 
 export async function getAllMediaTypes(req: Request, res: Response, next: NextFunction) {
     const userId = req.userId
-    if (!userId) 
+    if (!userId) {
         return res.status(401).json({ message: "Unauthorized: missing userId" })
+    }
 
     try {
-        const types = await getAllMediaTypesForUser(userId)
+        const types = await mediaTypeService.getAll(userId)
         res.status(200).json(types)
     } catch (error) {
         next(error)
@@ -27,18 +18,12 @@ export async function getAllMediaTypes(req: Request, res: Response, next: NextFu
 // Create a type, name sent in body
 export async function createMediaType(req: Request, res: Response, next: NextFunction) {
     const userId = req.userId
-    if (!userId) 
+    if (!userId) {
         return res.status(401).json({ message: "Unauthorized: missing userId" })
+    }
         
     try {
-        //Sanitization
-        const { name: normalizedName } = validateSchema(createMediaTypeSchema, req.body)
-        
-        const existingMediaType = await findMediaTypeForUserOrGlobal(normalizedName, userId)
-        if (existingMediaType) 
-            return res.status(409).json({ message: "Media Type already exists" })
-
-        const mediaType = await createMediaTypeForUser(normalizedName, userId)
+        const mediaType = await mediaTypeService.create(userId, req.body)
         res.status(201).json(mediaType)
     } catch (error) {
         next(error)
@@ -47,56 +32,35 @@ export async function createMediaType(req: Request, res: Response, next: NextFun
 
 //Delete a type, name sent in params
 export async function deleteMediaType(req: Request, res: Response, next: NextFunction) {
-    const name = decodeURIComponent(req.params.name)
-    
     const userId = req.userId
-    if (!userId) 
+    if (!userId) {
         return res.status(401).json({ message: "Unauthorized: missing userId" })
-
+    }
         
     try {
-        //Sanitization
-        const { confirm } = validateSchema(deleteMediaTypeSchema, req.body)
-        const normalizedName = normalizeTypeName(name)
+        const name = decodeURIComponent(req.params.name)
 
-        const existingMediaType = await findMediaTypeForUser(normalizedName, userId)
-        if (!existingMediaType) 
-            return res.status(404).json({ message: "You can only delete types that you created" })
+        const result = await mediaTypeService.delete(userId, name, req.body)
+        if (result.confirmNeeded) {
+            return res.status(200).json(result)
+        }
 
-        if (!confirm) 
-            return res.status(200).json({ 
-                message: `Deleting this Media Type will also delete ${existingMediaType.media.length} Media(s) and all Logs tied to them. Confirm deletion?`,
-                mediaCount: existingMediaType.media.length
-            })
-
-        await deleteMediaTypeForUser(normalizedName, userId)
-        res.status(200).json({ message: "Media Type deleted successfully" })
+        res.status(200).json(result)
     } catch (error) {
         next(error)
     }
 }
 
 export async function updateMediaType(req: Request, res: Response, next: NextFunction) {
-    const name = decodeURIComponent(req.params.name)
-
     const userId = req.userId
-    if (!userId) 
+    if (!userId) {
         return res.status(401).json({ message: "Unauthorized: missing userId" })
+    }
 
     try {
-        //Sanitization
-        const { newName: normalizedNewName } = validateSchema(updateMediaTypeSchema, req.body)
-        const normalizedOldName = normalizeTypeName(name)
+        const name = decodeURIComponent(req.params.name)
 
-        const existingOldMediaType = await findMediaTypeForUser(normalizedOldName, userId)
-        if (!existingOldMediaType) 
-            return res.status(404).json({ message: "You can only rename types that you created" })
-
-        const existingNewMediaType = await findMediaTypeForUserOrGlobal(normalizedNewName, userId)
-        if (existingNewMediaType) 
-            return res.status(409).json({ message: "Media Type with that name already exists" })
-
-        const updated = await updateMediaTypeForUser(normalizedOldName, normalizedNewName, userId)
+        const updated = await mediaTypeService.update(userId, name, req.body)
         res.status(200).json(updated)
     } catch (error) {
         next(error)
