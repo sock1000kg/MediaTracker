@@ -7,9 +7,6 @@ export async function createUser(
     displayName: string,
     hashedPassword: string
 ): Promise<User> {
-    const existingUser = await prisma.user.findUnique({ where: { username } })
-    if (existingUser) throw new Error("Username already taken")
-
     return prisma.user.create({
         data: { 
             username, 
@@ -18,7 +15,7 @@ export async function createUser(
     })
 }
 
-export async function findUserByUsername(username: string): Promise<User & { mediaType: MediaType[] }> {
+export async function findUserByUsername(username: string): Promise<User & { mediaType: MediaType[] } | null> {
     const user = await prisma.user.findUnique({
         where: {
             username 
@@ -27,8 +24,7 @@ export async function findUserByUsername(username: string): Promise<User & { med
             mediaType: true,
         },
     })
-    if (!user) throw new Error("Cannot find user")
-    return user
+    return user ?? null
 }
 
 export async function findUserById(id: number): Promise<User & { apiKeys: UserAPIKey[] } | null> {

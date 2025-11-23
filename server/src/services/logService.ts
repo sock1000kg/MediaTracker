@@ -55,7 +55,7 @@ export class LogService {
         }
 
         if (existingLog.userId !== userId) {
-            throw Object.assign(new Error("You can only edit logs that you created"), { status: 403 })
+            throw Object.assign(new Error("You can only edit logs that you created"), { status: 401 })
         }
 
         return updateLog(logId, status, rating, notes)
@@ -70,7 +70,7 @@ export class LogService {
         }
 
         if (existingLog.userId !== userId) {
-            throw Object.assign(new Error("You can only delete logs that you created"), { status: 403 })
+            throw Object.assign(new Error("You can only delete logs that you created"), { status: 401 })
         }
 
         if (!confirm) {

@@ -8,7 +8,7 @@ describe('Auth Routes', () => {
             .post('/auth/register')
             .send({ username: 'TestUser123', password: 'StrongPass1!', displayName: 'Tester' })
             .set('Content-Type', 'application/json');
-        expect(res.statusCode).toBe(200);
+        expect(res.statusCode).toBe(201);
         expect(res.body).toHaveProperty('token');
         expect(res.body.user.username).toBe('TestUser123');
 

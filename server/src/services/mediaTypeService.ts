@@ -42,7 +42,7 @@ export class MediaTypeService {
 
         if (!confirm) {
             return {
-                message: `Deleting this Media Type will also delete ${existing.media.length} Media(s) and all Logs tied to them.`,
+                message: `Deleting this Media Type will also delete ${existing.media.length} Media(s) and all Logs tied to them. Confirm deletion?`,
                 mediaCount: existing.media.length
             }
         }

@@ -230,7 +230,7 @@ describe('Log routes', () => {
     })
 
     test('Fails to update log belonging to another user', async () => {
-        const otherUser = await prisma.user.create({ data: { username: 'OtherUser', password: 'Pass123!' } })
+        const otherUser = await prisma.user.create({ data: { username: 'OtherUserUpdate', password: 'Pass123!' } })
         const otherLog = await prisma.userLogs.create({
             data: {
                 userId: otherUser.id,
@@ -332,7 +332,7 @@ describe('Log routes', () => {
         })
 
         test('Fails to delete log belonging to another user', async () => {
-            const otherUser = await prisma.user.create({ data: { username: 'OtherUser', password: 'Pass123!' } })
+            const otherUser = await prisma.user.create({ data: { username: 'OtherUserDelete', password: 'Pass123!' } })
             const otherLog = await prisma.userLogs.create({
                 data: {
                     userId: otherUser.id,

@@ -26,6 +26,9 @@ export const createMediaAndLog = async (req: Request, res: Response, next: NextF
         let media = await findMediaBySource(mediaData.sourceId, mediaData.source)
         if (!media) {
             const systemUser = await findUserByUsername("system")
+            if(!systemUser) {
+                return res.status(404).json({ message: "Demo user missing" })
+            }
             media = await createMedia(
                 mediaData.title,
                 bookType,

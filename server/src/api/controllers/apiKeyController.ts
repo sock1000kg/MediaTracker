@@ -29,6 +29,9 @@ export const addApiKey = async (req: Request, res: Response, next: NextFunction)
         return res.status(401).json({ message: "Unauthorized: missing userId" })
 
     const demoUser = await findUserByUsername("demo")
+    if(!demoUser) {
+        return res.status(404).json({ message: "Demo user missing" })
+    }
     if(userId === demoUser.id)
         return res.status(400).json({ message: "This feature is not available on demo account" })
     
@@ -54,6 +57,9 @@ export const updateApiKey = async (req: Request, res: Response, next: NextFuncti
         return res.status(401).json({ message: "Unauthorized: missing userId" })
 
     const demoUser = await findUserByUsername("demo")
+    if(!demoUser) {
+        return res.status(404).json({ message: "Demo user missing" })
+    }
     if(userId === demoUser.id)
         return res.status(400).json({ message: "This feature is not available on demo account" })
     
