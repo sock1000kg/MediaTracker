@@ -3,10 +3,10 @@ import { NextFunction, Request, Response } from 'express'
 import { createMediaAndLogSchema, googleBooksResponseSchema, SearchResult, searchResultsSchema } from '@/schemas/searchSchemas.js'
 import { decryptKey, validateSchema } from '@/utilities.js'
 
-import { createLog, findLogOfUserByMediaId, updateLog } from '@/repositories/logsCalls.js'
-import { createMedia, findMediaBySource } from '@/repositories/mediaCalls.js'
-import { findUserById, findUserByUsername } from '@/repositories/authCalls.js'
-import { findMediaTypeForUserOrGlobal } from '@/repositories/mediaTypeCalls.js'
+import { createLog, findLogOfUserByMediaId, updateLog } from '@/repositories/logsRepository.js'
+import { createMedia, findMediaBySource } from '@/repositories/mediaRepository.js'
+import { findUserById, findUserByUsername } from '@/repositories/authRepository.js'
+import { findMediaTypeForUserOrGlobal } from '@/repositories/mediaTypeRepository.js'
 
 export const createMediaAndLog = async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId

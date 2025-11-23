@@ -3,9 +3,9 @@ import jwt from 'jsonwebtoken'
 import {
   createUser,
   findUserByUsername
-} from "@/repositories/authCalls.js"
-import { findFirstMediaByTitle } from "@/repositories/mediaCalls.js"
-import { createLog } from "@/repositories/logsCalls.js"
+} from "@/repositories/authRepository.js"
+import { findFirstMediaByTitle } from "@/repositories/mediaRepository.js"
+import { createLog } from "@/repositories/logsRepository.js"
 
 import type { NextFunction, Request, Response } from "express"
 

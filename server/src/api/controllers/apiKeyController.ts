@@ -2,8 +2,8 @@ import { addApiKeySchema } from "@/schemas/apiKeySchemas.js"
 import { encryptKey, validateSchema } from "@/utilities.js"
 import { NextFunction, Request, Response } from "express"
 
-import { addApiKeyForUser, deleteApiKeyForUser, findApiKeyForUser, getAllApiKeys, updateApiKeyForUser } from "@/repositories/apiKey.js"
-import { findUserByUsername } from "../../repositories/authCalls.js"
+import { addApiKeyForUser, deleteApiKeyForUser, findApiKeyForUser, getAllApiKeys, updateApiKeyForUser } from "@/repositories/apiKeyRepository.js"
+import { findUserByUsername } from "../../repositories/authRepository.js"
 
 //Get all api keys (encrypted) based on userId
 export const getApiKeys = async (req: Request, res: Response, next: NextFunction) => {

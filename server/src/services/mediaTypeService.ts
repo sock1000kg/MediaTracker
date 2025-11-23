@@ -5,7 +5,7 @@ import {
     createMediaTypeForUser,
     deleteMediaTypeForUser,
     updateMediaTypeForUser
-} from "@/repositories/mediaTypeCalls.js"
+} from "@/repositories/mediaTypeRepository.js"
 
 import { 
     createMediaTypeSchema, 
