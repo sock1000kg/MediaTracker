@@ -148,7 +148,6 @@ export class MediaService {
 
         if (!confirm) {
             return {
-                confirmNeeded: true,
                 message: `Deleting ${media.title} will also delete your Log of it. Confirm deletion?`,
                 logsCount: media.logs.length,
             } 

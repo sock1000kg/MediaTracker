@@ -41,10 +41,6 @@ export async function deleteMediaType(req: Request, res: Response, next: NextFun
         const name = decodeURIComponent(req.params.name)
 
         const result = await mediaTypeService.delete(userId, name, req.body)
-        if (result.confirmNeeded) {
-            return res.status(200).json(result)
-        }
-
         res.status(200).json(result)
     } catch (error) {
         next(error)

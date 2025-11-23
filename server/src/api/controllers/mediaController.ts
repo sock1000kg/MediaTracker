@@ -65,11 +65,6 @@ export const deleteExistingMedia = async (req: Request, res: Response, next: Nex
 
   try {
     const result = await mediaService.delete(userId, mediaId, req.body)
-
-    if (!result.confirmNeeded) {
-      return res.status(200).json(result)
-    }
-
     res.status(200).json(result)
   } catch (error) {
     next(error)
