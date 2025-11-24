@@ -188,6 +188,7 @@ const ALGO = "aes-256-gcm"
 const SECRET = crypto.createHash("sha256").update(process.env.API_KEY_SECRET!).digest()
 export function encryptKey(key: string) {
     const iv = crypto.randomBytes(16)
+    
     const cipher = crypto.createCipheriv(ALGO, Buffer.from(SECRET), iv)
     let encrypted = cipher.update(key, "utf8", "hex")
     encrypted += cipher.final("hex")
@@ -196,11 +197,7 @@ export function encryptKey(key: string) {
 }
 
 export function decryptKey(stored: string) {
-    console.log("ALGO:", ALGO)
-    console.log("Secret length:", Buffer.from(SECRET).length)
-
     const [ivHex, authTagHex, encrypted] = stored.split(":")
-    console.log("IV length:", Buffer.from(ivHex, "hex").length)
     
     const decipher = crypto.createDecipheriv(ALGO, Buffer.from(SECRET), Buffer.from(ivHex, "hex"))
     decipher.setAuthTag(Buffer.from(authTagHex, "hex"))

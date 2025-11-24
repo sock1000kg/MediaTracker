@@ -3,7 +3,7 @@ import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { BookCard } from "../cards/BookCard"
 
-import { createMediaAndLog, searchBooks } from "@/api/search"
+import { searchBooks } from "@/api/search"
 import { useState } from "react"
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query"
 
@@ -15,6 +15,7 @@ import { editLog } from "@/api/logs"
 import { fetchLogsQueryOptions } from "@/queryOptions/fetchLogsQueryOptions"
 import { fetchMediasQueryOptions } from "@/queryOptions/fetchMediasQueryOptions"
 import { MediaSearchLogForm } from "@/forms/MediaSearchLogForm"
+import { createMediaAndLog } from "@/api/media"
 
 export default function SearchSection() {
     const [openDialog, setOpenDialog] = useState<DialogName>(null)
@@ -83,7 +84,7 @@ export default function SearchSection() {
 
         //set the data of the clicked media item
         const mediaData: Partial<Media> = {
-            //dont  send mediaType cus its given in the API's route automatically
+            //dont send mediaType cus its given in the API's route automatically
             title: item.title,
             source: item.source,
             sourceId: item.sourceId,

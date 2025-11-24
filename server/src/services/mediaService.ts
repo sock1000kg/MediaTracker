@@ -1,3 +1,5 @@
+import { findUserByUsername } from "@/repositories/authRepository.js"
+import { createLog, findLogOfUserByMediaId, updateLog } from "@/repositories/logsRepository.js"
 import {
     findMediaById,
     findMediaForUser,
@@ -5,6 +7,7 @@ import {
     updateMediaForUser,
     deleteMedia,
     getAllMediasUserCreated,
+    findMediaBySource,
 } from "@/repositories/mediaRepository.js" 
 
 import { findMediaTypeForUserOrGlobal } from "@/repositories/mediaTypeRepository.js" 
@@ -14,6 +17,7 @@ import {
     updateMediaSchema,
     deleteMediaSchema,
 } from "@/schemas/mediaSchemas.js" 
+import { createMediaAndLogSchema } from "@/schemas/searchSchemas.js"
 
 import { validateSchema } from "@/utilities.js" 
 
@@ -155,6 +159,49 @@ export class MediaService {
 
         await deleteMedia(mediaId) 
         return { message: "Media deleted" } 
+    }
+
+    async createMediaAndLog(userId: number, payload: any) {
+        const { mediaData, logData } = validateSchema(createMediaAndLogSchema, payload)
+
+        // media type ensures correctness (e.g. "book")
+        const mediaType = await findMediaTypeForUserOrGlobal("book", userId)
+        if (!mediaType) {
+            throw Object.assign(new Error("Media type not found"), { status: 404 })
+        }
+
+        // If media doesn't already exist, create system-owned media
+        let media = await findMediaBySource(mediaData.sourceId, mediaData.source)
+        if (!media) {
+            const systemUser = await findUserByUsername("system")
+            if (!systemUser) {
+                throw Object.assign(new Error("System user missing"), { status: 500 })
+            }
+
+            media = await createMedia(
+                mediaData.title,
+                mediaType,
+                mediaData.creator,
+                mediaData.year,
+                mediaData.source,
+                mediaData.sourceId,
+                mediaData.description,
+                mediaData.metadata,
+                mediaData.imageUrl,
+                systemUser.id
+            )
+        }
+
+        // log creation or updating
+        const existingLog = await findLogOfUserByMediaId(userId, media.id)
+        let log
+        if (existingLog) {
+            log = await updateLog(existingLog.id, logData.status, logData.rating, logData.notes)
+        } else {
+            log = await createLog(userId, media.id, logData.status, logData.rating, logData.notes)
+        }
+
+        return { media, log }
     }
 }
 

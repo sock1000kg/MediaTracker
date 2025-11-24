@@ -1,6 +1,6 @@
 import { apiFetch } from "./clientWrapper"
 
-import type { Media } from "@/types/main"
+import type { Log, Media } from "@/types/main"
 
 export function fetchMedias(): Promise<Media[]> {
   return apiFetch("/media")
@@ -52,4 +52,14 @@ export function editMedia(media: Partial<Media>): Promise<Media> {
       metadata: media.metadata
     })
   })
+}
+
+export function createMediaAndLog(mediaData: Partial<Media>, logData: Partial<Log>): Promise<Log>{
+    return apiFetch(`/media/media-log`, {
+        method: "PUT",
+        body: JSON.stringify({
+            mediaData,
+            logData
+        })
+    })
 }

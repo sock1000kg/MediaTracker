@@ -70,3 +70,17 @@ export const deleteExistingMedia = async (req: Request, res: Response, next: Nex
     next(error)
   }
 }
+
+export const createMediaAndLog = async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.userId
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" })
+    }
+
+    try {
+        const result = await mediaService.createMediaAndLog(userId, req.body)
+        res.status(201).json(result)
+    } catch (error) {
+        next(error)
+    }
+}
