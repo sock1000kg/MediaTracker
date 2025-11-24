@@ -1,6 +1,6 @@
 import { apiFetch } from "./clientWrapper"
 
-import type { Log, Media } from "@/types/main"
+import type { Log, Media } from "@/types/mainTypes"
 
 export function fetchMedias(): Promise<Media[]> {
   return apiFetch("/media")

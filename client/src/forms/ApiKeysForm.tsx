@@ -2,7 +2,7 @@ import { addApiKey, deleteApiKey, updateApiKey } from "@/api/apiKey"
 import { Button } from "@/components/ui/button"
 import { fetchApiKeysQueryOptions } from "@/queryOptions/fetchApiKeysQueryOptions"
 
-import type { AllowedSource, ApiKey } from "@/types/main"
+import type { AllowedSource, ApiKey } from "@/types/mainTypes"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 

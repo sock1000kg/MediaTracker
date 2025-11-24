@@ -10,7 +10,7 @@ import { useState, useEffect } from "react"
 
 import { fetchMediaTypes } from "@/api/mediaType"
 
-import type { Media, MediaType } from "@/types/main"
+import type { Media, MediaType } from "@/types/mainTypes"
 
 
 const AVAILABLE_METADATA_FIELDS = ["duration", "edition", "categories", "language", "pageCount", "platform",]

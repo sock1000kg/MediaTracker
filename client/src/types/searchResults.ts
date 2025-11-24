@@ -1,4 +1,4 @@
-import type { Media } from "./main"
+import type { Media } from "./mainTypes"
 
 export type MediaResults = BookResult
 

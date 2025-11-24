@@ -1,4 +1,4 @@
-import type { Log } from "@/types/main"
+import type { Log } from "@/types/mainTypes"
 import { Button } from "../ui/button"
 
 import { Fragment } from "react"

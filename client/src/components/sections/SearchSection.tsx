@@ -8,7 +8,7 @@ import { useState } from "react"
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query"
 
 import type { BookResult, MediaResults } from "@/types/searchResults"
-import { type DialogName, type Log, type Media } from "@/types/main"
+import { type DialogName, type Log, type Media } from "@/types/mainTypes"
 
 import EntityDialog from "../dialogs/EntityDialog"
 import { editLog } from "@/api/logs"
@@ -86,6 +86,7 @@ export default function SearchSection() {
         const mediaData: Partial<Media> = {
             //dont send mediaType cus its given in the API's route automatically
             title: item.title,
+            mediaType: "book",
             source: item.source,
             sourceId: item.sourceId,
             creator: item.creator,

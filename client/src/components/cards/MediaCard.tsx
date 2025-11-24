@@ -1,6 +1,6 @@
 import {Fragment} from 'react'
 
-import type { Media } from "@/types/main"
+import type { Media } from "@/types/mainTypes"
 
 import { Button } from "../ui/button"
 

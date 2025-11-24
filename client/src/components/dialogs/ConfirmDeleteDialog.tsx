@@ -8,7 +8,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
-import type { MediaType } from "@/types/main"
+import type { MediaType } from "@/types/mainTypes"
 import { useState, useEffect } from "react"
 
 interface ConfirmDeleteDialogProps<T = string> {

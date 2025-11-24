@@ -1,4 +1,4 @@
-import type { ApiKey } from "@/types/main";
+import type { ApiKey } from "@/types/mainTypes";
 import { apiFetch } from "./clientWrapper"
 
 export function getApiKeys(): Promise<ApiKey[]> {
