@@ -165,7 +165,7 @@ export class MediaService {
         const { mediaData, logData } = validateSchema(createMediaAndLogSchema, payload)
 
         // media type ensures correctness (e.g. "book")
-        const mediaType = await findMediaTypeForUserOrGlobal("book", userId)
+        const mediaType = await findMediaTypeForUserOrGlobal(mediaData.mediaType, userId)
         if (!mediaType) {
             throw Object.assign(new Error("Media type not found"), { status: 404 })
         }

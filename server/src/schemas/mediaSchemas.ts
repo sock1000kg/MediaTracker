@@ -120,3 +120,18 @@ export const deleteMediaSchema = z.object({
     confirm: z.boolean()
 })
 
+// Create schema specifically for searched up medias (due to missing info)
+export const searchMediaSchema = z.object({ 
+    title: titleSchema,
+    mediaType: z
+        .string()
+        .transform((val) => normalizeTypeName(val))
+        .refine(val => val.trim().length > 0, { message: "Media Type name is required" }),
+    creator: creatorSchema,
+    year: yearSchema,
+    description: descriptionSchema,
+    source: sourceSchema,
+    imageUrl: imageUrl,
+    sourceId: sourceIdSchema,
+    metadata: metadataSchema
+})

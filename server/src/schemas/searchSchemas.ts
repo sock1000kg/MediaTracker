@@ -1,10 +1,10 @@
 import { z } from "zod"
-import { createMediaSchema } from "@schemas/mediaSchemas.js"
+import { searchMediaSchema } from "@schemas/mediaSchemas.js"
 import { searchLogSchema } from "@/schemas/logSchemas.js"
 
 //For when user search up a media and wanna log it
 export const createMediaAndLogSchema = z.object({
-    mediaData: createMediaSchema.omit({mediaType: true}), //dont need mediaType cus we know what it is based on search API
+    mediaData: searchMediaSchema,
     logData: searchLogSchema
 })
 
