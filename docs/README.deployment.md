@@ -14,4 +14,4 @@ The frontend image uses a nulti-stage Dockerfile (`client/dockerfile`):
 Docker Compose files:
 - `docker-compose.yml` (prod): backend-frontend-Postgres for local production-like environment.
 - `docker-compose.dev.yml` (overlay): mounts source for hot reload, exposes Prisma Studio, sets `VITE_API_URL=http://localhost:5000` for the frontend.
-- `docker-compose.test-db.yml`: Postgres for running tests on port 5433.
+- `docker-compose.test-db.yml`: Postgres for running tests on host port 5433.

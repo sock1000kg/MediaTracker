@@ -15,7 +15,7 @@ export interface Media {
   id: number
   userId: number
   title: string
-  mediaType: MediaType | string
+  mediaType: MediaType
   creator?: string | null
   year?: number | null
   source?: string | null

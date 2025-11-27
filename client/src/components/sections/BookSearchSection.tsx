@@ -7,8 +7,8 @@ import { searchBooks } from "@/api/search"
 import { useState } from "react"
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query"
 
-import type { BookResult, MediaResults } from "@/types/searchResults"
-import { type DialogName, type Log, type Media } from "@/types/mainTypes"
+import type { BookResult } from "@/types/search"
+import { type DialogName, type Log } from "@/types/mainTypes"
 
 import EntityDialog from "../dialogs/EntityDialog"
 import { editLog } from "@/api/logs"
@@ -22,7 +22,7 @@ export default function SearchSection() {
     const [inputValue, setInputValue] = useState("")
     const [query, setQuery] = useState("")
 
-    const [targetMedia, setTargetMedia] = useState<Partial<Media> | null>(null)
+    const [targetMedia, setTargetMedia] = useState<BookResult | null>(null)
     const [targetLog, setTargetLog] = useState<Log | null>(null)
 
     const queryClient = useQueryClient()
@@ -55,7 +55,7 @@ export default function SearchSection() {
 
     //MUTATIONS
     const createMediaAndLogMutation = useMutation({
-        mutationFn: ({ mediaData, logData }: { mediaData: Partial<Media>, logData: Partial<Log> }) =>
+        mutationFn: ({ mediaData, logData }: { mediaData: BookResult, logData: Partial<Log> }) =>
             createMediaAndLog(mediaData, logData),
 
         onSuccess: () => {
@@ -75,7 +75,7 @@ export default function SearchSection() {
         }
     }
 
-    const handleLogClick = (item: MediaResults) => {
+    const handleLogClick = (item: BookResult) => {
         //Check if log of this item exists already
         const existingLog = logs.find(l => {
             if(!l.media.source && !l.media.sourceId) return false
@@ -83,18 +83,7 @@ export default function SearchSection() {
         })
 
         //set the data of the clicked media item
-        const mediaData: Partial<Media> = {
-            //dont send mediaType cus its given in the API's route automatically
-            title: item.title,
-            mediaType: "book",
-            source: item.source,
-            sourceId: item.sourceId,
-            creator: item.creator,
-            year: item.year,
-            description: item.description,
-            metadata: item.metadata,
-            imageUrl: item.imageUrl
-        }
+        const mediaData: BookResult = item
 
         setTargetMedia(mediaData)
         setTargetLog(existingLog ?? null)
@@ -132,8 +121,8 @@ export default function SearchSection() {
             {/* Header */}
             <div className="flex justify-between p-4 items-center bg-stone-200">
                 <div>
-                <p className="text-lg font-semibold">Search</p>
-                <p className="text-sm text-gray-600">Search and discover medias</p>
+                <p className="text-lg font-semibold">Book search</p>
+                <p className="text-sm text-gray-600">Search and discover books</p>
                 </div>
 
                 <div className="flex gap-2">
@@ -167,14 +156,7 @@ export default function SearchSection() {
                 {results.length > 0 ? (
                 <div className="grid gap-4">
                     {results.map((item) => {
-                        switch (item.source) {
-                            case "google_books":
-                                return <BookCard key={item.sourceId} book={item} onLog={(item) => handleLogClick(item)} />
-                            // case "spotify":
-                            //     return <MusicCard key={item.sourceId} music={item} />
-                            default:
-                            return null
-                        }
+                        return <BookCard key={item.sourceId} book={item} onLog={(item) => handleLogClick(item)} />
                     })}
 
                     {hasNextPage && (

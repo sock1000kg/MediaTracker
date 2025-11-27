@@ -1,4 +1,4 @@
-import type { BookResult } from "@/types/searchResults"
+import type { BookResult } from "@/types/search"
 import { Fragment } from "react/jsx-runtime"
 import { Button } from "../ui/button"
 

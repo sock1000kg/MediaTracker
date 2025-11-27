@@ -124,7 +124,7 @@ export const deleteMediaSchema = z.object({
 export const searchMediaSchema = z.object({ 
     title: titleSchema,
     mediaType: z
-        .string()
+        .string({ message: "Media Type is required" })
         .transform((val) => normalizeTypeName(val))
         .refine(val => val.trim().length > 0, { message: "Media Type name is required" }),
     creator: creatorSchema,

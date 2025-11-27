@@ -1,4 +1,4 @@
-import type { Log, Media, LogStatus } from "@/types/mainTypes"
+import type { Log, LogStatus } from "@/types/mainTypes"
 import {
   Select,
   SelectContent,
@@ -6,11 +6,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import type { MediaResult } from "@/types/search"
 
 interface MediaSearchLogFormProps {
   formData: Partial<Log>
   setFormData: React.Dispatch<React.SetStateAction<Partial<Log>>>
-  targetMedia: Partial<Media> //prefill with the picked media
+  targetMedia: MediaResult //prefill with the picked media
 }
 
 export function MediaSearchLogForm({
