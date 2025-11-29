@@ -6,11 +6,11 @@ export class SearchService {
         return googleBooksService.searchBooksGGBooks(userId, q, startIndex)
     }
 
-    async searchTracks(userId: number, q: string) {
+    async searchTracks(userId: number, q: string, page: number = 1) {
         return musicSearchService.searchTracksLastFm(userId, q)
     }
 
-    async searchAblums(userId: number, q: string) {
+    async searchAblums(userId: number, q: string, page: number = 1) {
         return musicSearchService.searchAlbumsLastFm(userId, q)
     }
 }

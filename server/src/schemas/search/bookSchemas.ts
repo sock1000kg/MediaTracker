@@ -28,10 +28,6 @@ const bookVolumeInfoSchema = z.object({
     averageRating: z
         .number()
         .nullable()
-        .default(null),
-    ratingsCount: z
-        .number()
-        .nullable()
         .default(null)
 }).loose() //allow extra stuff
 

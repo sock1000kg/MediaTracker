@@ -58,7 +58,7 @@ export function LogCard({log, onDelete, onEdit}: LogCardProps ) {
         {/* Metadata */}
         <div className="flex gap-2 flex-wrap text-xs text-stone-600 mt-1">
           {Object.entries(log.media.metadata || {})
-            .filter(([_, value]) => value != null && value !== "")
+            .filter(([key, value]) => value != null && value !== "" && key !== "url")
             .map(([key, value], index, arr) => (
               <Fragment key={key}>
                 <span className="flex gap-1 capitalize">
@@ -69,6 +69,19 @@ export function LogCard({log, onDelete, onEdit}: LogCardProps ) {
               </Fragment>
             ))}
         </div>
+
+        {log.media.metadata?.url && (
+          <div className="mt-1">
+            <a
+                href={log.media.metadata?.url as string}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs rounded-2xl px-2 py-0.5 bg-amber-100 text-amber-800 hover:underline"
+            >
+                More info
+            </a>
+          </div>
+        )}
 
         {/* Notes */}
         {log.notes && (

@@ -42,7 +42,7 @@ export class LastFmSearchService implements ISearchService {
             description: null,
             source: "lastfm",
             sourceId: i.mbid || i.url,
-            imageUrl: i.image?.find(img => img.size === "medium")?.["#text"] ?? null,
+            imageUrl: i.image?.find(img => img.size === "large")?.["#text"] ?? null,
             metadata: {
                 url: i.url
             }
@@ -95,6 +95,8 @@ export class LastFmSearchService implements ISearchService {
         url.searchParams.set("album", q)
         url.searchParams.set("api_key", key)
         url.searchParams.set("format", "json")
+        url.searchParams.set("limit", this.maxResults.toString())
+        url.searchParams.set("page", page.toString())
 
         const parsed = await fetchAndParse(url, lastFmAlbumSearchResponseSchema, "Last.fm API error", "Failed to fetch from Last.fm")
 

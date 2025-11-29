@@ -35,10 +35,10 @@ export const searchAlbums = async (req: Request, res: Response, next: NextFuncti
         return res.status(400).json({ message: "Missing query" })
     }
 
-    const startIndex = parseInt(req.query.startIndex as string) || 0
+    const page = parseInt(req.query.page as string) || 0
 
     try {
-        const results = await searchService.searchAblums(userId, q)
+        const results = await searchService.searchAblums(userId, q, page)
         res.status(200).json(results)
     } catch (error: any) {
         next(error)
@@ -56,10 +56,10 @@ export const searchTracks = async (req: Request, res: Response, next: NextFuncti
         return res.status(400).json({ message: "Missing query" })
     }
 
-    const startIndex = parseInt(req.query.startIndex as string) || 0
+    const page = parseInt(req.query.page as string) || 0
 
     try {
-        const results = await searchService.searchTracks(userId, q)
+        const results = await searchService.searchTracks(userId, q, page)
         res.status(200).json(results)
     } catch (error: any) {
         next(error)

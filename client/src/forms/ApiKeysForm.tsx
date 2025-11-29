@@ -9,7 +9,8 @@ import { useState } from "react"
 // This form only allows updating the key
 export function ApiKeyForm() {
     const [serverMessage, setServerMessage] = useState<string | null>(null) //message when delete a key
-    const [ggBooksInput, setGgBooksInput] = useState("")
+    const [googleBooksInput, setGoogleBooksInput] = useState("")
+    const [lastFmInput, setLastFmInput] = useState("")
     const queryClient = useQueryClient()
 
     const { data: apiKeys = [], error, isPending } = useQuery(fetchApiKeysQueryOptions())
@@ -36,21 +37,23 @@ export function ApiKeyForm() {
     })
 
     //Handlers
-    const handleCreate = (service: AllowedSource) => 
+    const handleCreate = (service: AllowedSource, value: string) => 
         async (e: React.FormEvent) => {
             e.preventDefault()
-            const payload: ApiKey = { key: ggBooksInput, service: service }
+            const payload: ApiKey = { key: value, service: service }
             await createMutation.mutateAsync(payload)
-            setGgBooksInput("")
+            if (service === "google_books") setGoogleBooksInput("")
+            if (service === "lastfm") setLastFmInput("")
     }
 
-    const handleUpdate = (service: AllowedSource) =>
+    const handleUpdate = (service: AllowedSource, value: string) =>
         async (e: React.FormEvent) => {
             e.preventDefault()
-            const payload: ApiKey = { key: ggBooksInput, service: service }
+            const payload: ApiKey = { key: value, service: service }
             try{
                 await updateMutation.mutateAsync(payload)
-                setGgBooksInput("")
+                if (service === "google_books") setGoogleBooksInput("")
+                if (service === "lastfm") setLastFmInput("")
             }catch(error: any){
                 setServerMessage(error.message || "Something went wrong")
                 setTimeout(() => setServerMessage(null), 3000) //clears message after delay
@@ -62,7 +65,8 @@ export function ApiKeyForm() {
             try {
                 const res = await deleteMutation.mutateAsync({ service: service, key: "" })
                 setServerMessage(res.message)
-                setGgBooksInput("")
+                if (service === "google_books") setGoogleBooksInput("")
+                if (service === "lastfm") setLastFmInput("")
 
                 // Immediately remove the key from cache to update UI (it'll be stuck when server responds with empty array)
                 queryClient.setQueryData<ApiKey[]>(
@@ -79,6 +83,7 @@ export function ApiKeyForm() {
 
     // Render
     const hasGoogleBooksKey = apiKeys.some(key => key.service === "google_books")
+    const hasLastFmKey = apiKeys.some(key => key.service === "lastfm")
 
     return (
         <div className="px-4">
@@ -101,15 +106,19 @@ export function ApiKeyForm() {
                 Your API keys will not be displayed again. Please store them somewhere safe before submitting.
             </p>
             {/* GOOGLE BOOKS */}
-            <form onSubmit={hasGoogleBooksKey ? handleUpdate("google_books") : handleCreate("google_books")}>
+            <form onSubmit={
+                hasGoogleBooksKey 
+                ? handleUpdate("google_books", googleBooksInput) 
+                : handleCreate("google_books", googleBooksInput)
+            }>
                 <label className="block mb-4">
                     <span className="text-stone-800">Google Books</span>
                     <div className="flex gap-4 mt-1">
                         <input
                             type="text"
-                            value={ggBooksInput ?? ""}
+                            value={googleBooksInput ?? ""}
                             onChange={(e) =>
-                                setGgBooksInput(e.target.value)
+                                setGoogleBooksInput(e.target.value)
                             }
                             className="block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none "
                             placeholder="Google Books API Key"
@@ -133,6 +142,50 @@ export function ApiKeyForm() {
                             type="button"
                             variant="destructive"
                             onClick={handleDelete("google_books")}  
+                        >
+                            Delete
+                        </Button>
+                    </div>
+                </label>
+            </form>
+
+            {/* Last.fm */}
+            <form onSubmit={
+                hasLastFmKey 
+                ? handleUpdate("lastfm", lastFmInput) 
+                : handleCreate("lastfm", lastFmInput)
+            }>
+                <label className="block mb-4">
+                    <span className="text-stone-800">Last.fm</span>
+                    <div className="flex gap-4 mt-1">
+                        <input
+                            type="text"
+                            value={lastFmInput ?? ""}
+                            onChange={(e) =>
+                                setLastFmInput(e.target.value)
+                            }
+                            className="block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none "
+                            placeholder="Last.fm API Key"
+                        />
+
+                        {/* Create/edit button depending on whether user has apikey */}
+                        {hasLastFmKey ? 
+                        <Button
+                            type="submit"
+                            variant="amber"  
+                        >
+                            Update
+                        </Button> :
+                        <Button
+                            type="submit"
+                            variant="amber"  
+                        >
+                            Add
+                        </Button>}
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={handleDelete("lastfm")}  
                         >
                             Delete
                         </Button>

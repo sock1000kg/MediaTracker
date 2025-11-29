@@ -15,6 +15,13 @@ export type BookResult = MediaResult<"book"> & {
     pageCount?: number
     categories?: string[]
     publisher?: string
+    url?: string
+  }
+}
+
+export type MusicResult = MediaResult<"music"> & {
+  metadata: {
+    url?: string
   }
 }
 

@@ -31,6 +31,7 @@ export class GoogleBooksService implements ISearchService {
                     pageCount: v.pageCount,
                     categories: v.categories,
                     publisher: v.publisher,
+                    url: v.infoLink
                 }
             }
         })

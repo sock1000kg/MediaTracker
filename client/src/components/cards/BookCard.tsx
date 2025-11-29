@@ -54,18 +54,31 @@ export function BookCard({ book, onLog }: BookCardProps) {
                     ))}
             </div>
 
-            {book.metadata?.categories?.length ? (
-                <div className="flex flex-wrap gap-1 mt-1"> 
-                    {book.metadata.categories.map((cat) => ( 
-                        <span 
-                            key={cat} 
-                            className="text-xs rounded-2xl px-2 py-0.5 bg-amber-100 text-amber-800" 
-                        > 
-                            {cat} 
-                        </span> 
-                    ))} 
-                </div> 
-            ) : null}
+            <div>
+                {book.metadata?.categories?.length && (
+                    <div className="flex flex-wrap gap-1 mt-1"> 
+                        {book.metadata.categories.map((cat) => ( 
+                            <span 
+                                key={cat} 
+                                className="text-xs rounded-2xl px-2 py-0.5 bg-amber-100 text-amber-800" 
+                            > 
+                                {cat} 
+                            </span> 
+                        ))} 
+                    </div> 
+                )}
+
+                {book.metadata?.url && (
+                    <a
+                        href={book.metadata.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs rounded-2xl px-2 py-0.5 bg-amber-100 text-amber-800 hover:underline"
+                    >
+                        View on Google Books
+                    </a>
+                )}
+            </div>
 
             {/* Description */}
             <p className="text-xs text-gray-500 whitespace-pre-line max-h-48 overflow-y-auto mt-2 pr-1">

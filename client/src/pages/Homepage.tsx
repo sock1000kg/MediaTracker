@@ -5,11 +5,13 @@ import LogsSection from "@/pages/sections/LogSection"
 import MediasSection from "@/pages/sections/MediaSection"
 import MediaTypesSection from "@/pages/sections/MediaTypeSection"
 import BooksSearchSection from "@/pages/sections/BookSearchSection"
+import MusicSearchSection from "@/pages/sections/MusicSearchSection"
 import Settings from "@/pages/sections/Settings"
 
 import { Search } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-export type Tab = "logs" | "medias" | "mediaTypes" | "search" | "settings" //Tabs in homepage
+export type Tab = "logs" | "medias" | "mediaTypes" | "settings" | "bookSearch" | "musicSearch" | "defaultSearch" //Tabs in homepage
 
 export default function Homepage() {
   const [activeTab, setActiveTab] = useState<Tab>("logs")
@@ -22,25 +24,40 @@ export default function Homepage() {
           {activeTab === "logs" && <LogsSection/>}
           {activeTab === "medias" && <MediasSection />}
           {activeTab === "mediaTypes" && <MediaTypesSection />}
-          {activeTab === "search" && <BooksSearchSection/>}
+          {activeTab === "bookSearch" && <BooksSearchSection />}
+          {activeTab === "musicSearch" && <MusicSearchSection />}
           {activeTab === "settings" && <Settings/>}
         </div>
 
         {/* Right side bar */}
         <div className="flex flex-col w-40 bg-stone-300">
-          <Button 
-            variant={activeTab === "search" ? "boldedLink" : "link"}
-            className="text-stone-600 w-full rounded-none shadow-[0_2px_2px_-2px_rgba(0,0,0,0.2)] hover:underline" 
-            onClick={() => { setActiveTab("search")}}
+          {/* Search Select */}
+          <Select 
+            onValueChange={(val: Tab) => setActiveTab(val)} 
+            value={activeTab.startsWith("book") || activeTab.startsWith("music") ? activeTab : "defaultSearch"}
           >
-              <Search /> Search
-          </Button>
+            <SelectTrigger className="w-full border-0 text-stone-600 rounded-none hover:underline">
+              <SelectValue placeholder="Search" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="defaultSearch" disabled className="text-gray-400">
+                <Search className="inline mr-2" /> Search
+              </SelectItem>
+              <SelectItem value="bookSearch">
+                <Search className="inline mr-2" /> Books
+              </SelectItem>
+              <SelectItem value="musicSearch">
+                <Search className="inline mr-2" /> Music
+              </SelectItem>
+            </SelectContent>
+          </Select>
+
           <Button 
             variant={activeTab === "logs" ? "boldedLink" : "link"}
             className="text-stone-600 w-full rounded-none shadow-[0_2px_2px_-2px_rgba(0,0,0,0.2)] hover:underline" 
             onClick={() => { setActiveTab("logs")}}
           >
-              Your Logs
+              Your Log
           </Button>
           <Button 
             variant={activeTab === "medias" ? "boldedLink" : "link"}

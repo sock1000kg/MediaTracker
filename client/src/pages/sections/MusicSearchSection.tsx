@@ -1,13 +1,12 @@
 import { Search } from "lucide-react"
 import { Button } from "../../components/ui/button"
 import { Input } from "../../components/ui/input"
-import { BookCard } from "../../components/cards/BookCard"
 
-import { searchBooks } from "@/api/search"
+import { searchAlbums, searchTracks } from "@/api/search"
 import { useState } from "react"
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData  } from "@tanstack/react-query"
 
-import type { BookResult } from "@/types/search"
+import type { MusicResult } from "@/types/search"
 import { type DialogName, type Log } from "@/types/mainTypes"
 
 import EntityDialog from "../../components/dialogs/EntityDialog"
@@ -16,13 +15,14 @@ import { fetchLogsQueryOptions } from "@/queryOptions/fetchLogsQueryOptions"
 import { fetchMediasQueryOptions } from "@/queryOptions/fetchMediasQueryOptions"
 import { MediaSearchLogForm } from "@/forms/MediaSearchLogForm"
 import { createMediaAndLog } from "@/api/media"
+import { MusicCard } from "@/components/cards/MusicCard"
 
-export default function BooksSearchSection() {
+export function MusicSearchSection() {
     const [openDialog, setOpenDialog] = useState<DialogName>(null)
     const [inputValue, setInputValue] = useState("")
     const [query, setQuery] = useState("")
 
-    const [targetMedia, setTargetMedia] = useState<BookResult | null>(null)
+    const [targetMedia, setTargetMedia] = useState<MusicResult | null>(null)
     const [targetLog, setTargetLog] = useState<Log | null>(null)
 
     const queryClient = useQueryClient()
@@ -36,18 +36,18 @@ export default function BooksSearchSection() {
         isFetchingNextPage,
         isLoading,
     } = useInfiniteQuery<
-        { results: BookResult[], nextStartIndex: number | null }, //QueryFnData
+        { results: MusicResult[], nextPage: number | null }, //QueryFnData
         Error, //Error
-        InfiniteData<{ results: BookResult[], nextStartIndex: number | null }, number>, //TData
+        InfiniteData<{ results: MusicResult[], nextPage: number | null }, number>, //TData
         [string, string], //QueryKey
         number //PageParam
     >({
-        queryKey: ["searchBooks", query],
-        queryFn: async ({ pageParam = 0 }) => {
-            return searchBooks(query, pageParam)
+        queryKey: ["searchAlbums", query],
+        queryFn: async ({ pageParam = 1 }) => {
+            return searchTracks(query, pageParam)
         },
         getNextPageParam: (lastPage) => {
-            return lastPage.nextStartIndex
+            return lastPage.nextPage
         },
         initialPageParam: 0,  
         enabled: !!query, //fires only when query isnt empty
@@ -60,7 +60,7 @@ export default function BooksSearchSection() {
 
     //MUTATIONS
     const createMediaAndLogMutation = useMutation({
-        mutationFn: ({ mediaData, logData }: { mediaData: BookResult, logData: Partial<Log> }) =>
+        mutationFn: ({ mediaData, logData }: { mediaData: MusicResult, logData: Partial<Log> }) =>
             createMediaAndLog(mediaData, logData),
 
         onSuccess: () => {
@@ -80,7 +80,7 @@ export default function BooksSearchSection() {
         }
     }
 
-    const handleLogClick = (item: BookResult) => {
+    const handleLogClick = (item: MusicResult) => {
         //Check if log of this item exists already
         const existingLog = logs.find(l => {
             if(!l.media.source && !l.media.sourceId) return false
@@ -88,9 +88,9 @@ export default function BooksSearchSection() {
         })
 
         //set the data of the clicked media item
-        const mediaData: BookResult = {
+        const mediaData: MusicResult = {
             ...item,
-            mediaType: "book"
+            mediaType: "music"
         }
 
         setTargetMedia(mediaData)
@@ -129,8 +129,8 @@ export default function BooksSearchSection() {
             {/* Header */}
             <div className="flex justify-between p-4 items-center bg-stone-200">
                 <div>
-                <p className="text-lg font-semibold">Book search</p>
-                <p className="text-sm text-gray-600">Search and discover books</p>
+                <p className="text-lg font-semibold">Music search</p>
+                <p className="text-sm text-gray-600">Search and discover songs and albums</p>
                 </div>
 
                 <div className="flex gap-2">
@@ -164,17 +164,17 @@ export default function BooksSearchSection() {
                 {results.length > 0 ? (
                 <div className="grid gap-4">
                     {results.map((item) => {
-                        return <BookCard key={item.sourceId} book={item} onLog={(item) => handleLogClick(item)} />
+                        return <MusicCard key={item.sourceId} book={item} onLog={(item) => handleLogClick(item)} />
                     })}
 
                     {hasNextPage && (
                         <Button variant={"amber"} onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
-                            {isFetchingNextPage ? "Loading more..." : "More books"}
+                            {isFetchingNextPage ? "Loading more..." : "More"}
                         </Button>
                     )}
                 </div>
                 ) : (
-                !isLoading && <p>No results</p>
+                !isLoading && <p>No results</p> 
                 )}
             </div>
 
@@ -189,3 +189,5 @@ export default function BooksSearchSection() {
         </div>
     )
 }
+
+export default MusicSearchSection

@@ -179,9 +179,9 @@ export async function fetchAndParse<T>(url: URL, responseSchema: ZodSchema<T>, e
 
     if (!res.ok) {
         const errorBody = await res.json().catch(() => null)
-        throw Object.assign(new Error(errMessage), {
+        throw Object.assign(new Error(defMessage), {
             status: res.status,
-            message: errorBody?.message ?? defMessage
+            message: errorBody?.message ?? errMessage
         })
     }
 
