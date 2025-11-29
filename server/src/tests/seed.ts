@@ -140,14 +140,12 @@ async function main() {
 
     //Seed Google Books key
     console.log("Demo user API keys:", demoUser.apiKeys)
-    console.log("Google Books API Key exists:", !!process.env.GOOGLE_BOOKS_API_KEY)
     const hasGoogleBooksKey = demoUser.apiKeys.some(
         (key) => key.service === "google_books"
     )
     if(!hasGoogleBooksKey && process.env.GOOGLE_BOOKS_API_KEY) {
         try {
             await addApiKeyForUser(demoUser.id, encryptKey(process.env.GOOGLE_BOOKS_API_KEY), "google_books")
-            console.log("Encrypted demo key:", encryptKey(process.env.GOOGLE_BOOKS_API_KEY))
             console.log("Google Books Demo Key created")
         } catch (error) {
             console.error("Failed to create Google Books API key:", error)
@@ -156,6 +154,23 @@ async function main() {
         console.log("GOOGLE_BOOKS_API_KEY environment variable not set")
     } else {
         console.log("Google Books Demo Key already exists")
+    }
+
+    //Seed lastfm key
+    const hasLastFmKey = demoUser.apiKeys.some(
+        (key) => key.service === "lastfm"
+    )
+    if(!hasLastFmKey && process.env.LASTFM_API_KEY) {
+        try {
+            await addApiKeyForUser(demoUser.id, encryptKey(process.env.LASTFM_API_KEY), "lastfm")
+            console.log("lastfm Demo Key created")
+        } catch (error) {
+            console.error("Failed to create lastfm API key:", error)
+        }
+    } else if (!process.env.LASTFM_API_KEY) {
+        console.log("LASTFM_API_KEY environment variable not set")
+    } else {
+        console.log("lastfm Demo Key already exists")
     }
 }
 

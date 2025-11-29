@@ -17,7 +17,7 @@ import {
     updateMediaSchema,
     deleteMediaSchema,
 } from "@/schemas/mediaSchemas.js" 
-import { createMediaAndLogSchema } from "@/schemas/searchSchemas.js"
+import { createMediaAndLogSchema } from "@/schemas/search/searchSchemas.js"
 
 import { validateSchema } from "@/utilities.js" 
 

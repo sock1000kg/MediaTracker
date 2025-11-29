@@ -1,9 +1,11 @@
 import express from 'express'
 
-import { searchBooks } from '@/api/controllers/searchControllers.js'
+import { searchAlbums, searchBooks, searchTracks } from '@/api/controllers/searchControllers.js'
 
 const router = express.Router()
 
 router.get('/books', searchBooks)
+router.get('/music/albums', searchAlbums)
+router.get('/music/tracks', searchTracks)
 
 export default router

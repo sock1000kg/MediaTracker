@@ -1,15 +1,22 @@
 import {
-    googleBooksResponseSchema,
     SearchResult,
     searchResultsSchema
-} from "@/schemas/searchSchemas.js"
+} from "@/schemas/search/searchSchemas.js"
+
+import {
+    googleBooksResponseSchema
+} from "@/schemas/search/bookSchemas.js"
 
 import { decryptKey, validateSchema } from "@/utilities.js"
 import { findUserById } from "@/repositories/authRepository.js"
+import { musicSearchService } from "@/services/search/lastFmSearchService.js"
 
 export class SearchService {
     async searchBooks(userId: number, q: string, startIndex: number = 0) {
         const user = await findUserById(userId)
+        if (!user) {
+            throw Object.assign(new Error("Non-existent userId"), { status: 404 })
+        }
 
         // decrypt API keys
         const decryptedApiKeys = user?.apiKeys.map(key => ({
@@ -32,7 +39,7 @@ export class SearchService {
             const errorBody = await response.json().catch(() => null)
             throw Object.assign(new Error("Google Books API error"), {
                 status: response.status,
-                message: errorBody?.error?.message ?? "Invalid or unauthorized API key"
+                message: errorBody?.error?.message ?? "Failed to fetch from Google Books"
             })
         }
 
@@ -66,6 +73,14 @@ export class SearchService {
 
         // Validate results array to match search schema
         return validateSchema(searchResultsSchema, rawResults)
+    }
+
+    async searchTracks(userId: number, q: string) {
+        return musicSearchService.searchTracksLastFm(userId, q)
+    }
+
+    async searchAblums(userId: number, q: string) {
+        return musicSearchService.searchAlbumsLastFm(userId, q)
     }
 }
 

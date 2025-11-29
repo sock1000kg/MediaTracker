@@ -128,7 +128,7 @@ export function sanitizeDescription(desc: string | undefined | null): string | n
 }
 
 // Sanitize source: only allow known sources (e.g., "google_books")
-const allowedSources = ["google_books"] as const
+const allowedSources = ["google_books", "lastfm"] as const
 export type AllowedSource = (typeof allowedSources)[number]
 export function sanitizeSource(source: string | undefined | null): AllowedSource | null {
     if (!source) return null
