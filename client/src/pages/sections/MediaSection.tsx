@@ -14,8 +14,8 @@ import { fetchLogsQueryOptions } from "@/queryOptions/fetchLogsQueryOptions"
 import { fetchMediasQueryOptions } from "@/queryOptions/fetchMediasQueryOptions"
 
 import { MediaForm } from "@/forms/MediaForm"
-import { ConfirmDeleteDialog } from "../dialogs/ConfirmDeleteDialog"
-import EntityDialog from "../dialogs/EntityDialog"
+import { ConfirmDeleteDialog } from "../../components/dialogs/ConfirmDeleteDialog"
+import EntityDialog from "../../components/dialogs/EntityDialog"
 import { LogForm } from "@/forms/LogForm"
 
 export default function MediasSection() {

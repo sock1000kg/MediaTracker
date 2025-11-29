@@ -1,7 +1,7 @@
 import { Search } from "lucide-react"
-import { Button } from "../ui/button"
-import { Input } from "../ui/input"
-import { BookCard } from "../cards/BookCard"
+import { Button } from "../../components/ui/button"
+import { Input } from "../../components/ui/input"
+import { BookCard } from "../../components/cards/BookCard"
 
 import { searchBooks } from "@/api/search"
 import { useState } from "react"
@@ -10,14 +10,14 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteD
 import type { BookResult } from "@/types/search"
 import { type DialogName, type Log } from "@/types/mainTypes"
 
-import EntityDialog from "../dialogs/EntityDialog"
+import EntityDialog from "../../components/dialogs/EntityDialog"
 import { editLog } from "@/api/logs"
 import { fetchLogsQueryOptions } from "@/queryOptions/fetchLogsQueryOptions"
 import { fetchMediasQueryOptions } from "@/queryOptions/fetchMediasQueryOptions"
 import { MediaSearchLogForm } from "@/forms/MediaSearchLogForm"
 import { createMediaAndLog } from "@/api/media"
 
-export default function SearchSection() {
+export default function BooksSearchSection() {
     const [openDialog, setOpenDialog] = useState<DialogName>(null)
     const [inputValue, setInputValue] = useState("")
     const [query, setQuery] = useState("")

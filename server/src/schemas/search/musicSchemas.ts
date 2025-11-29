@@ -22,18 +22,26 @@ export const lastFmAlbumSchema = z.object({
     })).optional(),
 })
 
-export const lastFmTrackSearchResponse = z.object({
+export const lastFmTrackSearchResponseSchema = z.object({
     results: z.object({
         trackmatches: z.object({
             track: z.array(lastFmTrackSchema).optional()
-        })
+        }),
+        "opensearch:totalResults": z
+            .string()
+            .transform(val => Number(val)) // convert to number
+            .nullable()
     }).optional()
 })
 
-export const lastFmAlbumSearchResponse = z.object({
+export const lastFmAlbumSearchResponseSchema = z.object({
     results: z.object({
         albummatches: z.object({
             album: z.array(lastFmAlbumSchema).optional()
-        })
+        }),
+        "opensearch:totalResults": z
+            .string() 
+            .transform(val => Number(val)) // convert to number
+            .nullable()
     }).optional()
 })

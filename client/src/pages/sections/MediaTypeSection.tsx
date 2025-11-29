@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { deleteMediaType, editMediaType, createMediaType, deleteWarningMediaType } from "@/api/mediaType"
 
 import type { MediaType, DialogName } from "@/types/mainTypes"
-import { ConfirmDeleteDialog } from "../dialogs/ConfirmDeleteDialog"
+import { ConfirmDeleteDialog } from "../../components/dialogs/ConfirmDeleteDialog"
 import EntityDialog from "@/components/dialogs/EntityDialog"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { fetchMediaTypesQueryOptions } from "@/queryOptions/fetchMediaTypesQueryOptions"

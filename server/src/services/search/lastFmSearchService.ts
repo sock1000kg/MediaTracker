@@ -1,7 +1,7 @@
 // services/musicSearchService.js
 import {
-    lastFmAlbumSearchResponse,
-    lastFmTrackSearchResponse
+    lastFmAlbumSearchResponseSchema,
+    lastFmTrackSearchResponseSchema
 } from "@/schemas/search/musicSchemas.js"
 
 import { searchResultsSchema, SearchResult } from "@/schemas/search/searchSchemas.js"
@@ -10,12 +10,8 @@ import { findUserById } from "@/repositories/authRepository.js"
 import { ISearchService } from "./searchServiceInterface.js"
 
 export class LastFmSearchService implements ISearchService {
-    baseUrl: string
-
-    constructor() {
-        // You can choose HTTPS as Last.fm supports it.
-        this.baseUrl = "https://ws.audioscrobbler.com/2.0/"
-    }
+    baseUrl = "https://ws.audioscrobbler.com/2.0/"
+    maxResults = 30
 
     async getUserApiKey(userId: number) {
         const user = await findUserById(userId)
@@ -53,7 +49,14 @@ export class LastFmSearchService implements ISearchService {
         }))
     }
 
-    async searchTracksLastFm(userId: number, q: string) {
+    computePagination(totalResults: number, page: number) {
+        const hasMore = page * this.maxResults < totalResults
+        return hasMore ? page + 1 : null
+    }
+
+    async searchTracksLastFm(userId: number, q: string, page = 1):
+        Promise<{ results: SearchResult[], nextStartIndex: number | null}>
+    {
         const key = await this.getUserApiKey(userId)
 
         const url = new URL(this.baseUrl)
@@ -61,20 +64,30 @@ export class LastFmSearchService implements ISearchService {
         url.searchParams.set("track", q)
         url.searchParams.set("api_key", key)
         url.searchParams.set("format", "json")
+        url.searchParams.set("limit", this.maxResults.toString())
+        url.searchParams.set("page", page.toString())
 
-        const parsed = await fetchAndParse(url, lastFmTrackSearchResponse, "Last.fm API error", "Failed to fetch from Last.fm")
+        const parsed = await fetchAndParse(url, lastFmTrackSearchResponseSchema, "Last.fm API error", "Failed to fetch from Last.fm")
+        console.log("PARSED: ", parsed)
 
         const items = parsed.results?.trackmatches?.track ?? []
         if (!items.length) {
             throw Object.assign(new Error("No item found"), { status: 404 })
         }
 
+        const total = parsed.results?.["opensearch:totalResults"] ?? 0
+        const nextPage = this.computePagination(total, page)
 
-        const results = this.mapResults(items)
-        return validateSchema(searchResultsSchema, results)
+        const mapped = this.mapResults(items)
+        return {
+            results: validateSchema(searchResultsSchema, mapped),
+            nextStartIndex: nextPage
+        }
     }
 
-    async searchAlbumsLastFm(userId: number, q: string) {
+    async searchAlbumsLastFm(userId: number, q: string, page = 1):
+        Promise<{ results: SearchResult[], nextStartIndex: number | null}>
+    {
         const key = await this.getUserApiKey(userId)
 
         const url = new URL(this.baseUrl)
@@ -83,16 +96,21 @@ export class LastFmSearchService implements ISearchService {
         url.searchParams.set("api_key", key)
         url.searchParams.set("format", "json")
 
-        const parsed = await fetchAndParse(url, lastFmAlbumSearchResponse, "Last.fm API error", "Failed to fetch from Last.fm")
+        const parsed = await fetchAndParse(url, lastFmAlbumSearchResponseSchema, "Last.fm API error", "Failed to fetch from Last.fm")
 
         const items = parsed.results?.albummatches?.album ?? []
         if (!items.length) {
             throw Object.assign(new Error("No item found"), { status: 404 })
         }
 
+        const total = parsed.results?.["opensearch:totalResults"] ?? 0
+        const nextPage = this.computePagination(total, page)
 
         const results = this.mapResults(items)
-        return validateSchema(searchResultsSchema, results)
+        return {
+            results: validateSchema(searchResultsSchema, results),
+            nextStartIndex: nextPage
+        }
     }
 }
 

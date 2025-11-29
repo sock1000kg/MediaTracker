@@ -1,5 +1,5 @@
 import { ApiKeyForm } from "@/forms/ApiKeysForm"
-import { Button } from "../ui/button"
+import { Button } from "../../components/ui/button"
 import { useState } from "react"
 
 export type Tab = "apiKeys" | "user" // Tabs in settings

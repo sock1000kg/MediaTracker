@@ -8,9 +8,9 @@ import { LogCard } from "@/components/cards/LogCard"
 import { MediaTypeCard } from "@/components/cards/MediaTypeGroupCard"
 
 import type { DialogName, Log } from "@/types/mainTypes"
-import EntityDialog from "../dialogs/EntityDialog"
+import EntityDialog from "../../components/dialogs/EntityDialog"
 import { LogForm } from "@/forms/LogForm"
-import { ConfirmDeleteDialog } from "../dialogs/ConfirmDeleteDialog"
+import { ConfirmDeleteDialog } from "../../components/dialogs/ConfirmDeleteDialog"
 
 export default function LogsSection() {
   const [openDialog, setOpenDialog] = useState<DialogName>(null)

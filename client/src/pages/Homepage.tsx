@@ -1,11 +1,11 @@
 import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
-import LogsSection from "@/components/sections/LogSection"
-import MediasSection from "@/components/sections/MediaSection"
-import MediaTypesSection from "@/components/sections/MediaTypeSection"
-import SearchSection from "@/components/sections/BookSearchSection"
-import Settings from "@/components/sections/Settings"
+import LogsSection from "@/pages/sections/LogSection"
+import MediasSection from "@/pages/sections/MediaSection"
+import MediaTypesSection from "@/pages/sections/MediaTypeSection"
+import BooksSearchSection from "@/pages/sections/BookSearchSection"
+import Settings from "@/pages/sections/Settings"
 
 import { Search } from "lucide-react"
 
@@ -22,7 +22,7 @@ export default function Homepage() {
           {activeTab === "logs" && <LogsSection/>}
           {activeTab === "medias" && <MediasSection />}
           {activeTab === "mediaTypes" && <MediaTypesSection />}
-          {activeTab === "search" && <SearchSection/>}
+          {activeTab === "search" && <BooksSearchSection/>}
           {activeTab === "settings" && <Settings/>}
         </div>
 

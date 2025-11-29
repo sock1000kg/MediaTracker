@@ -6,6 +6,8 @@ import { decryptKey, fetchAndParse, validateSchema } from "@/utilities.js"
 import { findUserById } from "@/repositories/authRepository.js"
 
 export class GoogleBooksService implements ISearchService {
+    maxResults = 20
+
     async getUserApiKey(userId: number): Promise<string | undefined> {
         const user = await findUserById(userId)
         if (!user) throw Object.assign(new Error("Non-existent userId"), { status: 404 })
@@ -42,17 +44,18 @@ export class GoogleBooksService implements ISearchService {
         const url = new URL("https://www.googleapis.com/books/v1/volumes")
         url.searchParams.set("q", q)
         url.searchParams.set("startIndex", startIndex.toString())
-        url.searchParams.set("maxResults", "15")
+        url.searchParams.set("maxResults", this.maxResults.toString())
         if (key) url.searchParams.set("key", key)
 
         const parsed = await fetchAndParse(url, googleBooksResponseSchema, "Google Books API error", "Failed to fetch from Google Books")
+        console.log("PARSED: ", parsed)
 
         const results = this.mapResults(parsed.items ?? [])
         if (!results.length) {
             throw Object.assign(new Error("No item found"), { status: 404 })
         }
 
-        const nextStartIndex = results.length < 15 ? null : startIndex + 15
+        const nextStartIndex = results.length < this.maxResults ? null : startIndex + this.maxResults
 
         return { 
             results: validateSchema(searchResultsSchema, results), 
