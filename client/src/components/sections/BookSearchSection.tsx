@@ -5,7 +5,7 @@ import { BookCard } from "../cards/BookCard"
 
 import { searchBooks } from "@/api/search"
 import { useState } from "react"
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query"
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData  } from "@tanstack/react-query"
 
 import type { BookResult } from "@/types/search"
 import { type DialogName, type Log } from "@/types/mainTypes"
@@ -35,23 +35,28 @@ export default function SearchSection() {
         hasNextPage,
         isFetchingNextPage,
         isLoading,
-    } = useInfiniteQuery<BookResult[], Error, InfiniteData<BookResult[], number>, [string, string], number>({
+    } = useInfiniteQuery<
+        { results: BookResult[], nextStartIndex: number | null }, //QueryFnData
+        Error, //Error
+        InfiniteData<{ results: BookResult[], nextStartIndex: number | null }, number>, //TData
+        [string, string], //QueryKey
+        number //PageParam
+    >({
         queryKey: ["searchBooks", query],
         queryFn: async ({ pageParam = 0 }) => {
             return searchBooks(query, pageParam)
         },
-        initialPageParam: 0,
-        getNextPageParam: (lastPageBookNum, allPagesCount) => {
-            if (lastPageBookNum.length < 15) return undefined
-            return allPagesCount.length * 15 // allPagesCount is the number of pages * 15 => the index of the next book, not pages
+        getNextPageParam: (lastPage) => {
+            return lastPage.nextStartIndex
         },
+        initialPageParam: 0,  
         enabled: !!query, //fires only when query isnt empty
     })
 
     // media and logs cache
     const { data: logs = [] } = useQuery(fetchLogsQueryOptions())
 
-    const results = data?.pages.flatMap((page) => page) ?? []
+    const results = data?.pages.flatMap((page) => page.results) ?? []
 
     //MUTATIONS
     const createMediaAndLogMutation = useMutation({

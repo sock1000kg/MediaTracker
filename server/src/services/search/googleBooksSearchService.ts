@@ -34,7 +34,9 @@ export class GoogleBooksService implements ISearchService {
         })
     }
 
-    async searchItems(userId: number, q: string, startIndex = 0): Promise<SearchResult[]> {
+    async searchBooksGGBooks(userId: number, q: string, startIndex = 0): 
+        Promise<{ results: SearchResult[], nextStartIndex: number | null}> 
+    {
         const key = await this.getUserApiKey(userId)
 
         const url = new URL("https://www.googleapis.com/books/v1/volumes")
@@ -46,9 +48,16 @@ export class GoogleBooksService implements ISearchService {
         const parsed = await fetchAndParse(url, googleBooksResponseSchema, "Google Books API error", "Failed to fetch from Google Books")
 
         const results = this.mapResults(parsed.items ?? [])
-        if (!results.length) throw Object.assign(new Error("No item found"), { status: 404 })
+        if (!results.length) {
+            throw Object.assign(new Error("No item found"), { status: 404 })
+        }
 
-        return validateSchema(searchResultsSchema, results)
+        const nextStartIndex = results.length < 15 ? null : startIndex + 15
+
+        return { 
+            results: validateSchema(searchResultsSchema, results), 
+            nextStartIndex 
+        }
     }
 }
 

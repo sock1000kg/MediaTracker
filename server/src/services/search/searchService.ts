@@ -3,7 +3,7 @@ import { googleBooksService } from "./googleBooksSearchService.js"
 
 export class SearchService {
     async searchBooks(userId: number, q: string, startIndex: number = 0) {
-        return googleBooksService.searchItems(userId, q, startIndex)
+        return googleBooksService.searchBooksGGBooks(userId, q, startIndex)
     }
 
     async searchTracks(userId: number, q: string) {
