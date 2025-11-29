@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import LogsSection from "@/components/sections/LogSection"
 import MediasSection from "@/components/sections/MediaSection"
 import MediaTypesSection from "@/components/sections/MediaTypeSection"
-import SearchSection from "@/components/sections/SearchSection"
+import SearchSection from "@/components/sections/BookSearchSection"
 import Settings from "@/components/sections/Settings"
 
 import { Search } from "lucide-react"

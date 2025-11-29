@@ -5,10 +5,11 @@ import {
 } from "@/schemas/search/musicSchemas.js"
 
 import { searchResultsSchema, SearchResult } from "@/schemas/search/searchSchemas.js"
-import { decryptKey, validateSchema } from "@/utilities.js"
+import { decryptKey, fetchAndParse, validateSchema } from "@/utilities.js"
 import { findUserById } from "@/repositories/authRepository.js"
-import { z } from "zod"
-export class LastFmSearchService {
+import { ISearchService } from "./searchServiceInterface.js"
+
+export class LastFmSearchService implements ISearchService {
     baseUrl: string
 
     constructor() {
@@ -36,24 +37,6 @@ export class LastFmSearchService {
         return lastfmKey
     }
 
-    async fetchAndParse<T>(url: URL, responseSchema: z.ZodSchema<T>): Promise<T> {
-        const res = await fetch(url.toString())
-
-        if (!res.ok) {
-            const errorBody = await res.json().catch(() => null)
-            console.error("[LastFmSearchService] Fetch error:", res.status, errorBody)
-            throw Object.assign(new Error("Last.fm API error"), {
-                status: res.status,
-                message: errorBody?.message ?? "Failed to fetch from Last.fm"
-            })
-        }
-
-        const raw = await res.json()
-        console.log("[LastFmSearchService] Raw response:", JSON.stringify(raw, null, 2))
-        return validateSchema(responseSchema, raw)
-    }
-
-
     // Shared mapper for both albums & tracks → SearchResult[]
     mapResults(items: any[]): SearchResult[] {
         return items.map(i => ({
@@ -64,6 +47,9 @@ export class LastFmSearchService {
             source: "lastfm",
             sourceId: i.mbid || i.url,
             imageUrl: i.image?.find(img => img.size === "medium")?.["#text"] ?? null,
+            metadata: {
+                url: i.url
+            }
         }))
     }
 
@@ -76,7 +62,7 @@ export class LastFmSearchService {
         url.searchParams.set("api_key", key)
         url.searchParams.set("format", "json")
 
-        const parsed = await this.fetchAndParse(url, lastFmTrackSearchResponse)
+        const parsed = await fetchAndParse(url, lastFmTrackSearchResponse, "Last.fm API error", "Failed to fetch from Last.fm")
 
         const items = parsed.results?.trackmatches?.track ?? []
         if (!items.length) {
@@ -97,7 +83,7 @@ export class LastFmSearchService {
         url.searchParams.set("api_key", key)
         url.searchParams.set("format", "json")
 
-        const parsed = await this.fetchAndParse(url, lastFmAlbumSearchResponse)
+        const parsed = await fetchAndParse(url, lastFmAlbumSearchResponse, "Last.fm API error", "Failed to fetch from Last.fm")
 
         const items = parsed.results?.albummatches?.album ?? []
         if (!items.length) {

@@ -173,6 +173,22 @@ export function sanitizeApiKey(key: string | undefined | null): string | null {
     return key.trim().slice(0, 200)
 }
 
+// Fetch and parse API results
+export async function fetchAndParse<T>(url: URL, responseSchema: ZodSchema<T>, errMessage: string, defMessage: string): Promise<T> {
+    const res = await fetch(url.toString())
+
+    if (!res.ok) {
+        const errorBody = await res.json().catch(() => null)
+        throw Object.assign(new Error(errMessage), {
+            status: res.status,
+            message: errorBody?.message ?? defMessage
+        })
+    }
+
+    const raw = await res.json()
+    return validateSchema(responseSchema, raw)
+}
+
 // Validate Zod schema
 export function validateSchema<T>(schema: ZodSchema<T>, data: unknown): T {
     const result = schema.safeParse(data)
