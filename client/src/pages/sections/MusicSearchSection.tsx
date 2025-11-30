@@ -16,11 +16,13 @@ import { fetchMediasQueryOptions } from "@/queryOptions/fetchMediasQueryOptions"
 import { MediaSearchLogForm } from "@/forms/MediaSearchLogForm"
 import { createMediaAndLog } from "@/api/media"
 import { MusicCard } from "@/components/cards/MusicCard"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export function MusicSearchSection() {
     const [openDialog, setOpenDialog] = useState<DialogName>(null)
     const [inputValue, setInputValue] = useState("")
     const [query, setQuery] = useState("")
+    const [searchMode, setSearchMode] = useState<"albums" | "tracks">("albums")
 
     const [targetMedia, setTargetMedia] = useState<MusicResult | null>(null)
     const [targetLog, setTargetLog] = useState<Log | null>(null)
@@ -39,12 +41,12 @@ export function MusicSearchSection() {
         { results: MusicResult[], nextPage: number | null }, //QueryFnData
         Error, //Error
         InfiniteData<{ results: MusicResult[], nextPage: number | null }, number>, //TData
-        [string, string], //QueryKey
+        [string, string, string], //QueryKey
         number //PageParam
     >({
-        queryKey: ["searchAlbums", query],
+        queryKey: ["searchMusic", searchMode, query],
         queryFn: async ({ pageParam = 1 }) => {
-            return searchTracks(query, pageParam)
+            return (searchMode === "tracks") ? searchTracks(query, pageParam) : searchAlbums(query, pageParam)
         },
         getNextPageParam: (lastPage) => {
             return lastPage.nextPage
@@ -134,9 +136,32 @@ export function MusicSearchSection() {
                 </div>
 
                 <div className="flex gap-2">
+                    {/* MODE SELECT */}
+                    <Select 
+                        onValueChange={(val: "albums" | "tracks") => setSearchMode(val)} 
+                        value={searchMode}
+                    >
+                        <SelectTrigger className="rounded-md border border-gray-300 bg-gray-50 focus:ring-2">
+                            <SelectValue placeholder="Mode" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="defaultMode" disabled className="text-gray-400">
+                                Search Mode
+                            </SelectItem>
+                            <SelectItem value="albums">
+                                Albums
+                            </SelectItem>
+                            <SelectItem value="tracks">
+                                Tracks
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    {/* SEARCH INPUT */}
                     <Input
                         placeholder="Type book name..."
                         value={inputValue}
+                        maxLength={100}
                         onChange={(e) => setInputValue(e.target.value)}
                         onKeyDown={(e) => { 
                             if(e.key === "Enter") {
