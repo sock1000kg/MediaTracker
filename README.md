@@ -79,7 +79,7 @@ Unless noted, endpoints require an `Authorization Bearer <JWT>` header
 #### Logs
 - Rating: Must be 0–100. Invalid → ignored.
 - Status: Only "completed", "in progress", "wishlist", "none" are valid. Invalid → ignored.
-- Notes: Trimmed and max length 5000 characters.
+- Notes: Trimmed and max length 10000 characters.
 
 #### Media
 - Title and creator: Trimmed and max length 100 chars
@@ -91,7 +91,7 @@ Unless noted, endpoints require an `Authorization Bearer <JWT>` header
 - Name: Trimmed and lowercased
 
 ## Planned Features
-- More API providers, allow searching multiple types of medias
+- More API providers
 - User settings
 - Filtering search and logs
 - User stats

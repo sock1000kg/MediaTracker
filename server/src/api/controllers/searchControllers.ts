@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 import { searchService } from "@/services/search/searchService.js"
 import { musicSearchService } from '@/services/search/lastFmSearchService.js'
+import { sanitizeQuery } from '@/utilities.js'
 
 // Returns the book info fetched from google books (A media shaped item without media type cus its enforced in frontend)
 export const searchBooks = async (req: Request, res: Response, next: NextFunction) => {
@@ -31,6 +32,7 @@ export const searchAlbums = async (req: Request, res: Response, next: NextFuncti
     }
 
     const q = req.query.q as string
+    sanitizeQuery(q)
     if (!q) {
         return res.status(400).json({ message: "Missing query" })
     }
@@ -52,6 +54,7 @@ export const searchTracks = async (req: Request, res: Response, next: NextFuncti
     }
 
     const q = req.query.q as string
+    sanitizeQuery(q)
     if (!q) {
         return res.status(400).json({ message: "Missing query" })
     }

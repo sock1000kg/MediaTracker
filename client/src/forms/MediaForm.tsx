@@ -74,7 +74,7 @@ export function MediaForm({
     }
 
     return (
-        <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 p-2">
+        <div className="space-y-4 max-h-[520px] overflow-y-auto pr-2 p-2">
             {/* Error message */}
             {errorMessage && (
                 <p className="mt-2 text-center text-sm text-red-500">

@@ -13,7 +13,7 @@ import { useEffect } from "react"
 interface LogFormProps {
   formData: Partial<Log>
   setFormData: React.Dispatch<React.SetStateAction<Partial<Log>>>
-  targetMedia?: Media  // for create mode
+  targetMedia?: Media  // for create mode, in edit mode the target's info is passed from EntityDialog
 }
 
 export function LogForm({
@@ -29,7 +29,7 @@ export function LogForm({
   }, [targetMedia, formData.id, formData.media, setFormData])
 
   return (
-    <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 p-2">
+    <div className="space-y-4 max-h-[520px] overflow-y-auto pr-2 p-2">
         {targetMedia && (
             <p className="text-sm text-gray-600 italic">
                 Logging for <span className="font-semibold">{targetMedia.title}</span>
@@ -84,9 +84,18 @@ export function LogForm({
           onChange={(e) =>
             setFormData((prev) => ({ ...prev, notes: e.target.value }))
           }
-          className="mt-1 block w-full h-40 rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none "
+          maxLength={10000}
+          className="
+            mt-1 block w-full h-40 rounded-md 
+            border border-gray-300 bg-gray-50 
+            px-3 py-2 text-sm 
+            focus:ring-2 focus:outline-none resize-none
+          "
           placeholder="Write your thoughts..."
         />
+        <div className="text-right text-xs text-gray-500 mt-1">
+          {(formData.notes?.length ?? 0)}/10000
+        </div>
       </label>
     </div>
   )

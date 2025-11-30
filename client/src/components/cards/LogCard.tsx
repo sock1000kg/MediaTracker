@@ -17,7 +17,7 @@ export function LogCard({log, onDelete, onEdit}: LogCardProps ) {
         <img
           src={log.media.imageUrl}
           alt={log.media.title}
-          className="w-20 h-28 object-cover rounded-md"
+          className="w-auto h-auto max-w-32 max-h-32 object-cover rounded-md"
         />
       )}
 
@@ -85,7 +85,7 @@ export function LogCard({log, onDelete, onEdit}: LogCardProps ) {
 
         {/* Notes */}
         {log.notes && (
-          <p className="text-stone-700 whitespace-pre-line break-all max-h-32  overflow-y-auto mt-2 pr-1">
+          <p className="text-stone-700 whitespace-pre-line break-all max-h-36  overflow-y-auto mt-2 pr-1">
             {log.notes}
           </p>
         )}

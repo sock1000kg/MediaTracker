@@ -54,10 +54,10 @@ export function sanitizeRating(rating: number | string | undefined | null): numb
     return num
 }
 
-// Sanitize notes: trim whitespace, limit length to 5000 chars
+// Sanitize notes: trim whitespace, limit length to 10000 chars
 export function sanitizeNotes(notes: string | undefined | null): string | null{
     if (!notes) return null
-    return String(notes).trim().slice(0, 5000)
+    return String(notes).trim().slice(0, 10000)
 }
 
 // Sanitize title: trim, limit length to 100 chars
@@ -187,6 +187,15 @@ export async function fetchAndParse<T>(url: URL, responseSchema: ZodSchema<T>, e
 
     const raw = await res.json()
     return validateSchema(responseSchema, raw)
+}
+
+export function sanitizeQuery(query: string | undefined | null): string | null {
+    if (!query) return null
+
+    query = String(query).trim().slice(0, 100)
+    if(query === "") return null
+
+    return query
 }
 
 // Validate Zod schema

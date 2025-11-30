@@ -137,6 +137,7 @@ export default function BooksSearchSection() {
                     <Input
                         placeholder="Type book name..."
                         value={inputValue}
+                        maxLength={100}
                         onChange={(e) => setInputValue(e.target.value)}
                         onKeyDown={(e) => { 
                             if(e.key === "Enter") {

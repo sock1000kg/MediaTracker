@@ -20,8 +20,6 @@ export interface Media {
   year?: number | null
   source?: string | null
   sourceId: string | null
-  sourceRating: number | null
-  ratingsCount: number | null
   description: string | null
   metadata?: MediaMetadata
   imageUrl?: string | null
