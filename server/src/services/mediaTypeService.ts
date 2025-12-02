@@ -1,3 +1,5 @@
+import { handlePrismaError } from "@/middleWare/errorHandlerMiddleware.js"
+import prisma from "@/prismaClient.js"
 import {
     getAllMediaTypesForUser,
     findMediaTypeForUserOrGlobal,
@@ -12,6 +14,7 @@ import {
     deleteMediaTypeSchema, 
     updateMediaTypeSchema 
 } from "@/schemas/mediaTypeSchemas.js"
+import { AppError } from "@/types/error.js"
 
 import { validateSchema, normalizeTypeName } from "@/utilities.js"
 
@@ -23,12 +26,11 @@ export class MediaTypeService {
     async create(userId: number, payload: any) {
         const { name : normalizedName } = validateSchema(createMediaTypeSchema, payload)
 
-        const existing = await findMediaTypeForUserOrGlobal(normalizedName, userId)
-        if (existing) {
-            throw Object.assign(new Error("Media Type already exists"), { status: 409 })
+        try {
+            return createMediaTypeForUser(normalizedName, userId, prisma)
+        } catch (error: any) {
+            handlePrismaError(error, { uniqueMessage: "Media Type with that name already exists"})
         }
-
-        return createMediaTypeForUser(normalizedName, userId)
     }
 
     async delete(userId: number, name: string, payload: any) {
@@ -37,7 +39,7 @@ export class MediaTypeService {
 
         const existing = await findMediaTypeForUser(normalizedName, userId)
         if (!existing) {
-            throw Object.assign(new Error("You can only delete types that you created"), { status: 404 });
+            throw new AppError("You can only delete types that you created", 404)
         }
 
         if (!confirm) {
@@ -57,15 +59,25 @@ export class MediaTypeService {
 
         const existingOld = await findMediaTypeForUser(normalizedOldName, userId)
         if (!existingOld) {
-            throw Object.assign(new Error("You can only rename types that you created"), { status: 404 })
+            throw new AppError("You can only rename types that you created", 404)
         }
 
-        const existingNew = await findMediaTypeForUserOrGlobal(newName, userId);
+        //Check for conflicts with user and global types
+        const existingNew = await findMediaTypeForUserOrGlobal(newName, userId, prisma)
         if (existingNew) {
-            throw Object.assign(new Error("Media Type with that name already exists"), { status: 409 })
+            throw new AppError("Media Type with that name already exists", 409)
         }
 
-        return updateMediaTypeForUser(normalizedOldName, newName, userId);
+        try {
+            return await updateMediaTypeForUser(normalizedOldName, newName, userId)
+        } catch (error: any) {
+             handlePrismaError(
+                error, 
+                { 
+                    uniqueMessage: "Media Type with that name already exists",
+                    notFoundMessage: "Media Type with that name does not exist"
+                })
+        }
     }
 }
 

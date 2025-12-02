@@ -1,3 +1,4 @@
+import prisma from "@/prismaClient.js"
 import {
     getAllLogs,
     createLog,
@@ -10,6 +11,7 @@ import {
 import { findMediaForUserById } from "@/repositories/mediaRepository.js"
 import { findMediaTypeForUserOrGlobal, createMediaTypeForUser } from "@/repositories/mediaTypeRepository.js"
 import { createLogSchema, updateLogSchema, deleteLogSchema } from "@/schemas/logSchemas.js"
+import { AppError } from "@/types/error.js"
 import { validateSchema } from "@/utilities.js"
 
 export class LogService {
@@ -23,24 +25,24 @@ export class LogService {
         // Check if log already exists
         const existingLog = await findLogOfUserByMediaId(userId, mediaId)
         if (existingLog) {
-            throw Object.assign(new Error("Your log of this media already exists"), { status: 409 })
+            throw new AppError("Your log of this media already exists", 409)
         }
 
         //Check for media so you cant log sb else's media
         const media = await findMediaForUserById(mediaId, userId)
         if (!media) {
-            throw Object.assign(new Error("Media does not exist or you do not own it"), { status: 404 })
+            throw new AppError("Media does not exist or you do not own it", 404)
         }
 
         //Check for mediaType just to be sure frontend sending it correctly
         if (!media.mediaType) {
-            throw Object.assign(new Error("Media Type is missing"), { status: 404 })
+            throw new AppError("Media Type is missing", 404)
         }
 
         //Check if user have this type available, if not make one for them
-        let mediaType = await findMediaTypeForUserOrGlobal(media.mediaType.name, userId)
+        let mediaType = await findMediaTypeForUserOrGlobal(media.mediaType.name, userId, prisma)
         if (!mediaType) {
-            mediaType = await createMediaTypeForUser(media.mediaType.name, userId)
+            mediaType = await createMediaTypeForUser(media.mediaType.name, userId, prisma)
         }
 
         return createLog(userId, mediaId, status, rating, notes)
@@ -51,11 +53,11 @@ export class LogService {
 
         const existingLog = await findLogById(logId)
         if (!existingLog) {
-            throw Object.assign(new Error("Log does not exist"), { status: 404 })
+            throw new AppError("Log does not exist", 404)
         }
 
         if (existingLog.userId !== userId) {
-            throw Object.assign(new Error("You can only edit logs that you created"), { status: 401 })
+            throw new AppError("You can only edit logs that you created", 401)
         }
 
         return updateLog(logId, status, rating, notes)
@@ -66,11 +68,11 @@ export class LogService {
 
         const existingLog = await findLogById(logId)
         if (!existingLog) {
-            throw Object.assign(new Error("Log does not exist"), { status: 404 })
+            throw new AppError("Log does not exist", 404)
         }
 
         if (existingLog.userId !== userId) {
-            throw Object.assign(new Error("You can only delete logs that you created"), { status: 401 })
+            throw new AppError("You can only delete logs that you created", 401)
         }
 
         if (!confirm) {

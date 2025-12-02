@@ -1,9 +1,10 @@
+import { AppError } from '@/types/error.js'
 import { Request, Response, NextFunction } from 'express'
 import { ZodError } from 'zod'
 
 function errorHandler(error: any, req: Request, res: Response, next: NextFunction) {
     // Recognize service errors with `status`
-    if (error.status) {
+    if (error instanceof AppError) {
         return res.status(error.status).json({ message: error.message })
     }
 
@@ -19,6 +20,18 @@ function errorHandler(error: any, req: Request, res: Response, next: NextFunctio
     
     console.error(error)
     res.status(500).json({ message: "Internal server error" })
+}
+
+export function handlePrismaError(error: any, options?: { uniqueMessage?: string, notFoundMessage?: string }) {
+    switch(error.code) {
+        // Not found error in where clause
+        case "P2001": throw new AppError(options?.notFoundMessage || "Resource not found", 404)
+        // Unique constraint violation
+        case "P2002": throw new AppError(options?.uniqueMessage || "Resource already exists", 409)
+        // Not found error for resource needed in transaction
+        case "P2025": throw new AppError(options?.notFoundMessage || "Resource not found in transaction", 404)
+        default: throw error
+    }
 }
 
 export default errorHandler

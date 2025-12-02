@@ -5,6 +5,7 @@ import { findFirstMediaByTitle } from "@/repositories/mediaRepository.js"
 import { createLog } from "@/repositories/logsRepository.js"
 import { registerSchema, loginSchema } from "@/schemas/authSchemas.js"
 import { validateSchema } from "@/utilities.js"
+import { AppError } from "@/types/error.js"
 
 export class AuthService {
     async register(payload: any) {
@@ -12,7 +13,7 @@ export class AuthService {
 
         const existingUser = await findUserByUsername(username)
         if (existingUser) {
-            throw Object.assign(new Error("Username already taken"), { status: 400 })
+            throw new AppError("Username already taken", 400)
         }
         
         const hashedPassword = bcrypt.hashSync(password, 12)
@@ -21,7 +22,7 @@ export class AuthService {
         // Create a default log for new users
         const defaultMedia = await findFirstMediaByTitle("Default Media")
         if (!defaultMedia) {
-            throw Object.assign(new Error("Default Media not found"), { status: 404 })
+            throw new AppError("Default Media not found", 404)
         }
 
         await createLog(
@@ -47,12 +48,12 @@ export class AuthService {
 
         const user = await findUserByUsername(username)
         if (!user) {
-            throw Object.assign(new Error("Cannot find user"), { status: 404 })
+            throw new AppError("Cannot find user", 404)
         }
 
         const passwordIsValid = bcrypt.compareSync(password, user.password)
         if (!passwordIsValid) {
-            throw Object.assign(new Error("Invalid password"), { status: 401 })
+            throw new AppError("Invalid password", 401)
         }
 
         const token = jwt.sign(

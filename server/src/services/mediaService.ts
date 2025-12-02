@@ -1,3 +1,4 @@
+import prisma from "@/prismaClient.js"
 import { findUserByUsername } from "@/repositories/authRepository.js"
 import { createLog, findLogOfUserByMediaId, updateLog } from "@/repositories/logsRepository.js"
 import {
@@ -18,6 +19,7 @@ import {
     deleteMediaSchema,
 } from "@/schemas/mediaSchemas.js" 
 import { createMediaAndLogSchema } from "@/schemas/search/searchSchemas.js"
+import { AppError } from "@/types/error.js"
 
 import { validateSchema } from "@/utilities.js" 
 
@@ -40,9 +42,9 @@ export class MediaService {
             imageUrl,
         } = validateSchema(createMediaSchema, payload) 
 
-        const type = await findMediaTypeForUserOrGlobal(mediaType.name, userId) 
+        const type = await findMediaTypeForUserOrGlobal(mediaType.name, userId, prisma) 
         if (!type) {
-            throw Object.assign(new Error("Media Type does not exist"), {status: 404})
+            throw new AppError("Media Type does not exist", 404)
         }
 
         const duplicate = await findMediaForUser(
@@ -59,7 +61,7 @@ export class MediaService {
         ) 
 
         if (duplicate) {
-            throw Object.assign(new Error("Media already exists"), { status: 409, duplicate }) 
+            throw new AppError("Media already exists", 409)
         }
 
         return createMedia(
@@ -92,18 +94,16 @@ export class MediaService {
 
         const existing = await findMediaById(mediaId) 
         if (!existing) {
-            throw Object.assign(new Error("Media not found"), { status: 404 }) 
+            throw new AppError("Media not found", 404)
         }
 
         if (existing.userId !== userId) {
-            throw Object.assign(new Error("You can only edit medias that you created"), { status: 403 }) 
+            throw new AppError("You can only edit medias that you created", 403)
         }
 
-        const type = await findMediaTypeForUserOrGlobal(mediaType.name, userId) 
+        const type = await findMediaTypeForUserOrGlobal(mediaType.name, userId, prisma) 
         if (!type) {
-        throw Object.assign(new Error("Media Type does not exist"), {
-            status: 404,
-        }) 
+            throw new AppError("Media Type does not exist", 404)
         }
 
         const duplicate = await findMediaForUser(
@@ -120,7 +120,7 @@ export class MediaService {
         ) 
 
         if (duplicate) {
-            throw Object.assign(new Error("Media already exists, please enter new information"), { status: 409, duplicate }) 
+            throw new AppError("Media already exists, please enter new information", 409)
         }
 
         return updateMediaForUser(
@@ -143,11 +143,11 @@ export class MediaService {
 
         const media = await findMediaById(mediaId) 
         if (!media) {
-            throw Object.assign(new Error("Media not found"), { status: 404 }) 
+            throw new AppError("Media not found", 404)
         }
 
         if (media.userId !== userId) {
-            throw Object.assign(new Error("You can only delete medias that you created"), { status: 403 }) 
+            throw new AppError("You can only delete medias that you created", 403)
         }
 
         if (!confirm) {
@@ -165,9 +165,9 @@ export class MediaService {
         const { mediaData, logData } = validateSchema(createMediaAndLogSchema, payload)
 
         // media type ensures correctness (e.g. "book")
-        const mediaType = await findMediaTypeForUserOrGlobal(mediaData.mediaType, userId)
+        const mediaType = await findMediaTypeForUserOrGlobal(mediaData.mediaType, userId, prisma)
         if (!mediaType) {
-            throw Object.assign(new Error("Media type not found"), { status: 404 })
+            throw new AppError("Media type not found", 404)
         }
 
         // If media doesn't already exist, create system-owned media
@@ -175,7 +175,7 @@ export class MediaService {
         if (!media) {
             const systemUser = await findUserByUsername("system")
             if (!systemUser) {
-                throw Object.assign(new Error("System user missing"), { status: 500 })
+                throw new AppError("System user missing", 500)
             }
 
             media = await createMedia(

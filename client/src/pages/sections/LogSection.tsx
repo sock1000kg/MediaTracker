@@ -62,7 +62,7 @@ export default function LogsSection() {
         console.error("Attempted to render LogForm without a targetLog.")
         return null
     }
-    <LogForm formData={formData} setFormData={setFormData} targetMedia={targetLog.media}/>
+    return <LogForm formData={formData} setFormData={setFormData} targetMedia={targetLog.media}/>
   }
 
   return (

@@ -8,6 +8,7 @@ import { searchResultsSchema, SearchResult } from "@/schemas/search/searchSchema
 import { decryptKey, fetchAndParse, validateSchema } from "@/utilities.js"
 import { findUserById } from "@/repositories/authRepository.js"
 import { ISearchService } from "./searchServiceInterface.js"
+import { AppError } from "@/types/error.js"
 
 export class LastFmSearchService implements ISearchService {
     baseUrl = "https://ws.audioscrobbler.com/2.0/"
@@ -16,7 +17,7 @@ export class LastFmSearchService implements ISearchService {
     async getUserApiKey(userId: number) {
         const user = await findUserById(userId)
         if (!user) {
-            throw Object.assign(new Error("Non-existent userId"), { status: 404 })
+            throw new AppError("Non-existent userId", 404)
         }
 
         const decrypted = user.apiKeys.map(k => ({
@@ -27,7 +28,7 @@ export class LastFmSearchService implements ISearchService {
         const lastfmKey = decrypted.find(k => k.service === "lastfm")?.key
 
         if (!lastfmKey) {
-            throw Object.assign(new Error("Missing Music API Key"), { status: 404 })
+            throw new AppError("Missing Music API Key", 404)
         }
 
         return lastfmKey
@@ -72,7 +73,7 @@ export class LastFmSearchService implements ISearchService {
 
         const items = parsed.results?.trackmatches?.track ?? []
         if (!items.length) {
-            throw Object.assign(new Error("No item found"), { status: 404 })
+            throw new AppError("No item found", 404)
         }
 
         const total = parsed.results?.["opensearch:totalResults"] ?? 0
@@ -102,7 +103,7 @@ export class LastFmSearchService implements ISearchService {
 
         const items = parsed.results?.albummatches?.album ?? []
         if (!items.length) {
-            throw Object.assign(new Error("No item found"), { status: 404 })
+            throw new AppError("No item found", 404)
         }
 
         const total = parsed.results?.["opensearch:totalResults"] ?? 0

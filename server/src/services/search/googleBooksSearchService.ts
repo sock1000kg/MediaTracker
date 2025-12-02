@@ -4,13 +4,14 @@ import { SearchResult, searchResultsSchema } from "@/schemas/search/searchSchema
 import { googleBooksResponseSchema } from "@/schemas/search/bookSchemas.js"
 import { decryptKey, fetchAndParse, validateSchema } from "@/utilities.js"
 import { findUserById } from "@/repositories/authRepository.js"
+import { AppError } from "@/types/error.js"
 
 export class GoogleBooksService implements ISearchService {
     maxResults = 20
 
     async getUserApiKey(userId: number): Promise<string | undefined> {
         const user = await findUserById(userId)
-        if (!user) throw Object.assign(new Error("Non-existent userId"), { status: 404 })
+        if (!user) throw new AppError("Non-existent userId", 404)
 
         const decrypted = user.apiKeys.map(k => ({ ...k, key: decryptKey(k.key) }))
         return decrypted.find(k => k.service === "google_books")?.key
@@ -53,7 +54,7 @@ export class GoogleBooksService implements ISearchService {
 
         const results = this.mapResults(parsed.items ?? [])
         if (!results.length) {
-            throw Object.assign(new Error("No item found"), { status: 404 })
+            throw new AppError("No item found", 404)
         }
 
         const nextStartIndex = results.length < this.maxResults ? null : startIndex + this.maxResults
