@@ -22,7 +22,8 @@ export default function BooksSearchSection() {
     const [inputValue, setInputValue] = useState("")
     const [query, setQuery] = useState("")
 
-    const [targetMedia, setTargetMedia] = useState<BookResult | null>(null)
+    //TARGET MEDIA/LOG FOR LOGGING
+    const [targetMedia, setTargetMedia] = useState<BookResult>()
     const [targetLog, setTargetLog] = useState<Log | null>(null)
 
     const queryClient = useQueryClient()
@@ -101,10 +102,17 @@ export default function BooksSearchSection() {
     const handleSubmit = async (formData: Partial<Log>) => {
         // If a log exists, edit it
         if(targetLog) return await editLogMutation.mutateAsync({...targetLog, ...formData})
+        
+        if (!targetMedia) {
+            // This case should theoretically never be reached if handleLogClick worked correctly
+            console.error("targetMedia is missing for creation.")
+            // Rejecting the Promise will prevent onSuccess from running and display error message
+            return Promise.reject(new Error("Cannot create log: Target media data is missing."))
+        }
 
         else {
             return await createMediaAndLogMutation.mutateAsync({
-                mediaData: targetMedia!,
+                mediaData: targetMedia,
                 logData: formData
             })
         }
@@ -115,9 +123,14 @@ export default function BooksSearchSection() {
         formData: Partial<Log>,
         setFormData: React.Dispatch<React.SetStateAction<Partial<Log>>> //state setter for formData
     ) => {
+        if (!targetMedia) {
+            // This case should theoretically never be reached if handleLogClick worked correctly
+            console.error("Attempted to render MediaSearchLogForm without a targetMedia.")
+            return null
+        } 
         return (
             <MediaSearchLogForm 
-                targetMedia={targetMedia!} 
+                targetMedia={targetMedia} 
                 formData={formData}
                 setFormData={setFormData}
             />

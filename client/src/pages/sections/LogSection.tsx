@@ -56,9 +56,14 @@ export default function LogsSection() {
   const renderLogForm = (
     formData: Partial<Log>,
     setFormData: React.Dispatch<React.SetStateAction<Partial<Log>>> //state setter for formData
-  ) => (
-    <LogForm formData={formData} setFormData={setFormData} targetMedia={targetLog?.media ?? undefined}/>
-  )
+  ) => {
+    if (!targetLog) {
+        // This case should theoretically never be reached if handleEditClick worked correctly
+        console.error("Attempted to render LogForm without a targetLog.")
+        return null
+    }
+    <LogForm formData={formData} setFormData={setFormData} targetMedia={targetLog.media}/>
+  }
 
   return (
     <div className="flex flex-col h-full">

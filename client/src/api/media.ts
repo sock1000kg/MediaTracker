@@ -16,7 +16,6 @@ export function createMedia(newMedia: Partial<Media>): Promise<Media> {
       creator: newMedia.creator,
       year: newMedia.year,
       source: newMedia.source, 
-      ratingsCount: newMedia.ratingsCount, 
       description: newMedia.description, 
       imageUrl: newMedia.imageUrl,
       metadata: newMedia.metadata

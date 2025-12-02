@@ -23,7 +23,8 @@ export default function MediasSection() {
 
   const [openDialog, setOpenDialog] = useState<DialogName>(null)
 
-  const [target, setTarget] = useState<Media | null>(null)
+  const [targetMediaMain, setTargetMediaMain] = useState<Media | null>(null)
+  const [targetMediaForLog, setTargetMediaForLog] = useState<Media>()
   const [targetLog, setTargetLog] = useState<Log | null>(null)
 
   const [logsQuery, mediasQuery] = useQueries({
@@ -87,25 +88,25 @@ export default function MediasSection() {
   //HANDLERS
   // Edit type
   const handleEditClick = (media: Media) => {
-    setTarget(media)
+    setTargetMediaMain(media)
     setOpenDialog("mediaForm")
   }
 
   const handleCreateClick = () => {
-    setTarget(null)
+    setTargetMediaMain(null)
     setOpenDialog("mediaForm")
   }
 
   // Delete media
   const handleDeleteClick = (media: Media) => {
-    setTarget(media)
+    setTargetMediaMain(media)
     setOpenDialog("deleteConfirm")
   }
   //Edit or create logs
   const handleLogClick = async (media: Media) => {
     const existingLog = logs.find(l => l.media.id === media.id)
     
-    setTarget(media)
+    setTargetMediaForLog(media)
     setTargetLog(existingLog ?? null)
     setOpenDialog("logForm")
   }
@@ -124,7 +125,7 @@ export default function MediasSection() {
         formData: Partial<Log>,
         setFormData: React.Dispatch<React.SetStateAction<Partial<Log>>> //state setter for formData
     ) => (
-      <LogForm formData={formData} setFormData={setFormData} targetMedia={target ?? undefined}/>
+      <LogForm formData={formData} setFormData={setFormData} targetMedia={targetMediaForLog as Media}/>
   )
 
   return (
@@ -174,17 +175,17 @@ export default function MediasSection() {
       <ConfirmDeleteDialog
         open={openDialog === "deleteConfirm"}
         onOpenChange={(isOpen) => setOpenDialog(isOpen ? "deleteConfirm" : null)}
-        target={target}
+        target={targetMediaMain}
         onWarning={deleteWarningMedia}
         onDelete={deleteMediaMutation.mutateAsync}
       />
 
       <EntityDialog
-        mode={target ? "edit" : "create"}
+        mode={targetMediaMain ? "edit" : "create"}
         open={openDialog === "mediaForm"}
         onOpenChange={(isOpen) => setOpenDialog(isOpen ? "mediaForm" : null)} 
-        target={target ?? undefined}
-        onSubmit={target ? 
+        target={targetMediaMain ?? undefined}
+        onSubmit={targetMediaMain ? 
           (formData) => editMediaMutation.mutateAsync(formData) :
           (formData) => createMediaMutation.mutateAsync(formData)
         }

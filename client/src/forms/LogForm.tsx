@@ -13,7 +13,7 @@ import { useEffect } from "react"
 interface LogFormProps {
   formData: Partial<Log>
   setFormData: React.Dispatch<React.SetStateAction<Partial<Log>>>
-  targetMedia?: Media  // for create mode, in edit mode the target's info is passed from EntityDialog
+  targetMedia: Media  // for create mode, in edit mode the target's info is passed from EntityDialog
 }
 
 export function LogForm({

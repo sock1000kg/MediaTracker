@@ -24,7 +24,7 @@ export function MusicSearchSection() {
     const [query, setQuery] = useState("")
     const [searchMode, setSearchMode] = useState<"albums" | "tracks">("albums")
 
-    const [targetMedia, setTargetMedia] = useState<MusicResult | null>(null)
+    const [targetMedia, setTargetMedia] = useState<MusicResult>()
     const [targetLog, setTargetLog] = useState<Log | null>(null)
 
     const queryClient = useQueryClient()
@@ -104,9 +104,16 @@ export function MusicSearchSection() {
         // If a log exists, edit it
         if(targetLog) return await editLogMutation.mutateAsync({...targetLog, ...formData})
 
+        if (!targetMedia) {
+            // This case should theoretically never be reached if handleLogClick worked correctly
+            console.error("targetMedia is missing for creation.")
+            // Rejecting the Promise will prevent onSuccess from running and display error message
+            return Promise.reject(new Error("Cannot create log: Target media data is missing."))
+        }
+
         else {
             return await createMediaAndLogMutation.mutateAsync({
-                mediaData: targetMedia!,
+                mediaData: targetMedia,
                 logData: formData
             })
         }
@@ -117,14 +124,18 @@ export function MusicSearchSection() {
         formData: Partial<Log>,
         setFormData: React.Dispatch<React.SetStateAction<Partial<Log>>> //state setter for formData
     ) => {
-        return (
-            <MediaSearchLogForm 
-                targetMedia={targetMedia!} 
-                formData={formData}
-                setFormData={setFormData}
-            />
-        )
+        if (!targetMedia) {
+            // This case should theoretically never be reached if handleLogClick worked correctly
+            console.error("Attempted to render MediaSearchLogForm without a targetMedia.")
+            return null
+        } 
+        return <MediaSearchLogForm 
+            targetMedia={targetMedia} 
+            formData={formData}
+            setFormData={setFormData}
+        />
     }
+    
 
     return(
         <div className="flex flex-col h-full">

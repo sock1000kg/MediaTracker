@@ -55,10 +55,11 @@ export default function EntityDialog<T extends EditableEntity>({
   }, [open, target, mode])
 
   const handleConfirm = async () => {
+    // No edit if target no exist
     if (mode === "edit" && !target) return
+
     setLoading(true)
     setErrorMessage(null)
-
     try {
       await onSubmit(formData)
       onOpenChange(false)
