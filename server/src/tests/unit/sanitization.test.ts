@@ -31,7 +31,7 @@ describe("checkPasswordStrength", () => {
 })
 
 describe("normalizeTypeName", () => {
-  test("trims whtestespace", () => {
+  test("trims whitespace", () => {
     expect(normalizeTypeName("  Movie ")).toBe("movie")
   })
 
@@ -62,7 +62,7 @@ describe("sanitizeNotes", () => {
   test("trims whitespace and limits length", () => {
     const input = " ".repeat(5) + "Hello World" + " ".repeat(5)
     expect(sanitizeNotes(input)).toBe("Hello World")
-    expect(sanitizeNotes("a".repeat(6000))!.length).toBe(5000)
+    expect(sanitizeNotes("a".repeat(11000))!.length).toBe(10000)
   })
 
   test("returns undefined for empty or falsy values", () => {

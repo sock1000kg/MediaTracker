@@ -50,7 +50,7 @@ export async function createMediaTypeForUser(name: string, userId: number, clien
 }
 
 // User can only delete media types that is tied to their ID (aka their own created types)
-export async function deleteMediaTypeForUser(name: string, userId: number, client = PrismaClient): Promise<void> {
+export async function deleteMediaTypeForUser(name: string, userId: number, client: PrismaClient): Promise<void> {
     await client.mediaType.delete({ 
         where: { 
             userId_name: { 

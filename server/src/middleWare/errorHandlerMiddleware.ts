@@ -16,8 +16,6 @@ function errorHandler(error: any, req: Request, res: Response, next: NextFunctio
         })
     }
 
-    console.dir(error, { depth: null })
-    
     console.error(error)
     res.status(500).json({ message: "Internal server error" })
 }

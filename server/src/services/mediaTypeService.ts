@@ -27,7 +27,7 @@ export class MediaTypeService {
         const { name : normalizedName } = validateSchema(createMediaTypeSchema, payload)
 
         try {
-            return createMediaTypeForUser(normalizedName, userId, prisma)
+            return await createMediaTypeForUser(normalizedName, userId, prisma)
         } catch (error: any) {
             handlePrismaError(error, { uniqueMessage: "Media Type with that name already exists"})
         }
@@ -49,7 +49,7 @@ export class MediaTypeService {
             }
         }
 
-        await deleteMediaTypeForUser(normalizedName, userId)
+        await deleteMediaTypeForUser(normalizedName, userId, prisma)
         return { message: "Media Type deleted successfully" }
     }
 
