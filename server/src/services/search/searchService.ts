@@ -7,11 +7,11 @@ export class SearchService {
     }
 
     async searchTracks(userId: number, q: string, page: number = 1) {
-        return musicSearchService.searchTracksLastFm(userId, q)
+        return musicSearchService.searchTracksLastFm(userId, q, page)
     }
 
     async searchAblums(userId: number, q: string, page: number = 1) {
-        return musicSearchService.searchAlbumsLastFm(userId, q)
+        return musicSearchService.searchAlbumsLastFm(userId, q, page)
     }
 }
 

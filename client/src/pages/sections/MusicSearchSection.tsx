@@ -38,9 +38,9 @@ export function MusicSearchSection() {
         isFetchingNextPage,
         isLoading,
     } = useInfiniteQuery<
-        { results: MusicResult[], nextPage: number | null }, //QueryFnData
+        { results: MusicResult[], nextStartIndex: number | null }, //QueryFnData
         Error, //Error
-        InfiniteData<{ results: MusicResult[], nextPage: number | null }, number>, //TData
+        InfiniteData<{ results: MusicResult[], nextStartIndex: number | null }, number>, //TData
         [string, string, string], //QueryKey
         number //PageParam
     >({
@@ -49,16 +49,22 @@ export function MusicSearchSection() {
             return (searchMode === "tracks") ? searchTracks(query, pageParam) : searchAlbums(query, pageParam)
         },
         getNextPageParam: (lastPage) => {
-            return lastPage.nextPage
+            return lastPage.nextStartIndex
         },
-        initialPageParam: 0,  
+        initialPageParam: 1,  
         enabled: !!query, //fires only when query isnt empty
     })
 
     // media and logs cache
     const { data: logs = [] } = useQuery(fetchLogsQueryOptions())
 
-    const results = data?.pages.flatMap((page) => page.results) ?? []
+    const results = Array.from(
+        new Map(
+            data?.pages
+                .flatMap((p) => p.results)
+                .map(item => [item.sourceId, item])
+        ).values()
+    )
 
     //MUTATIONS
     const createMediaAndLogMutation = useMutation({

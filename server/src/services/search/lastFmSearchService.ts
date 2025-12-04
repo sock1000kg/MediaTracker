@@ -50,10 +50,10 @@ export class LastFmSearchService implements ISearchService {
         }))
     }
 
-    computePagination(totalResults: number, page: number) {
-        const hasMore = page * this.maxResults < totalResults
-        return hasMore ? page + 1 : null
+    computePagination(items: any[], page: number) {
+        return items.length < this.maxResults ? null : page + 1
     }
+
 
     async searchTracksLastFm(userId: number, q: string, page = 1):
         Promise<{ results: SearchResult[], nextStartIndex: number | null}>
@@ -72,12 +72,7 @@ export class LastFmSearchService implements ISearchService {
         console.log("PARSED: ", parsed)
 
         const items = parsed.results?.trackmatches?.track ?? []
-        if (!items.length) {
-            throw new AppError("No item found", 404)
-        }
-
-        const total = parsed.results?.["opensearch:totalResults"] ?? 0
-        const nextPage = this.computePagination(total, page)
+        const nextPage = this.computePagination(items, page)
 
         const mapped = this.mapResults(items)
         return {
@@ -102,14 +97,14 @@ export class LastFmSearchService implements ISearchService {
         const parsed = await fetchAndParse(url, lastFmAlbumSearchResponseSchema, "Last.fm API error", "Failed to fetch from Last.fm")
 
         const items = parsed.results?.albummatches?.album ?? []
-        if (!items.length) {
-            throw new AppError("No item found", 404)
-        }
-
-        const total = parsed.results?.["opensearch:totalResults"] ?? 0
-        const nextPage = this.computePagination(total, page)
+        const nextPage = this.computePagination(items, page)
 
         const results = this.mapResults(items)
+        console.log("LASTFM REQUESTED PAGE:", page)
+        console.log("LASTFM RETURNED STARTPAGE:", parsed.results?.["opensearch:Query"]?.startPage)
+        console.log("ITEMS LENGTH:", items.length)
+        console.log("NEXT PAGE:", nextPage)
+
         return {
             results: validateSchema(searchResultsSchema, results),
             nextStartIndex: nextPage
