@@ -26,6 +26,8 @@ export function handlePrismaError(error: any, options?: { uniqueMessage?: string
         case "P2001": throw new AppError(options?.notFoundMessage || "Resource not found", 404)
         // Unique constraint violation
         case "P2002": throw new AppError(options?.uniqueMessage || "Resource already exists", 409)
+        //Foreign key violation
+        case "P2003": throw new AppError(options?.notFoundMessage + " | Foreign key violation"|| "Resource already exists", 409)
         // Not found error for resource needed in transaction
         case "P2025": throw new AppError(options?.notFoundMessage || "Resource not found in transaction", 404)
         default: throw error

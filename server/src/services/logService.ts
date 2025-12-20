@@ -1,3 +1,4 @@
+import { handlePrismaError } from "@/middleWare/errorHandlerMiddleware.js"
 import prisma from "@/prismaClient.js"
 import {
     getAllLogs,
@@ -13,6 +14,7 @@ import { findMediaTypeForUserOrGlobal, createMediaTypeForUser } from "@/reposito
 import { createLogSchema, updateLogSchema, deleteLogSchema } from "@/schemas/logSchemas.js"
 import { AppError } from "@/types/error.js"
 import { validateSchema } from "@/utilities.js"
+import { PrismaClient } from "@prisma/client/extension"
 
 export class LogService {
     async getAll(userId: number) {
@@ -20,47 +22,59 @@ export class LogService {
     }
 
     async create(userId: number, payload: any) {
-        const { mediaId, status, rating, notes } = validateSchema(createLogSchema, payload)
+        // Use a transaction because we might create a MediaType AND a Log
+        return await prisma.$transaction(async (tx: PrismaClient) => {
+            const { mediaId, status, rating, notes } = validateSchema(createLogSchema, payload)
 
-        // Check if log already exists
-        const existingLog = await findLogOfUserByMediaId(userId, mediaId)
-        if (existingLog) {
-            throw new AppError("Your log of this media already exists", 409)
-        }
+            // Ownership check
+            const media = await findMediaForUserById(mediaId, userId, tx)
+            if (!media) {
+                throw new AppError("Media does not exist or you do not own it", 404)
+            }
 
-        //Check for media so you cant log sb else's media
-        const media = await findMediaForUserById(mediaId, userId)
-        if (!media) {
-            throw new AppError("Media does not exist or you do not own it", 404)
-        }
+            if (!media.mediaType) {
+                throw new AppError("Media Type is missing from the record", 404)
+            }
 
-        //Check for mediaType just to be sure frontend sending it correctly
-        if (!media.mediaType) {
-            throw new AppError("Media Type is missing", 404)
-        }
+            // MediaType Logic (shouldnt even happen if frontend sends correctly)
+            let mediaType = await findMediaTypeForUserOrGlobal(media.mediaType.name, userId, tx)
+            if (!mediaType) {
+                throw new AppError("Media Type does not exist", 404)
+            }
 
-        //Check if user have this type available, if not make one for them
-        let mediaType = await findMediaTypeForUserOrGlobal(media.mediaType.name, userId, prisma)
-        if (!mediaType) {
-            mediaType = await createMediaTypeForUser(media.mediaType.name, userId, prisma)
-        }
+            try {
 
-        return createLog(userId, mediaId, status, rating, notes)
+                //Final Log creation
+                return await createLog(userId, mediaId, status, rating, notes, tx)
+            } catch (error: any) {
+                handlePrismaError(error, {
+                    uniqueMessage: "Your log of this media already exists",
+                    notFoundMessage: "Media not found"
+                })
+            }
+        })
     }
 
     async update(userId: number, logId: number, payload: any) {
         const { status, rating, notes } = validateSchema(updateLogSchema, payload)
 
+        // Ownership check
         const existingLog = await findLogById(logId)
         if (!existingLog) {
             throw new AppError("Log does not exist", 404)
         }
 
         if (existingLog.userId !== userId) {
-            throw new AppError("You can only edit logs that you created", 401)
+            throw new AppError("You can only edit logs that you created", 403)
         }
 
-        return updateLog(logId, status, rating, notes)
+        try {
+            return await updateLog(logId, status, rating, notes, prisma)
+        } catch (error: any) {
+            handlePrismaError(error, {
+                notFoundMessage: "Log not found"
+            })
+        }
     }
 
     async delete(userId: number, logId: number, payload: any) {
@@ -72,7 +86,7 @@ export class LogService {
         }
 
         if (existingLog.userId !== userId) {
-            throw new AppError("You can only delete logs that you created", 401)
+            throw new AppError("You can only delete logs that you created", 403) // Changed to 403
         }
 
         if (!confirm) {
@@ -81,8 +95,14 @@ export class LogService {
             }
         }
 
-        await deleteLog(logId)
-        return { message: "Log deleted" }
+        try {
+            await deleteLog(logId)
+            return { message: "Log deleted" }
+        } catch (error: any) {
+            handlePrismaError(error, {
+                notFoundMessage: "Log not found"
+            })
+        }
     }
 }
 

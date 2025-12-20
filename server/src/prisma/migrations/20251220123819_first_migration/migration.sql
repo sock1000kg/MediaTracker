@@ -65,6 +65,9 @@ CREATE TABLE "public"."UserAPIKey" (
 CREATE UNIQUE INDEX "User_username_key" ON "public"."User"("username");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Media_userId_creator_title_year_mediaTypeId_key" ON "public"."Media"("userId", "creator", "title", "year", "mediaTypeId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "MediaType_userId_name_key" ON "public"."MediaType"("userId", "name");
 
 -- CreateIndex

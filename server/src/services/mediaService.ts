@@ -1,3 +1,4 @@
+import { handlePrismaError } from "@/middleWare/errorHandlerMiddleware.js"
 import prisma from "@/prismaClient.js"
 import { findUserByUsername } from "@/repositories/authRepository.js"
 import { createLog, findLogOfUserByMediaId, updateLog } from "@/repositories/logsRepository.js"
@@ -22,6 +23,7 @@ import { createMediaAndLogSchema } from "@/schemas/search/searchSchemas.js"
 import { AppError } from "@/types/error.js"
 
 import { validateSchema } from "@/utilities.js" 
+import { PrismaClient } from "@prisma/client/extension"
 
 export class MediaService {
     async getAll(userId: number) {
@@ -46,36 +48,25 @@ export class MediaService {
         if (!type) {
             throw new AppError("Media Type does not exist", 404)
         }
-
-        const duplicate = await findMediaForUser(
-            title,
-            userId,
-            type,
-            creator,
-            year,
-            metadata,
-            source,
-            sourceId,
-            description,
-            imageUrl
-        ) 
-
-        if (duplicate) {
-            throw new AppError("Media already exists", 409)
+    
+        try{
+            return await createMedia(
+                title,
+                type,
+                creator,
+                year,
+                source,
+                sourceId,
+                description,
+                metadata,
+                imageUrl,
+                userId
+            ) 
+        } catch(error: any) {
+            handlePrismaError(error, { 
+                uniqueMessage: "Media already exists"
+            })
         }
-
-        return createMedia(
-            title,
-            type,
-            creator,
-            year,
-            source,
-            sourceId,
-            description,
-            metadata,
-            imageUrl,
-            userId
-        ) 
     }
 
     // Upadte media for userId using mediaId
@@ -106,36 +97,26 @@ export class MediaService {
             throw new AppError("Media Type does not exist", 404)
         }
 
-        const duplicate = await findMediaForUser(
-            title,
-            userId,
-            type,
-            creator,
-            year,
-            metadata,
-            source,
-            sourceId,
-            description,
-            imageUrl
-        ) 
-
-        if (duplicate) {
-            throw new AppError("Media already exists, please enter new information", 409)
-        }
-
-        return updateMediaForUser(
-            title,
-            type,
-            creator,
-            year,
-            source,
-            sourceId,
-            description,
-            metadata,
-            imageUrl,
-            userId,
-            mediaId
-        ) 
+        try{
+            return await updateMediaForUser(
+                title,
+                type,
+                creator,
+                year,
+                source,
+                sourceId,
+                description,
+                metadata,
+                imageUrl,
+                userId,
+                mediaId
+            ) 
+        } catch(error: any) {
+            handlePrismaError(error, { 
+                uniqueMessage: "Media already exists, please enter new information",
+                notFoundMessage: "Media not found"
+            })
+        } 
     }
 
     async delete(userId: number, mediaId: number, payload: any) {
@@ -157,51 +138,66 @@ export class MediaService {
             } 
         }
 
-        await deleteMedia(mediaId) 
-        return { message: "Media deleted" } 
+        try {
+            await deleteMedia(mediaId) 
+            return { message: "Media deleted" } 
+        } catch(error: any) {
+            handlePrismaError(error, {
+                notFoundMessage: "Media not found"
+            })
+        }
     }
 
     async createMediaAndLog(userId: number, payload: any) {
-        const { mediaData, logData } = validateSchema(createMediaAndLogSchema, payload)
+        return await prisma.$transaction(async (tx: PrismaClient) => {
+            const { mediaData, logData } = validateSchema(createMediaAndLogSchema, payload)
 
-        // media type ensures correctness (e.g. "book")
-        const mediaType = await findMediaTypeForUserOrGlobal(mediaData.mediaType, userId, prisma)
-        if (!mediaType) {
-            throw new AppError("Media type not found", 404)
-        }
+            try {
+                // media type ensures correctness (e.g. "book")
+                const mediaType = await findMediaTypeForUserOrGlobal(mediaData.mediaType, userId, tx)
+                if (!mediaType) {
+                    throw new AppError("Media type not found", 404)
+                }
 
-        // If media doesn't already exist, create system-owned media
-        let media = await findMediaBySource(mediaData.sourceId, mediaData.source)
-        if (!media) {
-            const systemUser = await findUserByUsername("system")
-            if (!systemUser) {
-                throw new AppError("System user missing", 500)
+                // If media doesn't already exist, create system-owned media
+                let media = await findMediaBySource(mediaData.sourceId, mediaData.source, tx)
+                if (!media) {
+                    const systemUser = await findUserByUsername("system", tx)
+                    if (!systemUser) {
+                        throw new AppError("System user missing", 500)
+                    }
+    
+                    media = await createMedia(
+                        mediaData.title,
+                        mediaType,
+                        mediaData.creator,
+                        mediaData.year,
+                        mediaData.source,
+                        mediaData.sourceId,
+                        mediaData.description,
+                        mediaData.metadata,
+                        mediaData.imageUrl,
+                        systemUser.id
+                    )
+                }
+    
+                // log creation or updating
+                const existingLog = await findLogOfUserByMediaId(userId, media.id, tx)
+                let log
+                if (existingLog) {
+                    log = await updateLog(existingLog.id, logData.status, logData.rating, logData.notes, tx)
+                } else {
+                    log = await createLog(userId, media.id, logData.status, logData.rating, logData.notes, tx)
+                }
+    
+                return { media, log }
+            } catch(error: any) {
+                handlePrismaError(error, {
+                    notFoundMessage: "Media or log not found",
+                    uniqueMessage: "Media or log already exists"
+                })
             }
-
-            media = await createMedia(
-                mediaData.title,
-                mediaType,
-                mediaData.creator,
-                mediaData.year,
-                mediaData.source,
-                mediaData.sourceId,
-                mediaData.description,
-                mediaData.metadata,
-                mediaData.imageUrl,
-                systemUser.id
-            )
-        }
-
-        // log creation or updating
-        const existingLog = await findLogOfUserByMediaId(userId, media.id)
-        let log
-        if (existingLog) {
-            log = await updateLog(existingLog.id, logData.status, logData.rating, logData.notes)
-        } else {
-            log = await createLog(userId, media.id, logData.status, logData.rating, logData.notes)
-        }
-
-        return { media, log }
+        })
     }
 }
 

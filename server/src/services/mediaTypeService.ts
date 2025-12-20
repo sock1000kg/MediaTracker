@@ -49,9 +49,16 @@ export class MediaTypeService {
             }
         }
 
-        await deleteMediaTypeForUser(normalizedName, userId, prisma)
-        return { message: "Media Type deleted successfully" }
+        try {
+            // You MUST await here for the catch block to work
+            await deleteMediaTypeForUser(normalizedName, userId, prisma)
+            return { message: "Media Type deleted successfully" }
+        } catch (error: any) {
+            handlePrismaError(error, {
+                notFoundMessage: "You can only delete types that you created",
+            })
     }
+}
 
     async update(userId: number, oldName: string, payload: any) {
         const { newName } = validateSchema(updateMediaTypeSchema, payload)
@@ -62,7 +69,7 @@ export class MediaTypeService {
             throw new AppError("You can only rename types that you created", 404)
         }
 
-        //Check for conflicts with user and global types
+        //Check for conflicts with user and global types (global types duplicates cant be checked by db's uniqueness restriction)
         const existingNew = await findMediaTypeForUserOrGlobal(newName, userId, prisma)
         if (existingNew) {
             throw new AppError("Media Type with that name already exists", 409)

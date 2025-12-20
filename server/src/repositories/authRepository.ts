@@ -1,13 +1,15 @@
 import prisma from "@/prismaClient.js"
 import { User, MediaType, UserAPIKey } from "@prisma/client"
+import { PrismaClient } from "@prisma/client/extension"
 
 //USERS
 export async function createUser(
     username: string,
     displayName: string,
-    hashedPassword: string
+    hashedPassword: string,
+    client: PrismaClient
 ): Promise<User> {
-    return prisma.user.create({
+    return client.user.create({
         data: { 
             username, 
             displayName, 
@@ -15,8 +17,8 @@ export async function createUser(
     })
 }
 
-export async function findUserByUsername(username: string): Promise<User & { mediaType: MediaType[] } | null> {
-    const user = await prisma.user.findUnique({
+export async function findUserByUsername(username: string, client: PrismaClient): Promise<User & { mediaType: MediaType[] } | null> {
+    const user = await client.user.findUnique({
         where: {
             username 
         },

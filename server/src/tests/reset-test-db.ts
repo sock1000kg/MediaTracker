@@ -1,5 +1,7 @@
 import dotenv from 'dotenv'
 import { execSync } from 'child_process'
+import { fileURLToPath } from 'url'
+import path from 'path'
 
 // Load test environment
 dotenv.config({ path: '.env.test' })
@@ -26,7 +28,14 @@ export default async function resetTestDb() {
   }
 }
 
-// if run directly from `node reset-test-db.js`
-if (import.meta.url === `file://${process.argv[1]}`) {
-  resetTestDb().then(() => process.exit(0))
+const __filename = fileURLToPath(import.meta.url)
+
+// Check if this file is the one being executed directly
+// We use path.resolve to ensure slashes and drive letters match
+if (process.argv[1] && path.resolve(__filename) === path.resolve(process.argv[1])) {
+    resetTestDb().then(() => process.exit(0))
+} else {
+    // This will help see the mismatch if it fails
+    console.log('Normalized Meta:', path.resolve(__filename));
+    console.log('Normalized Argv:', path.resolve(process.argv[1]));
 }

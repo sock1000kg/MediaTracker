@@ -91,7 +91,7 @@ export function LogCard({log, onDelete, onEdit}: LogCardProps ) {
         )}
 
         {/* Actions */}
-        <div className="flex gap-2 justify-end mt-auto">
+        <div className="flex gap-2 justify-end mt-2">
           <Button size="sm" variant="amber" onClick={() => onEdit(log)}>
             Edit
           </Button>
