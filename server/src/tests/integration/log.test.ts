@@ -15,15 +15,17 @@ describe('Log routes', () => {
     beforeAll(async () => {
         //refresh the db and creates a new user
         await prisma.user.deleteMany({ where: { username } })
-        await request(app)
+        const regRes = await request(app)
             .post('/auth/register')
             .send({ username, password, displayName })
             .set('Content-Type', 'application/json')
+        expect(regRes.statusCode).toBe(201)
+
         const res = await request(app)
             .post('/auth/login')
             .send({ username, password })
             .set('Content-Type', 'application/json')
-        token = res.body.token
+        token = res.body.accessToken
         user = await prisma.user.findUnique({ where: { username } })
 
         // Create a media type for this user

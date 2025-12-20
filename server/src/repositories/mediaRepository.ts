@@ -102,7 +102,7 @@ export async function findFirstMediaByTitle(
     title: string,
     client: PrismaClient
 ): Promise<(Media & { mediaType: MediaType | null, logs: UserLogs[] }) | null> {
-    return prisma.media.findFirst({
+    return client.media.findFirst({
         where: { title },
         include: { 
             mediaType: true, 

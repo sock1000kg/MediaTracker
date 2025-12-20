@@ -17,7 +17,7 @@ async function registerAndLogin(username: string) {
         .set("Content-Type", "application/json")
 
     return {
-        token: loginRes.body.token,
+        token: loginRes.body.accessToken,
         userId: loginRes.body.user.id,
     }
 }

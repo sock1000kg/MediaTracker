@@ -25,7 +25,7 @@ describe('MediaType Routes', () => {
             .post('/auth/login')
             .send({ username, password })
             .set('Content-Type', 'application/json')
-        token = res.body.token
+        token = res.body.accessToken
         user = await prisma.user.findUnique({ where: { username } })
     })
 
