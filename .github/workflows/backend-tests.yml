@@ -41,8 +41,7 @@ jobs:
       DEMO_USER_PASSWORD: ${{ secrets.DEMO_USER_PASSWORD }}
       SYSTEM_USER_PASSWORD: ${{ secrets.SYSTEM_USER_PASSWORD }}
 
-      # Construct DATABASE_URL using secrets
-      DATABASE_URL: postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@localhost:5432/mydb_test
+      DATABASE_URL: postgresql://test_user:test_password@localhost:5432/mydb_test
 
     steps:
       - name: Checkout repository
