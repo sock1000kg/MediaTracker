@@ -27,7 +27,7 @@ jobs:
     env:
       # Non-secret test env
       NODE_ENV: test
-      RATE_LIMIT_ENABLED: true
+      RATE_LIMIT_ENABLED: false
       PORT: 5000
       POSTGRES_DB: mydb_test
       POSTGRES_USER: test_user
