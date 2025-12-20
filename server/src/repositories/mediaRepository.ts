@@ -1,5 +1,6 @@
 import prisma from "@/prismaClient.js"
 import { Prisma, Media, MediaType, UserLogs } from "@prisma/client"
+import { PrismaClient } from "@prisma/client/extension"
 
 
 //MEDIA
@@ -59,8 +60,12 @@ export async function findMediaForUser(
     })
 }
 
-export async function findMediaForUserById(mediaId: number, userId: number): Promise<(Media & { mediaType: MediaType | null, logs: UserLogs[] }) | null> {
-    return prisma.media.findFirst({
+export async function findMediaForUserById(
+    mediaId: number, 
+    userId: number, 
+    client: PrismaClient
+): Promise<(Media & { mediaType: MediaType | null, logs: UserLogs[] }) | null> {
+    return client.media.findFirst({
         where: { 
             id: mediaId, 
             OR: [
@@ -82,9 +87,9 @@ export async function findMediaById(id: number): Promise<(Media & { mediaType: M
     })
 }
 
-export async function findMediaBySource(sourceId: string | null, source: string | null): Promise<Media | null> {
+export async function findMediaBySource(sourceId: string | null, source: string | null, client: PrismaClient): Promise<Media | null> {
     if(source === null || sourceId === null) return null
-    return prisma.media.findFirst({
+    return client.media.findFirst({
         where: {
             source: source,
             sourceId: sourceId
@@ -93,7 +98,10 @@ export async function findMediaBySource(sourceId: string | null, source: string 
 }
 
 //**Used in Default Media check upon registration
-export async function findFirstMediaByTitle(title: string): Promise<(Media & { mediaType: MediaType | null, logs: UserLogs[] }) | null> {
+export async function findFirstMediaByTitle(
+    title: string,
+    client: PrismaClient
+): Promise<(Media & { mediaType: MediaType | null, logs: UserLogs[] }) | null> {
     return prisma.media.findFirst({
         where: { title },
         include: { 

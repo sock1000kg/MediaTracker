@@ -1,5 +1,6 @@
 import prisma from "@/prismaClient.js"
 import { Prisma, User, Media, MediaType, UserLogs } from "@prisma/client"
+import { PrismaClient } from "@prisma/client/extension"
 
 //LOGS
 export async function createLog(
@@ -7,9 +8,10 @@ export async function createLog(
     mediaId: number, 
     status: string | null,
     rating: number | null, 
-    notes: string | null
+    notes: string | null,
+    client: PrismaClient
 ): Promise<UserLogs> {
-    return prisma.userLogs.create({
+    return client.userLogs.create({
         data: { userId, mediaId, status, rating, notes },
     })
 }
@@ -23,8 +25,8 @@ export async function getAllLogs(userId: number): Promise<(UserLogs & { media: M
     })
 }
 
-export async function findLogOfUserByMediaId(userId: number, mediaId: number): Promise<(UserLogs & { media: Media & { mediaType: MediaType | null } }) | null> {
-    return prisma.userLogs.findUnique({
+export async function findLogOfUserByMediaId(userId: number, mediaId: number, client: PrismaClient): Promise<(UserLogs & { media: Media & { mediaType: MediaType | null } }) | null> {
+    return client.userLogs.findUnique({
         where: { 
             userId_mediaId: { 
                 userId, 
@@ -50,9 +52,10 @@ export async function updateLog(
     logId: number, 
     newStatus: string | null, 
     newRating: number | null, 
-    newNotes: string | null
+    newNotes: string | null,
+    client: PrismaClient
 ): Promise<UserLogs & { media: Media & { mediaType: MediaType | null } }> {
-    return prisma.userLogs.update({
+    return client.userLogs.update({
         where: { id: logId },
         data: { 
             ...(newStatus ? { status: newStatus } : {}), 

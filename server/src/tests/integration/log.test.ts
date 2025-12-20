@@ -245,7 +245,7 @@ describe('Log routes', () => {
             .set('Authorization', `Bearer ${token}`)
             .send({ status: 'completed' })
 
-        expect(res.statusCode).toBe(401)
+        expect(res.statusCode).toBe(403)
         expect(res.body.message).toMatch(/that you created/i)
 
         await prisma.userLogs.delete({ where: { id: otherLog.id } })
@@ -347,7 +347,7 @@ describe('Log routes', () => {
                 .set('Authorization', `Bearer ${token}`)
                 .send({ confirm: true })
 
-            expect(res.statusCode).toBe(401)
+            expect(res.statusCode).toBe(403)
             expect(res.body.message).toMatch(/that you created/i)
 
             await prisma.userLogs.delete({ where: { id: otherLog.id } })

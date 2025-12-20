@@ -11,10 +11,12 @@ import {
 
 import { findUserByUsername } from "@/repositories/authRepository.js"
 import { AppError } from "@/types/error.js"
+import prisma from "@/prismaClient.js"
+import { handlePrismaError } from "@/middleWare/errorHandlerMiddleware.js"
 
 export class ApiKeyService {
     private async ensureNotDemo(userId: number) {
-        const demoUser = await findUserByUsername("demo")
+        const demoUser = await findUserByUsername("demo", prisma)
         if (!demoUser) {
             throw new AppError("Demo user missing", 404)
         }
@@ -36,12 +38,13 @@ export class ApiKeyService {
 
         const { key, service } = validateSchema(addApiKeySchema, payload)
 
-        const existingKey = await findApiKeyForUser(userId, service)
-        if (existingKey) {
-            throw new AppError("You already have an API key for this service", 409)
+        try {
+            return await addApiKeyForUser(userId, encryptKey(key), service)
+        } catch (error: any) {
+            handlePrismaError(error, { 
+                uniqueMessage: "You already have an API key for this service" 
+            })
         }
-
-        return addApiKeyForUser(userId, encryptKey(key), service)
     }
 
     async update(userId: number, payload: any) {
@@ -49,12 +52,13 @@ export class ApiKeyService {
 
         const { key, service } = validateSchema(addApiKeySchema, payload)
 
-        const existingKey = await findApiKeyForUser(userId, service)
-        if (!existingKey) {
-            throw new AppError("API key for this service not found", 404)
+        try {
+            return await updateApiKeyForUser(userId, service, encryptKey(key))
+        } catch (error: any) {
+            handlePrismaError(error, { 
+                notFoundMessage: "API key for this service not found" 
+            })
         }
-
-        return updateApiKeyForUser(userId, service, encryptKey(key))
     }
 
     async delete(userId: number, payload: any) {
@@ -65,13 +69,14 @@ export class ApiKeyService {
             throw new AppError("Missing service in request body", 400)
         }
 
-        const existingKey = await findApiKeyForUser(userId, service)
-        if (!existingKey) {
-            throw new AppError("API key for this service not found", 404)
+        try {
+            await deleteApiKeyForUser(userId, service)
+            return { message: `${service} API Key deleted` }
+        } catch (error: any) {
+            handlePrismaError(error, { 
+                notFoundMessage: "API key for this service not found" 
+            })
         }
-
-        await deleteApiKeyForUser(userId, service)
-        return { message: `${service} API Key deleted` }
     }
 }
 

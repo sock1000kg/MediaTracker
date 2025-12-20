@@ -121,10 +121,10 @@ async function main() {
 
     //Create seed log
     if(defaultMedia) {
-        const demoLog = await findLogOfUserByMediaId(demoUser.id, defaultMedia.id)
+        const demoLog = await findLogOfUserByMediaId(demoUser.id, defaultMedia.id, prisma)
         if(!demoLog) {
             try {
-                await createLog(demoUser.id, defaultMedia.id, "completed", 100, "Welcome! This is your default log! Search up or create a custom media to log it!")
+                await createLog(demoUser.id, defaultMedia.id, "completed", 100, "Welcome! This is your default log! Search up or create a custom media to log it!", prisma)
                 console.log("Demo log created")
             } catch (error: any) {
                 if (error.code === 'P2002') {
