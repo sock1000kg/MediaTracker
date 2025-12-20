@@ -19,7 +19,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U ${{ secrets.POSTGRES_USER }} -d mydb_test"
+          --health-cmd="pg_isready -U test_user -d mydb_test"
           --health-interval=5s
           --health-timeout=2s
           --health-retries=20
