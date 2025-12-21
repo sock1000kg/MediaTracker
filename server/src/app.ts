@@ -19,7 +19,9 @@ import logger from '@/middleWare/loggingMiddleware.js'
 import cookieParser from 'cookie-parser'
 
 const app: Application = express()
-    
+
+app.set('trust proxy', 1)
+
 // Middleware
 app.use(helmet())
 app.use(cookieParser())

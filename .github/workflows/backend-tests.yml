@@ -56,6 +56,10 @@ jobs:
       - name: Install backend dependencies
         working-directory: ./server
         run: npm ci
+        
+      - name: Type Check
+        working-directory: ./server
+        run: npx tsc --noEmit
 
       - name: Run Migrations
         working-directory: ./server
