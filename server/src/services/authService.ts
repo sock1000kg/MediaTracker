@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
-import { createUser, findUserByUsername } from "@/repositories/authRepository.js"
+import { createUser, deleteRefreshToken, findRefreshToken, findUserByUsername, saveRefreshToken } from "@/repositories/authRepository.js"
 import { findFirstMediaByTitle } from "@/repositories/mediaRepository.js"
 import { createLog } from "@/repositories/logsRepository.js"
 import { registerSchema, loginSchema } from "@/schemas/authSchemas.js"
@@ -10,6 +10,12 @@ import prisma from "@/prismaClient.js"
 import { handlePrismaError } from "@/middleWare/errorHandlerMiddleware.js"
 
 export class AuthService {
+    private generateTokens(userId: number) {
+        const accessToken = jwt.sign({ id: userId }, process.env.JWT_KEY_SECRET!, { expiresIn: "15m" })
+        const refreshToken = jwt.sign({ id: userId }, process.env.JWT_REFRESH_SECRET!, { expiresIn: "7d" })
+        return { accessToken, refreshToken }
+    }
+
     async register(payload: any) {
         const { username, password, displayName } = validateSchema(registerSchema, payload)
 
@@ -39,16 +45,15 @@ export class AuthService {
                     tx
                 )
 
-                // Generate JWT
-                const token = jwt.sign(
-                    { id: user.id },
-                    process.env.JWT_KEY_SECRET as string,
-                    { expiresIn: "1h" }
-                )
+                const { accessToken, refreshToken } = this.generateTokens(user.id)
 
-                return { token, user }
+                const expiresAt = new Date()
+                expiresAt.setDate(expiresAt.getDate() + 7)
+                await saveRefreshToken(user.id, refreshToken, expiresAt, tx)
+
+                return { accessToken, refreshToken, user }
             } catch (error: any) {
-                // handlePrismaError will re-throw the error, triggering a rollback
+                console.log("DEBUG: Registration failed with error code:", error.code, "Target:", error.meta?.target)
                 handlePrismaError(error, {
                     uniqueMessage: "Username already taken",
                 })
@@ -69,14 +74,54 @@ export class AuthService {
             throw new AppError("Invalid password", 401)
         }
 
-        const token = jwt.sign(
-            { id: user.id },
-            process.env.JWT_KEY_SECRET as string,
-            { expiresIn: "1h" }
-        )
+        const { accessToken, refreshToken } = this.generateTokens(user.id)
 
-        return { token, user }
+        const expiresAt = new Date()
+        expiresAt.setDate(expiresAt.getDate() + 7)
+        try {
+            await saveRefreshToken(user.id, refreshToken, expiresAt, prisma)
+            return { accessToken, refreshToken, user }
+        } catch (error) {
+            handlePrismaError(error, {
+                uniqueMessage: "Refresh Token already exists"
+            })
+        }
+
+    }
+
+    async refresh(oldRefreshToken: string) {
+        const storedToken = await findRefreshToken(oldRefreshToken)
+        
+        if (!storedToken || storedToken.expiresAt < new Date()) {
+            if (storedToken) await deleteRefreshToken(oldRefreshToken)
+            throw new AppError("Refresh token expired or revoked", 401)
+        }
+
+        // Verify JWT signature
+        try {
+            const decoded: any = jwt.verify(oldRefreshToken, process.env.JWT_REFRESH_SECRET as string)
+            
+            // Token Rotation: Delete old token and generate new ones
+            await deleteRefreshToken(oldRefreshToken) 
+            const tokens = this.generateTokens(decoded.id)
+
+            const expiresAt = new Date()
+            expiresAt.setDate(expiresAt.getDate() + 7)
+            await saveRefreshToken(decoded.id, tokens.refreshToken, expiresAt, prisma)
+
+            return tokens
+        } catch (error) {
+            await deleteRefreshToken(oldRefreshToken) // delete suspicious token
+            throw new AppError("Invalid refresh token", 401)
+        }
+    }
+    
+    async logout(token: string) {
+        if (token) {
+            await deleteRefreshToken(token);
+        }
     }
 }
+
 
 export const authService = new AuthService()

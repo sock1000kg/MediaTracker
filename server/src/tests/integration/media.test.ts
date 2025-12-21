@@ -19,6 +19,7 @@ describe('Media Routes', () => {
             .post('/auth/register')
             .send({ username, password, displayName })
             .set('Content-Type', 'application/json')
+        expect(registerRes.statusCode).toBe(201)
 
         if (registerRes.statusCode !== 200 && registerRes.statusCode !== 201) {
             throw new Error(`Register failed: ${registerRes.statusCode} ${JSON.stringify(registerRes.body)}`)
@@ -33,13 +34,14 @@ describe('Media Routes', () => {
             throw new Error(`Login failed: ${loginRes.statusCode} ${JSON.stringify(loginRes.body)}`)
         }
 
-        token = loginRes.body.token
+        token = loginRes.body.accessToken
         if (!token) throw new Error(`No token returned from login: ${JSON.stringify(loginRes.body)}`)
 
         user = await prisma.user.findUnique({ where: { username } })
         if (!user) {
             throw new Error(`User not found in DB after register. Register response: ${JSON.stringify(registerRes.body)}`)
         }
+        console.log(user)
 
         // Create a media type for this user
         mediaType = await prisma.mediaType.create({

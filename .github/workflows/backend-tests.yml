@@ -37,6 +37,7 @@ jobs:
       GOOGLE_BOOKS_API_KEY: ${{ secrets.GOOGLE_BOOKS_API_KEY }}
       LASTFM_API_KEY: ${{ secrets.GOOGLE_BOOKS_API_KEY }}
       JWT_KEY_SECRET: ${{ secrets.JWT_KEY_SECRET }}
+      JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
       API_KEY_SECRET: ${{ secrets.API_KEY_SECRET }}
       DEMO_USER_PASSWORD: ${{ secrets.DEMO_USER_PASSWORD }}
       SYSTEM_USER_PASSWORD: ${{ secrets.SYSTEM_USER_PASSWORD }}

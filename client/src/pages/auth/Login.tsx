@@ -27,7 +27,7 @@ export default function Login() {
       return data
     },
     onSuccess: (data) => {
-      localStorage.setItem("token", data.token)
+      localStorage.setItem("accessToken", data.accessToken)
       navigate("/homepage")
     },
     onError: (error: any) => {

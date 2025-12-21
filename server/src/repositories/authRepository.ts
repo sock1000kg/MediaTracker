@@ -39,3 +39,24 @@ export async function findUserById(id: number): Promise<User & { apiKeys: UserAP
         },
     })
 }
+
+export const saveRefreshToken = async (userId: number, token: string, expiresAt: Date, client: any) => {
+    return await client.refreshToken.upsert({
+        where: { token: token },
+        update: { expiresAt },
+        create: { userId, token, expiresAt }
+    })
+}
+
+export async function findRefreshToken(token: string) {
+    return await prisma.refreshToken.findUnique({
+        where: { token },
+        include: { user: true }
+    })
+}
+
+export async function deleteRefreshToken(token: string) {
+    return await prisma.refreshToken.delete({
+        where: { token }
+    })
+}

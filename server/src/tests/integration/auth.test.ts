@@ -9,7 +9,7 @@ describe('Auth Routes', () => {
             .send({ username: 'TestUser123', password: 'StrongPass1!', displayName: 'Tester' })
             .set('Content-Type', 'application/json');
         expect(res.statusCode).toBe(201);
-        expect(res.body).toHaveProperty('token');
+        expect(res.body).toHaveProperty('accessToken');
         expect(res.body.user.username).toBe('TestUser123');
 
         //Clean up
@@ -68,7 +68,7 @@ describe('Auth Routes', () => {
             .send({ username: 'LoginUser', password: 'StrongPass1!' })
             .set('Content-Type', 'application/json') 
         expect(res.statusCode).toBe(200) 
-        expect(res.body).toHaveProperty('token') 
+        expect(res.body).toHaveProperty('accessToken') 
         expect(res.body.user.username).toBe('LoginUser') 
 
         //Clean up

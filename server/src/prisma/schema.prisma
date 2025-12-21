@@ -25,6 +25,7 @@ model User {
   logs            UserLogs[]@relation("UserLogsToUser")
   mediaType       MediaType[]@relation("MediaTypesToUser")
   media           Media[]@relation("MediaToUser")
+  refreshToken    RefreshToken[]@relation("RefreshTokenToUser")
 
   apiKeys         UserAPIKey[]@relation("APIToUser")
 }
@@ -97,4 +98,13 @@ model UserAPIKey {
   user            User      @relation(fields: [userId], references: [id], name: "APIToUser", onDelete: Cascade)
 
   @@unique([userId, service]) // one key per user per service
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], name: "RefreshTokenToUser", onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }

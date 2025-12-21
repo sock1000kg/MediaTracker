@@ -28,7 +28,7 @@ export default function Register() {
             return data
         },
         onSuccess: (data) => {
-            localStorage.setItem("token", data.token)
+            localStorage.setItem("accessToken", data.accessToken)
             navigate("/homepage")
         },
         onError: (error: any) => {
