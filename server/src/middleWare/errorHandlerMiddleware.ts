@@ -20,7 +20,7 @@ function errorHandler(error: any, req: Request, res: Response, next: NextFunctio
     res.status(500).json({ message: "Internal server error" })
 }
 
-export function handlePrismaError(error: any, options?: { uniqueMessage?: string, notFoundMessage?: string }) {
+export function handlePrismaError(error: any, options?: { uniqueMessage?: string, notFoundMessage?: string }): never {
     switch(error.code) {
         // Not found error in where clause
         case "P2001": throw new AppError(options?.notFoundMessage || "Resource not found", 404)

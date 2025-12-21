@@ -29,7 +29,6 @@ export default function Register() {
         },
         onSuccess: (data) => {
             localStorage.setItem("accessToken", data.accessToken)
-            localStorage.setItem("refreshToken", data.refreshToken)
             navigate("/homepage")
         },
         onError: (error: any) => {

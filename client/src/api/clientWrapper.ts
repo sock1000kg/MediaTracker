@@ -1,3 +1,5 @@
+const API_BASE = import.meta.env.VITE_API_URL
+
 //Allow apiFetch to access navigate() depsite being outside of React
 let navigateFunction: ((path: string) => void) | null = null
 
@@ -9,6 +11,25 @@ const logout = () => {
   localStorage.removeItem("accessToken")
   localStorage.removeItem("refreshToken")
   if (navigateFunction) navigateFunction("/login")
+}
+
+//Helper to call refresh endpoint
+async function refreshAccessToken(): Promise<string | null> {
+  try {
+    const res = await fetch(`${API_BASE}/auth/refresh`, {
+      method: "POST",
+      credentials: "include", // Send the HttpOnly refresh cookie
+    })
+    
+    if (!res.ok) throw new Error("Refresh failed")
+    
+    const data = await res.json()
+    localStorage.setItem("accessToken", data.accessToken)
+    return data.accessToken
+  } catch (error) {
+    logout()
+    return null
+  }
 }
 
 export async function apiFetch<T>(url: string, options: RequestInit = {}): Promise<T> {
@@ -23,7 +44,6 @@ export async function apiFetch<T>(url: string, options: RequestInit = {}): Promi
   }
 
   try {
-    const API_BASE = import.meta.env.VITE_API_URL
     let res = await fetch(`${API_BASE}${url}`, {
       ...options,
       headers: {
@@ -34,47 +54,32 @@ export async function apiFetch<T>(url: string, options: RequestInit = {}): Promi
     }) 
 
     console.log(res.status, res.headers.get("content-type"))
-      if (res.status === 401) {
-          const refreshToken = localStorage.getItem("refreshToken")
+    if (res.status === 401) {
+      const newToken = await refreshAccessToken()
 
-          if (!refreshToken) {
-            logout()
-            throw new Error("Session expired")
-          }
-
-          const refreshRes = await fetch(`${API_BASE}/auth/refresh`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ token: refreshToken }),
-          })
-
-          if (refreshRes.ok) {
-            const data = await refreshRes.json()
-            localStorage.setItem("accessToken", data.accessToken)
-            localStorage.setItem("refreshToken", data.refreshToken)
-            
-            // Retry the original request with the new token
-            res = await fetch(`${API_BASE}${url}`, {
-              ...options,
-              headers: {
+      if (newToken) {
+        // Retry the original request exactly once with the new token
+        res = await fetch(`${API_BASE}${url}`, {
+            ...options,
+            headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${data.accessToken}`,
+                Authorization: `Bearer ${newToken}`,
                 ...(options.headers || {}),
-              },
-            })
-          } else {
-            logout()
-            throw new Error("Session expired")
-          }
-      }   
-      
-      if (!res.ok) {
-        let errorMessage = "Unknown error"
-        const data = await res.json()
-        errorMessage = data.message || JSON.stringify(data)
-        throw new Error(errorMessage)
+            },
+        })
+      } else {
+        logout()
+        throw new Error("Session expired")
       }
+    }   
+      
+    if (!res.ok) {
+      const data = await res.json()
+      let errorMessage = data.message || JSON.stringify(data)
+      throw new Error(errorMessage || "Unknown error")
+    }
 
+    if (res.status === 204) return {} as T
     return res.json()
 
   } catch(error: any) {

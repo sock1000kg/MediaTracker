@@ -94,27 +94,34 @@ export class AuthService {
         
         if (!storedToken || storedToken.expiresAt < new Date()) {
             if (storedToken) await deleteRefreshToken(oldRefreshToken)
-            throw new AppError("Invalid or expired refresh token", 401)
+            throw new AppError("Refresh token expired or revoked", 401)
         }
 
         // Verify JWT signature
         try {
-            jwt.verify(oldRefreshToken, process.env.JWT_REFRESH_SECRET!)
-        } catch (err) {
-            await deleteRefreshToken(oldRefreshToken)
+            const decoded: any = jwt.verify(oldRefreshToken, process.env.JWT_REFRESH_SECRET as string)
+            
+            // Token Rotation: Delete old token and generate new ones
+            await deleteRefreshToken(oldRefreshToken) 
+            const tokens = this.generateTokens(decoded.id)
+
+            const expiresAt = new Date()
+            expiresAt.setDate(expiresAt.getDate() + 7)
+            await saveRefreshToken(decoded.id, tokens.refreshToken, expiresAt, prisma)
+
+            return tokens
+        } catch (error) {
+            await deleteRefreshToken(oldRefreshToken) // delete suspicious token
             throw new AppError("Invalid refresh token", 401)
         }
-
-        // Revoke old token and issue new pair
-        await deleteRefreshToken(oldRefreshToken)
-        const tokens = this.generateTokens(storedToken.userId)
-        
-        const newExpiresAt = new Date()
-        newExpiresAt.setDate(newExpiresAt.getDate() + 7)
-        await saveRefreshToken(storedToken.userId, tokens.refreshToken, newExpiresAt, prisma)
-
-        return tokens
+    }
+    
+    async logout(token: string) {
+        if (token) {
+            await deleteRefreshToken(token);
+        }
     }
 }
+
 
 export const authService = new AuthService()
