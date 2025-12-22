@@ -22,6 +22,10 @@ export const lastFmAlbumSchema = z.object({
     })).optional(),
 })
 
+export type LastFmTrack = z.infer<typeof lastFmTrackSchema>
+export type LastFmAlbum = z.infer<typeof lastFmAlbumSchema>
+export type LastFmMusicItem = LastFmTrack | LastFmAlbum
+
 export const lastFmTrackSearchResponseSchema = z.object({
     results: z.object({
         trackmatches: z.object({

@@ -1,8 +1,8 @@
 
 import prisma from "@/prismaClient.js"
-import type { NextFunction, Request, Response } from "express"
+import type { Request, Response } from "express"
 
-export const healthCheck = async (req: Request, res: Response, next: NextFunction) => {
+export const healthCheck = async (req: Request, res: Response) => {
     try {
         await prisma.$queryRaw`SELECT 1`
 

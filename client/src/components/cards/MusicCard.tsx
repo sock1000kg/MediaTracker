@@ -42,7 +42,7 @@ export function MusicCard({ book: music, onLog }: MusicCardProps) {
                     publisher: music.metadata?.publisher,
                     pageCount: music.metadata?.pageCount ? `${music.metadata.pageCount} pages` : null,
                 })
-                    .filter(([_, value]) => value != null && value !== "") //get rid of empty fields
+                    .filter(([, value]) => value != null && value !== "") //get rid of empty fields
                     .map(([key, value], index, arr) => (
                         <Fragment key={key}>
                             <span className="flex gap-1 capitalize">

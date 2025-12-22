@@ -24,15 +24,16 @@ export default function Register() {
         })
             const data = await res.json()
 
-            if (!res.ok) throw new Error(data.message || "Registen failed")
+            if (!res.ok) throw new Error(data.message || "Register failed")
             return data
         },
         onSuccess: (data) => {
             localStorage.setItem("accessToken", data.accessToken)
             navigate("/homepage")
         },
-        onError: (error: any) => {
-            console.error(error.message)
+        onError: (error: unknown) => {
+            const msg = error instanceof Error ? error.message : "Failed to register"
+            console.error(msg)
         },
     })
 
@@ -91,7 +92,8 @@ export default function Register() {
             {/* Error message */}
             {registerMutation.isError && (
                 <p className="mt-2 text-center text-sm text-red-500">
-                {registerMutation.error?.message}
+                {registerMutation.error instanceof Error
+                    ? registerMutation.error.message : "An unexpected error occured"}
                 </p>
             )}
             

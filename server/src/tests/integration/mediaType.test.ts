@@ -102,7 +102,7 @@ describe('MediaType Routes', () => {
         })
         
         const res = await request(app)
-            .delete(`/media-type/${encodeURIComponent(mediaTypeName)}`)
+            .delete(`/media-type/${encodeURIComponent(mediaType.name)}`)
             .set('Authorization', `Bearer ${token}`)
             .send({ confirm: true }) 
         expect(res.statusCode).toBe(200)

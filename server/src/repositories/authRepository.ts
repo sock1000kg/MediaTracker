@@ -40,7 +40,7 @@ export async function findUserById(id: number): Promise<User & { apiKeys: UserAP
     })
 }
 
-export const saveRefreshToken = async (userId: number, token: string, expiresAt: Date, client: any) => {
+export const saveRefreshToken = async (userId: number, token: string, expiresAt: Date, client: PrismaClient) => {
     return await client.refreshToken.upsert({
         where: { token: token },
         update: { expiresAt },

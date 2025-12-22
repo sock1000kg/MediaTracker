@@ -23,8 +23,9 @@ export default async function resetTestDb() {
     
     console.log('Test database reset and seeded!')
 
-  }catch(error: any) {
-    console.error('Error:', error.message)
+  } catch(error: unknown) {
+    const msg = error instanceof Error ? error.message : "Failed to reset test db"
+    console.error('Error:', msg)
   }
 }
 

@@ -1,4 +1,4 @@
-name: Backend Tests
+name: CI
 
 on:
   push:
@@ -6,6 +6,43 @@ on:
   pull_request:
 
 jobs:
+  backend-lint-and-type:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Backend Checks
+        working-directory: ./server
+        run: |
+          npm ci
+          npx tsc --noEmit
+          npm run lint
+    
+  frontend-lint-and-type:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Frontend Checks
+        working-directory: ./client
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+  
+  security-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Audit Dependencies
+        run: |
+          cd server && npm audit --audit-level=high
+          cd ../client && npm audit --audit-level=high
+
   test:
     runs-on: ubuntu-latest
 
@@ -51,7 +88,7 @@ jobs:
       - name: Install Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install backend dependencies
         working-directory: ./server

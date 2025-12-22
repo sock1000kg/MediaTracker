@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "cross-env CHOKIDAR_USEPOLLING=true CHOKIDAR_INTERVAL=1000 tsx watch src/server.ts",
     "build": "tsc && tsc-alias",
+    "lint": "eslint .",
     "start": "node dist/server.js",
     "test": "npm run build && cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
     "seed": "npm run build && node dist/tests/seed.js",
@@ -39,6 +40,7 @@
     "zod": "^4.1.5"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@types/bcryptjs": "^2.4.6",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
@@ -49,12 +51,14 @@
     "@types/pg": "^8.15.5",
     "@types/supertest": "^6.0.3",
     "cross-env": "^10.0.0",
+    "eslint": "^9.39.2",
     "jest": "^30.0.5",
     "prisma": "^6.14.0",
     "supertest": "^7.1.4",
     "ts-node": "^10.9.2",
     "tsc-alias": "^1.8.16",
     "tsx": "^4.20.5",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.50.1"
   }
 }

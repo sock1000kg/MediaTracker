@@ -35,8 +35,9 @@ export function MediaForm({
                 const data = await fetchMediaTypes()
                 console.log("Fetched media types:", data)
                 setMediaTypes(data)
-            } catch (error: any) {
-                setErrorMessage(error.message)
+            } catch (error: unknown) {
+                const msg = error instanceof Error ? error.message : "Failed to load MediaTypes"
+                setErrorMessage(msg)
             }
         }
 

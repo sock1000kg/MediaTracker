@@ -1,5 +1,5 @@
 import prisma from "@/prismaClient.js"
-import { Prisma, User, Media, MediaType, UserLogs } from "@prisma/client"
+import { Media, MediaType, UserLogs } from "@prisma/client"
 import { PrismaClient } from "@prisma/client/extension"
 
 //LOGS

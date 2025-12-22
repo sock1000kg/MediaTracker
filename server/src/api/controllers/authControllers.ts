@@ -13,7 +13,7 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
         const { accessToken, refreshToken, user } = await authService.register(req.body)
         res.cookie('refreshToken', refreshToken, COOKIES_OPTIONS)
         res.status(201).json({ accessToken, user })
-    } catch (error: any) {
+    } catch (error) {
         next(error)
     }
 }
@@ -24,7 +24,7 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
         const { accessToken, refreshToken, user } = await authService.login(req.body)
         res.cookie('refreshToken', refreshToken, COOKIES_OPTIONS)
         res.status(200).json({ accessToken, user })
-    } catch (error: any) {
+    } catch (error) {
         next(error)
     }
 }
@@ -37,7 +37,7 @@ export const refreshToken = async (req: Request, res: Response, next: NextFuncti
         const { accessToken, refreshToken } = await authService.refresh(oldToken);
         res.cookie('refreshToken', refreshToken, COOKIES_OPTIONS)
         res.status(200).json({ accessToken })
-    } catch (error: any) {
+    } catch (error) {
         res.clearCookie('refreshToken')
         next(error)
     }

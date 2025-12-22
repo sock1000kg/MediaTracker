@@ -26,14 +26,14 @@ async function refreshAccessToken(): Promise<string | null> {
     const data = await res.json()
     localStorage.setItem("accessToken", data.accessToken)
     return data.accessToken
-  } catch (error) {
+  } catch {
     logout()
     return null
   }
 }
 
 export async function apiFetch<T>(url: string, options: RequestInit = {}): Promise<T> {
-  let token = localStorage.getItem("accessToken")
+  const token = localStorage.getItem("accessToken")
 
   if (!token) {
     if (navigateFunction) {
@@ -75,14 +75,15 @@ export async function apiFetch<T>(url: string, options: RequestInit = {}): Promi
       
     if (!res.ok) {
       const data = await res.json()
-      let errorMessage = data.message || JSON.stringify(data)
+      const errorMessage = data.message || JSON.stringify(data)
       throw new Error(errorMessage || "Unknown error")
     }
 
     if (res.status === 204) return {} as T
     return res.json()
 
-  } catch(error: any) {
-    throw new Error(error.message)
+  } catch(error: unknown) {
+    const msg = error instanceof Error ? error.message : "Unknown error"
+    throw new Error(msg)
   }
 }

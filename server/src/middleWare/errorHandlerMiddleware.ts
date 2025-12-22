@@ -1,8 +1,9 @@
 import { AppError } from '@/types/error.js'
-import { Request, Response, NextFunction } from 'express'
+import { Prisma } from '@prisma/client'
+import { NextFunction, Request, Response } from 'express'
 import { ZodError } from 'zod'
 
-function errorHandler(error: any, req: Request, res: Response, next: NextFunction) {
+function errorHandler(error: unknown, _req: Request, res: Response, _next: NextFunction) {
     // Recognize service errors with `status`
     if (error instanceof AppError) {
         return res.status(error.status).json({ message: error.message })
@@ -16,22 +17,26 @@ function errorHandler(error: any, req: Request, res: Response, next: NextFunctio
         })
     }
 
-    console.error(error)
+    console.error("INTERNAL ERROR:", error)
     res.status(500).json({ message: "Internal server error" })
 }
 
-export function handlePrismaError(error: any, options?: { uniqueMessage?: string, notFoundMessage?: string }): never {
-    switch(error.code) {
-        // Not found error in where clause
-        case "P2001": throw new AppError(options?.notFoundMessage || "Resource not found", 404)
-        // Unique constraint violation
-        case "P2002": throw new AppError(options?.uniqueMessage || "Resource already exists", 409)
-        //Foreign key violation
-        case "P2003": throw new AppError(options?.notFoundMessage + " | Foreign key violation"|| "Resource already exists", 400)
-        // Not found error for resource needed in transaction
-        case "P2025": throw new AppError(options?.notFoundMessage || "Resource not found in transaction", 404)
-        default: throw error
+export function handlePrismaError(error: unknown, options?: { uniqueMessage?: string, notFoundMessage?: string }): never {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        switch(error.code) {
+            // Not found error in where clause
+            case "P2001": throw new AppError(options?.notFoundMessage || "Resource not found", 404)
+            // Unique constraint violation
+            case "P2002": throw new AppError(options?.uniqueMessage || "Resource already exists", 409)
+            //Foreign key violation
+            case "P2003": throw new AppError((options?.notFoundMessage || "Resource") + " | Foreign key violation", 400)
+            // Not found error for resource needed in transaction
+            case "P2025": throw new AppError(options?.notFoundMessage || "Resource not found in transaction", 404)
+            default: throw error
+        }
     }
+
+    throw error
 }
 
 export default errorHandler

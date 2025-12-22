@@ -54,8 +54,9 @@ export function ApiKeyForm() {
                 await updateMutation.mutateAsync(payload)
                 if (service === "google_books") setGoogleBooksInput("")
                 if (service === "lastfm") setLastFmInput("")
-            }catch(error: any){
-                setServerMessage(error.message || "Something went wrong")
+            }catch(error: unknown){
+                const message = error instanceof Error ? error.message : "Something went wrong"
+                setServerMessage(message)
                 setTimeout(() => setServerMessage(null), 3000) //clears message after delay
             }
     }
@@ -75,8 +76,9 @@ export function ApiKeyForm() {
                 )
 
                 setTimeout(() => setServerMessage(null), 3000) //clears message after delay
-            } catch (error: any) {
-                setServerMessage(error.message || "Something went wrong")
+            } catch (error: unknown) {
+                const message = error instanceof Error ? error.message : "Something went wrong";
+                setServerMessage(message)
                 setTimeout(() => setServerMessage(null), 3000) //clears message after delay
             }
     }

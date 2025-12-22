@@ -16,7 +16,7 @@ export class AuthService {
         return { accessToken, refreshToken }
     }
 
-    async register(payload: any) {
+    async register(payload: unknown) {
         const { username, password, displayName } = validateSchema(registerSchema, payload)
 
         return await prisma.$transaction(async (tx) => {
@@ -52,8 +52,7 @@ export class AuthService {
                 await saveRefreshToken(user.id, refreshToken, expiresAt, tx)
 
                 return { accessToken, refreshToken, user }
-            } catch (error: any) {
-                console.log("DEBUG: Registration failed with error code:", error.code, "Target:", error.meta?.target)
+            } catch (error: unknown) {
                 handlePrismaError(error, {
                     uniqueMessage: "Username already taken",
                 })
@@ -61,7 +60,7 @@ export class AuthService {
         })
     }
 
-    async login(payload: any) {
+    async login(payload: unknown) {
         const { username, password } = validateSchema(loginSchema, payload)
 
         const user = await findUserByUsername(username, prisma)
@@ -99,8 +98,11 @@ export class AuthService {
 
         // Verify JWT signature
         try {
-            const decoded: any = jwt.verify(oldRefreshToken, process.env.JWT_REFRESH_SECRET as string)
-            
+            const decoded = jwt.verify(oldRefreshToken, process.env.JWT_REFRESH_SECRET as string)
+            if (typeof decoded === "string" || !decoded.id) {
+                throw new AppError("Invalid token payload", 401);
+            }
+                    
             // Token Rotation: Delete old token and generate new ones
             await deleteRefreshToken(oldRefreshToken) 
             const tokens = this.generateTokens(decoded.id)
@@ -110,7 +112,7 @@ export class AuthService {
             await saveRefreshToken(decoded.id, tokens.refreshToken, expiresAt, prisma)
 
             return tokens
-        } catch (error) {
+        } catch {
             await deleteRefreshToken(oldRefreshToken) // delete suspicious token
             throw new AppError("Invalid refresh token", 401)
         }

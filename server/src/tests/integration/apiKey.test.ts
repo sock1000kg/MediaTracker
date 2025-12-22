@@ -155,7 +155,7 @@ describe("API Key Routes", () => {
             .set("Authorization", `Bearer ${token}`)
 
         expect(res.statusCode).toBe(400)
-        expect(res.body.message).toMatch(/missing service/i)
+        expect(res.body.message).toMatch(/Service must exist/i)
     })
 
     test("DELETE /apikeys fails if service doesn’t exist", async () => {
@@ -164,7 +164,7 @@ describe("API Key Routes", () => {
             .send({ service: "unknownService" })
             .set("Authorization", `Bearer ${token}`)
 
-        expect(res.statusCode).toBe(404)
-        expect(res.body.message).toMatch(/not found/i)
+        expect(res.statusCode).toBe(400)
+        expect(res.body.message).toMatch(/Service must exist/i)
     })
 })
