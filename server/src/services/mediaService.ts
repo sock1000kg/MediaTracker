@@ -4,7 +4,6 @@ import { findUserByUsername } from "@/repositories/authRepository.js"
 import { createLog, findLogOfUserByMediaId, updateLog } from "@/repositories/logsRepository.js"
 import {
     findMediaById,
-    findMediaForUser,
     createMedia,
     updateMediaForUser,
     deleteMedia,
@@ -31,7 +30,7 @@ export class MediaService {
     }
 
     // Create new media for an userId
-    async create(userId: number, payload: any) {
+    async create(userId: number, payload: unknown) {
         const {
             title,
             mediaType,
@@ -62,7 +61,7 @@ export class MediaService {
                 imageUrl,
                 userId
             ) 
-        } catch(error: any) {
+        } catch(error: unknown) {
             handlePrismaError(error, { 
                 uniqueMessage: "Media already exists"
             })
@@ -70,7 +69,7 @@ export class MediaService {
     }
 
     // Upadte media for userId using mediaId
-    async update(userId: number, mediaId: number, payload: any) {
+    async update(userId: number, mediaId: number, payload: unknown) {
         const {
             title,
             mediaType,
@@ -111,7 +110,7 @@ export class MediaService {
                 userId,
                 mediaId
             ) 
-        } catch(error: any) {
+        } catch(error: unknown) {
             handlePrismaError(error, { 
                 uniqueMessage: "Media already exists, please enter new information",
                 notFoundMessage: "Media not found"
@@ -119,7 +118,7 @@ export class MediaService {
         } 
     }
 
-    async delete(userId: number, mediaId: number, payload: any) {
+    async delete(userId: number, mediaId: number, payload: unknown) {
         const { confirm } = validateSchema(deleteMediaSchema, payload) 
 
         const media = await findMediaById(mediaId) 
@@ -141,14 +140,14 @@ export class MediaService {
         try {
             await deleteMedia(mediaId) 
             return { message: "Media deleted" } 
-        } catch(error: any) {
+        } catch(error: unknown) {
             handlePrismaError(error, {
                 notFoundMessage: "Media not found"
             })
         }
     }
 
-    async createMediaAndLog(userId: number, payload: any) {
+    async createMediaAndLog(userId: number, payload: unknown) {
         return await prisma.$transaction(async (tx: PrismaClient) => {
             const { mediaData, logData } = validateSchema(createMediaAndLogSchema, payload)
 
@@ -191,7 +190,7 @@ export class MediaService {
                 }
     
                 return { media, log }
-            } catch(error: any) {
+            } catch(error: unknown) {
                 handlePrismaError(error, {
                     notFoundMessage: "Media or log not found",
                     uniqueMessage: "Media or log already exists"

@@ -23,17 +23,17 @@ export class MediaTypeService {
         return getAllMediaTypesForUser(userId)
     }
 
-    async create(userId: number, payload: any) {
+    async create(userId: number, payload: unknown) {
         const { name : normalizedName } = validateSchema(createMediaTypeSchema, payload)
 
         try {
             return await createMediaTypeForUser(normalizedName, userId, prisma)
-        } catch (error: any) {
+        } catch (error: unknown) {
             handlePrismaError(error, { uniqueMessage: "Media Type with that name already exists"})
         }
     }
 
-    async delete(userId: number, name: string, payload: any) {
+    async delete(userId: number, name: string, payload: unknown) {
         const { confirm } = validateSchema(deleteMediaTypeSchema, payload)
         const normalizedName = normalizeTypeName(name);
 
@@ -53,14 +53,14 @@ export class MediaTypeService {
             // You MUST await here for the catch block to work
             await deleteMediaTypeForUser(normalizedName, userId, prisma)
             return { message: "Media Type deleted successfully" }
-        } catch (error: any) {
+        } catch (error: unknown) {
             handlePrismaError(error, {
                 notFoundMessage: "You can only delete types that you created",
             })
     }
 }
 
-    async update(userId: number, oldName: string, payload: any) {
+    async update(userId: number, oldName: string, payload: unknown) {
         const { newName } = validateSchema(updateMediaTypeSchema, payload)
         const normalizedOldName = normalizeTypeName(oldName)
 
@@ -77,7 +77,7 @@ export class MediaTypeService {
 
         try {
             return await updateMediaTypeForUser(normalizedOldName, newName, userId)
-        } catch (error: any) {
+        } catch (error: unknown) {
              handlePrismaError(
                 error, 
                 { 

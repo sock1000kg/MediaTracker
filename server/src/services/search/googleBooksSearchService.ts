@@ -1,7 +1,7 @@
 // services/search/googleBooksService.ts
 import { ISearchService } from "@/services/search/searchServiceInterface.js"
 import { SearchResult, searchResultsSchema } from "@/schemas/search/searchSchemas.js"
-import { googleBooksResponseSchema } from "@/schemas/search/bookSchemas.js"
+import { GoogleBook, googleBooksResponseSchema } from "@/schemas/search/bookSchemas.js"
 import { decryptKey, fetchAndParse, validateSchema } from "@/utilities.js"
 import { findUserById } from "@/repositories/authRepository.js"
 import { AppError } from "@/types/error.js"
@@ -17,7 +17,7 @@ export class GoogleBooksService implements ISearchService {
         return decrypted.find(k => k.service === "google_books")?.key
     }
 
-    mapResults(items: any[]): SearchResult[] {
+    mapResults(items: GoogleBook[]): SearchResult[] {
         return items.map(item => {
             const v = item.volumeInfo
             return {

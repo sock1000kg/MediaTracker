@@ -28,14 +28,32 @@ const bookVolumeInfoSchema = z.object({
     averageRating: z
         .number()
         .nullable()
-        .default(null)
+        .default(null),
+    pageCount: z
+        .number()
+        .nullable()
+        .default(null),
+    categories: z
+        .array(z.string())
+        .nullable()
+        .default(null),
+    publisher: z
+        .string()
+        .nullable()
+        .default(null),
+    infoLink: z
+        .string()
+        .nullable()
+        .default(null),
 }).loose() //allow extra stuff
 
 //For an item of book
-const googleBookSchema = z.object({
+export const googleBookSchema = z.object({
   id: z.string(),
   volumeInfo: bookVolumeInfoSchema,
 })
+
+export type GoogleBook = z.infer<typeof googleBookSchema>
 
 //For response of a buncha books
 export const googleBooksResponseSchema = z.object({

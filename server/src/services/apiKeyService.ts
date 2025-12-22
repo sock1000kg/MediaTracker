@@ -1,10 +1,9 @@
-import { addApiKeySchema } from "@/schemas/apiKeySchemas.js"
+import { addApiKeySchema, deleteApiKeySchema } from "@/schemas/apiKeySchemas.js"
 import { encryptKey, validateSchema } from "@/utilities.js"
 
 import {
     addApiKeyForUser,
     deleteApiKeyForUser,
-    findApiKeyForUser,
     getAllApiKeys,
     updateApiKeyForUser
 } from "@/repositories/apiKeyRepository.js"
@@ -33,46 +32,43 @@ export class ApiKeyService {
         return apiKeys
     }
 
-    async create(userId: number, payload: any) {
+    async create(userId: number, payload: unknown) {
         await this.ensureNotDemo(userId)
 
         const { key, service } = validateSchema(addApiKeySchema, payload)
 
         try {
             return await addApiKeyForUser(userId, encryptKey(key), service)
-        } catch (error: any) {
+        } catch (error) {
             handlePrismaError(error, { 
                 uniqueMessage: "You already have an API key for this service" 
             })
         }
     }
 
-    async update(userId: number, payload: any) {
+    async update(userId: number, payload: unknown) {
         await this.ensureNotDemo(userId)
 
         const { key, service } = validateSchema(addApiKeySchema, payload)
 
         try {
             return await updateApiKeyForUser(userId, service, encryptKey(key))
-        } catch (error: any) {
+        } catch (error: unknown) {
             handlePrismaError(error, { 
                 notFoundMessage: "API key for this service not found" 
             })
         }
     }
 
-    async delete(userId: number, payload: any) {
+    async delete(userId: number, payload: unknown) {
         await this.ensureNotDemo(userId)
 
-        const { service } = payload
-        if (!service) {
-            throw new AppError("Missing service in request body", 400)
-        }
+        const { service } = validateSchema(deleteApiKeySchema, payload)
 
         try {
             await deleteApiKeyForUser(userId, service)
             return { message: `${service} API Key deleted` }
-        } catch (error: any) {
+        } catch (error: unknown) {
             handlePrismaError(error, { 
                 notFoundMessage: "API key for this service not found" 
             })

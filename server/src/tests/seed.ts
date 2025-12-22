@@ -1,11 +1,9 @@
-
-import { addApiKey } from "@/api/controllers/apiKeyController.js"
 import { addApiKeyForUser } from "@/repositories/apiKeyRepository.js"
 import { createLog, findLogOfUserByMediaId } from "@/repositories/logsRepository.js"
 import { createMedia } from "@/repositories/mediaRepository.js"
 import prisma from "@/prismaClient.js"
 import { encryptKey } from "@/utilities.js"
-import { MediaType, User, UserAPIKey } from "@prisma/client"
+import { MediaType, Prisma, User, UserAPIKey } from "@prisma/client"
 import bcrypt from "bcryptjs"
 
 async function createSystemUser(): Promise<{ id: number }> {
@@ -126,8 +124,8 @@ async function main() {
             try {
                 await createLog(demoUser.id, defaultMedia.id, "completed", 100, "Welcome! This is your default log! Search up or create a custom media to log it!", prisma)
                 console.log("Demo log created")
-            } catch (error: any) {
-                if (error.code === 'P2002') {
+            } catch (error: unknown) {
+                if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
                     console.log("Demo log already exists")
                 } else {
                     throw error

@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken'
+import jwt, { JwtPayload } from 'jsonwebtoken'
 
 import { Request, Response, NextFunction } from 'express'
 
@@ -8,9 +8,9 @@ function authMiddleWare(req: Request, res: Response, next: NextFunction) {
 
     if (!token) return res.status(401).json({ message: 'No token provided' })
 
-    jwt.verify(token, process.env.JWT_KEY_SECRET!, (error: any, decoded: any) => {
-        if (error) return res.status(401).json({ message: 'Invalid token' })
-        req.userId = Number(decoded.id) // now req.userId is a number
+    jwt.verify(token, process.env.JWT_KEY_SECRET!, (error, decoded) => {
+        if (error || !decoded) return res.status(401).json({ message: 'Invalid token' })
+        req.userId = Number(( decoded as JwtPayload).id) // now req.userId is a number
         next()
     })
 } 

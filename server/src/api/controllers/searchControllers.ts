@@ -1,6 +1,5 @@
 import { NextFunction, Request, Response } from 'express'
 import { searchService } from "@/services/search/searchService.js"
-import { musicSearchService } from '@/services/search/lastFmSearchService.js'
 import { sanitizeQuery } from '@/utilities.js'
 
 // Returns the book info fetched from google books (A media shaped item without media type cus its enforced in frontend)
@@ -20,7 +19,7 @@ export const searchBooks = async (req: Request, res: Response, next: NextFunctio
     try {
         const results = await searchService.searchBooks(userId, q, startIndex)
         res.status(200).json(results)
-    } catch (error: any) {
+    } catch (error) {
         next(error)
     }
 }
@@ -42,7 +41,7 @@ export const searchAlbums = async (req: Request, res: Response, next: NextFuncti
     try {
         const results = await searchService.searchAblums(userId, q, page)
         res.status(200).json(results)
-    } catch (error: any) {
+    } catch (error) {
         next(error)
     }
 }
@@ -64,7 +63,7 @@ export const searchTracks = async (req: Request, res: Response, next: NextFuncti
     try {
         const results = await searchService.searchTracks(userId, q, page)
         res.status(200).json(results)
-    } catch (error: any) {
+    } catch (error) {
         next(error)
     }
 }

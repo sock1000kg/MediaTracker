@@ -19,3 +19,7 @@ export const addApiKeySchema = z.object({
     key: keySchema,
     service: serviceSchema
 })
+
+export const deleteApiKeySchema = z.object({
+    service: serviceSchema
+})

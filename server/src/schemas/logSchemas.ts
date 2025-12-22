@@ -5,8 +5,6 @@ import {
     sanitizeNotes,
 } from "@/utilities.js"
 
-const allowedStatuses = ["completed", "in progress", "wishlist", "dropped"] as const
-
 // Sanitizers as transforms
 const statusSchema = z
     .preprocess((val: string | null | undefined) => {

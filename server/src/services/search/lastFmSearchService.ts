@@ -1,6 +1,7 @@
 // services/musicSearchService.js
 import {
     lastFmAlbumSearchResponseSchema,
+    LastFmMusicItem,
     lastFmTrackSearchResponseSchema
 } from "@/schemas/search/musicSchemas.js"
 
@@ -35,7 +36,7 @@ export class LastFmSearchService implements ISearchService {
     }
 
     // Shared mapper for both albums & tracks → SearchResult[]
-    mapResults(items: any[]): SearchResult[] {
+    mapResults(items: LastFmMusicItem[]): SearchResult[] {
         return items.map(i => ({
             title: i.name,
             creator: i.artist,
@@ -50,7 +51,7 @@ export class LastFmSearchService implements ISearchService {
         }))
     }
 
-    computePagination(items: any[], page: number) {
+    computePagination(items: LastFmMusicItem[], page: number) {
         return items.length < this.maxResults ? null : page + 1
     }
 

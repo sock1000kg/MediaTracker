@@ -3,14 +3,13 @@ import prisma from "@/prismaClient.js"
 import {
     getAllLogs,
     createLog,
-    findLogOfUserByMediaId,
     findLogById,
     updateLog,
     deleteLog,
 } from "@/repositories/logsRepository.js"
 
 import { findMediaForUserById } from "@/repositories/mediaRepository.js"
-import { findMediaTypeForUserOrGlobal, createMediaTypeForUser } from "@/repositories/mediaTypeRepository.js"
+import { findMediaTypeForUserOrGlobal } from "@/repositories/mediaTypeRepository.js"
 import { createLogSchema, updateLogSchema, deleteLogSchema } from "@/schemas/logSchemas.js"
 import { AppError } from "@/types/error.js"
 import { validateSchema } from "@/utilities.js"
@@ -21,7 +20,7 @@ export class LogService {
         return getAllLogs(userId)
     }
 
-    async create(userId: number, payload: any) {
+    async create(userId: number, payload: unknown) {
         // Use a transaction because we might create a MediaType AND a Log
         return await prisma.$transaction(async (tx: PrismaClient) => {
             const { mediaId, status, rating, notes } = validateSchema(createLogSchema, payload)
@@ -37,7 +36,7 @@ export class LogService {
             }
 
             // MediaType Logic (shouldnt even happen if frontend sends correctly)
-            let mediaType = await findMediaTypeForUserOrGlobal(media.mediaType.name, userId, tx)
+            const mediaType = await findMediaTypeForUserOrGlobal(media.mediaType.name, userId, tx)
             if (!mediaType) {
                 throw new AppError("Media Type does not exist", 404)
             }
@@ -46,7 +45,7 @@ export class LogService {
 
                 //Final Log creation
                 return await createLog(userId, mediaId, status, rating, notes, tx)
-            } catch (error: any) {
+            } catch (error: unknown) {
                 handlePrismaError(error, {
                     uniqueMessage: "Your log of this media already exists",
                     notFoundMessage: "Media not found"
@@ -55,7 +54,7 @@ export class LogService {
         })
     }
 
-    async update(userId: number, logId: number, payload: any) {
+    async update(userId: number, logId: number, payload: unknown) {
         const { status, rating, notes } = validateSchema(updateLogSchema, payload)
 
         // Ownership check
@@ -70,14 +69,14 @@ export class LogService {
 
         try {
             return await updateLog(logId, status, rating, notes, prisma)
-        } catch (error: any) {
+        } catch (error: unknown) {
             handlePrismaError(error, {
                 notFoundMessage: "Log not found"
             })
         }
     }
 
-    async delete(userId: number, logId: number, payload: any) {
+    async delete(userId: number, logId: number, payload: unknown) {
         const { confirm } = validateSchema(deleteLogSchema, payload)
 
         const existingLog = await findLogById(logId)
@@ -98,7 +97,7 @@ export class LogService {
         try {
             await deleteLog(logId)
             return { message: "Log deleted" }
-        } catch (error: any) {
+        } catch (error: unknown) {
             handlePrismaError(error, {
                 notFoundMessage: "Log not found"
             })
