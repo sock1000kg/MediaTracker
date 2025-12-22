@@ -30,8 +30,9 @@ export default function Login() {
       localStorage.setItem("accessToken", data.accessToken)
       navigate("/homepage")
     },
-    onError: (error: any) => {
-      console.error(error.message)
+    onError: (error: unknown) => {
+      const msg = error instanceof Error ? error.message : "Failed to login"
+      console.error(msg)
     },
   })
 
@@ -77,9 +78,10 @@ export default function Login() {
               />
 
           {/* Error message */}
-          {loginMutation.error && (
+          {loginMutation.isError && (
             <p className="mt-2 text-center text-sm text-red-500">
-              {loginMutation.error?.message}
+              {loginMutation.error instanceof Error
+                ? loginMutation.error.message : "An unexpected error occured"}
             </p>
           )}
 

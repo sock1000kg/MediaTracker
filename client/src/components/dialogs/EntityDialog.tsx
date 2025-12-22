@@ -52,7 +52,7 @@ export default function EntityDialog<T extends EditableEntity>({
       }
       setErrorMessage(null)
     }
-  }, [open, target, mode])
+  }, [open, target, mode, initialData])
 
   const handleConfirm = async () => {
     // No edit if target no exist
@@ -63,8 +63,9 @@ export default function EntityDialog<T extends EditableEntity>({
     try {
       await onSubmit(formData)
       onOpenChange(false)
-    } catch (err: any) {
-      setErrorMessage(err.message || "Failed to save")
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Failed to save"
+      setErrorMessage(msg)
     } finally {
       setLoading(false)
     }

@@ -42,7 +42,7 @@ export function BookCard({ book, onLog }: BookCardProps) {
                     publisher: book.metadata?.publisher,
                     pageCount: book.metadata?.pageCount ? `${book.metadata.pageCount} pages` : null,
                 })
-                    .filter(([_, value]) => value != null && value !== "") //get rid of empty fields
+                    .filter(([, value]) => value != null && value !== "") //get rid of empty fields
                     .map(([key, value], index, arr) => (
                         <Fragment key={key}>
                             <span className="flex gap-1 capitalize">

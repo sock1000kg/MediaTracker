@@ -47,10 +47,13 @@ export function ConfirmDeleteDialog<T = MediaType>({
     setError(null)
     onWarning(target)
       .then((result) => setWarning(result.message))
-      .catch((err: any) => setError(err.message))
+      .catch((error: unknown) => {
+        const msg = error instanceof Error ? error.message : "Error"
+        setError(msg)
+      })
       .finally(() => setLoading(false))
     }
-  }, [open, target])
+  }, [open, target, onWarning])
 
   //Reset everything upon closing
   const handleOpenChange = (isOpen: boolean) => {
@@ -73,8 +76,9 @@ export function ConfirmDeleteDialog<T = MediaType>({
       const result = await onDelete(target)
       onOpenChange(false)
       alert(result.message)
-    } catch (error: any) {
-      setError(error.message)
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Error";
+      setError(msg)
     } finally {
       setLoading(false)
     }
