@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client'
 import { NextFunction, Request, Response } from 'express'
 import { ZodError } from 'zod'
 
-function errorHandler(error: unknown, req: Request, res: Response, next: NextFunction) {
+function errorHandler(error: unknown, _req: Request, res: Response, _next: NextFunction) {
     // Recognize service errors with `status`
     if (error instanceof AppError) {
         return res.status(error.status).json({ message: error.message })

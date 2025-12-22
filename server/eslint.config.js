@@ -4,7 +4,7 @@ import tseslint from 'typescript-eslint';
 import { globalIgnores } from 'eslint/config';
 
 export default tseslint.config([
-    globalIgnores(['dist']),
+    globalIgnores(['dist', 'node_modules']),
     {
         files: ['**/*.ts'],
         extends: [
@@ -15,5 +15,16 @@ export default tseslint.config([
             ecmaVersion: 2020,
             globals: globals.node, // Set to node for the backend
         },
-    }
+        
+        rules: {
+            "@typescript-eslint/no-unused-vars": [
+                "error",
+                {
+                    "argsIgnorePattern": "^_",
+                    "varsIgnorePattern": "^_",
+                    "caughtErrorsIgnorePattern": "^_"
+                }
+            ]
+        } 
+    },
 ])
