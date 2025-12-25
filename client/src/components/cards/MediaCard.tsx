@@ -19,7 +19,7 @@ export function MediaCard({ media, onEdit, onDelete, onLog}: MediaCardProps) {
             <img
                 src={media.imageUrl}
                 alt={media.title}
-                className="w-20 h-28 object-cover rounded-md"
+                className="w-auto h-auto max-w-32 max-h-32 object-cover rounded-md"
             />
         )}
 
