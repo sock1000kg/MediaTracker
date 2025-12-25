@@ -3,7 +3,7 @@ import { Button } from "../../components/ui/button"
 import { Input } from "../../components/ui/input"
 
 import { searchAlbums, searchTracks } from "@/api/search"
-import { useState } from "react"
+import { useCallback, useState } from "react"
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData  } from "@tanstack/react-query"
 
 import type { MusicResult } from "@/types/search"
@@ -126,7 +126,7 @@ export function MusicSearchSection() {
     }
 
     // Media Form
-    const renderLogForm = (
+    const renderLogForm = useCallback((
         formData: Partial<Log>,
         setFormData: React.Dispatch<React.SetStateAction<Partial<Log>>> //state setter for formData
     ) => {
@@ -140,7 +140,7 @@ export function MusicSearchSection() {
             formData={formData}
             setFormData={setFormData}
         />
-    }
+    }, [targetMedia])
     
 
     return(

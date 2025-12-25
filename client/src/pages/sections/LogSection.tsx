@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useCallback, useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { deleteLog, deleteWarningLog, editLog } from "@/api/logs"
@@ -53,7 +53,7 @@ export default function LogsSection() {
   }
 
   //Log form
-  const renderLogForm = (
+  const renderLogForm = useCallback((
     formData: Partial<Log>,
     setFormData: React.Dispatch<React.SetStateAction<Partial<Log>>> //state setter for formData
   ) => {
@@ -62,8 +62,8 @@ export default function LogsSection() {
         console.error("Attempted to render LogForm without a targetLog.")
         return null
     }
-    return <LogForm formData={formData} setFormData={setFormData} targetMedia={targetLog.media}/>
-  }
+      return <LogForm formData={formData} setFormData={setFormData} targetMedia={targetLog.media}/>
+  }, [targetLog])
 
   return (
     <div className="flex flex-col h-full">

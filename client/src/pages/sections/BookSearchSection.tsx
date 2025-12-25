@@ -4,7 +4,7 @@ import { Input } from "../../components/ui/input"
 import { BookCard } from "../../components/cards/BookCard"
 
 import { searchBooks } from "@/api/search"
-import { useState } from "react"
+import { useCallback, useState } from "react"
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData  } from "@tanstack/react-query"
 
 import type { BookResult } from "@/types/search"
@@ -119,7 +119,7 @@ export default function BooksSearchSection() {
     }
 
     // Media Form
-    const renderLogForm = (
+    const renderLogForm = useCallback((
         formData: Partial<Log>,
         setFormData: React.Dispatch<React.SetStateAction<Partial<Log>>> //state setter for formData
     ) => {
@@ -135,7 +135,7 @@ export default function BooksSearchSection() {
                 setFormData={setFormData}
             />
         )
-    }
+    }, [targetMedia])
 
     return(
         <div className="flex flex-col h-full">

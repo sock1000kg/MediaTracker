@@ -31,7 +31,7 @@ export function MediaSearchLogForm({
       <label className="block">
         <span className="text-sm">Status</span>
         <Select
-          value={formData.status ?? undefined}
+          value={formData.status ?? ""}
           onValueChange={(val: LogStatus) =>
             setFormData((prev) => ({ ...prev, status: val }))
           }

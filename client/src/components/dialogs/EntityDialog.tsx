@@ -7,6 +7,10 @@ import type { EditableEntity } from "@/types/mainTypes"
 
 type Mode = "create" | "edit"
 
+// STABLE EMPTY OBJECT FOR INITIAL DATA, WITHOUT THIS IT WILL CAUSE RENDER LOOPS
+// BECAUSE INITIALDATA WILL RE-UPDATE EVERY TIME THE COMPONENT RERENDER
+const EMPTY_OBJ = {} 
+
 interface EntityDialogProps<T extends EditableEntity> {
   mode: Mode
   open: boolean
@@ -33,7 +37,7 @@ export default function EntityDialog<T extends EditableEntity>({
   title,
   confirmText,
   cancelText = "Cancel",
-  initialData = {},
+  initialData = EMPTY_OBJ,
   target,
   onSubmit, 
   renderForm,
@@ -88,7 +92,7 @@ export default function EntityDialog<T extends EditableEntity>({
             handleConfirm()
           }}
         >
-          <div className="py-2">{renderForm(formData, setFormData)}</div>
+          <div className="py-2">{open && renderForm(formData, setFormData)}</div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
