@@ -3,6 +3,6 @@ import express from "express"
 
 const router = express.Router()
 
-router.post("/", healthCheck)
+router.get("/", healthCheck)
 
 export default router

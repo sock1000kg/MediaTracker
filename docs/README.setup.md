@@ -4,9 +4,7 @@
 - Docker Engine, Docker Compose
 - Node.js 22.17 (if you plan to run scripts locally)
 
-## Installation
-
-## Environment files
+## Environment config
 Create these files at the repo root if you want to run on Docker, else create them in server directory:
 1) `.env` (used by dev/prod Docker Compose)
 ```bash
