@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { useMutation } from "@tanstack/react-query"
 
 export default function Login() {
@@ -98,7 +98,7 @@ export default function Login() {
 
           {/* Switch to register */}
           <p className="mt-4 text-center text-sm text-stone-900">
-            Don’t have an account? <a href="/register" className="underline">Sign up</a>
+            Don’t have an account? <Link to="/register" className="underline">Sign up</Link>
           </p>
         </CardContent>
       </Card>
