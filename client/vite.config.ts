@@ -5,7 +5,9 @@ import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/MediaTracker/',
+  base: process.env.GITHUB_ACTIONS === 'true' 
+    ? '/MediaTracker/' 
+    : '/',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {

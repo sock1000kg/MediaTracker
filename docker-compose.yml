@@ -12,18 +12,6 @@ services:
       - .env
     depends_on: # Wait for database to start first
       - database
-  
-  frontend:
-    build:
-      context: ./client
-      dockerfile: dockerfile
-      target: production
-    ports:
-      - "80:80"
-    environment:
-      - VITE_API_URL=http://backend:5000
-    depends_on:
-      - backend
 
   database:
     image: postgres:17

@@ -13,8 +13,8 @@
     "reset": "npx prisma migrate reset --force --skip-seed && npm run seed",
     "reset-test-db": "tsx src/tests/reset-test-db.ts",
     "db-test:start": "docker-compose -f ../docker-compose.test-db.yml up -d",
-    "prod:start": "docker-compose -f ../docker-compose.yml up -d",
-    "prod:rebuild": "docker-compose -f ../docker-compose.yml build --no-cache && docker-compose -f ../docker-compose.yml up -d",
+    "prod:start": "docker-compose -f ../docker-compose.yml -f ../docker-compose.prod.yml up -d",
+    "prod:rebuild": "docker-compose -f ../docker-compose.yml -f ../docker-compose.prod.yml build --no-cache && docker-compose -f ../docker-compose.yml -f ../docker-compose.prod.yml up -d",
     "dev:start": "docker-compose -f ../docker-compose.yml -f ../docker-compose.dev.yml up -d",
     "dev:rebuild": "docker-compose -f ../docker-compose.yml -f ../docker-compose.dev.yml build --no-cache && docker-compose -f ../docker-compose.yml -f ../docker-compose.dev.yml up -d"
   },
