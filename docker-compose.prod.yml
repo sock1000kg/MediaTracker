@@ -1,6 +1,7 @@
 # docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build
 
 services:
+# No Vite env needed because npm run build alrdy baked the .env file into the container's dist
   frontend:
     build:
       context: ./client
@@ -8,7 +9,13 @@ services:
       target: production
     ports:
       - "80:80"
-    environment:
-      - VITE_API_URL=http://backend:5000
     depends_on:
       - backend
+  
+  database:
+    ports:
+      - "5432:5432"
+
+  backend:
+    ports:
+      - "5000:5000"

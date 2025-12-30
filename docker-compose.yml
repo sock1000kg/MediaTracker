@@ -6,8 +6,6 @@ services:
       context: ./server #Dockerfile location
       dockerfile: dockerfile
       target: production
-    ports:
-      - "5000:5000" # Host port 5000 → Container port 5000
     env_file:
       - .env
     depends_on: # Wait for database to start first
@@ -25,8 +23,6 @@ services:
       - .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432" # Host port 5432 → Container port 5432
     logging:
       options:
         max-size: "10m"
@@ -34,3 +30,8 @@ services:
 
 volumes:
   postgres_data:
+
+networks:
+  default:
+    name: internal-sock
+    external: true

@@ -7,6 +7,8 @@ services:
       context: ./server
       dockerfile: dockerfile
       target: dev
+    ports:
+      - 5000:5000
     volumes:
       - ./server/src:/app/src
 
@@ -18,10 +20,15 @@ services:
     ports:
       - "5173:5173"
     environment:
-      - VITE_API_URL=http://localhost:5000
+    # Still need this cus it's npm run dev on TS files
+      - VITE_API_URL=http://localhost:5000 
     volumes:
       - ./client:/app
       - /app/node_modules
+
+  database:
+    ports:
+      - "5432:5432"
 
   prisma-studio:
     image: node:lts-alpine3.17

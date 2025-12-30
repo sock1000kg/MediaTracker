@@ -12,8 +12,9 @@ The frontend image uses a nulti-stage Dockerfile (`client/dockerfile`):
 - Production: copies built JS files from builder and serves through nginx
 
 Docker Compose files:
-- `docker-compose.yml` (prod): backend-frontend-Postgres for local production-like environment.
-- `docker-compose.dev.yml` (overlay): mounts source for hot reload, exposes Prisma Studio, sets `VITE_API_URL=http://localhost:5000` for the frontend.
+- `docker-compose.yml` (deployment): backend-Postgres compose for my local server 
+- `docker-compose.prod.yml` (prod simulation): backend-frontend-Postgres for local production-like environment.
+- `docker-compose.dev.yml` (dev simulation): mounts source for hot reload, exposes Prisma Studio, sets `VITE_API_URL=http://localhost:5000` for the frontend.
 - `docker-compose.test-db.yml`: Postgres for running tests on host port 5433.
 
 ## Continuous Integration (CI)
