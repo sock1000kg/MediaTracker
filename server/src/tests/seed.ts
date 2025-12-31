@@ -5,6 +5,7 @@ import prisma from "@/prismaClient.js"
 import { encryptKey } from "@/utilities.js"
 import { MediaType, Prisma, User, UserAPIKey } from "@prisma/client"
 import bcrypt from "bcryptjs"
+import { fileURLToPath } from "url"
 
 async function createSystemUser(): Promise<{ id: number }> {
     let systemUser = await prisma.user.findUnique({
@@ -83,7 +84,7 @@ async function createMediaTypeSeed(name: string, userId: number): Promise<MediaT
     }
 }
 
-async function main() {
+export async function seedDatabase() {
     const systemUser = await createSystemUser()
     const demoUser = await createDemoUser()
 
@@ -172,11 +173,14 @@ async function main() {
     }
 }
 
-// Execute seed script
-main()
-    .then(() => prisma.$disconnect())
-    .catch((error) => {
-        console.error(error)
-        prisma.$disconnect()
-        process.exit(1)
-    })
+// Execute seed script if the script that node ran is the same as the file path
+// node seed.js = running /full/path/seed.js
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+    seedDatabase()
+        .then(() => prisma.$disconnect())
+        .catch((error) => {
+            console.error(error)
+            prisma.$disconnect()
+            process.exit(1)
+        })
+}

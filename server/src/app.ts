@@ -17,6 +17,7 @@ import apiKeyRoutes from '@/api/routes/apiKeyRoutes.js'
 import errorHandler from '@/middleWare/errorHandlerMiddleware.js'
 import logger from '@/middleWare/loggingMiddleware.js'
 import cookieParser from 'cookie-parser'
+import { demoResetJob } from './jobs/resetDemoJob.js'
 
 const app: Application = express()
 
@@ -37,6 +38,9 @@ app.use(express.json())
 app.use(globalLimiter)
 app.use(logger)
 
+if (process.env.NODE_ENV !== 'test') {
+    demoResetJob()
+}
 
 //Routes
 app.use('/healthz', healthRoutes)

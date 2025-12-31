@@ -175,3 +175,7 @@ export async function updateMediaForUser(
 export async function deleteMedia(id: number): Promise<void> {
     await prisma.media.delete({ where: { id } })
 }
+
+export async function deleteAllMediasForUser(userId: number, client: PrismaClient): Promise<void> {
+    await client.media.deleteMany({ where: { userId } })
+}
