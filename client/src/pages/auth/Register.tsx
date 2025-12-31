@@ -12,14 +12,16 @@ export default function Register() {
     const [username, setUsername] = useState("")
     const [displayName, setDisplayName] = useState("")
     const [password, setPassword] = useState("")
+    const [registerKey, setRegisterKey] = useState("")
 
     const registerMutation = useMutation({
-        mutationFn: async ({ username, password, displayName }: {username: string, password: string, displayName: string}) => {
+        mutationFn: async ({ username, password, displayName, registerKey }
+            : {username: string, password: string, displayName: string, registerKey: string}) => {
             const API_BASE = import.meta.env.VITE_API_URL
             const res = await fetch(`${API_BASE}/auth/register`, { 
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, password, displayName}),
+            body: JSON.stringify({ username, password, displayName, registerKey }),
             credentials: "include",
         })
             const data = await res.json()
@@ -39,7 +41,7 @@ export default function Register() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        registerMutation.mutate({ username, password, displayName })
+        registerMutation.mutate({ username, password, displayName, registerKey })
     }
 
     return (
@@ -53,51 +55,65 @@ export default function Register() {
             <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
-                <Input
-                    id="username"
-                    type="username"
-                    placeholder="YourUsername"
-                    value={username}
-                    onChange={(e) => { setUsername(e.target.value) }}
-                    required
-                />
+                    <Label htmlFor="username">Username</Label>
+                    <Input
+                        id="username"
+                        type="username"
+                        placeholder="YourUsername"
+                        value={username}
+                        onChange={(e) => { setUsername(e.target.value) }}
+                        required
+                    />
                 </div>
 
                 <div className="space-y-2">
-                <Label htmlFor="displayName">Display Name</Label>
-                <Input
-                    id="displayName"
-                    type="text"
-                    placeholder="Your Display Name"
-                    value={displayName}
-                    onChange={(e) => { setDisplayName(e.target.value) }}
-                    required
-                    disabled={registerMutation.isPending}
-                />
+                    <Label htmlFor="displayName">Display Name</Label>
+                    <Input
+                        id="displayName"
+                        type="text"
+                        placeholder="Your Display Name"
+                        value={displayName}
+                        onChange={(e) => { setDisplayName(e.target.value) }}
+                        required
+                        disabled={registerMutation.isPending}
+                    />
                 </div>
 
                 <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={registerMutation.isPending}
-                />
-
-            {/* Error message */}
-            {registerMutation.isError && (
-                <p className="mt-2 text-center text-sm text-red-500">
-                {registerMutation.error instanceof Error
-                    ? registerMutation.error.message : "An unexpected error occured"}
-                </p>
-            )}
-            
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                        id="password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        disabled={registerMutation.isPending}
+                    />
                 </div>
+
+                <div className="space-y-2">
+                    <Label className="mb-0.5" htmlFor="password">Registration Key</Label>
+                    <p className="text-xs text-stone-500">Contact me if you want an account</p>
+                    <Input
+                        id="password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={registerKey}
+                        onChange={(e) => setRegisterKey(e.target.value)}
+                        required
+                        disabled={registerMutation.isPending}
+                    />
+                </div>
+
+                {/* Error message */}
+                {registerMutation.isError && (
+                    <p className="mt-2 text-center text-sm text-red-500">
+                    {registerMutation.error instanceof Error
+                        ? registerMutation.error.message : "An unexpected error occured"}
+                    </p>
+                )}
+
                 <Button 
                     type="submit" 
                     variant="amber" 

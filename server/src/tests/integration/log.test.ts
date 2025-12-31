@@ -10,6 +10,7 @@ describe('Log routes', () => {
     const mediaTypeName = normalizeTypeName('TestType')
     const mediaName = 'TestMedia'
     const displayName = 'Tester'
+    const registerKey = process.env.REGISTER_KEY
     let token, user, mediaType, media, log
 
     beforeAll(async () => {
@@ -17,7 +18,7 @@ describe('Log routes', () => {
         await prisma.user.deleteMany({ where: { username } })
         const regRes = await request(app)
             .post('/auth/register')
-            .send({ username, password, displayName })
+            .send({ username, password, displayName, registerKey })
             .set('Content-Type', 'application/json')
         expect(regRes.statusCode).toBe(201)
 

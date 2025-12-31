@@ -8,7 +8,7 @@ const API = "/api-key"
 async function registerAndLogin(username: string) {
     await request(app)
         .post("/auth/register")
-        .send({ username, password: "StrongPass1!", displayName: "Tester" })
+        .send({ username, password: "StrongPass1!", displayName: "Tester", registerKey: process.env.REGISTER_KEY })
         .set("Content-Type", "application/json")
 
     const loginRes = await request(app)

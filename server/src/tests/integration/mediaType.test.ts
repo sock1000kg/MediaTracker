@@ -8,6 +8,7 @@ describe('MediaType Routes', () => {
     const username = 'MediaTypeTestUser'
     const password = 'StrongPass1!'
     const displayName = 'Tester'
+    const registerKey = process.env.REGISTER_KEY
     let token, user
 
     beforeAll(async () => {
@@ -17,7 +18,7 @@ describe('MediaType Routes', () => {
         //Register user
         await request(app)
             .post('/auth/register')
-            .send({ username, password, displayName })
+            .send({ username, password, displayName, registerKey })
             .set('Content-Type', 'application/json')
 
         //Login to get token

@@ -9,7 +9,8 @@ Content-Type: application/json
 {
     "username": "BalloonBoy",
     "password": "Password123!",
-    "displayName": "Ball Boy"
+    "displayName": "Ball Boy",
+    "registerKey": "register_key"
 }
 ### 
 

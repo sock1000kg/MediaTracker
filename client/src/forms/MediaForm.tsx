@@ -155,7 +155,6 @@ export function MediaForm({
             {/* Image Url */}
             <label className="block">
                 <span className="text-sm mr-1">Image URL</span>
-                <span className="text-xs text-stone-500">(I recommend 'Open Library' to find https image urls)</span>
                 <input
                     type="text"
                     value={formData.imageUrl ?? ""}
