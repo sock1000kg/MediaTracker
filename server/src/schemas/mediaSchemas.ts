@@ -66,6 +66,13 @@ const sourceSchema = z
     .default(null)
 )
 
+const searchSourceSchema = z
+    .preprocess((val: string | null | undefined) => {
+        return sanitizeSource(val)
+    }, z
+    .string()
+)
+
 const sourceIdSchema = z
     .preprocess((val: string | null | undefined) => {
         return sanitizeSourceId(val)
@@ -130,7 +137,7 @@ export const searchMediaSchema = z.object({
     creator: creatorSchema,
     year: yearSchema,
     description: descriptionSchema,
-    source: sourceSchema,
+    source: searchSourceSchema,
     imageUrl: imageUrl,
     sourceId: sourceIdSchema,
     metadata: metadataSchema

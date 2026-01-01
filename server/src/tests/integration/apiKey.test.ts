@@ -2,17 +2,17 @@ import request from "supertest"
 import app from "@/app.js"
 import { prisma } from "@/tests/jest.setup.js"
 
-const API = "/api-key"
+const API = "/api/api-key"
 
 // Utility: create + login user → returns token + userId
 async function registerAndLogin(username: string) {
     await request(app)
-        .post("/auth/register")
+        .post("/api/auth/register")
         .send({ username, password: "StrongPass1!", displayName: "Tester", registerKey: process.env.REGISTER_KEY })
         .set("Content-Type", "application/json")
 
     const loginRes = await request(app)
-        .post("/auth/login")
+        .post("/api/auth/login")
         .send({ username, password: "StrongPass1!" })
         .set("Content-Type", "application/json")
 

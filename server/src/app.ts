@@ -14,6 +14,7 @@ import mediaRoutes from '@/api/routes/mediaRoutes.js'
 import mediaTypeRoutes from '@/api/routes/mediaTypeRoutes.js'
 import searchRoutes from '@/api/routes/searchRoutes.js'
 import apiKeyRoutes from '@/api/routes/apiKeyRoutes.js'
+import importRoutes from '@/api/routes/importRoutes.js'
 import errorHandler from '@/middleWare/errorHandlerMiddleware.js'
 import logger from '@/middleWare/loggingMiddleware.js'
 import cookieParser from 'cookie-parser'
@@ -43,14 +44,18 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 //Routes
-app.use('/healthz', healthRoutes)
-app.use('/auth', authRoutes)
-app.use('/logs', authMiddleWare, globalLimiter, logRoutes)
-app.use('/media', authMiddleWare, globalLimiter, mediaRoutes)
-app.use('/media-type', authMiddleWare, globalLimiter, mediaTypeRoutes)
-app.use('/search', authMiddleWare, globalLimiter, searchRoutes)
-app.use('/api-key', authMiddleWare, globalLimiter, apiKeyRoutes)
+const apiRouter = express.Router()
 
+apiRouter.use('/healthz', healthRoutes)
+apiRouter.use('/auth', authRoutes)
+apiRouter.use('/logs', authMiddleWare, globalLimiter, logRoutes)
+apiRouter.use('/media', authMiddleWare, globalLimiter, mediaRoutes)
+apiRouter.use('/media-type', authMiddleWare, globalLimiter, mediaTypeRoutes)
+apiRouter.use('/search', authMiddleWare, globalLimiter, searchRoutes)
+apiRouter.use('/api-key', authMiddleWare, globalLimiter, apiKeyRoutes)
+apiRouter.use('/imports', authMiddleWare, globalLimiter, importRoutes)
+
+app.use('/api', apiRouter)
 
 //Error handling
 app.use(errorHandler)

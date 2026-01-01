@@ -4,17 +4,17 @@ import { prisma } from "@/tests/jest.setup.js"
 import { findUserByUsername } from "@/repositories/authRepository.js"
 import { AppError } from "@/types/error.js"
 
-const API = "/media/import-goodreads" // Adjust if your route prefix differs (e.g., /api/media/import-goodreads)
+const API = "/api/imports/goodreads"
 
 // create + login user: returns token + userId
 async function registerAndLogin(username: string) {
     await request(app)
-        .post("/auth/register")
+        .post("/api/auth/register")
         .send({ username, password: "StrongPass1!", displayName: "Tester", registerKey: process.env.REGISTER_KEY })
         .set("Content-Type", "application/json")
 
     const loginRes = await request(app)
-        .post("/auth/login")
+        .post("/api/auth/login")
         .send({ username, password: "StrongPass1!" })
         .set("Content-Type", "application/json")
 
@@ -53,7 +53,7 @@ describe("Media Import Routes (Goodreads)", () => {
     // --------------------------------------------------------
     test("POST /import-goodreads successfully imports valid CSV", async () => {
         const csvContent = 
-`Title,Author,My Rating,Year Published,Bookshelves,Book Id
+`Title,Author,My Rating,Year Published,Exclusive Shelf,Book Id
 The Great Gatsby,F. Scott Fitzgerald,5,1925,read,4671
 The Hobbit,J.R.R. Tolkien,4,1937,currently-reading,5907`
         
@@ -81,7 +81,7 @@ The Hobbit,J.R.R. Tolkien,4,1937,currently-reading,5907`
 
     test("POST /import-goodreads skips duplicates if run twice", async () => {
         const csvContent = 
-`Title,Author,My Rating,Year Published,Bookshelves,Book Id
+`Title,Author,My Rating,Year Published,Exclusive Shelf,Book Id
 Dune,Frank Herbert,5,1965,read,234225`
         
         const buffer = Buffer.from(csvContent)
@@ -118,7 +118,7 @@ Dune,Frank Herbert,5,1965,read,234225`
     test("POST /import-goodreads returns error counts for malformed rows", async () => {
         // Row 2 is missing Title/Author which violates schema
         const csvContent = 
-`Title,Author,My Rating,Year Published,Bookshelves,Book Id
+`Title,Author,My Rating,Year Published,Exclusive Shelf,Book Id
 Valid Book,Valid Author,5,2020,read,111
 ,,0,0,,` 
 

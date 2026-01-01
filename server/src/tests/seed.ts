@@ -6,6 +6,10 @@ import { encryptKey } from "@/utilities.js"
 import { MediaType, Prisma, User, UserAPIKey } from "@prisma/client"
 import bcrypt from "bcryptjs"
 import { fileURLToPath } from "url"
+import path from "path"
+import fs from "fs"
+import { mediaService } from "@/services/mediaService.js"
+import { goodreadsImportService } from "@/services/imports/goodreadsImportService.js"
 
 async function createSystemUser(): Promise<{ id: number }> {
     let systemUser = await prisma.user.findUnique({
@@ -171,6 +175,35 @@ export async function seedDatabase() {
         console.log("LASTFM_API_KEY environment variable not set")
     } else {
         console.log("lastfm Demo Key already exists")
+    }
+
+
+    // SEED GoodReads import
+    if (process.env.NODE_ENV !== 'test') {
+        const __filename = fileURLToPath(import.meta.url)
+        const __dirname = path.dirname(__filename)
+        const csvPath = path.join(__dirname, "goodreads_seed.csv")
+    
+        if (fs.existsSync(csvPath)) {
+            console.log(`\x1b[1m\x1b[32m\nFound goodreads_seed.csv at ${csvPath}\x1b[0m`)
+            console.log("Importing books for Demo user...")
+            
+            try {
+                const fileBuffer = fs.readFileSync(csvPath)
+                
+                // Re-use your existing service!
+                const result = await goodreadsImportService.importFromGoodReads(demoUser.id, fileBuffer)
+                
+                console.log(`Goodreads Import Results:`)
+                console.log(`Imported: ${result.imported}`)
+                console.log(`Skipped: ${result.skipped}`)
+                console.log(`Errors: ${result.errors}`)
+            } catch (error) {
+                console.error("\x1b[1m\x1b[31mFailed to seed Goodreads CSV:\x1b[0m", error)
+            }
+        } else {
+            console.log(`\nNo 'goodreads_seed.csv' found in ${__dirname}. Skipping CSV import.`)
+        }
     }
 }
 

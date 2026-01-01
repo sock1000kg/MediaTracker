@@ -5,7 +5,7 @@ import { prisma } from '@/tests/jest.setup.js'
 describe('Auth Routes', () => {
     test('Register with valid credentials succeeds', async () => {
         const res = await request(app)
-            .post('/auth/register')
+            .post('/api/auth/register')
             .send({ 
                 username: 'TestUser123', 
                 password: 'StrongPass1!', 
@@ -25,7 +25,7 @@ describe('Auth Routes', () => {
 
     test('Register with missing username fails', async () => {
         const res = await request(app)
-            .post('/auth/register')
+            .post('/api/auth/register')
             .send({ password: 'StrongPass1!', registerKey: process.env.REGISTER_KEY })
             .set('Content-Type', 'application/json') 
         expect(res.statusCode).toBe(400) 
@@ -34,7 +34,7 @@ describe('Auth Routes', () => {
 
     test('Register with missing registerKey fails', async () => {
         const res = await request(app)
-            .post('/auth/register')
+            .post('/api/auth/register')
             .send({ 
                 username: 'TestUser123', 
                 password: 'StrongPass1!', 
@@ -47,7 +47,7 @@ describe('Auth Routes', () => {
 
     test('Register with weak password fails', async () => {
         const res = await request(app)
-            .post('/auth/register')
+            .post('/api/auth/register')
             .send({ username: 'WeakUser', password: '123', displayName: 'Tester', registerKey: process.env.REGISTER_KEY })
             .set('Content-Type', 'application/json') 
         expect(res.statusCode).toBe(400) 
@@ -57,12 +57,12 @@ describe('Auth Routes', () => {
     test('Register with duplicate username fails', async () => {
         // Register once
         await request(app)
-            .post('/auth/register')
+            .post('/api/auth/register')
             .send({ username: 'DupUser', password: 'StrongPass1!', displayName: 'Tester', registerKey: process.env.REGISTER_KEY })
             .set('Content-Type', 'application/json') 
         // Register again
         const res = await request(app)
-            .post('/auth/register')
+            .post('/api/auth/register')
             .send({ username: 'DupUser', password: 'StrongPass1!', displayName: 'Tester', registerKey: process.env.REGISTER_KEY })
             .set('Content-Type', 'application/json') 
         expect(res.statusCode).toBe(400) 
@@ -77,12 +77,12 @@ describe('Auth Routes', () => {
     test('Login with correct credentials succeeds', async () => {
         // Register user first
         await request(app)
-            .post('/auth/register')
+            .post('/api/auth/register')
             .send({ username: 'LoginUser', password: 'StrongPass1!', displayName: 'Tester', registerKey: process.env.REGISTER_KEY })
             .set('Content-Type', 'application/json') 
         // Login
         const res = await request(app)
-            .post('/auth/login')
+            .post('/api/auth/login')
             .send({ username: 'LoginUser', password: 'StrongPass1!' })
             .set('Content-Type', 'application/json') 
         expect(res.statusCode).toBe(200) 
@@ -98,12 +98,12 @@ describe('Auth Routes', () => {
     test('Login with wrong password fails', async () => {
         // Register user first
         await request(app)
-            .post('/auth/register')
+            .post('/api/auth/register')
             .send({ username: 'LoginUser', password: 'StrongPass1!', displayName: 'Tester', registerKey: process.env.REGISTER_KEY })
             .set('Content-Type', 'application/json') 
 
         const res = await request(app)
-            .post('/auth/login')
+            .post('/api/auth/login')
             .send({ username: 'LoginUser', password: 'WrongPass123!'})
             .set('Content-Type', 'application/json') 
         expect(res.statusCode).toBe(401) 
@@ -117,7 +117,7 @@ describe('Auth Routes', () => {
 
     test('Login with non-existent user fails', async () => {
         const res = await request(app)
-            .post('/auth/login')
+            .post('/api/auth/login')
             .send({ username: 'NoSuchUser', password: 'SomePass1!' })
             .set('Content-Type', 'application/json') 
         expect(res.statusCode).toBe(404) 
@@ -126,7 +126,7 @@ describe('Auth Routes', () => {
 
     test('Login with missing fields fails', async () => {
         const res = await request(app)
-            .post('/auth/login')
+            .post('/api/auth/login')
             .send({ username: 'LoginUser' })
             .set('Content-Type', 'application/json') 
         expect(res.statusCode).toBe(400) 
