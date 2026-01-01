@@ -1,12 +1,14 @@
 # docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build
 
 services:
-# No Vite env needed because npm run build alrdy baked the .env file into the container's dist
   frontend:
     build:
       context: ./client
       dockerfile: dockerfile
       target: production
+      # Need this to "bake" the env in during build time, not run time
+      args:
+        - VITE_API_URL=http://localhost:5000/api
     ports:
       - "80:80"
     depends_on:
