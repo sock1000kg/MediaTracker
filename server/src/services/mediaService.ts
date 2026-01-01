@@ -1,15 +1,12 @@
 import { createImportedMedia } from "@/api/domain/media/mediaFactory.js"
 import { handlePrismaError } from "@/middleWare/errorHandlerMiddleware.js"
 import prisma from "@/prismaClient.js"
-import { findUserByUsername } from "@/repositories/authRepository.js"
-import { createLog, findLogOfUserByMediaId, updateLog } from "@/repositories/logsRepository.js"
 import {
     findMediaById,
     createMedia,
     updateMediaForUser,
     deleteMedia,
     getAllMediasUserCreated,
-    findMediaBySource,
 } from "@/repositories/mediaRepository.js" 
 
 import { findMediaTypeForUserOrGlobal } from "@/repositories/mediaTypeRepository.js" 

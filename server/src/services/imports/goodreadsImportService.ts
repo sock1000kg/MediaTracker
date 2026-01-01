@@ -117,8 +117,12 @@ export class GoodreadsImportService {
 
                 preparedItems.push({ isValid: true, record, enrichmentData })
 
-            } catch (error) {
-                console.error(`Validation failed for row`, unvalidRecord)
+            } catch (error: unknown) {
+                if (error instanceof Error) {
+                    console.error(`Validation failed for row`, unvalidRecord, error)
+                } else {
+                    console.error(`Unexpected error during import`, error)
+                }
                 results.errors++
             }
         }

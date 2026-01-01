@@ -8,7 +8,6 @@ import bcrypt from "bcryptjs"
 import { fileURLToPath } from "url"
 import path from "path"
 import fs from "fs"
-import { mediaService } from "@/services/mediaService.js"
 import { goodreadsImportService } from "@/services/imports/goodreadsImportService.js"
 
 async function createSystemUser(): Promise<{ id: number }> {
