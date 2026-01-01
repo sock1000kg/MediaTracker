@@ -96,9 +96,8 @@ export default function Register() {
                     <Label className="mb-0.5" htmlFor="password">Registration Key</Label>
                     <p className="text-xs text-stone-500">Contact me if you want an account</p>
                     <Input
-                        id="password"
-                        type="password"
-                        placeholder="••••••••"
+                        id="registerKey"
+                        type="text"
                         value={registerKey}
                         onChange={(e) => setRegisterKey(e.target.value)}
                         required
