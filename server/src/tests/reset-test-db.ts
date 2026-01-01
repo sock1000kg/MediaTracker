@@ -33,7 +33,7 @@ const __filename = fileURLToPath(import.meta.url)
 
 // Check if this file is the one being executed directly
 // We use path.resolve to ensure slashes and drive letters match
-if (process.argv[1] && path.resolve(__filename) === path.resolve(process.argv[1])) {
+if (process.argv[1] === fileURLToPath(import.meta.url))  {
     resetTestDb().then(() => process.exit(0))
 } else {
     // This will help see the mismatch if it fails

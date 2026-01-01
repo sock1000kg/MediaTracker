@@ -39,9 +39,10 @@ export async function findMediaForUser(
     source: string | null,
     sourceId: string | null,
     description: string | null,
-    imageUrl: string | null
+    imageUrl: string | null,
+    client: PrismaClient
 ): Promise<(Media & { mediaType: MediaType | null, logs: UserLogs[] }) | null> {
-    return prisma.media.findFirst({
+    return client.media.findFirst({
         where: {
             title,
             mediaType: { name: type.name },
@@ -122,9 +123,10 @@ export async function createMedia(
     description: string | null,
     metadata: Prisma.JsonValue | null,
     imageUrl: string | null,
-    userId: number
+    userId: number,
+    client: PrismaClient
 ): Promise<Media & { mediaType: MediaType | null }> {
-    return prisma.media.create({
+    return client.media.create({
         data: {
             title,
             mediaType: { connect: { id: type.id } },

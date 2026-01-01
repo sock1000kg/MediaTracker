@@ -145,6 +145,7 @@ describe('Media Routes', () => {
                 mediaType: mediaType,
                 creator: 'Author',
                 year: 2024,
+                source: 'goodreads',
                 metadata: { foo: 'bar' }
             })
         const res = await request(app)
@@ -155,6 +156,7 @@ describe('Media Routes', () => {
                 mediaType: mediaType,
                 creator: 'Author',
                 year: 2024,
+                source: 'goodreads',
                 metadata: { foo: 'bar' }
             })
         expect(res.statusCode).toBe(409)
@@ -280,6 +282,7 @@ describe('Media Routes', () => {
                 mediaType: mediaType,
                 creator: 'A',
                 year: 2024,
+                source: 'goodreads',
                 metadata: {}
             })
         const createRes = await request(app)
@@ -290,6 +293,7 @@ describe('Media Routes', () => {
                 mediaType: mediaType,
                 creator: 'B',
                 year: 2024,
+                source: 'goodreads',
                 metadata: {}
             })
         const media2Id = createRes.body.id

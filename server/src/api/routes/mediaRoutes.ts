@@ -4,10 +4,13 @@ import {
   createNewMedia,
   updateExistingMedia,
   deleteExistingMedia,
-  createMediaAndLog
+  createMediaAndLog,
+  importGoodReads
 } from '@/api/controllers/mediaController.js'
+import multer from 'multer'
 
 const router = express.Router()
+const upload = multer()
 
 // Get all medias for the user
 router.get('/', getMedias)
@@ -23,6 +26,9 @@ router.put('/:id', updateExistingMedia)
 
 // delete media by id
 router.delete('/:id', deleteExistingMedia)
+
+//import medias from goodreads and log them
+router.post('/import-goodreads', upload.single('file'), importGoodReads)
 
 
 export default router

@@ -111,7 +111,8 @@ export async function seedDatabase() {
             "This is your default  media",
             null,
             null,
-            systemUser.id
+            systemUser.id,
+            prisma
         )
         console.log("Default Media created")
     } else {
