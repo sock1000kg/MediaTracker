@@ -8,6 +8,8 @@ import { PrismaClient } from "@prisma/client/extension"
 import { parse } from "csv-parse/sync"
 import { googleBooksService } from "../search/googleBooksSearchService.js"
 import { BookMetadata, createImportedMedia } from "@/api/domain/media.js"
+import { ZodError } from "zod"
+import { ImportFailure, ImportResult } from "@/api/domain/imports.js"
 
 //Helpers for preparing rich or unrich data
 type BookEnrichmentData = {
@@ -66,7 +68,7 @@ export class GoodreadsImportService {
         }
     }
 
-    async importFromGoodReads(userId: number, fileBuffer: Buffer) {
+    async importFromGoodReads(userId: number, fileBuffer: Buffer): Promise<ImportResult> {
         const rawRecords = parse(fileBuffer, {
             columns: true, //use the headers as fields for JSON, if false it parses data into arrays
             skip_empty_lines: true,
@@ -74,7 +76,9 @@ export class GoodreadsImportService {
             cast: true,
             bom: true //handle weird Excel csv apparently, just for safety
         }) as Record<string, unknown>[]
-        const results = { imported: 0, skipped: 0, errors: 0 }
+
+        const results: ImportResult = { imported: 0, skipped: 0, failures: [] }
+        const failures: ImportFailure[] = []
         const preparedItems: PreparedImportItem[] = []
 
         // EXTRACT ALL EXISTING RECORDS TO SAVE ENRICHMENT API calls
@@ -93,7 +97,9 @@ export class GoodreadsImportService {
         const existingSourceIds = new Set(existingMedia.map(m => m.sourceId))
 
         //ENRICHMENT OF IMPORTED DATA
-        for (const unvalidRecord of rawRecords) {
+        for (const [index, unvalidRecord] of rawRecords.entries()) {
+            const rowNum = index + 2 //+2 because: 1st entry is on line 2
+            const rawTitle = (unvalidRecord['Title'] as string) || "Unknown Title"
             try {
                 const record = validateSchema(goodreadsRowSchema, unvalidRecord)
                 const sourceId = record['Book Id']
@@ -111,12 +117,27 @@ export class GoodreadsImportService {
                 preparedItems.push({ isValid: true, record, enrichmentData })
 
             } catch (error: unknown) {
-                if (error instanceof Error) {
-                    console.error(`Validation failed for row`, unvalidRecord, error)
-                } else {
-                    console.error(`Unexpected error during import`, error)
+                let reason = "Invalid data format"
+
+                if (error instanceof ZodError) {
+                    const reason = error.issues 
+                    ? error.issues.map((i) => i.message).join(", ") 
+                    : error.message || "Invalid data format"
+
+                    failures.push({
+                        row: rowNum,
+                        title: rawTitle,
+                        reason: `Validation Error: ${reason}`
+                    })
+                } else if (error instanceof Error) {
+                    reason = error.message
                 }
-                results.errors++
+
+                results.failures.push({
+                    row: rowNum,
+                    title: rawTitle,
+                    reason: `Validation Error: ${reason}`
+                })
             }
         }
 
@@ -137,8 +158,8 @@ export class GoodreadsImportService {
                     const mainAuthor = record['Author']
                     const additionalAuthors = record['Additional Authors']
                     const year = record['Year Published'] ?? null
-                    const sourceId = record['Book Id'] || null
-                    const starRating = record['My Rating'] || 0
+                    const sourceId = record['Book Id'] ?? null
+                    const starRating = record['My Rating'] ?? 0
                     const exclusiveShelf = record['Exclusive Shelf'] || ""
 
                     //Combine authors
@@ -206,11 +227,17 @@ export class GoodreadsImportService {
                     } else {
                         results.skipped++
                     }
-                } catch (error) {
-                    const rawTitle = item['Title']
-                    const title = typeof rawTitle === 'string' ? rawTitle : "Unknown Title"
+                } catch (error: unknown) {
+                    const reason = error instanceof Error ? error.message : "Unknown database error"
+
+                    const title = item['Title']
                     console.error(`Failed to import book: ${title}`, error)
-                    results.errors++
+                    
+                    results.failures.push({
+                        row: -1, // We can't track original row index in preparedItems easily, but we have the title
+                        title: title,
+                        reason: `Save Error: ${reason}`
+                    })
                 }
             }
 

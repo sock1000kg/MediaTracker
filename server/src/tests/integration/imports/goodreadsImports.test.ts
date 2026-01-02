@@ -66,7 +66,7 @@ The Hobbit,J.R.R. Tolkien,4,1937,currently-reading,5907`
         expect(res.body).toEqual(expect.objectContaining({
             imported: 2,
             skipped: 0,
-            errors: 0
+            failures: []
         }))
 
         // Verify Data in DB
@@ -101,7 +101,8 @@ Dune,Frank Herbert,5,1965,read,234225`
         expect(res.statusCode).toBe(200)
         expect(res.body).toEqual(expect.objectContaining({
             imported: 0,
-            skipped: 1 // Should skip the duplicate
+            skipped: 1, // Should skip the duplicate
+            failures: []
         }))
     })
 
@@ -128,9 +129,15 @@ Valid Book,Valid Author,5,2020,read,111
             .attach('file', Buffer.from(csvContent), 'bad.csv')
 
         expect(res.statusCode).toBe(200)
-        // Validation strategy:
-        // Validate per row -> returns errors count instead of crashing
-        expect(res.body.errors).toBeGreaterThan(0) 
+
+        // We expect 1 success and 1 failure
         expect(res.body.imported).toBe(1)
+
+        // Check failures array
+        expect(res.body.failures).toHaveLength(1)
+        expect(res.body.failures[0]).toEqual(expect.objectContaining({
+            row: 3, // Header (1) + Valid Row (1) + Malformed Row (1) = Line 3
+            reason: expect.stringMatching(/Validation Error/i)
+        }))
     })
 })

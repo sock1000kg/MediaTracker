@@ -196,7 +196,7 @@ export async function seedDatabase() {
                 console.log(`Goodreads Import Results:`)
                 console.log(`Imported: ${result.imported}`)
                 console.log(`Skipped: ${result.skipped}`)
-                console.log(`Errors: ${result.errors}`)
+                console.log(`Errors: `, JSON.stringify(result.failures, null, 2))
             } catch (error) {
                 console.error("\x1b[1m\x1b[31mFailed to seed Goodreads CSV:\x1b[0m", error)
             }
