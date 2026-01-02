@@ -2,25 +2,18 @@ import prisma from "@/prismaClient.js"
 import { findUserByUsername } from "@/repositories/authRepository.js"
 import { findMediaTypeForUserOrGlobal } from "@/repositories/mediaTypeRepository.js"
 import { GoodReadsRow, goodreadsRowSchema } from "@/schemas/imports/goodReadsSchemas.js"
-import { AppError } from "@/types/error.js"
+import { AppError } from "@/api/domain/error.js"
 import { validateSchema } from "@/utilities.js"
 import { PrismaClient } from "@prisma/client/extension"
 import { parse } from "csv-parse/sync"
 import { googleBooksService } from "../search/googleBooksSearchService.js"
-import { createImportedMedia } from "@/api/domain/media/mediaFactory.js"
-
-//Helper for fetching rich data
-type GoogleBookMetadata = {
-    pageCount?: number | null
-    categories?: string[] | null
-    publisher?: string | null
-}
+import { BookMetadata, createImportedMedia } from "@/api/domain/media.js"
 
 //Helpers for preparing rich or unrich data
 type BookEnrichmentData = {
     description: string | null
     imageUrl: string | null
-    metadata: GoogleBookMetadata
+    metadata: BookMetadata
 }
 
 type PreparedImportItem = {
@@ -55,7 +48,7 @@ export class GoodreadsImportService {
 
             if (!book) return null
 
-            const meta = book.metadata as GoogleBookMetadata
+            const meta = book.metadata as BookMetadata
 
             // Map Google result to our internal structure
             return {

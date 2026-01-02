@@ -1,4 +1,4 @@
-import { createImportedMedia } from "@/api/domain/media/mediaFactory.js"
+import { createImportedMedia } from "@/api/domain/media.js"
 import { handlePrismaError } from "@/middleWare/errorHandlerMiddleware.js"
 import prisma from "@/prismaClient.js"
 import {
@@ -17,7 +17,7 @@ import {
     deleteMediaSchema,
 } from "@/schemas/mediaSchemas.js" 
 import { createMediaAndLogSchema } from "@/schemas/search/searchSchemas.js"
-import { AppError } from "@/types/error.js"
+import { AppError } from "@/api/domain/error.js"
 
 import { validateSchema } from "@/utilities.js" 
 import { PrismaClient } from "@prisma/client/extension"

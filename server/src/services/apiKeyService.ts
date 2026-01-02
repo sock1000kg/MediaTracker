@@ -9,7 +9,7 @@ import {
 } from "@/repositories/apiKeyRepository.js"
 
 import { findUserByUsername } from "@/repositories/authRepository.js"
-import { AppError } from "@/types/error.js"
+import { AppError } from "@/api/domain/error.js"
 import prisma from "@/prismaClient.js"
 import { handlePrismaError } from "@/middleWare/errorHandlerMiddleware.js"
 

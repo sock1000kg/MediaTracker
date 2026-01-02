@@ -1,11 +1,18 @@
 // domain/media/mediaFactory.ts
 import { PrismaClient } from "@prisma/client/extension"
-import { AppError } from "@/types/error.js"
+import { AppError } from "@/api/domain/error.js"
 
 import { findUserByUsername } from "@/repositories/authRepository.js"
 import { findMediaBySource, createMedia } from "@/repositories/mediaRepository.js"
 import { findMediaTypeForUserOrGlobal } from "@/repositories/mediaTypeRepository.js"
 import { findLogOfUserByMediaId, createLog, updateLog } from "@/repositories/logsRepository.js"
+
+export type BookMetadata = {
+    pageCount?: number | null
+    categories?: string[] | null
+    publisher?: string | null
+    url?: string | null
+}
 
 type CreateImportedMediaInput = {
     userId: number

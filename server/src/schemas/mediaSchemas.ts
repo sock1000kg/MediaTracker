@@ -22,12 +22,11 @@ const titleSchema = z
 const mediaTypeSchema = z.object({
     id: z.number(),
     created_at: z.any(),
-    userId: z.number(),
     name: z
         .string()
         .transform((val) => normalizeTypeName(val))
         .refine(val => val.trim().length > 0, { message: "Media Type name is required" })
-}, { message: "Media Type is required" }).loose()
+}, { message: "Media Type is required" })
 
 const creatorSchema = z
     .preprocess((val: string | null | undefined) => {

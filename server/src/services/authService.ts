@@ -5,7 +5,7 @@ import { findFirstMediaByTitle } from "@/repositories/mediaRepository.js"
 import { createLog } from "@/repositories/logsRepository.js"
 import { registerSchema, loginSchema } from "@/schemas/authSchemas.js"
 import { validateSchema } from "@/utilities.js"
-import { AppError } from "@/types/error.js"
+import { AppError } from "@/api/domain/error.js"
 import prisma from "@/prismaClient.js"
 import { handlePrismaError } from "@/middleWare/errorHandlerMiddleware.js"
 

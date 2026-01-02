@@ -41,22 +41,32 @@ export function MediaCard({ media, onEdit, onDelete, onLog}: MediaCardProps) {
                             {media.year && <span>{media.year}</span>}
                         </div>
                         {/* Metadata */}
-                        <div className=" flex gap-2">
-                            {Object.entries(media.metadata || {}) //converts to array of [key (metadataName), value] pairs
-                                .filter(([value]) => value != null && value !== '') // Filter out empty values
-                                .map(([key, value], index, arr) => (
-                                    <Fragment key={key}>
-                                        <span className='flex gap-1 capitalize'>
-                                            <span className="font-semibold">
-                                                {key}:
-                                            </span>
-                                            {String(value)}
-                                        </span>
-                                        {index < arr.length - 1 && <span>•</span>}
-                                    </Fragment>
-                                ))
-                            }
+                        <div className="flex gap-2 flex-wrap text-xs text-stone-600 mt-1">
+                        {Object.entries(media.metadata || {})
+                            .filter(([key, value]) => value != null && value !== "" && key !== "url")
+                            .map(([key, value], index, arr) => (
+                            <Fragment key={key}>
+                                <span className="flex gap-1 capitalize">
+                                <span className="font-semibold">{key}:</span>
+                                {String(value)}
+                                </span>
+                                {index < arr.length - 1 && <span>•</span>}
+                            </Fragment>
+                            ))}
                         </div>
+
+                        {media.metadata?.url && (
+                        <div className="mt-1">
+                            <a
+                                href={media.metadata?.url as string}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs rounded-2xl px-2 py-0.5 bg-amber-100 text-amber-800 hover:underline"
+                            >
+                                More info
+                            </a>
+                        </div>
+                        )}
                     </div>
                 </div>
 

@@ -2,7 +2,7 @@ import request from "supertest"
 import app from "@/app.js"
 import { prisma } from "@/tests/jest.setup.js"
 import { findUserByUsername } from "@/repositories/authRepository.js"
-import { AppError } from "@/types/error.js"
+import { AppError } from "@/api/domain/error.js"
 
 const API = "/api/imports/goodreads"
 

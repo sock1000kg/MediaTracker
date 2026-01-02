@@ -14,7 +14,7 @@ import {
     deleteMediaTypeSchema, 
     updateMediaTypeSchema 
 } from "@/schemas/mediaTypeSchemas.js"
-import { AppError } from "@/types/error.js"
+import { AppError } from "@/api/domain/error.js"
 
 import { validateSchema, normalizeTypeName } from "@/utilities.js"
 

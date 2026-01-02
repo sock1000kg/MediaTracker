@@ -9,7 +9,7 @@ import { searchResultsSchema, SearchResult } from "@/schemas/search/searchSchema
 import { decryptKey, fetchAndParse, validateSchema } from "@/utilities.js"
 import { findUserById } from "@/repositories/authRepository.js"
 import { ISearchService } from "./searchServiceInterface.js"
-import { AppError } from "@/types/error.js"
+import { AppError } from "@/api/domain/error.js"
 
 export class LastFmSearchService implements ISearchService {
     baseUrl = "https://ws.audioscrobbler.com/2.0/"
