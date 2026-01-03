@@ -75,14 +75,15 @@ export default function LogsSection() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
-        {isPending && <p className="text-gray-500 m-4">Loading logs...</p>}
+      <div className="flex-1 overflow-y-auto min-h-0 scrollbar-hide">
+        {isPending && <p className="text-gray-500 m-4 animate-pulse">Loading logs...</p>}
+
         {/* Error message */}
-          {error && (
-              <p className="mt-2 text-center text-sm text-red-500">
-                  {error.message}
-              </p>
-          )}
+        {error && (
+            <p className="mt-2 text-center text-sm text-red-500">
+                {error.message}
+            </p>
+        )}
 
         {logs.length === 0 && !isPending && <p className=" text-gray-600 m-4">You have no logs. Search for a media and create one!</p>}
         {!isPending && (logs.length > 0) && (

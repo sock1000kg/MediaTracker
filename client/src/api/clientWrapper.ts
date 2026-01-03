@@ -43,15 +43,17 @@ export async function apiFetch<T>(url: string, options: RequestInit = {}): Promi
     throw new Error("No token found")
   }
 
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    ...(options.headers as Record<string, string> | undefined),
+    ...(options.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
+  }
+
   try {
     let res = await fetch(`${API_BASE}${url}`, {
       ...options,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-        ...(options.headers || {}),
-      },
-    }) 
+      headers,
+    })
 
     console.log(res.status, res.headers.get("content-type"))
     if (res.status === 401) {
@@ -59,13 +61,15 @@ export async function apiFetch<T>(url: string, options: RequestInit = {}): Promi
 
       if (newToken) {
         // Retry the original request exactly once with the new token
+        const retryHeaders: Record<string, string> = {
+          Authorization: `Bearer ${newToken}`,
+          ...(options.headers as Record<string, string> | undefined),
+          ...(options.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
+        }
+        
         res = await fetch(`${API_BASE}${url}`, {
             ...options,
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${newToken}`,
-                ...(options.headers || {}),
-            },
+            headers: retryHeaders,
         })
       } else {
         logout()

@@ -100,7 +100,7 @@ export default function MediaTypesSection() {
         </Button>
       </div>
 
-      {isPending && <p className="text-gray-500 m-4">Loading media types...</p>}
+      {isPending && <p className="text-gray-500 m-4 animate-pulse">Loading media types...</p>}
 
       {/* Error message */}
       {error && (
@@ -110,7 +110,7 @@ export default function MediaTypesSection() {
       )}
 
       {/* Media Type list */}
-      <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto min-h-0 scrollbar-hide">
         {!(mediaTypes.length > 0) && !isPending && <p className="text-gray-600 m-4">You have no media types. Create one!</p>}
         {!isPending && (
           <ul className="space-y-2">

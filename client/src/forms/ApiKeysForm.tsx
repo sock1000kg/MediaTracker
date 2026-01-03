@@ -89,7 +89,16 @@ export function ApiKeyForm() {
 
     return (
         <div className="px-4">
-            {isPending && <p className="text-gray-500">Checking your API Keys...</p>}
+            {/* INFO TEXT */}
+            <p className="text-gray-500 text-sm">
+                Please register and enter your own API keys for these services, otherwise your searches will not be available.
+            </p>
+            <p className="text-gray-500 text-xs mb-4">
+                Your API keys will not be displayed again. Please store them somewhere safe before submitting.
+            </p>
+
+            {/* LOADING */}
+            {isPending && <p className="text-gray-500 animate-pulse">Checking your API Keys...</p>}
             {/* Error message */}
             {error && (
                 <p className="mt text-center text-sm text-red-500">
@@ -101,12 +110,7 @@ export function ApiKeyForm() {
                     {serverMessage}
                 </p>
             )}
-            <p className="text-gray-500 text-sm">
-                Please register and enter your own API keys for these services, otherwise your searches will be limited to the API service's restrictions.
-            </p>
-            <p className="text-gray-500 text-xs mb-4">
-                Your API keys will not be displayed again. Please store them somewhere safe before submitting.
-            </p>
+
             {/* GOOGLE BOOKS */}
             <form onSubmit={
                 hasGoogleBooksKey 
@@ -114,7 +118,7 @@ export function ApiKeyForm() {
                 : handleCreate("google_books", googleBooksInput)
             }>
                 <label className="block mb-4">
-                    <span className="text-stone-800">Google Books</span>
+                    <span className="text-stone-800 font-medium">Google Books</span>
                     <div className="flex gap-4 mt-1">
                         <input
                             type="text"
@@ -158,7 +162,7 @@ export function ApiKeyForm() {
                 : handleCreate("lastfm", lastFmInput)
             }>
                 <label className="block mb-4">
-                    <span className="text-stone-800">Last.fm</span>
+                    <span className="text-stone-800 font-medium">Last.fm</span>
                     <div className="flex gap-4 mt-1">
                         <input
                             type="text"

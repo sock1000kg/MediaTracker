@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const goodreadsRowSchema = z.object({
-    "Title": z.coerce.string().min(1),
+    "Title": z.coerce.string({ message: "Title is missing" }).min(1, "Title cannot be empty"),
     "Author": z.string().min(1),
     "Additional Authors": z.string().optional(),
     "My Rating": z.number().min(0).max(5).default(0), 
@@ -14,7 +14,7 @@ export const goodreadsRowSchema = z.object({
     "Date Added": z.string().optional(),
     "Exclusive Shelf": z.string().optional(),
     "My Review": z.string().optional(),
-    "Book Id": z.coerce.string().optional(),
+    "Book Id": z.coerce.string({ message: "Book Id is missing"}).min(1, "Book Id cannot be empty"),
     "ISBN": z.coerce.string().optional(), 
     "ISBN13": z.coerce.string().optional()
 })

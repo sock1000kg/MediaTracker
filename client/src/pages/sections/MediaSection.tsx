@@ -141,7 +141,7 @@ export default function MediasSection() {
         </Button>
       </div>
 
-      {pending && <p className="text-gray-500 m-4">Loading medias...</p>}
+      {pending && <p className="text-gray-500 m-4 animate-pulse">Loading medias...</p>}
 
       {/* Error message */}
       {errorMessage && (
@@ -151,7 +151,7 @@ export default function MediasSection() {
       )}
 
       {/* Media list */}
-      <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto min-h-0 scrollbar-hide">
         {!(medias.length > 0) && !pending && <p className=" text-gray-600 m-4">You have no medias. Create one!</p>}
         {!pending && (medias.length > 0) && (
           <ul className="space-y-2">

@@ -10,6 +10,9 @@ import { googleBooksService } from "../search/googleBooksSearchService.js"
 import { BookMetadata, createImportedMedia } from "@/api/domain/media.js"
 import { ZodError } from "zod"
 import { ImportFailure, ImportResult } from "@/api/domain/imports.js"
+import { handlePrismaError } from "@/middleWare/errorHandlerMiddleware.js"
+import { Prisma } from "@prisma/client"
+import { demoService } from "../demoService.js"
 
 //Helpers for preparing rich or unrich data
 type BookEnrichmentData = {
@@ -69,6 +72,8 @@ export class GoodreadsImportService {
     }
 
     async importFromGoodReads(userId: number, fileBuffer: Buffer): Promise<ImportResult> {
+        await demoService.ensureNotDemo(userId)
+
         const rawRecords = parse(fileBuffer, {
             columns: true, //use the headers as fields for JSON, if false it parses data into arrays
             skip_empty_lines: true,
@@ -81,7 +86,10 @@ export class GoodreadsImportService {
         const failures: ImportFailure[] = []
         const preparedItems: PreparedImportItem[] = []
 
+        /*
         // EXTRACT ALL EXISTING RECORDS TO SAVE ENRICHMENT API calls
+        // 
+        */
         const sourceIds = rawRecords
             .map(r => r['Book Id'])
             .filter(Boolean)
@@ -96,7 +104,10 @@ export class GoodreadsImportService {
         })
         const existingSourceIds = new Set(existingMedia.map(m => m.sourceId))
 
+        /*
+        //
         //ENRICHMENT OF IMPORTED DATA
+        */
         for (const [index, unvalidRecord] of rawRecords.entries()) {
             const rowNum = index + 2 //+2 because: 1st entry is on line 2
             const rawTitle = (unvalidRecord['Title'] as string) || "Unknown Title"
@@ -120,7 +131,7 @@ export class GoodreadsImportService {
                 let reason = "Invalid data format"
 
                 if (error instanceof ZodError) {
-                    const reason = error.issues 
+                    reason = error.issues 
                     ? error.issues.map((i) => i.message).join(", ") 
                     : error.message || "Invalid data format"
 
@@ -141,109 +152,89 @@ export class GoodreadsImportService {
             }
         }
 
-        return prisma.$transaction(async (tx: PrismaClient) => {
-            const systemUser = await findUserByUsername("system", tx)
-            const bookType = await findMediaTypeForUserOrGlobal("book", userId, tx)
-
-            if (!systemUser || !bookType) {
-                throw new AppError("System user or book type missing", 500)
-            }
+        /*
+        //PARSE THE ENRICHED DATA AND CREATE MEDIA ENTRIES, THEN UPSERT LOGS FOR USER
+        */
+        for (const item of preparedItems) {
+            if (!item.isValid) continue
             
-            for (const item of preparedItems) {
-                if (!item.isValid) continue
-                try {
-                    const { record, enrichmentData } = item
+            const title = item.record['Title']
 
-                    const title = record['Title']
+            try {
+                // Run a MINI transaction for just this one book
+                // This ensures Media + Log are atomic, but isolates this book from others
+                await prisma.$transaction(async (tx) => {
+                    const systemUser = await findUserByUsername("system", tx)
+                    const bookType = await findMediaTypeForUserOrGlobal("book", userId, tx) 
+                    
+                    if (!systemUser || !bookType) throw new AppError("System config missing", 500)
+
+                    // Variable mapping logic)
+                    const { record, enrichmentData } = item
                     const mainAuthor = record['Author']
                     const additionalAuthors = record['Additional Authors']
                     const year = record['Year Published'] ?? null
                     const sourceId = record['Book Id'] ?? null
                     const starRating = record['My Rating'] ?? 0
                     const exclusiveShelf = record['Exclusive Shelf'] || ""
-
-                    //Combine authors
-                    const author = additionalAuthors 
-                        ? `${mainAuthor}, ${additionalAuthors}` 
-                        : mainAuthor
-
-                    // CONSTRUCT THE LINK
-                    // Goodreads links follow this pattern: https://www.goodreads.com/book/show/12345
-                    let constructedSourceUrl = ""
-                    if (sourceId) {
-                        constructedSourceUrl = `https://www.goodreads.com/book/show/${sourceId}`
-                    }
-
-                    // Map shelves to status, wishlist is default
+                    const author = additionalAuthors ? `${mainAuthor}, ${additionalAuthors}` : mainAuthor
+                    let constructedSourceUrl = sourceId ? `https://www.goodreads.com/book/show/${sourceId}` : ""
+                    
+                    //Map bookshelves to status
                     let status = "wishlist"
-                    if (exclusiveShelf === 'read') {
-                        status = "completed"
-                    } else if (exclusiveShelf === 'currently-reading') {
-                        status = "in progress"
-                    } else if (exclusiveShelf === 'to-read') {
-                        status = "wishlist"
-                    } else {
-                        // FALLBACK: If Exclusive Shelf is somehow missing, check "Date Read"
-                        if (record['Date Read']) {
-                            status = "completed"
-                        }
-                    }
-    
-                    //Convert stars to 100
+                    if (exclusiveShelf === 'read') status = "completed"
+                    else if (exclusiveShelf === 'currently-reading') status = "in progress"
+                    else if (record['Date Read']) status = "completed"
+
+                    //Convert stars to 100 scale
                     const rating100 = Math.round(starRating * 20)
 
-                    // MERGE DATA: Use enrichment data if available
-                    const finalMetadata = {
-                        url: constructedSourceUrl,
-                        ...(enrichmentData?.metadata || {})
-                    }
-    
-                    const { logCreated } = await createImportedMedia(
-                        {
-                            userId,
-                            mediaTypeName: "book",
-                            mediaData: {
-                                title,
-                                creator: author,
-                                year,
-                                source: "goodreads",
-                                sourceId,
-                                metadata: finalMetadata,
-                                description: enrichmentData?.description,
-                                imageUrl: enrichmentData?.imageUrl,
+                    const { logCreated } = await createImportedMedia({
+                         userId,
+                         mediaTypeName: "book",
+                         mediaData: {
+                             title, creator: author, year, source: "goodreads", sourceId,
+                             metadata: { 
+                                url: constructedSourceUrl, 
+                                ...(enrichmentData?.metadata || {}) 
+                            },
+                             description: enrichmentData?.description,
+                             imageUrl: enrichmentData?.imageUrl,
+                         },
+                         logData: { status, rating: rating100, notes: record['My Review'] || "" },
+                    }, tx)
 
-                            },
-                            logData: {
-                                status,
-                                rating: rating100,
-                                notes: record['My Review'] || "",
-                            },
-                        },
-                        tx
-                    )
-                        
                     if (logCreated) {
                         results.imported++
-                    } else {
+                    } else { 
                         results.skipped++
                     }
-                } catch (error: unknown) {
-                    const reason = error instanceof Error ? error.message : "Unknown database error"
+                })
 
-                    const title = item['Title']
-                    console.error(`Failed to import book: ${title}`, error)
-                    
-                    results.failures.push({
-                        row: -1, // We can't track original row index in preparedItems easily, but we have the title
-                        title: title,
-                        reason: `Save Error: ${reason}`
-                    })
+            } catch (error: unknown) {
+                let reason = "Database Error"
+                // dont want it to throw so dont use handlePrismaError
+                if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                    if (error.code === 'P2002') {
+                        reason = "Database Error (Ignore): Book already exists in library, but was not skipped"
+                    } else {
+                        reason = `Database Error (${error.code})`
+                    }
+                } else if (error instanceof AppError) {
+                    reason = error.message
+                } else if (error instanceof Error) {
+                    reason = error.message
                 }
+
+                results.failures.push({
+                    row: -1, 
+                    title: title, 
+                    reason: reason
+                })
             }
+        }
 
-            return results
-        }, { timeout: 30000 })
-
+        return results
     }
 }
 
