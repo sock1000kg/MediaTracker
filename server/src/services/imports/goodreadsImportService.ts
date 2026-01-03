@@ -60,7 +60,7 @@ export class GoodreadsImportService {
                 description: book.description || null,
                 imageUrl: book.imageUrl || null,
                 metadata: {
-                    pageCount: meta.pageCount ?? null,
+                    pageCount: meta.pageCount || null, //ignore 0
                     categories: meta.categories ?? null,
                     publisher: meta.publisher ?? null
                 }
@@ -72,8 +72,6 @@ export class GoodreadsImportService {
     }
 
     async importFromGoodReads(userId: number, fileBuffer: Buffer): Promise<ImportResult> {
-        await demoService.ensureNotDemo(userId)
-
         const rawRecords = parse(fileBuffer, {
             columns: true, //use the headers as fields for JSON, if false it parses data into arrays
             skip_empty_lines: true,

@@ -21,7 +21,7 @@ export function ImportsForm() {
             setServerMessage(null)
             setSelectedFile(null)
 
-            queryClient.invalidateQueries({ queryKey: fetchLogsQueryOptions().queryKey })
+            queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey })
         },
         onError: (error: Error) => {
             setServerMessage(error.message || "Import failed")
