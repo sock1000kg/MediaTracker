@@ -4,15 +4,12 @@ import { findMediaTypeForUserOrGlobal } from "@/repositories/mediaTypeRepository
 import { GoodReadsRow, goodreadsRowSchema } from "@/schemas/imports/goodReadsSchemas.js"
 import { AppError } from "@/api/domain/error.js"
 import { validateSchema } from "@/utilities.js"
-import { PrismaClient } from "@prisma/client/extension"
 import { parse } from "csv-parse/sync"
 import { googleBooksService } from "../search/googleBooksSearchService.js"
 import { BookMetadata, createImportedMedia } from "@/api/domain/media.js"
 import { ZodError } from "zod"
 import { ImportFailure, ImportResult } from "@/api/domain/imports.js"
-import { handlePrismaError } from "@/middleWare/errorHandlerMiddleware.js"
 import { Prisma } from "@prisma/client"
-import { demoService } from "../demoService.js"
 
 //Helpers for preparing rich or unrich data
 type BookEnrichmentData = {
@@ -71,95 +68,17 @@ export class GoodreadsImportService {
         }
     }
 
-    async importFromGoodReads(userId: number, fileBuffer: Buffer): Promise<ImportResult> {
-        const rawRecords = parse(fileBuffer, {
-            columns: true, //use the headers as fields for JSON, if false it parses data into arrays
-            skip_empty_lines: true,
-            trim: true,
-            cast: true,
-            bom: true //handle weird Excel csv apparently, just for safety
-        }) as Record<string, unknown>[]
-
-        const results: ImportResult = { imported: 0, skipped: 0, failures: [] }
-        const failures: ImportFailure[] = []
-        const preparedItems: PreparedImportItem[] = []
-
-        /*
-        // EXTRACT ALL EXISTING RECORDS TO SAVE ENRICHMENT API calls
-        // 
-        */
-        const sourceIds = rawRecords
-            .map(r => r['Book Id'])
-            .filter(Boolean)
-            .map(id => String(id)) // Force string conversion
-
-        const existingMedia = await prisma.media.findMany({
-            where: {
-                source: "goodreads",
-                sourceId: { in: sourceIds }
-            },
-            select: { sourceId: true }
-        })
-        const existingSourceIds = new Set(existingMedia.map(m => m.sourceId))
-
-        /*
-        //
-        //ENRICHMENT OF IMPORTED DATA
-        */
-        for (const [index, unvalidRecord] of rawRecords.entries()) {
-            const rowNum = index + 2 //+2 because: 1st entry is on line 2
-            const rawTitle = (unvalidRecord['Title'] as string) || "Unknown Title"
-            try {
-                const record = validateSchema(goodreadsRowSchema, unvalidRecord)
-                const sourceId = record['Book Id']
-
-                let enrichmentData: BookEnrichmentData | undefined
-                // Only enrich if it's a NEW book (not in DB)
-                if (sourceId && !existingSourceIds.has(sourceId.toString())) {
-                    // Small delay to be nice to Google API if processing many
-                    await new Promise(r => setTimeout(r, 100)) 
-
-                    const data = await this.fetchEnrichmentData(userId, record)
-                    if (data) enrichmentData = data
-                }
-
-                preparedItems.push({ isValid: true, record, enrichmentData })
-
-            } catch (error: unknown) {
-                let reason = "Invalid data format"
-
-                if (error instanceof ZodError) {
-                    reason = error.issues 
-                    ? error.issues.map((i) => i.message).join(", ") 
-                    : error.message || "Invalid data format"
-
-                    failures.push({
-                        row: rowNum,
-                        title: rawTitle,
-                        reason: `Validation Error: ${reason}`
-                    })
-                } else if (error instanceof Error) {
-                    reason = error.message
-                }
-
-                results.failures.push({
-                    row: rowNum,
-                    title: rawTitle,
-                    reason: `Validation Error: ${reason}`
-                })
-            }
-        }
-
-        /*
-        //PARSE THE ENRICHED DATA AND CREATE MEDIA ENTRIES, THEN UPSERT LOGS FOR USER
-        */
-        for (const item of preparedItems) {
-            if (!item.isValid) continue
-            
-            const title = item.record['Title']
+    private async processSingleItem(
+        userId: number,
+        record: GoodReadsRow,
+        enrichmentData: BookEnrichmentData | undefined ,
+        results: ImportResult,
+        rowNum: number
+    ) {
+        const title = record['Title']
 
             try {
-                // Run a MINI transaction for just this one book
+                // Run a MINI transaction for just this one row
                 // This ensures Media + Log are atomic, but isolates this book from others
                 await prisma.$transaction(async (tx) => {
                     const systemUser = await findUserByUsername("system", tx)
@@ -168,7 +87,6 @@ export class GoodreadsImportService {
                     if (!systemUser || !bookType) throw new AppError("System config missing", 500)
 
                     // Variable mapping logic)
-                    const { record, enrichmentData } = item
                     const mainAuthor = record['Author']
                     const additionalAuthors = record['Additional Authors']
                     const year = record['Year Published'] ?? null
@@ -176,7 +94,7 @@ export class GoodreadsImportService {
                     const starRating = record['My Rating'] ?? 0
                     const exclusiveShelf = record['Exclusive Shelf'] || ""
                     const author = additionalAuthors ? `${mainAuthor}, ${additionalAuthors}` : mainAuthor
-                    let constructedSourceUrl = sourceId ? `https://www.goodreads.com/book/show/${sourceId}` : ""
+                    const constructedSourceUrl = sourceId ? `https://www.goodreads.com/book/show/${sourceId}` : ""
                     
                     //Map bookshelves to status
                     let status = "wishlist"
@@ -225,13 +143,90 @@ export class GoodreadsImportService {
                 }
 
                 results.failures.push({
-                    row: -1, 
+                    row: rowNum, 
                     title: title, 
                     reason: reason
                 })
             }
-        }
+    }
 
+    async importFromGoodReads(userId: number, fileBuffer: Buffer): Promise<ImportResult> {
+        const rawRecords = parse(fileBuffer, {
+            columns: true, //use the headers as fields for JSON, if false it parses data into arrays
+            skip_empty_lines: true,
+            trim: true,
+            cast: true,
+            bom: true //handle weird Excel csv apparently, just for safety
+        }) as Record<string, unknown>[]
+
+        const results: ImportResult = { imported: 0, skipped: 0, failures: [] }
+        const failures: ImportFailure[] = []
+
+        /*
+        // EXTRACT ALL EXISTING RECORDS TO SAVE ENRICHMENT API calls
+        // 
+        */
+        const sourceIds = rawRecords
+            .map(r => r['Book Id'])
+            .filter(Boolean)
+            .map(id => String(id)) // Force string conversion
+
+        const existingMedia = await prisma.media.findMany({
+            where: {
+                source: "goodreads",
+                sourceId: { in: sourceIds }
+            },
+            select: { sourceId: true }
+        })
+        const existingSourceIds = new Set(existingMedia.map(m => m.sourceId))
+
+        /*
+        //
+        //ENRICHMENT OF IMPORTED DATA
+        */
+        for (const [index, unvalidRecord] of rawRecords.entries()) {
+            const rowNum = index + 2 //+2 because: 1st entry is on line 2
+            const rawTitle = (unvalidRecord['Title'] as string) || "Unknown Title"
+            try {
+                const record = validateSchema(goodreadsRowSchema, unvalidRecord)
+                const sourceId = record['Book Id']
+
+                let enrichmentData: BookEnrichmentData | undefined
+                // Only enrich if it's a NEW book (not in DB)
+                if (sourceId && !existingSourceIds.has(sourceId.toString())) {
+                    // Small delay to be nice to Google API if processing many
+                    await new Promise(r => setTimeout(r, 100)) 
+
+                    const data = await this.fetchEnrichmentData(userId, record)
+                    if (data) enrichmentData = data
+                }
+
+                await this.processSingleItem(userId, record, enrichmentData, results, rowNum)
+
+            } catch (error: unknown) {
+                let reason = "Invalid data format"
+
+                if (error instanceof ZodError) {
+                    reason = error.issues 
+                    ? error.issues.map((i) => i.message).join(", ") 
+                    : error.message || "Invalid data format"
+
+                    failures.push({
+                        row: rowNum,
+                        title: rawTitle,
+                        reason: `Validation Error: ${reason}`
+                    })
+                } else if (error instanceof Error) {
+                    reason = error.message
+                }
+
+                results.failures.push({
+                    row: rowNum,
+                    title: rawTitle,
+                    reason: `Validation Error: ${reason}`
+                })
+            }
+        }
         return results
     }
 }
