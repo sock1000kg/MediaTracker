@@ -18,12 +18,6 @@ type BookEnrichmentData = {
     metadata: BookMetadata
 }
 
-type PreparedImportItem = {
-    isValid: boolean
-    record: GoodReadsRow
-    enrichmentData?: BookEnrichmentData
-}
-
 export class GoodreadsImportService {
     /**
      * Enriches a record with Google Books data.

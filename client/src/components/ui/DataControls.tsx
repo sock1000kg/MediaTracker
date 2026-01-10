@@ -1,7 +1,7 @@
 import { Search, Plus, Filter, X, ArrowUp, ArrowDown } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuItem } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { type SortField, type SortCriterion } from "@/types/sort"
 import type { ReactNode } from "react"
 
@@ -63,7 +63,7 @@ export function DataControls({
                         <span className="hidden sm:inline">Add Sort</span>
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[160px]">
+                <DropdownMenuContent>
                     <DropdownMenuLabel>Sort by</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     {availableSorts.map((f) => (
@@ -75,6 +75,21 @@ export function DataControls({
                             {f.label}
                         </DropdownMenuItem>
                     ))}
+                        {activeSorts.length > 0 && (
+                                <>
+                                    <DropdownMenuSeparator />
+                                    <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="w-full justify-center text-xs"
+                                    onClick={() => {
+                                        activeSorts.forEach(s => removeSort(s.id))
+                                    }}
+                                    >
+                                    Clear Filters
+                                    </Button>
+                                </>
+                            )}
                 </DropdownMenuContent>
              </DropdownMenu>
 
@@ -87,34 +102,34 @@ export function DataControls({
                             <span className="hidden sm:inline">{opt.label}</span>
                         </Button>
                     </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[200px]">
-                    <DropdownMenuLabel>Filter by {opt.label}</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {opt.values.map((val) => (
-                        <DropdownMenuCheckboxItem 
-                            key={val} 
-                            checked={activeFilters[opt.id]?.includes(val)}
-                            onSelect={(e) => { e.preventDefault(); toggleFilter(opt.id, val); }}
-                        >
-                            <span className="capitalize">{val}</span>
-                        </DropdownMenuCheckboxItem>
-                    ))}
-                        {activeFilters[opt.id]?.length > 0 && (
-                        <>
-                            <DropdownMenuSeparator />
-                            <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="w-full justify-center text-xs"
-                            onClick={() => {
-                                activeFilters[opt.id].forEach(v => toggleFilter(opt.id, v))
-                            }}
+                    <DropdownMenuContent>
+                        <DropdownMenuLabel>Filter by {opt.label}</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {opt.values.map((val) => (
+                            <DropdownMenuItem 
+                                key={val} 
+                                disabled={activeFilters[opt.id]?.includes(val)}
+                                onSelect={(e) => { e.preventDefault(); toggleFilter(opt.id, val); }}
                             >
-                            Clear Filters
-                            </Button>
-                        </>
-                        )}
-                </DropdownMenuContent>
+                                <span className="capitalize">{val}</span>
+                            </DropdownMenuItem>
+                        ))}
+                            {activeFilters[opt.id]?.length > 0 && (
+                                <>
+                                    <DropdownMenuSeparator />
+                                    <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="w-full justify-center text-xs"
+                                    onClick={() => {
+                                        activeFilters[opt.id].forEach(v => toggleFilter(opt.id, v))
+                                    }}
+                                    >
+                                    Clear Filters
+                                    </Button>
+                                </>
+                            )}
+                    </DropdownMenuContent>
                 </DropdownMenu>
             ))}
 

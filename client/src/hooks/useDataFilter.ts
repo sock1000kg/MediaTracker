@@ -55,22 +55,23 @@ export function useDataFilter<T>({
   const processedData = useMemo(() => {
     let result = [...data]
 
-    // 1. Search
+    // Search
     if (searchQuery) {
       const lowerQ = searchQuery.toLowerCase()
       result = result.filter(item => {
         // Simple nested property accessor
-        return searchFields.some(path => {
-            const val = path.toString().split('.').reduce((obj: any, key) => obj?.[key], item)
-            return String(val ?? "").toLowerCase().includes(lowerQ);
+        return searchFields.some(path => { // path ex: "media.title"
+            const val = path.toString().split('.')  // Becomes: ["media", "title"]
+            .reduce<unknown>((obj, key) => (obj as Record<string, unknown>)?.[key], item)
+            return String(val ?? "").toLowerCase().includes(lowerQ)
         })
       })
     }
 
-    // 2. Filters
+    // Filters
     Object.entries(activeFilters).forEach(([filterId, activeValues]) => {
-      if (activeValues.length === 0) return;
-      const filterDef = filterableFields.find(f => f.id === filterId);
+      if (activeValues.length === 0) return
+      const filterDef = filterableFields.find(f => f.id === filterId)
       if (filterDef) {
         result = result.filter(item => activeValues.includes(filterDef.field(item)))
       }
@@ -105,7 +106,7 @@ export function useDataFilter<T>({
     }
     
     return result
-  }, [data, searchQuery, activeFilters, activeSorts])
+  }, [data, searchQuery, activeFilters, activeSorts, searchFields, filterableFields, getSortValue])
 
   return {
     processedData,

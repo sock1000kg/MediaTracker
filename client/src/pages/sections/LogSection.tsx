@@ -14,7 +14,7 @@ import { ConfirmDeleteDialog } from "@/components/dialogs/ConfirmDeleteDialog"
 // --- NEW IMPORTS ---
 import { DataControls } from "@/components/ui/DataControls" 
 import { useDataFilter } from "@/hooks/useDataFilter"
-import { AVAILABLE_SORT_FIELDS, type SortField } from "@/types/sort"
+import { AVAILABLE_SORT_FIELDS, type SortCriterion, type SortField } from "@/types/sort"
 import type { DialogName, Log, MediaMetadata } from "@/types/mainTypes"
 
 export default function LogsSection() {
@@ -26,10 +26,10 @@ export default function LogsSection() {
 
   const queryClient = useQueryClient()
   
-  // 1. Fetch Data
+  // Fetch Data
   const { data: logs = [], error, isPending } = useQuery(fetchLogsQueryOptions())
 
-  // 2. Mutations
+  // Mutations
   const deleteMutation = useMutation({
     mutationFn: deleteLog,
     onSuccess: () => queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey }),
@@ -40,7 +40,7 @@ export default function LogsSection() {
     onSuccess: () => queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey }),
   })
 
-  //Helper function for the hook
+  //Helper function for the filters hook
   const getLogSortValue = (log: Log, field: SortField) => {
     switch (field) {
         case "title": return log.media.title
@@ -56,24 +56,30 @@ export default function LogsSection() {
     }
   }
 
+  //Filters hook config
+  const INITIAL_SORTS: SortCriterion[] = [
+    { id: "date", field: "date", direction: "desc" }
+  ]
+  const SEARCH_FIELDS = ["media.title", "media.creator"]
+  const FILTER_CONFIG = [
+    { id: "type", field: (log: Log) => log.media.mediaType.name },
+    { id: "status", field: (log: Log) => log.status }
+  ]
+  
   // Filters Hook
   // We pass the raw data ('logs') into the hook.
   // The hook gives us back 'processedData' (already filtered/sorted) and all the handlers.
   const {
-    processedData: processedLogs, // Rename processedData to processedLogs for clarity
+    processedData: processedLogs,
     searchQuery, setSearchQuery,
     activeSorts, addSort, removeSort, toggleSortDirection,
     activeFilters, toggleFilter,
     clearAll
   } = useDataFilter<Log>({
     data: logs,
-    initialSorts: [{ id: "date", field: "date", direction: "desc" }],
-    searchFields: ["media.title", "media.creator"],
-    filterableFields: [
-        // Define how to get the value for each filter
-        { id: "type", field: (log) => log.media.mediaType.name },
-        { id: "status", field: (log) => log.status }
-    ],
+    initialSorts: INITIAL_SORTS,
+    searchFields: SEARCH_FIELDS,
+    filterableFields: FILTER_CONFIG,
     getSortValue: getLogSortValue
   })
 
