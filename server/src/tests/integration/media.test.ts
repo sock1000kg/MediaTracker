@@ -9,6 +9,7 @@ describe('Media Routes', () => {
     const password = 'StrongPass1!'
     const mediaTypeName = normalizeTypeName('TestMediaType')
     const displayName = 'Tester'
+    const registerKey = process.env.REGISTER_KEY
     let token, user, mediaType
 
     beforeEach(async () => {
@@ -16,8 +17,8 @@ describe('Media Routes', () => {
         await prisma.user.deleteMany({ where: { username } })
 
         const registerRes = await request(app)
-            .post('/auth/register')
-            .send({ username, password, displayName })
+            .post('/api/auth/register')
+            .send({ username, password, displayName, registerKey })
             .set('Content-Type', 'application/json')
         expect(registerRes.statusCode).toBe(201)
 
@@ -26,7 +27,7 @@ describe('Media Routes', () => {
         }
 
         const loginRes = await request(app)
-            .post('/auth/login')
+            .post('/api/auth/login')
             .send({ username, password })
             .set('Content-Type', 'application/json')
 
@@ -61,7 +62,7 @@ describe('Media Routes', () => {
     //CREATE
     test('Create media with global type succeeds', async () => {
         const res = await request(app)
-            .post('/media')
+            .post('/api/media')
             .set('Authorization', `Bearer ${token}`)
             .send({
             title: 'GlobalTypeTest',
@@ -76,7 +77,7 @@ describe('Media Routes', () => {
 
     test('Create media with valid data succeeds', async () => {
         const res = await request(app)
-            .post('/media')
+            .post('/api/media')
             .set('Authorization', `Bearer ${token}`)
             .send({
                 title: 'Test Media',
@@ -92,7 +93,7 @@ describe('Media Routes', () => {
 
     test('Create media with null metadata succeeds', async () => {
     const res = await request(app)
-        .post('/media')
+        .post('/api/media')
         .set('Authorization', `Bearer ${token}`)
         .send({
             title: 'MetaNull',
@@ -109,7 +110,7 @@ describe('Media Routes', () => {
 
     test('Create media with missing title fails', async () => {
         const res = await request(app)
-            .post('/media')
+            .post('/api/media')
             .set('Authorization', `Bearer ${token}`)
             .send({
                 mediaType: mediaType,
@@ -122,7 +123,7 @@ describe('Media Routes', () => {
 
     test('Create media with invalid year succeeds, year turns null', async () => {
     const res = await request(app)
-        .post('/media')
+        .post('/api/media')
         .set('Authorization', `Bearer ${token}`)
         .send({
             title: 'BadYear',
@@ -137,23 +138,25 @@ describe('Media Routes', () => {
 
     test('Create duplicate media fails', async () => {
         await request(app)
-            .post('/media')
+            .post('/api/media')
             .set('Authorization', `Bearer ${token}`)
             .send({
                 title: 'Test Media',
                 mediaType: mediaType,
                 creator: 'Author',
                 year: 2024,
+                source: 'goodreads',
                 metadata: { foo: 'bar' }
             })
         const res = await request(app)
-            .post('/media')
+            .post('/api/media')
             .set('Authorization', `Bearer ${token}`)
             .send({
                 title: 'Test Media',
                 mediaType: mediaType,
                 creator: 'Author',
                 year: 2024,
+                source: 'goodreads',
                 metadata: { foo: 'bar' }
             })
         expect(res.statusCode).toBe(409)
@@ -162,7 +165,7 @@ describe('Media Routes', () => {
 
     test('Create media without token fails', async () => {
         const res = await request(app)
-            .post('/media')
+            .post('/api/media')
             .send({
                 title: 'NoAuthMedia',
                 mediaType: mediaType,
@@ -174,7 +177,7 @@ describe('Media Routes', () => {
 
     test('Response includes expected fields', async () => {
         const res = await request(app)
-            .post('/media')
+            .post('/api/media')
             .set('Authorization', `Bearer ${token}`)
             .send({
                 title: 'SchemaTest',
@@ -199,7 +202,7 @@ describe('Media Routes', () => {
     // FETCH
     test('Fetch all media returns array', async () => {
         await request(app)
-            .post('/media')
+            .post('/api/media')
             .set('Authorization', `Bearer ${token}`)
             .send({
                 title: 'Test Media',
@@ -209,7 +212,7 @@ describe('Media Routes', () => {
                 metadata: { foo: 'bar' }
             })
         const res = await request(app)
-            .get('/media')
+            .get('/api/media')
             .set('Authorization', `Bearer ${token}`)
         expect(res.statusCode).toBe(200)
         expect(Array.isArray(res.body)).toBe(true)
@@ -219,7 +222,7 @@ describe('Media Routes', () => {
     //UPDATE
     test('Update media succeeds', async () => {
         const createRes = await request(app)
-            .post('/media')
+            .post('/api/media')
             .set('Authorization', `Bearer ${token}`)
             .send({
                 title: 'Test Media',
@@ -230,7 +233,7 @@ describe('Media Routes', () => {
             })
         const mediaId = createRes.body.id
         const res = await request(app)
-            .put(`/media/${mediaId}`)
+            .put(`/api/media/${mediaId}`)
             .set('Authorization', `Bearer ${token}`)
             .send({
                 title: 'Updated Media',
@@ -246,7 +249,7 @@ describe('Media Routes', () => {
 
     test('Update media missing fields fails', async () => {
         const createRes = await request(app)
-            .post('/media')
+            .post('/api/media')
             .set('Authorization', `Bearer ${token}`)
             .send({
                 title: 'Test Media',
@@ -257,7 +260,7 @@ describe('Media Routes', () => {
             })
         const mediaId = createRes.body.id
         const res = await request(app)
-            .put(`/media/${mediaId}`)
+            .put(`/api/media/${mediaId}`)
             .set('Authorization', `Bearer ${token}`)
             .send({
                 mediaType: mediaType,
@@ -272,29 +275,31 @@ describe('Media Routes', () => {
     test('Update media to duplicate fails', async () => {
         // Create two medias
         await request(app)
-            .post('/media')
+            .post('/api/media')
             .set('Authorization', `Bearer ${token}`)
             .send({
                 title: 'Media1',
                 mediaType: mediaType,
                 creator: 'A',
                 year: 2024,
+                source: 'goodreads',
                 metadata: {}
             })
         const createRes = await request(app)
-            .post('/media')
+            .post('/api/media')
             .set('Authorization', `Bearer ${token}`)
             .send({
                 title: 'Media2',
                 mediaType: mediaType,
                 creator: 'B',
                 year: 2024,
+                source: 'goodreads',
                 metadata: {}
             })
         const media2Id = createRes.body.id
         // Try to update Media2 to have same info as Media1
         const res = await request(app)
-            .put(`/media/${media2Id}`)
+            .put(`/api/media/${media2Id}`)
             .set('Authorization', `Bearer ${token}`)
             .send({
                 title: 'Media1',
@@ -310,7 +315,7 @@ describe('Media Routes', () => {
     //DELETE
     test('Delete media succeeds', async () => {
         const createRes = await request(app)
-            .post('/media')
+            .post('/api/media')
             .set('Authorization', `Bearer ${token}`)
             .send({
                 title: 'Delete Me',
@@ -321,7 +326,7 @@ describe('Media Routes', () => {
             })
         const mediaId = createRes.body.id
         const res = await request(app)
-            .delete(`/media/${mediaId}`)
+            .delete(`/api/media/${mediaId}`)
             .set('Authorization', `Bearer ${token}`)
             .send({ confirm: true })
         expect(res.statusCode).toBe(200)
@@ -330,7 +335,7 @@ describe('Media Routes', () => {
 
     test('Delete non-existent media fails', async () => {
         const res = await request(app)
-            .delete('/media/999999')
+            .delete('/api/media/999999')
             .set('Authorization', `Bearer ${token}`)
             .send({ confirm: true })
         expect(res.statusCode).toBe(404)
@@ -340,7 +345,7 @@ describe('Media Routes', () => {
     test('Delete media with logs without confirmation fails with prompt', async () => {
         // Create media
         const createRes = await request(app)
-            .post('/media')
+            .post('/api/media')
             .set('Authorization', `Bearer ${token}`)
             .send({
                 title: 'MediaWithLog',
@@ -362,7 +367,7 @@ describe('Media Routes', () => {
         })
         // Try to delete without confirmation
         const res = await request(app)
-            .delete(`/media/${mediaId}`)
+            .delete(`/api/media/${mediaId}`)
             .set('Authorization', `Bearer ${token}`)
             .send({ confirm: false })
         expect(res.statusCode).toBe(200)
@@ -372,7 +377,7 @@ describe('Media Routes', () => {
 
     test('Update media with missing fields fails', async () => {
         const createRes = await request(app)
-            .post('/media')
+            .post('/api/media')
             .set('Authorization', `Bearer ${token}`)
             .send({
                 title: 'UpdateFail',
@@ -383,7 +388,7 @@ describe('Media Routes', () => {
             })
         const mediaId = createRes.body.id
         const res = await request(app)
-            .put(`/media/${mediaId}`)
+            .put(`/api/media/${mediaId}`)
             .set('Authorization', `Bearer ${token}`)
             .send({
                 title: '',
@@ -410,7 +415,7 @@ describe('Media Routes', () => {
         })
         // Try to delete as main user
         const res = await request(app)
-            .delete(`/media/${otherMedia.id}`)
+            .delete(`/api/media/${otherMedia.id}`)
             .set('Authorization', `Bearer ${token}`)
             .send({ confirm: true })
         expect(res.statusCode).toBe(403)

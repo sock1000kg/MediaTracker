@@ -68,8 +68,14 @@ export async function updateLog(
     })
 }
 
-export async function deleteLog(id) {
+export async function deleteLog(id: number) {
     await prisma.userLogs.delete({
         where: { id }
+    })
+}
+
+export async function deleteAllLogsForUser(userId: number, client: PrismaClient) {
+    await client.userLogs.deleteMany({
+        where: { userId }
     })
 }

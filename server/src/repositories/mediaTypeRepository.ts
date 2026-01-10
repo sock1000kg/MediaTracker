@@ -61,6 +61,14 @@ export async function deleteMediaTypeForUser(name: string, userId: number, clien
     })
 }
 
+export async function deleteAllMediaTypeForUser(userId: number, client: PrismaClient): Promise<void> {
+    await client.mediaType.deleteMany({ 
+        where: { 
+            userId
+        } 
+    })
+}
+
 export async function updateMediaTypeForUser(oldName: string, newName: string, userId: number): Promise<MediaType> {
   return prisma.mediaType.update({
     where: { 

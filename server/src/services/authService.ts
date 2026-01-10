@@ -5,7 +5,7 @@ import { findFirstMediaByTitle } from "@/repositories/mediaRepository.js"
 import { createLog } from "@/repositories/logsRepository.js"
 import { registerSchema, loginSchema } from "@/schemas/authSchemas.js"
 import { validateSchema } from "@/utilities.js"
-import { AppError } from "@/types/error.js"
+import { AppError } from "@/api/domain/error.js"
 import prisma from "@/prismaClient.js"
 import { handlePrismaError } from "@/middleWare/errorHandlerMiddleware.js"
 
@@ -17,6 +17,15 @@ export class AuthService {
     }
 
     async register(payload: unknown) {
+        // Only people with this key is allow to register
+        const { registerKey } = payload as { registerKey?: string}
+        if (!process.env.REGISTER_KEY) {
+            throw new AppError("Registration key env is missing", 403)
+        }
+        if (process.env.REGISTER_KEY !== registerKey) {
+            throw new AppError("Invalid Registration Key", 403)
+        }
+
         const { username, password, displayName } = validateSchema(registerSchema, payload)
 
         return await prisma.$transaction(async (tx) => {

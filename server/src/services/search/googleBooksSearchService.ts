@@ -4,7 +4,7 @@ import { SearchResult, searchResultsSchema } from "@/schemas/search/searchSchema
 import { GoogleBook, googleBooksResponseSchema } from "@/schemas/search/bookSchemas.js"
 import { decryptKey, fetchAndParse, validateSchema } from "@/utilities.js"
 import { findUserById } from "@/repositories/authRepository.js"
-import { AppError } from "@/types/error.js"
+import { AppError } from "@/api/domain/error.js"
 
 export class GoogleBooksService implements ISearchService {
     maxResults = 20
@@ -50,7 +50,7 @@ export class GoogleBooksService implements ISearchService {
         if (key) url.searchParams.set("key", key)
 
         const parsed = await fetchAndParse(url, googleBooksResponseSchema, "Google Books API error", "Failed to fetch from Google Books")
-        console.log("PARSED: ", parsed)
+        // console.log("PARSED: ", parsed)
 
         const results = this.mapResults(parsed.items ?? [])
         if (!results.length) {

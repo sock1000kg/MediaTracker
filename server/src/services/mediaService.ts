@@ -1,14 +1,12 @@
+import { createImportedMedia } from "@/api/domain/media.js"
 import { handlePrismaError } from "@/middleWare/errorHandlerMiddleware.js"
 import prisma from "@/prismaClient.js"
-import { findUserByUsername } from "@/repositories/authRepository.js"
-import { createLog, findLogOfUserByMediaId, updateLog } from "@/repositories/logsRepository.js"
 import {
     findMediaById,
     createMedia,
     updateMediaForUser,
     deleteMedia,
     getAllMediasUserCreated,
-    findMediaBySource,
 } from "@/repositories/mediaRepository.js" 
 
 import { findMediaTypeForUserOrGlobal } from "@/repositories/mediaTypeRepository.js" 
@@ -19,7 +17,7 @@ import {
     deleteMediaSchema,
 } from "@/schemas/mediaSchemas.js" 
 import { createMediaAndLogSchema } from "@/schemas/search/searchSchemas.js"
-import { AppError } from "@/types/error.js"
+import { AppError } from "@/api/domain/error.js"
 
 import { validateSchema } from "@/utilities.js" 
 import { PrismaClient } from "@prisma/client/extension"
@@ -59,7 +57,8 @@ export class MediaService {
                 description,
                 metadata,
                 imageUrl,
-                userId
+                userId,
+                prisma
             ) 
         } catch(error: unknown) {
             handlePrismaError(error, { 
@@ -148,55 +147,26 @@ export class MediaService {
     }
 
     async createMediaAndLog(userId: number, payload: unknown) {
-        return await prisma.$transaction(async (tx: PrismaClient) => {
-            const { mediaData, logData } = validateSchema(createMediaAndLogSchema, payload)
+        const { mediaData, logData } = validateSchema(createMediaAndLogSchema, payload)
 
-            try {
-                // media type ensures correctness (e.g. "book")
-                const mediaType = await findMediaTypeForUserOrGlobal(mediaData.mediaType, userId, tx)
-                if (!mediaType) {
-                    throw new AppError("Media type not found", 404)
-                }
-
-                // If media doesn't already exist, create system-owned media
-                let media = await findMediaBySource(mediaData.sourceId, mediaData.source, tx)
-                if (!media) {
-                    const systemUser = await findUserByUsername("system", tx)
-                    if (!systemUser) {
-                        throw new AppError("System user missing", 500)
-                    }
-    
-                    media = await createMedia(
-                        mediaData.title,
-                        mediaType,
-                        mediaData.creator,
-                        mediaData.year,
-                        mediaData.source,
-                        mediaData.sourceId,
-                        mediaData.description,
-                        mediaData.metadata,
-                        mediaData.imageUrl,
-                        systemUser.id
-                    )
-                }
-    
-                // log creation or updating
-                const existingLog = await findLogOfUserByMediaId(userId, media.id, tx)
-                let log
-                if (existingLog) {
-                    log = await updateLog(existingLog.id, logData.status, logData.rating, logData.notes, tx)
-                } else {
-                    log = await createLog(userId, media.id, logData.status, logData.rating, logData.notes, tx)
-                }
-    
-                return { media, log }
-            } catch(error: unknown) {
-                handlePrismaError(error, {
-                    notFoundMessage: "Media or log not found",
-                    uniqueMessage: "Media or log already exists"
-                })
-            }
-        })
+        try {
+            return await prisma.$transaction(async (tx: PrismaClient) => 
+                createImportedMedia(
+                    {
+                        userId,
+                        mediaTypeName: mediaData.mediaType,
+                        mediaData,
+                        logData
+                    },
+                    tx
+                )
+            )
+        } catch(error: unknown) {
+            handlePrismaError(error, {
+                notFoundMessage: "Media or log not found",
+                uniqueMessage: "Media or log already exists"
+            })
+        }
     }
 }
 

@@ -11,7 +11,7 @@ import {
 import { findMediaForUserById } from "@/repositories/mediaRepository.js"
 import { findMediaTypeForUserOrGlobal } from "@/repositories/mediaTypeRepository.js"
 import { createLogSchema, updateLogSchema, deleteLogSchema } from "@/schemas/logSchemas.js"
-import { AppError } from "@/types/error.js"
+import { AppError } from "@/api/domain/error.js"
 import { validateSchema } from "@/utilities.js"
 import { PrismaClient } from "@prisma/client/extension"
 

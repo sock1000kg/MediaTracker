@@ -20,8 +20,8 @@ services:
     ports:
       - "5173:5173"
     environment:
-    # Still need this cus it's npm run dev on TS files
-      - VITE_API_URL=http://localhost:5000 
+    # Still need this cus it's npm run dev on TS files -> env file isnt baked into the code
+      - VITE_API_URL=http://localhost:5000/api 
     volumes:
       - ./client:/app
       - /app/node_modules

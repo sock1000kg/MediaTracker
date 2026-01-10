@@ -195,8 +195,8 @@ export function MusicSearchSection() {
             </div>
 
             {/* Results */}
-            <div className="p-4 flex-1 overflow-y-auto">
-                {isLoading && <p>Loading...</p>}
+            <div className="p-4 flex-1 overflow-y-auto min-h-0 scrollbar-hide">
+                {isLoading && <p className="animate-pulse">Loading...</p>}
                 {error && 
                     <p className="text-red-500">
                         {error.message}

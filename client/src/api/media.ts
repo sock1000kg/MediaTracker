@@ -12,7 +12,11 @@ export function createMedia(newMedia: Partial<Media>): Promise<Media> {
     method: "POST",
     body: JSON.stringify({
       title: newMedia.title,
-      mediaType: newMedia.mediaType,
+      mediaType: { 
+        id: newMedia.mediaType?.id,
+        name: newMedia.mediaType?.name,
+        created_at: newMedia.mediaType?.created_at
+      },
       creator: newMedia.creator,
       year: newMedia.year,
       source: newMedia.source, 
