@@ -43,18 +43,24 @@ if (process.env.NODE_ENV !== 'test') {
     demoResetJob()
 }
 
-//Routes
+//ROUTES
 const apiRouter = express.Router()
 
+// Public
 apiRouter.use('/healthz', healthRoutes)
 apiRouter.use('/auth', authRoutes)
-apiRouter.use('/logs', authMiddleWare, globalLimiter, logRoutes)
-apiRouter.use('/media', authMiddleWare, globalLimiter, mediaRoutes)
-apiRouter.use('/media-type', authMiddleWare, globalLimiter, mediaTypeRoutes)
-apiRouter.use('/search', authMiddleWare, globalLimiter, searchRoutes)
-apiRouter.use('/api-key', authMiddleWare, globalLimiter, apiKeyRoutes)
-apiRouter.use('/imports', authMiddleWare, globalLimiter, importRoutes)
 
+// Protected
+const protectedRouter = express.Router()
+protectedRouter.use(authMiddleWare, globalLimiter)
+protectedRouter.use('/logs', logRoutes)
+protectedRouter.use('/media', mediaRoutes)
+protectedRouter.use('/media-type', mediaTypeRoutes)
+protectedRouter.use('/search', searchRoutes)
+protectedRouter.use('/api-key', apiKeyRoutes)
+protectedRouter.use('/imports', importRoutes)
+
+apiRouter.use('/', protectedRouter)
 app.use('/api', apiRouter)
 
 //Error handling
