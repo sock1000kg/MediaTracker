@@ -18,9 +18,13 @@ POSTGRES_DB=media_tracker
 
 # Server
 PORT=5000
+
+REGISTER_KEY=register_key
+
 JWT_KEY_SECRET=replace_me_with_a_long_random_secret
 API_KEY_SECRET=replace_me_with_a_long_random_secret
 GOOGLE_BOOKS_API_KEY=your_google_book_api_key
+LAS_FM_API_KEY=your_lastfm_api_key
 DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
 
 # Seeding
@@ -33,6 +37,8 @@ SYSTEM_USER_PASSWORD=Cooler_pass_that_has_special_chars!_and_numbers123_upperCAS
 NODE_ENV=test
 RATE_LIMIT_ENABLED=false
 
+REGISTER_KEY=register_key
+
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
 POSTGRES_DB=media_tracker_test
@@ -40,7 +46,9 @@ POSTGRES_DB=media_tracker_test
 # The test DB is published on host port 5433 by docker-compose.test-db.yml
 DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5433/${POSTGRES_DB}
 
-# Insert everything else in .env
+# Seeding
+DEMO_USER_PASSWORD=Cool_pass_that_has_special_chars!_and_numbers123_and_upperCASE
+SYSTEM_USER_PASSWORD=Cooler_pass_that_has_special_chars!_and_numbers123_upperCASE
 ```
 
 3) `.env` (create this in client directory if you run dev without Docker)

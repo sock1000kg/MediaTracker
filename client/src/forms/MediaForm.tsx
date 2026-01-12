@@ -13,7 +13,7 @@ import { fetchMediaTypes } from "@/api/mediaType"
 import type { Media, MediaType } from "@/types/mainTypes"
 
 
-const AVAILABLE_METADATA_FIELDS = ["duration", "edition", "categories", "language", "pageCount", "platform",]
+const AVAILABLE_METADATA_FIELDS = ["duration", "edition", "categories", "language", "pageCount", "url"]
 
 interface MediaFormProps {
     formData: Partial<Media>,
@@ -155,7 +155,6 @@ export function MediaForm({
             {/* Image Url */}
             <label className="block">
                 <span className="text-sm mr-1">Image URL</span>
-                <span className="text-xs text-stone-500">(I recommend 'Open Library' to find https image urls)</span>
                 <input
                     type="text"
                     value={formData.imageUrl ?? ""}

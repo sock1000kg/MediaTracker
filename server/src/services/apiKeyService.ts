@@ -7,22 +7,11 @@ import {
     getAllApiKeys,
     updateApiKeyForUser
 } from "@/repositories/apiKeyRepository.js"
-
-import { findUserByUsername } from "@/repositories/authRepository.js"
-import { AppError } from "@/types/error.js"
-import prisma from "@/prismaClient.js"
+import { AppError } from "@/api/domain/error.js"
 import { handlePrismaError } from "@/middleWare/errorHandlerMiddleware.js"
+import { demoService } from "./demoService.js"
 
 export class ApiKeyService {
-    private async ensureNotDemo(userId: number) {
-        const demoUser = await findUserByUsername("demo", prisma)
-        if (!demoUser) {
-            throw new AppError("Demo user missing", 404)
-        }
-        if (userId === demoUser.id) {
-            throw new AppError("This feature is not available on demo account", 400)
-        }
-    }
 
     async getAll(userId: number) {
         const apiKeys = await getAllApiKeys(userId)
@@ -33,7 +22,7 @@ export class ApiKeyService {
     }
 
     async create(userId: number, payload: unknown) {
-        await this.ensureNotDemo(userId)
+        await demoService.ensureNotDemo(userId)
 
         const { key, service } = validateSchema(addApiKeySchema, payload)
 
@@ -47,7 +36,7 @@ export class ApiKeyService {
     }
 
     async update(userId: number, payload: unknown) {
-        await this.ensureNotDemo(userId)
+        await demoService.ensureNotDemo(userId)
 
         const { key, service } = validateSchema(addApiKeySchema, payload)
 
@@ -61,7 +50,7 @@ export class ApiKeyService {
     }
 
     async delete(userId: number, payload: unknown) {
-        await this.ensureNotDemo(userId)
+        await demoService.ensureNotDemo(userId)
 
         const { service } = validateSchema(deleteApiKeySchema, payload)
 

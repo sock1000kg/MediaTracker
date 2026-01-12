@@ -22,12 +22,11 @@ const titleSchema = z
 const mediaTypeSchema = z.object({
     id: z.number(),
     created_at: z.any(),
-    userId: z.number(),
     name: z
         .string()
         .transform((val) => normalizeTypeName(val))
         .refine(val => val.trim().length > 0, { message: "Media Type name is required" })
-}, { message: "Media Type is required" }).loose()
+}, { message: "Media Type is required" })
 
 const creatorSchema = z
     .preprocess((val: string | null | undefined) => {
@@ -64,6 +63,13 @@ const sourceSchema = z
     .string()
     .nullable() 
     .default(null)
+)
+
+const searchSourceSchema = z
+    .preprocess((val: string | null | undefined) => {
+        return sanitizeSource(val)
+    }, z
+    .string()
 )
 
 const sourceIdSchema = z
@@ -130,7 +136,7 @@ export const searchMediaSchema = z.object({
     creator: creatorSchema,
     year: yearSchema,
     description: descriptionSchema,
-    source: sourceSchema,
+    source: searchSourceSchema,
     imageUrl: imageUrl,
     sourceId: sourceIdSchema,
     metadata: metadataSchema

@@ -5,6 +5,10 @@ import prisma from "@/prismaClient.js"
 import { encryptKey } from "@/utilities.js"
 import { MediaType, Prisma, User, UserAPIKey } from "@prisma/client"
 import bcrypt from "bcryptjs"
+import { fileURLToPath } from "url"
+import path from "path"
+import fs from "fs"
+import { goodreadsImportService } from "@/services/imports/goodreadsImportService.js"
 
 async function createSystemUser(): Promise<{ id: number }> {
     let systemUser = await prisma.user.findUnique({
@@ -83,7 +87,7 @@ async function createMediaTypeSeed(name: string, userId: number): Promise<MediaT
     }
 }
 
-async function main() {
+export async function seedDatabase() {
     const systemUser = await createSystemUser()
     const demoUser = await createDemoUser()
 
@@ -110,7 +114,8 @@ async function main() {
             "This is your default  media",
             null,
             null,
-            systemUser.id
+            systemUser.id,
+            prisma
         )
         console.log("Default Media created")
     } else {
@@ -170,13 +175,45 @@ async function main() {
     } else {
         console.log("lastfm Demo Key already exists")
     }
+
+
+    // SEED GoodReads import
+    if (process.env.NODE_ENV !== 'test') {
+        const __filename = fileURLToPath(import.meta.url)
+        const __dirname = path.dirname(__filename)
+        const csvPath = path.join(__dirname, "goodreads_seed.csv")
+    
+        if (fs.existsSync(csvPath)) {
+            console.log(`\x1b[1m\x1b[32m\nFound goodreads_seed.csv at ${csvPath}\x1b[0m`)
+            console.log("Importing books for Demo user...")
+            
+            try {
+                const fileBuffer = fs.readFileSync(csvPath)
+                
+                // Re-use your existing service!
+                const result = await goodreadsImportService.importFromGoodReads(demoUser.id, fileBuffer)
+                
+                console.log(`Goodreads Import Results:`)
+                console.log(`Imported: ${result.imported}`)
+                console.log(`Skipped: ${result.skipped}`)
+                console.log(`Errors: `, JSON.stringify(result.failures, null, 2))
+            } catch (error) {
+                console.error("\x1b[1m\x1b[31mFailed to seed Goodreads CSV:\x1b[0m", error)
+            }
+        } else {
+            console.log(`\nNo 'goodreads_seed.csv' found in ${__dirname}. Skipping CSV import.`)
+        }
+    }
 }
 
-// Execute seed script
-main()
-    .then(() => prisma.$disconnect())
-    .catch((error) => {
-        console.error(error)
-        prisma.$disconnect()
-        process.exit(1)
-    })
+// Execute seed script if the script that node ran is the same as the file path
+// node seed.js = running /full/path/seed.js
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+    seedDatabase()
+        .then(() => prisma.$disconnect())
+        .catch((error) => {
+            console.error(error)
+            prisma.$disconnect()
+            process.exit(1)
+        })
+}
