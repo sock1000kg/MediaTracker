@@ -3,6 +3,9 @@ name: CI
 on:
   push:
     branches: [ main ]
+    paths:
+      - "server/**"
+      - "client/**"
   pull_request:
 
 jobs:
