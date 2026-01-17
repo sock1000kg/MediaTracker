@@ -37,14 +37,35 @@ jobs:
           npm run lint
           npm run build
   
-  security-audit:
+  security-audit-frontend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Audit Dependencies
-        run: |
-          cd server && npm audit --audit-level=high
-          cd ../client && npm audit --audit-level=high
+
+      - name: Create dummy env file
+        run: touch .env
+
+      - name: Build Frontend (Dev)
+        # We need .dev.yaml because "frontend" is defined there
+        run: docker compose -f docker-compose.yml -f docker-compose.dev.yml build frontend
+
+      - name: Audit Frontend
+        run: docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm frontend npm audit
+  
+  security-audit-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create dummy env file
+        run: touch .env
+        
+      - name: Build Backend (Prod)
+        run: docker compose -f docker-compose.yml build backend
+
+      - name: Audit Backend
+        # --no-deps: Don't start the database
+        run: docker compose -f docker-compose.yml run --rm --no-deps backend npm audit
 
   test:
     runs-on: ubuntu-latest

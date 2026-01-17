@@ -8,7 +8,7 @@ services:
       target: production
       # Need this to "bake" the env in during build time, not run time
       args:
-        - VITE_API_URL=http://localhost:5000/api
+        - VITE_API_URL=http://localhost:5000
     ports:
       - "80:80"
     depends_on:
