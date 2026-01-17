@@ -4,17 +4,17 @@ import { prisma } from "@/tests/jest.setup.js"
 import { findUserByUsername } from "@/repositories/authRepository.js"
 import { AppError } from "@/api/domain/error.js"
 
-const API = "/api/imports/goodreads"
+const API = "/imports/goodreads"
 
 // create + login user: returns token + userId
 async function registerAndLogin(username: string) {
     await request(app)
-        .post("/api/auth/register")
+        .post("/auth/register")
         .send({ username, password: "StrongPass1!", displayName: "Tester", registerKey: process.env.REGISTER_KEY })
         .set("Content-Type", "application/json")
 
     const loginRes = await request(app)
-        .post("/api/auth/login")
+        .post("/auth/login")
         .send({ username, password: "StrongPass1!" })
         .set("Content-Type", "application/json")
 

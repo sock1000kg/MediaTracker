@@ -17,13 +17,13 @@ describe('Log routes', () => {
         //refresh the db and creates a new user
         await prisma.user.deleteMany({ where: { username } })
         const regRes = await request(app)
-            .post('/api/auth/register')
+            .post('/auth/register')
             .send({ username, password, displayName, registerKey })
             .set('Content-Type', 'application/json')
         expect(regRes.statusCode).toBe(201)
 
         const res = await request(app)
-            .post('/api/auth/login')
+            .post('/auth/login')
             .send({ username, password })
             .set('Content-Type', 'application/json')
         token = res.body.accessToken
@@ -70,7 +70,7 @@ describe('Log routes', () => {
             })
     
         const res = await request(app)
-            .get('/api/logs')
+            .get('/logs')
             .set('Authorization', `Bearer ${token}`)
         expect(res.statusCode).toBe(200)
         expect(Array.isArray(res.body)).toBe(true)
@@ -80,7 +80,7 @@ describe('Log routes', () => {
     //CREATE
     test('Create log succeeds', async () => {
         const res = await request(app)
-            .post('/api/logs')
+            .post('/logs')
             .set('Authorization', `Bearer ${token}`)
             .send({
                 mediaId: media.id,
@@ -96,7 +96,7 @@ describe('Log routes', () => {
 
     test('Create log without mediaId fails', async () => {
         const res = await request(app)
-            .post('/api/logs')
+            .post('/logs')
             .set('Authorization', `Bearer ${token}`)
             .send({
                 status: 'completed',
@@ -119,7 +119,7 @@ describe('Log routes', () => {
             })
     
         const res = await request(app)
-            .post('/api/logs')
+            .post('/logs')
             .set('Authorization', `Bearer ${token}`)
             .send({
                 mediaId: media.id,
@@ -133,7 +133,7 @@ describe('Log routes', () => {
 
     test('Create log for non-existent media fails', async () => {
         const res = await request(app)
-            .post('/api/logs')
+            .post('/logs')
             .set('Authorization', `Bearer ${token}`)
             .send({
                 mediaId: 999999,
@@ -146,7 +146,7 @@ describe('Log routes', () => {
 
     test('Create log without token fails', async () => {
         const res = await request(app)
-            .post('/api/logs')
+            .post('/logs')
             .send({
                 mediaId: media.id,
                 status: 'completed',
@@ -157,7 +157,7 @@ describe('Log routes', () => {
 
     test('Response for creating log includes expected fields', async () => {
         const res = await request(app)
-            .post('/api/logs')
+            .post('/logs')
             .set('Authorization', `Bearer ${token}`)
             .send({
                 mediaId: media.id,
@@ -195,7 +195,7 @@ describe('Log routes', () => {
     
     test('Successfully updates all fields', async () => {
         const res = await request(app)
-            .put(`/api/logs/${log.id}`)
+            .put(`/logs/${log.id}`)
             .set('Authorization', `Bearer ${token}`)
             .send({
                 status: 'completed',
@@ -212,7 +212,7 @@ describe('Log routes', () => {
 
     test('Partial update only changes provided fields', async () => {
         const res = await request(app)
-            .put(`/api/logs/${log.id}`)
+            .put(`/logs/${log.id}`)
             .set('Authorization', `Bearer ${token}`)
             .send({ rating: 85 }) // only rating
 
@@ -224,7 +224,7 @@ describe('Log routes', () => {
 
     test('Fails to update non-existent log', async () => {
         const res = await request(app)
-            .put('/api/logs/999999')
+            .put('/logs/999999')
             .set('Authorization', `Bearer ${token}`)
             .send({ status: 'completed' })
 
@@ -244,7 +244,7 @@ describe('Log routes', () => {
         })
 
         const res = await request(app)
-            .put(`/api/logs/${otherLog.id}`)
+            .put(`/logs/${otherLog.id}`)
             .set('Authorization', `Bearer ${token}`)
             .send({ status: 'completed' })
 
@@ -257,7 +257,7 @@ describe('Log routes', () => {
 
     test('Fails without token', async () => {
         const res = await request(app)
-            .put(`/api/logs/${log.id}`)
+            .put(`/logs/${log.id}`)
             .send({ status: 'completed' })
 
         expect(res.statusCode).toBe(401)
@@ -265,7 +265,7 @@ describe('Log routes', () => {
 
     test('Sanitization nullifies invalid rating', async () => {
         const res = await request(app)
-            .put(`/api/logs/${log.id}`)
+            .put(`/logs/${log.id}`)
             .set('Authorization', `Bearer ${token}`)
             .send({ rating: 9999 })
 
@@ -276,7 +276,7 @@ describe('Log routes', () => {
 
     test('Sanitization nullifies invalid status', async () => {
         const res = await request(app)
-            .put(`/api/logs/${log.id}`)
+            .put(`/logs/${log.id}`)
             .set('Authorization', `Bearer ${token}`)
             .send({ status: 'NotAStatus' })
 
@@ -287,7 +287,7 @@ describe('Log routes', () => {
     test('Sanitization trims notes and limits length', async () => {
         const longNotes = 'a'.repeat(11000)
         const res = await request(app)
-            .put(`/api/logs/${log.id}`)
+            .put(`/logs/${log.id}`)
             .set('Authorization', `Bearer ${token}`)
             .send({ notes: longNotes })
 
@@ -312,7 +312,7 @@ describe('Log routes', () => {
 
         test('Successfully deletes a log', async () => {
             const res = await request(app)
-                .delete(`/api/logs/${log.id}`)
+                .delete(`/logs/${log.id}`)
                 .set('Authorization', `Bearer ${token}`)
                 .send({ confirm: true })
 
@@ -326,7 +326,7 @@ describe('Log routes', () => {
 
         test('Fails to delete non-existent log', async () => {
             const res = await request(app)
-                .delete('/api/logs/999999')
+                .delete('/logs/999999')
                 .set('Authorization', `Bearer ${token}`)
                 .send({ confirm: true })
 
@@ -346,7 +346,7 @@ describe('Log routes', () => {
             })
 
             const res = await request(app)
-                .delete(`/api/logs/${otherLog.id}`)
+                .delete(`/logs/${otherLog.id}`)
                 .set('Authorization', `Bearer ${token}`)
                 .send({ confirm: true })
 
@@ -359,7 +359,7 @@ describe('Log routes', () => {
 
         test('Fails without token', async () => {
             const res = await request(app)
-                .delete(`/api/logs/${log.id}`)
+                .delete(`/logs/${log.id}`)
 
             expect(res.statusCode).toBe(401)
         })

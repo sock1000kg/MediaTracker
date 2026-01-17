@@ -17,13 +17,13 @@ describe('MediaType Routes', () => {
 
         //Register user
         await request(app)
-            .post('/api/auth/register')
+            .post('/auth/register')
             .send({ username, password, displayName, registerKey })
             .set('Content-Type', 'application/json')
 
         //Login to get token
         const res = await request(app)
-            .post('/api/auth/login')
+            .post('/auth/login')
             .send({ username, password })
             .set('Content-Type', 'application/json')
         token = res.body.accessToken
@@ -47,7 +47,7 @@ describe('MediaType Routes', () => {
     test('Create media type with valid name succeeds', async () => {
         const mediaTypeName = 'TestType'
         const res = await request(app)
-            .post('/api/media-type')
+            .post('/media-type')
             .set('Authorization', `Bearer ${token}`)
             .send({ name: mediaTypeName })
         expect(res.statusCode).toBe(201)
@@ -56,7 +56,7 @@ describe('MediaType Routes', () => {
 
     test('Create media type with missing name fails', async () => {
         const res = await request(app)
-            .post('/api/media-type')
+            .post('/media-type')
             .set('Authorization', `Bearer ${token}`)
             .send("")
         expect(res.statusCode).toBe(400)
@@ -67,11 +67,11 @@ describe('MediaType Routes', () => {
         const mediaTypeName = 'DuplicateType'
 
         await request(app)
-            .post('/api/media-type')
+            .post('/media-type')
             .set('Authorization', `Bearer ${token}`)
             .send({ name: mediaTypeName })
         const res = await request(app)
-            .post('/api/media-type')
+            .post('/media-type')
             .set('Authorization', `Bearer ${token}`)
             .send({ name: mediaTypeName })
         expect(res.statusCode).toBe(409)
@@ -81,11 +81,11 @@ describe('MediaType Routes', () => {
     test('Fetch all media types returns array', async () => {
         const mediaTypeName = 'FetchTestType'
         await request(app)
-            .post('/api/media-type')
+            .post('/media-type')
             .set('Authorization', `Bearer ${token}`)
             .send({ name: mediaTypeName })
         const res = await request(app)
-            .get('/api/media-type')
+            .get('/media-type')
             .set('Authorization', `Bearer ${token}`)
         expect(res.statusCode).toBe(200)
         expect(Array.isArray(res.body)).toBe(true)
@@ -103,7 +103,7 @@ describe('MediaType Routes', () => {
         })
         
         const res = await request(app)
-            .delete(`/api/media-type/${encodeURIComponent(mediaType.name)}`)
+            .delete(`/media-type/${encodeURIComponent(mediaType.name)}`)
             .set('Authorization', `Bearer ${token}`)
             .send({ confirm: true }) 
         expect(res.statusCode).toBe(200)
@@ -112,7 +112,7 @@ describe('MediaType Routes', () => {
 
     test('Delete non-existent media type fails', async () => {
         const res = await request(app)
-            .delete('/api/media-type/HhahahahHA')
+            .delete('/media-type/HhahahahHA')
             .set('Authorization', `Bearer ${token}`)
             .send( { confirm: true })
         expect(res.statusCode).toBe(404)
@@ -123,11 +123,11 @@ describe('MediaType Routes', () => {
         const mediaTypeName = 'RenameTest'
 
         await request(app)
-            .post('/api/media-type')
+            .post('/media-type')
             .set('Authorization', `Bearer ${token}`)
             .send({ name: mediaTypeName })
         const res = await request(app)
-            .put(`/api/media-type/${encodeURIComponent(mediaTypeName)}`)
+            .put(`/media-type/${encodeURIComponent(mediaTypeName)}`)
             .set('Authorization', `Bearer ${token}`)
             .send({ newName: 'RenamedType' })
         expect(res.statusCode).toBe(200)
@@ -136,7 +136,7 @@ describe('MediaType Routes', () => {
 
     test('Rename media type that user doesnt own fails', async () => {
         const res = await request(app)
-            .put(`/api/media-type/book)}`)
+            .put(`/media-type/book)}`)
             .set('Authorization', `Bearer ${token}`)
             .send({ newName: 'RenamedType' })
         expect(res.statusCode).toBe(404)
@@ -145,16 +145,16 @@ describe('MediaType Routes', () => {
 
     test('Rename media type to existing name fails', async () => {
         await request(app)
-            .post('/api/media-type')
+            .post('/media-type')
             .set('Authorization', `Bearer ${token}`)
             .send({ name: 'TypeA' })
         await request(app)
-            .post('/api/media-type')
+            .post('/media-type')
             .set('Authorization', `Bearer ${token}`)
             .send({ name: 'TypeB' })
             
         const res = await request(app)
-            .put('/api/media-type/TypeA')
+            .put('/media-type/TypeA')
             .set('Authorization', `Bearer ${token}`)
             .send({ newName: 'TypeB' })
         expect(res.statusCode).toBe(409)
@@ -163,7 +163,7 @@ describe('MediaType Routes', () => {
 
     test('Rename non-existent media type fails', async () => {
         const res = await request(app)
-            .put('/api/media-type/NoSuchType')
+            .put('/media-type/NoSuchType')
             .set('Authorization', `Bearer ${token}`)
             .send({ newName: 'Anything' })
         expect(res.statusCode).toBe(404)
@@ -174,11 +174,11 @@ describe('MediaType Routes', () => {
         const mediaTypeName = 'MissingNewNameTest'
 
         await request(app)
-            .post('/api/media-type')
+            .post('/media-type')
             .set('Authorization', `Bearer ${token}`)
             .send({ name: mediaTypeName })
         const res = await request(app)
-            .put(`/api/media-type/${encodeURIComponent(mediaTypeName)}`)
+            .put(`/media-type/${encodeURIComponent(mediaTypeName)}`)
             .set('Authorization', `Bearer ${token}`)
             .send("  ")
         expect(res.statusCode).toBe(400)
@@ -204,7 +204,7 @@ describe('MediaType Routes', () => {
 
         // Attempt to delete the media type without confirmation
         const res = await request(app)
-            .delete(`/api/media-type/${encodeURIComponent(mediaTypeName)}`)
+            .delete(`/media-type/${encodeURIComponent(mediaTypeName)}`)
             .set('Authorization', `Bearer ${token}`)
             .send({ confirm: false }) // no confirm
 
@@ -215,14 +215,14 @@ describe('MediaType Routes', () => {
 
     test('Creation fails with empty string after trimming', async () => {
         const res = await request(app)
-            .post('/api/media-type')
+            .post('/media-type')
             .set('Authorization', `Bearer ${token}`)
             .send({ name: '    ' })
         expect(res.statusCode).toBe(400)
     })
 
     test('Unauthorized request fails', async () => {
-        const res = await request(app).post('/api/media-type').send({ name: 'Test' })
+        const res = await request(app).post('/media-type').send({ name: 'Test' })
         expect(res.statusCode).toBe(401) 
     })
 })
