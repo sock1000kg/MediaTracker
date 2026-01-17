@@ -56,6 +56,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Create dummy env file
+        run: touch .env
+        
       - name: Build Backend (Prod)
         run: docker compose -f docker-compose.yml build backend
 
