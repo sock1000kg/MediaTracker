@@ -8,7 +8,7 @@
     "build": "tsc && tsc-alias && copyfiles -u 2 src/tests/*csv dist/tests/",
     "lint": "eslint .",
     "start": "node dist/server.js",
-    "test": "npm run build && cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
+    "test": "npm run build && cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand --coverage",
     "seed": "npm run build && node dist/tests/seed.js",
     "reset": "npx prisma migrate reset --force --skip-seed && npm run seed",
     "reset-demo": "npm run build && node dist/tests/manualResetDemo.js",

@@ -11,7 +11,7 @@ export default function Settings() {
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
-            <div className="flex justify-between p-4 items-center bg-stone-200">
+            <div className="flex justify-between p-4 items-center bg-stone-200 border border-b-stone-300">
                 <div>
                     <p className="text-lg font-semibold">Settings</p>
                     <p className="text-sm text-gray-600">Configure your account</p>
@@ -19,24 +19,33 @@ export default function Settings() {
             </div>
 
             {/* Floating buttons below header */}
-            <div className="flex gap-2 px-4 py-2 bg-stone-100 border">
+            <div className="flex bg-stone-200">
                 <Button
                     variant={activeTab === "user" ? "boldedLink" : "link"}
-                    className="bg-transparent text-stone-800"
+                    className={
+                        `bg-transparent text-stone-800 rounded-none 
+                        ${activeTab === "user" ? 'bg-stone-100' : 'bg-stone-200'}`
+                    }
                     onClick={() => setActiveTab("user")}
                 >
                     User
                 </Button>
                 <Button
                     variant={activeTab === "apiKeys" ? "boldedLink" : "link"}
-                    className="bg-transparent text-stone-800"
+                    className={
+                        `bg-transparent text-stone-800 rounded-none 
+                        ${activeTab === "apiKeys" ? 'bg-stone-100' : 'bg-stone-200'}`
+                    }
                     onClick={() => setActiveTab("apiKeys")}
                 >
                     API Keys
                 </Button>
                 <Button
                     variant={activeTab === "imports" ? "boldedLink" : "link"}
-                    className="bg-transparent text-stone-800"
+                    className={
+                        `bg-transparent text-stone-800 rounded-none 
+                        ${activeTab === "imports" ? 'bg-stone-100' : 'bg-stone-200'}`
+                    }
                     onClick={() => setActiveTab("imports")}
                 >
                     Data Imports

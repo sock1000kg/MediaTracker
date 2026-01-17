@@ -189,8 +189,6 @@ export async function seedDatabase() {
             
             try {
                 const fileBuffer = fs.readFileSync(csvPath)
-                
-                // Re-use your existing service!
                 const result = await goodreadsImportService.importFromGoodReads(demoUser.id, fileBuffer)
                 
                 console.log(`Goodreads Import Results:`)

@@ -9,7 +9,6 @@ export function setNavigate(navigate: (path: string) => void) {
 
 const logout = () => {
   localStorage.removeItem("accessToken")
-  localStorage.removeItem("refreshToken")
   if (navigateFunction) navigateFunction("/login")
 }
 

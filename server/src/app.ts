@@ -61,7 +61,7 @@ protectedRouter.use('/api-key', apiKeyRoutes)
 protectedRouter.use('/imports', importRoutes)
 
 apiRouter.use('/', protectedRouter)
-app.use('/api', apiRouter)
+app.use(apiRouter)
 
 //Error handling
 app.use(errorHandler)
