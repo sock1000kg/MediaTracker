@@ -30,7 +30,7 @@ app.use(cookieParser())
 
 app.use(
     cors({
-        origin: ['http://localhost:5173', 'http://localhost'],
+        origin: ['http://localhost:5173', 'http://localhost', 'https://media-tracker.sock1000kg.io.vn'],
         credentials: true
     })
 )

@@ -4,7 +4,9 @@ import { authService } from "@/services/authService.js"
 const COOKIES_OPTIONS = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict' as const,
+    sameSite: 'none' as const,
+    path: '/',
+    domain: 'sock1000kg.io.vn',
     maxAge: 7 * 24 * 60 * 60 * 1000
 }
 
