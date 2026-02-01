@@ -1,24 +1,22 @@
 ###
 GET http://localhost:5000/healthz/
 
+###
+GET https://media-tracker-api.sock1000kg.io.vn/healthz/ip
+
 ### Baseline IP check
 GET http://localhost:5000/healthz/ip
 
 ### Spoof CF-Connecting-IP (should NOT be trusted locally)
-GET http://localhost:5000/healthz/ip
+GET http://media-tracker-api.sock1000kg.io.vn/healthz/ip
 CF-Connecting-IP: 8.8.8.8
 
 ### Spoof X-Forwarded-For
-GET http://localhost:5000/healthz/ip
+GET http://media-tracker-api.sock1000kg.io.vn/healthz/ip
 X-Forwarded-For: 1.1.1.1, 2.2.2.2
 
-### full proxy chain
-GET http://localhost:5000/healthz/ip
-CF-Connecting-IP: 9.9.9.9
-X-Forwarded-For: 9.9.9.9, 172.16.0.10, 10.0.0.5
-
 ### No CF header, fallback to req.ip
-GET http://localhost:5000/healthz/ip
+GET http://media-tracker-api.sock1000kg.io.vn/healthz/ip
 X-Forwarded-For:
 
 
