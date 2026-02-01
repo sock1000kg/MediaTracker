@@ -3,3 +3,6 @@
 
 /output
 /server/coverage
+/server/dist
+/server/node_modules
+*.tsbuildinfo

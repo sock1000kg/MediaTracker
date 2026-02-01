@@ -22,9 +22,9 @@ import { demoResetJob } from './jobs/resetDemoJob.js'
 
 const app: Application = express()
 
-app.set('trust proxy', 1)
-
 // Middleware
+app.set('trust proxy', true)
+
 app.use(helmet())
 app.use(cookieParser())
 
@@ -36,7 +36,10 @@ app.use(
 )
 
 app.use(express.json())
+
+// No userId atp so this checks for ip
 app.use(globalLimiter)
+
 app.use(logger)
 
 if (process.env.NODE_ENV !== 'test') {
@@ -50,9 +53,9 @@ const apiRouter = express.Router()
 apiRouter.use('/healthz', healthRoutes)
 apiRouter.use('/auth', authRoutes)
 
-// Protected
+// Protected by login
 const protectedRouter = express.Router()
-protectedRouter.use(authMiddleWare, globalLimiter)
+protectedRouter.use(authMiddleWare, globalLimiter) // Limit by userId
 protectedRouter.use('/logs', logRoutes)
 protectedRouter.use('/media', mediaRoutes)
 protectedRouter.use('/media-type', mediaTypeRoutes)
