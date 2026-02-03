@@ -1,9 +1,10 @@
 import { musicSearchService } from "@/services/search/lastFmSearchService.js"
-import { googleBooksService } from "./googleBooksSearchService.js"
+import { openLibraryService } from "./openLibrarySearchService.js"
 
 export class SearchService {
     async searchBooks(userId: number, q: string, startIndex: number = 0) {
-        return googleBooksService.searchBooksGGBooks(userId, q, startIndex)
+        // return googleBooksService.searchBooksGGBooks(userId, q, startIndex)
+        return openLibraryService.searchBooksOpenLib(userId, q, startIndex)
     }
 
     async searchTracks(userId: number, q: string, page: number = 1) {

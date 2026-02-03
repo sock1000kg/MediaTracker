@@ -5,11 +5,11 @@ import { GoodReadsRow, goodreadsRowSchema } from "@/schemas/imports/goodReadsSch
 import { AppError } from "@/api/domain/error.js"
 import { validateSchema } from "@/utilities.js"
 import { parse } from "csv-parse/sync"
-import { googleBooksService } from "../search/googleBooksSearchService.js"
 import { BookMetadata, createImportedMedia } from "@/api/domain/media.js"
 import { ZodError } from "zod"
 import { ImportFailure, ImportResult } from "@/api/domain/imports.js"
 import { Prisma } from "@prisma/client"
+import { openLibraryService } from "../search/openLibrarySearchService.js"
 
 //Helpers for preparing rich or unrich data
 type BookEnrichmentData = {
@@ -39,7 +39,7 @@ export class GoodreadsImportService {
             }
 
             // catch errors silently so one failed search doesn't crash the import
-            const searchResponse = await googleBooksService.searchBooksGGBooks(userId, query, 0).catch(() => null)
+            const searchResponse = await openLibraryService.searchBooksOpenLib(userId, query, 0).catch(() => null)
             const book = searchResponse?.results?.[0]
 
             if (!book) return null

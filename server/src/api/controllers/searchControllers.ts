@@ -10,8 +10,8 @@ export const searchBooks = async (req: Request, res: Response, next: NextFunctio
     }
 
     const q = req.query.q as string
-    if (!q) {
-        return res.status(400).json({ message: "Missing query" })
+    if (!q || q.length < 3) {
+        return res.status(400).json("Search query must be at least 3 characters")
     }
 
     const startIndex = parseInt(req.query.startIndex as string) || 0

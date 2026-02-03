@@ -6,6 +6,9 @@ import { decryptKey, fetchAndParse, validateSchema } from "@/utilities.js"
 import { findUserById } from "@/repositories/authRepository.js"
 import { AppError } from "@/api/domain/error.js"
 
+/*
+* THIS SERVICE IS DEPRECATED AND REPLACED BY OPEN LIBRARY
+*/
 export class GoogleBooksService implements ISearchService {
     maxResults = 20
 
@@ -45,9 +48,12 @@ export class GoogleBooksService implements ISearchService {
 
         const url = new URL("https://www.googleapis.com/books/v1/volumes")
         url.searchParams.set("q", q)
+        url.searchParams.set("printType", "books")
         url.searchParams.set("startIndex", startIndex.toString())
         url.searchParams.set("maxResults", this.maxResults.toString())
         if (key) url.searchParams.set("key", key)
+
+        console.log(url.toString())
 
         const parsed = await fetchAndParse(url, googleBooksResponseSchema, "Google Books API error", "Failed to fetch from Google Books")
         // console.log("PARSED: ", parsed)
