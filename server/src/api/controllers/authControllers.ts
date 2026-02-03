@@ -6,7 +6,7 @@ const COOKIES_OPTIONS = {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax' as const,
     path: '/',
-    domain: 'sock1000kg.io.vn',
+    domain: process.env.NODE_ENV === 'production' ? 'sock1000kg.io.vn' : undefined,
     maxAge: 7 * 24 * 60 * 60 * 1000
 }
 
