@@ -9,7 +9,7 @@ import { useState } from "react"
 // This form only allows updating the key
 export function ApiKeyForm() {
     const [serverMessage, setServerMessage] = useState<string | null>(null) //message when delete a key
-    const [googleBooksInput, setGoogleBooksInput] = useState("")
+    // const [googleBooksInput, setGoogleBooksInput] = useState("")
     const [lastFmInput, setLastFmInput] = useState("")
     const queryClient = useQueryClient()
 
@@ -42,7 +42,7 @@ export function ApiKeyForm() {
             e.preventDefault()
             const payload: ApiKey = { key: value, service: service }
             await createMutation.mutateAsync(payload)
-            if (service === "google_books") setGoogleBooksInput("")
+            // if (service === "google_books") setGoogleBooksInput("")
             if (service === "lastfm") setLastFmInput("")
     }
 
@@ -52,7 +52,7 @@ export function ApiKeyForm() {
             const payload: ApiKey = { key: value, service: service }
             try{
                 await updateMutation.mutateAsync(payload)
-                if (service === "google_books") setGoogleBooksInput("")
+                // if (service === "google_books") setGoogleBooksInput("")
                 if (service === "lastfm") setLastFmInput("")
             }catch(error: unknown){
                 const message = error instanceof Error ? error.message : "Something went wrong"
@@ -66,7 +66,7 @@ export function ApiKeyForm() {
             try {
                 const res = await deleteMutation.mutateAsync({ service: service, key: "" })
                 setServerMessage(res.message)
-                if (service === "google_books") setGoogleBooksInput("")
+                // if (service === "google_books") setGoogleBooksInput("")
                 if (service === "lastfm") setLastFmInput("")
 
                 // Immediately remove the key from cache to update UI (it'll be stuck when server responds with empty array)
@@ -84,7 +84,7 @@ export function ApiKeyForm() {
     }
 
     // Render
-    const hasGoogleBooksKey = apiKeys.some(key => key.service === "google_books")
+    // const hasGoogleBooksKey = apiKeys.some(key => key.service === "google_books")
     const hasLastFmKey = apiKeys.some(key => key.service === "lastfm")
 
     return (
@@ -111,7 +111,7 @@ export function ApiKeyForm() {
                 </p>
             )}
 
-            {/* GOOGLE BOOKS */}
+            {/* GOOGLE BOOKS
             <form onSubmit={
                 hasGoogleBooksKey 
                 ? handleUpdate("google_books", googleBooksInput) 
@@ -130,7 +130,6 @@ export function ApiKeyForm() {
                             placeholder="Google Books API Key"
                         />
 
-                        {/* Create/edit button depending on whether user has apikey */}
                         {hasGoogleBooksKey ? 
                         <Button
                             type="submit"
@@ -153,7 +152,7 @@ export function ApiKeyForm() {
                         </Button>
                     </div>
                 </label>
-            </form>
+            </form> */}
 
             {/* Last.fm */}
             <form onSubmit={
@@ -171,7 +170,7 @@ export function ApiKeyForm() {
                                 setLastFmInput(e.target.value)
                             }
                             className="block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none "
-                            placeholder="Last.fm API Key"
+                            placeholder="Last.fm API Key. Used for music search."
                         />
 
                         {/* Create/edit button depending on whether user has apikey */}

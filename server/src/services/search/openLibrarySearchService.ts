@@ -52,8 +52,12 @@ export class OpenLibraryService implements ISearchService {
         url.searchParams.set("q", q) // 'q' searches title, author, and text
         url.searchParams.set("page", page.toString())
         url.searchParams.set("limit", this.limit.toString())
+
+        const headers = {
+            "User-Agent": "MediaTracker/0.1 (https://github.com/sock1000kg/MediaTracker)"
+        }
         
-        console.log(url.toString())
+        // console.log(url.toString())
 
         // Fields filtering (optional, but good for performance)
         url.searchParams.set("fields", "key,title,author_name,first_publish_year,cover_i,number_of_pages_median,publisher,subject")
@@ -64,7 +68,8 @@ export class OpenLibraryService implements ISearchService {
             url, 
             openLibraryResponseSchema, 
             "Open Library API error", 
-            "Failed to fetch from Open Library"
+            "Failed to fetch from Open Library",
+            { headers }
         )
 
         const results = this.mapResults(parsed.docs)

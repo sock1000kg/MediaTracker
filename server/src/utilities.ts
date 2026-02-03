@@ -174,8 +174,14 @@ export function sanitizeApiKey(key: string | undefined | null): string | null {
 }
 
 // Fetch and parse API results
-export async function fetchAndParse<T>(url: URL, responseSchema: ZodSchema<T>, errMessage: string, defMessage: string): Promise<T> {
-    const res = await fetch(url.toString())
+export async function fetchAndParse<T>(
+    url: URL, 
+    responseSchema: ZodSchema<T>, 
+    errMessage: string, 
+    defMessage: string,
+    init?: RequestInit
+): Promise<T> {
+    const res = await fetch(url.toString(), init)
 
     if (!res.ok) {
         const errorBody = await res.json().catch(() => null)
