@@ -57,7 +57,7 @@ export class OpenLibraryService implements ISearchService {
             "User-Agent": "MediaTracker/0.1 (https://github.com/sock1000kg/MediaTracker)"
         }
         
-        // console.log(url.toString())
+
 
         // Fields filtering (optional, but good for performance)
         url.searchParams.set("fields", "key,title,author_name,first_publish_year,cover_i,number_of_pages_median,publisher,subject")
