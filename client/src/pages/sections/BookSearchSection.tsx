@@ -160,7 +160,7 @@ export default function BooksSearchSection() {
                         }}
                         className="block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none "
                     />
-                    <Button size="default" variant="amber" onClick={() => handleSearch()}>
+                    <Button size="default" variant="amber" onClick={() => handleSearch()} disabled={isLoading || isFetchingNextPage}>
                         <Search />
                     </Button>
                 </div>

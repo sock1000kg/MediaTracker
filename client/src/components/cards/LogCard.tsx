@@ -10,6 +10,11 @@ interface LogCardProps {
 }
 
 export function LogCard({log, onDelete, onEdit}: LogCardProps ) {
+  // Helper to safely access categories since metadata is generic
+  const categories = Array.isArray(log.media.metadata?.categories) 
+    ? log.media.metadata.categories as string[] 
+    : []
+
   return (
     <li key={log.id} className="flex gap-4 p-3 border rounded-lg bg-white shadow-sm">
       {/* Image */}
@@ -58,7 +63,7 @@ export function LogCard({log, onDelete, onEdit}: LogCardProps ) {
         {/* Metadata */}
         <div className="flex gap-2 flex-wrap text-xs text-stone-600 mt-1">
           {Object.entries(log.media.metadata || {})
-            .filter(([key, value]) => value != null && value !== "" && key !== "url")
+            .filter(([key, value]) => value != null && value !== "" && key !== "url" && key !== "categories")
             .map(([key, value], index, arr) => (
               <Fragment key={key}>
                 <span className="flex gap-1 capitalize">
@@ -70,18 +75,35 @@ export function LogCard({log, onDelete, onEdit}: LogCardProps ) {
             ))}
         </div>
 
-        {log.media.metadata?.url && (
-          <div className="mt-1">
-            <a
-                href={log.media.metadata?.url as string}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs rounded-2xl px-2 py-0.5 bg-amber-100 text-amber-800 hover:underline"
-            >
-                More info
-            </a>
-          </div>
-        )}
+        <div>
+            {/* Badges for Categories */}
+            {categories.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1"> 
+                    {categories.map((cat) => ( 
+                        <span 
+                            key={cat} 
+                            className="text-xs rounded-2xl px-2 py-0.5 bg-amber-100 text-amber-800" 
+                        > 
+                            {cat} 
+                        </span> 
+                    ))} 
+                </div> 
+            )}
+
+            {/* URL Link */}
+            {log.media.metadata?.url && (
+            <div className="mt-1">
+                <a
+                    href={log.media.metadata?.url as string}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs rounded-2xl px-2 py-0.5 bg-amber-100 text-amber-800 hover:underline"
+                >
+                    More info
+                </a>
+            </div>
+            )}
+        </div>
 
         {/* Notes */}
         {log.notes && (

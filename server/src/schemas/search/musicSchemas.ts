@@ -1,5 +1,11 @@
 import { z } from "zod"
 
+export const musicMetadataSchema = z.object({
+    url: z.string().optional(),
+})
+
+export type MusicMetadata = z.infer<typeof musicMetadataSchema>
+
 export const lastFmTrackSchema = z.object({
     name: z.string(),
     artist: z.string(),

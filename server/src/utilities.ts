@@ -128,7 +128,7 @@ export function sanitizeDescription(desc: string | undefined | null): string | n
 }
 
 // Sanitize source: only allow known sources (e.g., "google_books")
-const allowedSources = ["google_books", "lastfm", "goodreads"] as const
+const allowedSources = ["google_books", "lastfm", "goodreads", "open_library"] as const
 export type AllowedSource = (typeof allowedSources)[number]
 export function sanitizeSource(source: string | undefined | null): AllowedSource | null {
     if (!source) return null
@@ -174,8 +174,14 @@ export function sanitizeApiKey(key: string | undefined | null): string | null {
 }
 
 // Fetch and parse API results
-export async function fetchAndParse<T>(url: URL, responseSchema: ZodSchema<T>, errMessage: string, defMessage: string): Promise<T> {
-    const res = await fetch(url.toString())
+export async function fetchAndParse<T>(
+    url: URL, 
+    responseSchema: ZodSchema<T>, 
+    errMessage: string, 
+    defMessage: string,
+    init?: RequestInit
+): Promise<T> {
+    const res = await fetch(url.toString(), init)
 
     if (!res.ok) {
         const errorBody = await res.json().catch(() => null)

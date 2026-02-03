@@ -1,12 +1,19 @@
 import { z } from "zod"
 import { searchMediaSchema } from "@schemas/mediaSchemas.js"
 import { searchLogSchema } from "@/schemas/logSchemas.js"
+import { bookMetadataSchema } from "./bookSchemas.js"
+import { musicMetadataSchema } from "./musicSchemas.js"
 
 //For when user search up a media and wanna log it
 export const createMediaAndLogSchema = z.object({
     mediaData: searchMediaSchema,
     logData: searchLogSchema
 })
+
+const mediaMetadataSchema = z.union([
+  bookMetadataSchema,
+  musicMetadataSchema
+])
 
 //Schema for ONE result of a search (generic normaliztion for all types)
 export const searchResultSchema = z.object({
@@ -32,7 +39,7 @@ export const searchResultSchema = z.object({
         .nullable()
         .default(null),
     sourceId: z.string(),
-    metadata: z.unknown().optional(), // raw Google volumeInfo
+    metadata: mediaMetadataSchema.optional(), // raw Google volumeInfo
 })
 export const searchResultsSchema = z.array(searchResultSchema) //Schema for the results array
 
