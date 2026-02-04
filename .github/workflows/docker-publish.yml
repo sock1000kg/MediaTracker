@@ -3,6 +3,7 @@ name: Publish Backend Image
 on:
   push: 
     branches: [ main ]
+    tags: [ 'v*.*.*' ]
     paths:
       - "server/**"
       - ".github/workflows/docker-publish.yml"
@@ -40,6 +41,7 @@ jobs:
             type=ref,event=branch
             type=sha,format=short,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
 
       - name: Build and push image
         uses: docker/build-push-action@v5

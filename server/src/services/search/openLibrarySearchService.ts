@@ -50,14 +50,16 @@ export class OpenLibraryService implements ISearchService {
         url.searchParams.set("page", page.toString())
         url.searchParams.set("limit", this.limit.toString())
 
+        const contact = process.env.CONTACT_EMAIL || "not-main-dev"
+        const version = process.env.VERSION || "not-prod"
         const headers = {
-            "User-Agent": "MediaTracker/0.1 (https://github.com/sock1000kg/MediaTracker)"
+            "User-Agent": `MediaTracker/${version} (${contact})`
         }
 
         // Fields filtering (optional, but good for performance)
         url.searchParams.set("fields", "key,title,author_name,first_publish_year,cover_i,number_of_pages_median,publisher,subject")
 
-        console.log(url.toString())
+        console.log(url.toString(), "\n", headers)
 
         const parsed = await fetchAndParse(
             url, 
