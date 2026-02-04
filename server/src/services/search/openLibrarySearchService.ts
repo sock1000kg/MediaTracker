@@ -42,12 +42,9 @@ export class OpenLibraryService implements ISearchService {
         })
     }
 
-    async searchBooksOpenLib(userId: number, q: string, startIndex = 0): 
+    async searchBooksOpenLib(userId: number, q: string, page = 1): 
         Promise<{ results: SearchResult[], nextStartIndex: number | null}> 
     {
-        // Convert 0-based 'startIndex' to 1-based 'page' number
-        const page = Math.floor(startIndex / this.limit) + 1
-
         const url = new URL("https://openlibrary.org/search.json")
         url.searchParams.set("q", q) // 'q' searches title, author, and text
         url.searchParams.set("page", page.toString())
@@ -56,8 +53,6 @@ export class OpenLibraryService implements ISearchService {
         const headers = {
             "User-Agent": "MediaTracker/0.1 (https://github.com/sock1000kg/MediaTracker)"
         }
-        
-
 
         // Fields filtering (optional, but good for performance)
         url.searchParams.set("fields", "key,title,author_name,first_publish_year,cover_i,number_of_pages_median,publisher,subject")
@@ -80,9 +75,7 @@ export class OpenLibraryService implements ISearchService {
 
         // Calculate if there are more results
         // If the number of results returned matches the limit, there's likely a next page
-        const nextStartIndex = results.length < this.limit 
-            ? null 
-            : startIndex + this.limit
+        const nextStartIndex = results.length < this.limit ? null : page + 1
 
         return { 
             results: validateSchema(searchResultsSchema, results), 

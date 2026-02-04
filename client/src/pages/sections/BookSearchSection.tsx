@@ -50,7 +50,7 @@ export default function BooksSearchSection() {
         getNextPageParam: (lastPage) => {
             return lastPage.nextStartIndex
         },
-        initialPageParam: 0,  
+        initialPageParam: 1,  
         enabled: !!query, //fires only when query isnt empty
     })
 

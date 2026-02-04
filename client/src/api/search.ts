@@ -1,10 +1,10 @@
 import type { BookResult, MusicResult } from "@/types/search";
 import { apiFetch } from "./clientWrapper";
 
-export function searchBooks(params: string, startIndex: number = 0): 
+export function searchBooks(params: string, page: number = 1): 
     Promise<{ results: BookResult[], nextStartIndex: number | null }> 
 {
-    return apiFetch(`/search/books?q=${encodeURIComponent(params)}&startIndex=${startIndex}`, {
+    return apiFetch(`/search/books?q=${encodeURIComponent(params)}&page=${page}`, {
         method: "GET"
     })
 }

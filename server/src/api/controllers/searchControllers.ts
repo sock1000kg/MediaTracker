@@ -14,10 +14,10 @@ export const searchBooks = async (req: Request, res: Response, next: NextFunctio
         return res.status(400).json("Search query must be at least 3 characters")
     }
 
-    const startIndex = parseInt(req.query.startIndex as string) || 0
+    const page = parseInt(req.query.page as string) || 0
 
     try {
-        const results = await searchService.searchBooks(userId, q, startIndex)
+        const results = await searchService.searchBooks(userId, q, page)
         res.status(200).json(results)
     } catch (error) {
         next(error)
