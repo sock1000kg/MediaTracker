@@ -6,7 +6,7 @@ import {
 } from "@/schemas/search/musicSchemas.js"
 
 import { searchResultsSchema, SearchResult } from "@/schemas/search/searchSchemas.js"
-import { decryptKey, fetchAndParse, validateSchema } from "@/utilities.js"
+import { createUserAgentHeader, decryptKey, fetchAndParse, validateSchema } from "@/utilities.js"
 import { findUserById } from "@/repositories/authRepository.js"
 import { ISearchService } from "./searchServiceInterface.js"
 import { AppError } from "@/api/domain/error.js"
@@ -68,9 +68,11 @@ export class LastFmSearchService implements ISearchService {
         url.searchParams.set("format", "json")
         url.searchParams.set("limit", this.maxResults.toString())
         url.searchParams.set("page", page.toString())
+        
+        const headers = createUserAgentHeader()
+        // console.log(url.toString(), "\n", headers)
 
-        const parsed = await fetchAndParse(url, lastFmTrackSearchResponseSchema, "Last.fm API error", "Failed to fetch from Last.fm")
-        console.log("PARSED: ", parsed)
+        const parsed = await fetchAndParse(url, lastFmTrackSearchResponseSchema, "Last.fm API error", "Failed to fetch from Last.fm", headers)
 
         const items = parsed.results?.trackmatches?.track ?? []
         const nextPage = this.computePagination(items, page)
@@ -95,17 +97,15 @@ export class LastFmSearchService implements ISearchService {
         url.searchParams.set("limit", this.maxResults.toString())
         url.searchParams.set("page", page.toString())
 
-        const parsed = await fetchAndParse(url, lastFmAlbumSearchResponseSchema, "Last.fm API error", "Failed to fetch from Last.fm")
+        const headers = createUserAgentHeader()
+        // console.log(url.toString(), "\n", headers)
+
+        const parsed = await fetchAndParse(url, lastFmAlbumSearchResponseSchema, "Last.fm API error", "Failed to fetch from Last.fm", headers)
 
         const items = parsed.results?.albummatches?.album ?? []
         const nextPage = this.computePagination(items, page)
 
         const results = this.mapResults(items)
-        console.log("LASTFM REQUESTED PAGE:", page)
-        console.log("LASTFM RETURNED STARTPAGE:", parsed.results?.["opensearch:Query"]?.startPage)
-        console.log("ITEMS LENGTH:", items.length)
-        console.log("NEXT PAGE:", nextPage)
-
         return {
             results: validateSchema(searchResultsSchema, results),
             nextStartIndex: nextPage

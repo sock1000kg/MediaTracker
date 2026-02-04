@@ -237,3 +237,15 @@ export function decryptKey(stored: string) {
 
     return decrypted
 }
+
+
+// API usage header
+export function createUserAgentHeader(): RequestInit {
+    const contact = process.env.CONTACT_EMAIL || "not-main-dev"
+    const version = process.env.VERSION || "not-prod"
+    return {
+        headers: {
+            "User-Agent": `MediaTracker/${version} (${contact})`
+        }
+    }
+}

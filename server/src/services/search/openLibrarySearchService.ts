@@ -1,7 +1,7 @@
 import { ISearchService } from "@/services/search/searchServiceInterface.js"
 import { SearchResult, searchResultsSchema } from "@/schemas/search/searchSchemas.js"
 import { OpenLibraryBook, openLibraryResponseSchema } from "@/schemas/search/bookSchemas.js"
-import { fetchAndParse, validateSchema } from "@/utilities.js"
+import { createUserAgentHeader, fetchAndParse, validateSchema } from "@/utilities.js"
 import { AppError } from "@/api/domain/error.js"
 
 export class OpenLibraryService implements ISearchService {
@@ -50,23 +50,19 @@ export class OpenLibraryService implements ISearchService {
         url.searchParams.set("page", page.toString())
         url.searchParams.set("limit", this.limit.toString())
 
-        const contact = process.env.CONTACT_EMAIL || "not-main-dev"
-        const version = process.env.VERSION || "not-prod"
-        const headers = {
-            "User-Agent": `MediaTracker/${version} (${contact})`
-        }
+        const headers = createUserAgentHeader()
 
         // Fields filtering (optional, but good for performance)
         url.searchParams.set("fields", "key,title,author_name,first_publish_year,cover_i,number_of_pages_median,publisher,subject")
 
-        console.log(url.toString(), "\n", headers)
+        // console.log(url.toString(), "\n", headers)
 
         const parsed = await fetchAndParse(
             url, 
             openLibraryResponseSchema, 
             "Open Library API error", 
             "Failed to fetch from Open Library",
-            { headers }
+            headers 
         )
 
         const results = this.mapResults(parsed.docs)
