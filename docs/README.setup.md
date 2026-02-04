@@ -2,62 +2,12 @@
 
 ## Prerequisites
 - Docker Engine, Docker Compose
-- Node.js 22.17 (if you plan to run scripts locally)
+- Node.js 22.17
 
 ## Environment config
-Create these files at the repo root if you want to run on Docker, else create them in server directory:
-1) `.env` (used by dev/prod Docker Compose)
-```bash
-NODE_ENV=development
-RATE_LIMIT_ENABLED=true
+Set up your environment variables in the .env.example files
 
-# Postgres
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-POSTGRES_DB=media_tracker
-
-# Server
-PORT=5000
-
-REGISTER_KEY=register_key
-
-JWT_KEY_SECRET=replace_me_with_a_long_random_secret
-API_KEY_SECRET=replace_me_with_a_long_random_secret
-GOOGLE_BOOKS_API_KEY=your_google_book_api_key
-LAS_FM_API_KEY=your_lastfm_api_key
-DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
-
-# Seeding
-DEMO_USER_PASSWORD=Cool_pass_that_has_special_chars!_and_numbers123_and_upperCASE
-SYSTEM_USER_PASSWORD=Cooler_pass_that_has_special_chars!_and_numbers123_upperCASE
-```
-
-2) `.env.test` (used by test database test runner)
-```bash
-NODE_ENV=test
-RATE_LIMIT_ENABLED=false
-
-REGISTER_KEY=register_key
-
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-POSTGRES_DB=media_tracker_test
-
-# The test DB is published on host port 5433 by docker-compose.test-db.yml
-DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5433/${POSTGRES_DB}
-
-# Seeding
-DEMO_USER_PASSWORD=Cool_pass_that_has_special_chars!_and_numbers123_and_upperCASE
-SYSTEM_USER_PASSWORD=Cooler_pass_that_has_special_chars!_and_numbers123_upperCASE
-```
-
-3) `.env` (create this in client directory if you run dev without Docker)
-```bash
-VITE_API_URL=http://localhost:5000
-```
-
-
-## One‑command dev (Docker)
+## Dev (Docker Compose)
 From the `server` directory:
 ```bash
 npm run dev:start
@@ -84,7 +34,7 @@ When done:
 docker compose -f ../docker-compose.test-db.yml down -v
 ```
 
-## Production (Docker)
+## Production (Docker Compose)
 Build and run the production images (backend-frontend-database):
 ```bash
 cd server
