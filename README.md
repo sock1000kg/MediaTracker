@@ -33,7 +33,7 @@ A solo fullstack media logging webapp to help media lovers track everything in o
 - Integration tests for api routes
 
 ## API Overview
-Unless noted, endpoints require an `Authorization Bearer <JWT>` header
+Other than Authentication and Health Checks, endpoints require an `Authorization Bearer <JWT>` header
 
 ### Authentication
 - `POST /auth/register` - User registration
@@ -67,9 +67,9 @@ Unless noted, endpoints require an `Authorization Bearer <JWT>` header
 - `DELETE /api-key` - Delete an API key
 
 ### Search
-- `GET /search/books?q=...&startIndex=...` - Search book via Google Books API
-- `GET /search/music/albums?q=...` - Search music albums via Last.fm API.
-- `GET /search/music/tracks?q=...` - Search music tracks via Last.fm API.
+- `GET /search/books?q=...&page=...` - Search book via Open Library API
+- `GET /search/music/albums?q=...&page=...` - Search music albums via Last.fm API.
+- `GET /search/music/tracks?q=...&page=...` - Search music tracks via Last.fm API.
 
 ### Health
 - `POST /healthz` - Liveness probe
@@ -77,7 +77,7 @@ Unless noted, endpoints require an `Authorization Bearer <JWT>` header
 ## Planned Features
 - More API providers
 - User settings
-- Filtering search and logs
+- Filtering search and medias
 - API intergration (Goodreads, AOTY,...)
 - User statistics
 - Multi-media recommendation service
