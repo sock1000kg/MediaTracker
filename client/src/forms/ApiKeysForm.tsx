@@ -177,13 +177,15 @@ export function ApiKeyForm() {
                         {hasLastFmKey ? 
                         <Button
                             type="submit"
-                            variant="amber"  
+                            variant="amber"
+                            disabled={!lastFmInput}  
                         >
                             Update
                         </Button> :
                         <Button
                             type="submit"
-                            variant="amber"  
+                            variant="amber"
+                            disabled={!lastFmInput}
                         >
                             Add
                         </Button>}
