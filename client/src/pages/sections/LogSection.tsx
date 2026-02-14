@@ -14,14 +14,14 @@ import { ConfirmDeleteDialog } from "@/components/dialogs/ConfirmDeleteDialog"
 // --- NEW IMPORTS ---
 import { DataControls } from "@/components/ui/DataControls" 
 import { useDataFilter } from "@/hooks/useDataFilter"
-import { AVAILABLE_SORT_FIELDS, type SortCriterion, type SortField } from "@/types/sort"
+import { AVAILABLE_SORT_FIELDS_LOGS, type SortCriterion, type SortField } from "@/types/sort"
 import type { DialogName, Log, MediaMetadata } from "@/types/mainTypes"
 
 export default function LogsSection() {
   const [openDialog, setOpenDialog] = useState<DialogName>(null)
   const [targetLog, setTargetLog] = useState<Log | null>(null)
   
-  // GroupBy is purely visual, so we keep this state here
+  // GroupBy is purely visual
   const [groupBy, setGroupBy] = useState<"type" | "none">("type")
 
   const queryClient = useQueryClient()
@@ -146,7 +146,7 @@ export default function LogsSection() {
                     activeSorts={activeSorts}
                     toggleSortDirection={toggleSortDirection}
                     removeSort={removeSort}
-                    availableSorts={AVAILABLE_SORT_FIELDS}
+                    availableSorts={AVAILABLE_SORT_FIELDS_LOGS}
                     activeFilters={activeFilters}
                     toggleFilter={toggleFilter}
                     clearAll={clearAll}
@@ -185,11 +185,11 @@ export default function LogsSection() {
         {isPending && <p className="text-stone-500 m-4 animate-pulse">Loading logs...</p>}
         {error && <p className="mt-2 text-center text-sm m-4 text-red-500">{error.message}</p>}
 
-        {!isPending && logs.length === 0 && (
+        {!isPending && !(logs.length > 0) && (
             <p className="text-stone-600 m-4">You have no logs. Search for a media and create one!</p>
         )}
 
-        {!isPending && logs.length > 0 && processedLogs.length === 0 && (
+        {!isPending && logs.length > 0 && !(processedLogs.length > 0) && (
              <div className="flex flex-col items-center justify-center h-40 text-stone-500">
                  <Search className="h-8 w-8 mb-2 opacity-20"/>
                  <p>No logs match your filters.</p>

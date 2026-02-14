@@ -14,7 +14,7 @@ export const searchBooks = async (req: Request, res: Response, next: NextFunctio
         return res.status(400).json("Search query must be at least 3 characters")
     }
 
-    const page = parseInt(req.query.page as string) || 0
+    const page = parseInt(req.query.page as string) || 1
 
     try {
         const results = await searchService.searchBooks(userId, q, page)
@@ -36,7 +36,7 @@ export const searchAlbums = async (req: Request, res: Response, next: NextFuncti
         return res.status(400).json({ message: "Missing query" })
     }
 
-    const page = parseInt(req.query.page as string) || 0
+    const page = parseInt(req.query.page as string) || 1
 
     try {
         const results = await searchService.searchAblums(userId, q, page)
@@ -58,7 +58,7 @@ export const searchTracks = async (req: Request, res: Response, next: NextFuncti
         return res.status(400).json({ message: "Missing query" })
     }
 
-    const page = parseInt(req.query.page as string) || 0
+    const page = parseInt(req.query.page as string) || 1
 
     try {
         const results = await searchService.searchTracks(userId, q, page)

@@ -18,6 +18,7 @@
     "prod:rebuild": "docker-compose -f ../docker-compose.yml -f ../docker-compose.prod.yml build --no-cache && docker-compose -f ../docker-compose.yml -f ../docker-compose.prod.yml up -d",
     "dev:start": "docker-compose -f ../docker-compose.yml -f ../docker-compose.dev.yml up -d",
     "dev:rebuild": "docker-compose -f ../docker-compose.yml -f ../docker-compose.dev.yml build --no-cache && docker-compose -f ../docker-compose.yml -f ../docker-compose.dev.yml up -d",
+    "dev:reset": "docker-compose -f ../docker-compose.yml -f ../docker-compose.dev.yml down -v && docker-compose -f ../docker-compose.yml -f ../docker-compose.dev.yml build --no-cache && docker-compose -f ../docker-compose.yml -f ../docker-compose.dev.yml up -d",
     "server:start": "docker-compose -f ../docker-compose.yml up -d",
     "server:rebuild": "docker-compose -f ../docker-compose.yml up build --no-cache && docker-compose -f ../docker-compose.yml up -d"
   },

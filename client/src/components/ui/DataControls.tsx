@@ -76,20 +76,20 @@ export function DataControls({
                         </DropdownMenuItem>
                     ))}
                         {activeSorts.length > 0 && (
-                                <>
-                                    <DropdownMenuSeparator />
-                                    <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="w-full justify-center text-xs"
-                                    onClick={() => {
-                                        activeSorts.forEach(s => removeSort(s.id))
-                                    }}
-                                    >
-                                    Clear Filters
-                                    </Button>
-                                </>
-                            )}
+                            <>
+                                <DropdownMenuSeparator />
+                                <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="w-full justify-center text-xs"
+                                onClick={() => {
+                                    activeSorts.forEach(s => removeSort(s.id))
+                                }}
+                                >
+                                Clear Filters
+                                </Button>
+                            </>
+                        )}
                 </DropdownMenuContent>
              </DropdownMenu>
 
