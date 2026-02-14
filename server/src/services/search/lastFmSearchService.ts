@@ -70,7 +70,6 @@ export class LastFmSearchService implements ISearchService {
         url.searchParams.set("page", page.toString())
         
         const headers = createUserAgentHeader()
-        // console.log(url.toString(), "\n", headers)
 
         const parsed = await fetchAndParse(url, lastFmTrackSearchResponseSchema, "Last.fm API error", "Failed to fetch from Last.fm", headers)
 

@@ -53,8 +53,6 @@ export class GoogleBooksService implements ISearchService {
         url.searchParams.set("maxResults", this.maxResults.toString())
         if (key) url.searchParams.set("key", key)
 
-        console.log(url.toString())
-
         const parsed = await fetchAndParse(url, googleBooksResponseSchema, "Google Books API error", "Failed to fetch from Google Books")
         // console.log("PARSED: ", parsed)
 

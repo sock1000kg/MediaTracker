@@ -182,6 +182,7 @@ export async function fetchAndParse<T>(
     init?: RequestInit
 ): Promise<T> {
     const res = await fetch(url.toString(), init)
+    // console.log(url.toString(), init)
 
     if (!res.ok) {
         const errorBody = await res.json().catch(() => null)

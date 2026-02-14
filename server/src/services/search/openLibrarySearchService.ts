@@ -53,9 +53,7 @@ export class OpenLibraryService implements ISearchService {
         const headers = createUserAgentHeader()
 
         // Fields filtering (optional, but good for performance)
-        url.searchParams.set("fields", "key,title,author_name,first_publish_year,cover_i,number_of_pages_median,publisher,subject")
-
-        // console.log(url.toString(), "\n", headers)
+        url.searchParams.set("fields", "key,title,author_name,first_publish_year,cover_i,number_of_pages_median,publisher,subject,isbn")
 
         const parsed = await fetchAndParse(
             url, 

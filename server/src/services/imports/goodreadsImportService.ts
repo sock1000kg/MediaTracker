@@ -39,7 +39,7 @@ export class GoodreadsImportService {
             }
 
             // catch errors silently so one failed search doesn't crash the import
-            const searchResponse = await openLibraryService.searchBooksOpenLib(userId, query, 0).catch(() => null)
+            const searchResponse = await openLibraryService.searchBooksOpenLib(userId, query, 1).catch(() => null)
             const book = searchResponse?.results?.[0]
 
             if (!book) return null
