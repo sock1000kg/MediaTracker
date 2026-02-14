@@ -1,8 +1,8 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query"
 
 import type { DialogName, Log } from "@/types/mainTypes"
-import type { Media } from "@/types/mainTypes"
+import type { Media, MediaMetadata } from "@/types/mainTypes"
 
 import { Button } from "@/components/ui/button"
 import { MediaTypeCard } from "@/components/cards/MediaTypeGroupCard"
@@ -17,11 +17,18 @@ import { MediaForm } from "@/forms/MediaForm"
 import { ConfirmDeleteDialog } from "../../components/dialogs/ConfirmDeleteDialog"
 import EntityDialog from "../../components/dialogs/EntityDialog"
 import { LogForm } from "@/forms/LogForm"
+import { AVAILABLE_SORT_FIELDS_MEDIAS, type SortCriterion, type SortField } from "@/types/sort"
+import { useDataFilter } from "@/hooks/useDataFilter"
+import { Layers, Search } from "lucide-react"
+import { DataControls } from "@/components/ui/DataControls"
 
 export default function MediasSection() {
   const queryClient = useQueryClient()
 
   const [openDialog, setOpenDialog] = useState<DialogName>(null)
+
+  // GroupBy is purely visual
+  const [groupBy, setGroupBy] = useState<"type" | "none">("type")
 
   const [targetMediaMain, setTargetMediaMain] = useState<Media | null>(null)
   const [targetMediaForLog, setTargetMediaForLog] = useState<Media>()
@@ -39,15 +46,63 @@ export default function MediasSection() {
   const pending = logsQuery.isPending || mediasQuery.isPending
   const errorMessage = logsQuery.error?.message || mediasQuery.error?.message || null
 
-  // Group Medias by type
-  const groupedMedias = medias.reduce((acc, media) => {
-      const type = media.mediaType.name ?? "Unknown"
+    //Helper function for the filters hook
+    const getMediaSortValue = (media: Media, field: SortField) => {
+      switch (field) {
+          case "title": return media.title
+          case "creator": return media.creator
+          case "date": return new Date(media.created_at).getTime()
+          case "pageCount": return Number((media.metadata as MediaMetadata)?.pageCount ?? 0)
+          case "categories": {
+              const cats = (media.metadata as MediaMetadata)?.categories
+              return Array.isArray(cats) ? cats.join(", ") : String(cats || "")
+          }
+          default: return ""
+      }
+    }
   
-      if (!acc[type]) acc[type] = [] //Create empty type array if type doesnt exist
-      acc[type].push(media)
+    //Filters hook config
+    const INITIAL_SORTS: SortCriterion[] = [
+      { id: "date", field: "date", direction: "desc" }
+    ]
+    const SEARCH_FIELDS = ["title", "creator"]
+    const FILTER_CONFIG = [
+      { id: "type", field: (media: Media) => media.mediaType.name },
+    ]
+    
+    // Filters Hook
+    // We pass the raw data ('logs') into the hook.
+    // The hook gives us back 'processedData' (already filtered/sorted) and all the handlers.
+    const {
+      processedData: processedMedias,
+      searchQuery, setSearchQuery,
+      activeSorts, addSort, removeSort, toggleSortDirection,
+      activeFilters, toggleFilter,
+      clearAll
+    } = useDataFilter<Media>({
+      data: medias,
+      initialSorts: INITIAL_SORTS,
+      searchFields: SEARCH_FIELDS,
+      filterableFields: FILTER_CONFIG,
+      getSortValue: getMediaSortValue
+    })
   
-      return acc
-    }, {} as Record<string, Media[]>) //<key,value> object
+    // Calculate options for the dropdowns (Type, Status)
+    const uniqueMediaTypes = useMemo(() => 
+      Array.from(new Set(medias.map((media) => media.mediaType.name))).sort(), 
+    [medias])
+  
+    // Grouping Logic (Visual only)
+    // We use 'processedMedias' here so grouping happens AFTER filters are applied
+    const groupedMedias = useMemo(() => {
+      if (groupBy === "none") return null
+      return processedMedias.reduce((acc, media) => {
+        const type = media.mediaType.name
+        if (!acc[type]) acc[type] = []
+        acc[type].push(media)
+        return acc
+      }, {} as Record<string, Media[]>)
+    }, [processedMedias, groupBy])
 
   //MUTATIONS
   // MEDIA
@@ -136,9 +191,55 @@ export default function MediasSection() {
           <p className="text-lg font-semibold">Your Medias</p>
           <p className="text-sm text-gray-600">List of medias you created</p>
         </div>
-        <Button size="default" variant="amber" onClick={() => handleCreateClick()}>
-          + Add Media
-        </Button>
+
+        <div className="flex gap-4">
+          <div>
+            <Button size="default" variant="amber" onClick={() => handleCreateClick()}>
+              + Add Media
+            </Button>
+          </div>
+
+          {/* Controls Area */}
+          <div className="flex flex-col items-end gap-3">
+            <div className="flex flex-wrap gap-2 items-center">
+                <DataControls
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    addSort={addSort}
+                    activeSorts={activeSorts}
+                    toggleSortDirection={toggleSortDirection}
+                    removeSort={removeSort}
+                    availableSorts={AVAILABLE_SORT_FIELDS_MEDIAS}
+                    activeFilters={activeFilters}
+                    toggleFilter={toggleFilter}
+                    clearAll={clearAll}
+                    filterOptions={[
+                        { id: "type", label: "Type", values: uniqueMediaTypes, badgeColor: "stone" },
+                    ]}
+                    extraControls={
+                      <div className="flex items-center border rounded-md h-9 overflow-hidden bg-white shadow-sm">
+                          <Button
+                            variant="ghost" size="sm"
+                            className={`h-full rounded-none px-3 gap-2 font-normal ${groupBy === 'type' ? 'bg-stone-100 text-stone-900' : 'bg-white text-stone-500 hover:text-stone-900'}`}
+                            onClick={() => setGroupBy('type')}
+                          >
+                            <Layers className="h-3.5 w-3.5" />
+                            <span className="hidden sm:inline">Grouped</span>
+                          </Button>
+                          <div className="w-[1px] h-4 bg-stone-200" />
+                          <Button 
+                            variant="ghost" size="sm" 
+                            className={`h-full rounded-none px-3 font-normal ${groupBy === 'none' ? 'bg-stone-100 text-stone-900' : 'bg-white text-stone-500 hover:text-stone-900'}`}
+                            onClick={() => setGroupBy('none')}
+                          >
+                            List
+                          </Button>
+                      </div>
+                    }
+                />
+            </div>
+          </div>
+        </div>
       </div>
 
       {pending && <p className="text-gray-500 m-4 animate-pulse">Loading medias...</p>}
@@ -152,21 +253,47 @@ export default function MediasSection() {
 
       {/* Media list */}
       <div className="flex-1 overflow-y-auto min-h-0 scrollbar-hide">
-        {!(medias.length > 0) && !pending && <p className=" text-gray-600 m-4">You have no medias. Create one!</p>}
-        {!pending && (medias.length > 0) && (
-          <ul className="space-y-2">
-            {Object.entries(groupedMedias).sort().map(([type, typeMedias]) => (
-              <MediaTypeCard key={type} type={type}>
-                {typeMedias.map((media) => (
-                  <MediaCard
-                    key={media.id}
-                    media={media}
-                    onEdit={handleEditClick}
-                    onDelete={handleDeleteClick}
-                    onLog={handleLogClick}
-                  />
-                ))}
-              </MediaTypeCard>
+        {!(medias.length > 0) && !pending && 
+          <p className=" text-gray-600 m-4">You have no medias. Create one!</p>
+        }
+
+        {!pending && medias.length > 0 && !(processedMedias.length > 0) && (
+             <div className="flex flex-col items-center justify-center h-40 text-stone-500">
+                 <Search className="h-8 w-8 mb-2 opacity-20"/>
+                 <p>No medias match your filters.</p>
+             </div>
+        )}
+
+
+        {!pending && (processedMedias.length > 0) && (
+          <ul className="space-y-4 pb-10 pt-2">
+            {groupBy === 'type' && groupedMedias && 
+              Object.entries(groupedMedias).sort().map(([type, typeMedias]) => (
+                <MediaTypeCard key={type} type={type}>
+                  {typeMedias.map((media) => (
+                    <MediaCard
+                      key={media.id}
+                      media={media}
+                      onEdit={handleEditClick}
+                      onDelete={handleDeleteClick}
+                      onLog={handleLogClick}
+                    />
+                  ))}
+                </MediaTypeCard>
+            ))}
+
+            {/* LIST VIEW */}
+            {groupBy === 'none' && 
+                processedMedias.map((media) => (
+                  <div key={media.id} className="px-6">
+                    <MediaCard
+                      key={media.id}
+                      media={media}
+                      onEdit={handleEditClick}
+                      onDelete={handleDeleteClick}
+                      onLog={handleLogClick}
+                    />
+                  </div>
             ))}
           </ul>
         )}
