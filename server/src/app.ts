@@ -28,9 +28,10 @@ app.set('trust proxy', true)
 app.use(helmet())
 app.use(cookieParser())
 
+const allowedOrigins = process.env.ALLOWED_CORS ? process.env.ALLOWED_CORS.split(',') : []
 app.use(
     cors({
-        origin: ['http://localhost:5173', 'http://localhost', 'https://media-tracker.sock1000kg.io.vn'],
+        origin: allowedOrigins,
         credentials: true
     })
 )

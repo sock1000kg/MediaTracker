@@ -41,8 +41,16 @@ export default function MediasSection() {
     ]
   })
 
-  const logs = logsQuery.data ?? []
-  const medias = mediasQuery.data ?? []
+  // useMemo to avoid rerenders
+  const logs = useMemo(
+    () => logsQuery.data ?? [],
+    [logsQuery.data]
+  )
+  const medias = useMemo(
+    () => mediasQuery.data ?? [],
+    [mediasQuery.data]
+  )
+  
   const pending = logsQuery.isPending || mediasQuery.isPending
   const errorMessage = logsQuery.error?.message || mediasQuery.error?.message || null
 
