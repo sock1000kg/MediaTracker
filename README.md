@@ -1,6 +1,6 @@
 # Media Tracker (WIP)
 
-A solo fullstack media logging webapp to help media lovers track everything in one place. Users won't have to switch between multiple apps to log what they've seen. This app supports music, books, movies,... It can be your own personal hub where you can log, rate and store notes of your favourite medias. You can also add you own custom medias if the app doesn't have them!
+A solo fullstack media logging webapp to help media lovers track everything in one place. Users won't have to switch between multiple apps to log what they've seen. It can be your own personal hub where you can log, rate and store notes of your favourite medias.
 
 ## Table of Contents
 - [Setup Guide](./docs/README.setup.md)
@@ -9,6 +9,7 @@ A solo fullstack media logging webapp to help media lovers track everything in o
 - [Tech Stack](#tech-stack)
 - [Features](#features)
 - [API Overview](#api-overview)
+- [Demo Account](#demo-account)
 - [Planned Features](#planned-features)
 
 ## Tech Stack
@@ -73,6 +74,12 @@ Other than Authentication and Health Checks, endpoints require an `Authorization
 
 ### Health
 - `POST /healthz` - Liveness probe
+
+## Demo Account
+
+You can explore the app using the demo account at: https://media-tracker.sock1000kg.io.vn/
+- **Username:** `demo`
+- **Password:** `Demo123!!!`
 
 ## Planned Features
 - More API providers
