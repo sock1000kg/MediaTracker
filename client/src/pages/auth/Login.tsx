@@ -1,13 +1,15 @@
+import BlueDude from "@/components/BlueDude"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { useMutation } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 export default function Login() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
@@ -27,6 +29,7 @@ export default function Login() {
       return data
     },
     onSuccess: (data) => {
+      queryClient.clear() // drop the previous user's cached data first
       localStorage.setItem("accessToken", data.accessToken)
       navigate("/homepage")
     },
@@ -42,11 +45,18 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center  bg-stone-100">
-      <Card className="w-full max-w-sm shadow-2xl">
+    <div className="flex min-h-screen items-center justify-center pt-24">
+      <div className="relative w-full max-w-sm">
+      <div className="absolute -top-[72px] left-1/2 z-0 -translate-x-1/2">
+        <BlueDude size={96} label="A small blue creature, grinning" />
+      </div>
+      <p className="absolute -top-[60px] left-1/2 z-0 ml-14 -rotate-3 whitespace-nowrap font-hand text-lg text-muted-foreground">
+        oh, it’s you!
+      </p>
+      <Card className="relative z-10 w-full shadow-paper">
 
         <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">Login</CardTitle>
+          <CardTitle className="font-display text-2xl font-semibold text-center">Welcome back</CardTitle>
         </CardHeader>
 
         <CardContent>
@@ -79,7 +89,7 @@ export default function Login() {
 
           {/* Error message */}
           {loginMutation.isError && (
-            <p className="mt-2 text-center text-sm text-red-500">
+            <p className="mt-2 text-center text-sm text-destructive">
               {loginMutation.error instanceof Error
                 ? loginMutation.error.message : "An unexpected error occured"}
             </p>
@@ -97,11 +107,12 @@ export default function Login() {
           </form>
 
           {/* Switch to register */}
-          <p className="mt-4 text-center text-sm text-stone-900">
+          <p className="mt-4 text-center text-sm text-foreground">
             Don’t have an account? <Link to="/register" className="underline">Sign up</Link>
           </p>
         </CardContent>
       </Card>
+      </div>
     </div>
   )
 }

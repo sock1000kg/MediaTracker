@@ -1,17 +1,30 @@
-import { useMemo, useState } from "react"
-import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query"
+import { usePreferences } from "@/hooks/usePreferences"
+import { sortPrefsToCriteria } from "@/lib/preferences"
+import EmptyState from "@/components/EmptyState"
+import { EMPTY_LINES, pickLoadingLine } from "@/lib/whimsy"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import type { DialogName, Log } from "@/types/mainTypes"
 import type { Media, MediaMetadata } from "@/types/mainTypes"
 
 import { Button } from "@/components/ui/button"
-import { MediaTypeCard } from "@/components/cards/MediaTypeGroupCard"
-import { MediaCard } from "@/components/cards/MediaCard"
+import { MediaRow } from "@/components/media/MediaRow"
+import { MediaTile } from "@/components/media/MediaTile"
+import { GroupHeading } from "@/components/media-view/GroupHeading"
+import { ViewControls } from "@/components/media-view/ViewControls"
+import { capitalise } from "@/lib/mediaView"
+import { GroupFooter } from "@/components/media-view/GroupFooter"
+import { useGroupReveal } from "@/hooks/useGroupReveal"
+import { step } from "@/lib/logView"
+import { readStoredString, writeStoredString } from "@/lib/utils"
 
 import { createMedia, deleteMedia, deleteWarningMedia, editMedia } from "@/api/media"
 import { createLog, editLog } from "@/api/logs"
 import { fetchLogsQueryOptions } from "@/queryOptions/fetchLogsQueryOptions"
 import { fetchMediasQueryOptions } from "@/queryOptions/fetchMediasQueryOptions"
+import { fetchMediaTypesQueryOptions } from "@/queryOptions/fetchMediaTypesQueryOptions"
+import { unionCI } from "@/lib/filterValues"
 
 import { MediaForm } from "@/forms/MediaForm"
 import { ConfirmDeleteDialog } from "../../components/dialogs/ConfirmDeleteDialog"
@@ -19,16 +32,44 @@ import EntityDialog from "../../components/dialogs/EntityDialog"
 import { LogForm } from "@/forms/LogForm"
 import { AVAILABLE_SORT_FIELDS_MEDIAS, type SortCriterion, type SortField } from "@/types/sort"
 import { useDataFilter } from "@/hooks/useDataFilter"
-import { Layers, Search } from "lucide-react"
 import { DataControls } from "@/components/ui/DataControls"
 
+//Helper function for the filters hook
+const getMediaSortValue = (media: Media, field: SortField) => {
+  switch (field) {
+      case "title": return media.title
+      case "creator": return media.creator
+      case "date": return new Date(media.created_at).getTime()
+      case "pageCount": return Number((media.metadata as MediaMetadata)?.pageCount ?? 0)
+      case "categories": {
+          const cats = (media.metadata as MediaMetadata)?.categories
+          return Array.isArray(cats) ? cats.join(", ") : String(cats || "")
+      }
+      default: return ""
+  }
+}
+
+const VIEWS = ["list", "grid"] as const
+type MediaView = (typeof VIEWS)[number]
+const GROUPS = ["type", "none"] as const
+type MediaGroup = (typeof GROUPS)[number]
+
+const INITIAL_SORTS: SortCriterion[] = [
+  { id: "date", field: "date", direction: "desc" }
+]
+const SEARCH_FIELDS = ["title", "creator"]
+
 export default function MediasSection() {
+  const [loadingLine] = useState(() => pickLoadingLine())
   const queryClient = useQueryClient()
 
   const [openDialog, setOpenDialog] = useState<DialogName>(null)
 
-  // GroupBy is purely visual
-  const [groupBy, setGroupBy] = useState<"type" | "none">("type")
+  // View and grouping are purely visual, remembered per device
+  const [view, setViewState] = useState<MediaView>(() => readStoredString("media.view", VIEWS, "list"))
+  const [groupBy, setGroupByState] = useState<MediaGroup>(() => readStoredString("media.group", GROUPS, "type"))
+  const setView = (v: MediaView) => { setViewState(v); writeStoredString("media.view", v) }
+  const setGroupBy = (g: MediaGroup) => { setGroupByState(g); writeStoredString("media.group", g) }
 
   const [targetMediaMain, setTargetMediaMain] = useState<Media | null>(null)
   const [targetMediaForLog, setTargetMediaForLog] = useState<Media>()
@@ -54,63 +95,84 @@ export default function MediasSection() {
   const pending = logsQuery.isPending || mediasQuery.isPending
   const errorMessage = logsQuery.error?.message || mediasQuery.error?.message || null
 
-    //Helper function for the filters hook
-    const getMediaSortValue = (media: Media, field: SortField) => {
-      switch (field) {
-          case "title": return media.title
-          case "creator": return media.creator
-          case "date": return new Date(media.created_at).getTime()
-          case "pageCount": return Number((media.metadata as MediaMetadata)?.pageCount ?? 0)
-          case "categories": {
-              const cats = (media.metadata as MediaMetadata)?.categories
-              return Array.isArray(cats) ? cats.join(", ") : String(cats || "")
-          }
-          default: return ""
-      }
-    }
-  
-    //Filters hook config
-    const INITIAL_SORTS: SortCriterion[] = [
-      { id: "date", field: "date", direction: "desc" }
-    ]
-    const SEARCH_FIELDS = ["title", "creator"]
-    const FILTER_CONFIG = [
+    // Logged state per media id (logs include shared media, medias are user-created)
+    const logByMediaId = useMemo(() => new Map(logs.map(l => [l.media.id, l])), [logs])
+
+    const filterConfig = useMemo(() => [
       { id: "type", field: (media: Media) => media.mediaType.name },
-    ]
-    
+      { id: "logged", field: (media: Media) => logByMediaId.has(media.id) ? "Logged" : "Not logged" },
+      { id: "status", field: (media: Media) => logByMediaId.get(media.id)?.status ?? "not logged" },
+    ], [logByMediaId])
+
     // Filters Hook
     // We pass the raw data ('logs') into the hook.
     // The hook gives us back 'processedData' (already filtered/sorted) and all the handlers.
     const {
       processedData: processedMedias,
       searchQuery, setSearchQuery,
-      activeSorts, addSort, removeSort, toggleSortDirection,
+      activeSorts, addSort, replaceSorts, removeSort, toggleSortDirection,
       activeFilters, toggleFilter,
       clearAll
     } = useDataFilter<Media>({
       data: medias,
       initialSorts: INITIAL_SORTS,
       searchFields: SEARCH_FIELDS,
-      filterableFields: FILTER_CONFIG,
+      filterableFields: filterConfig,
       getSortValue: getMediaSortValue
     })
+
+    // Saved default sort: applied once when prefs load, unless the user already changed sorts
+    const { prefs, isLoaded: prefsLoaded } = usePreferences()
+    const sortsTouched = useRef(false)
+    const defaultSortApplied = useRef(false)
+    const markSorted = <A extends unknown[]>(fn: (...a: A) => void) => (...a: A) => {
+      sortsTouched.current = true
+      fn(...a)
+    }
+    useEffect(() => {
+      if (!prefsLoaded || defaultSortApplied.current) return
+      defaultSortApplied.current = true
+      const criteria = sortPrefsToCriteria(prefs.defaultSort?.medias)
+      if (criteria && !sortsTouched.current) replaceSorts(criteria)
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [prefsLoaded, prefs.defaultSort?.medias])
   
     // Calculate options for the dropdowns (Type, Status)
-    const uniqueMediaTypes = useMemo(() => 
-      Array.from(new Set(medias.map((media) => media.mediaType.name))).sort(), 
-    [medias])
+    // Every available type (system + user), not only the ones that appear in the loaded media
+    const { data: knownTypes = [] } = useQuery(fetchMediaTypesQueryOptions())
+    const uniqueMediaTypes = useMemo(() =>
+      unionCI(medias.map((media) => media.mediaType.name), knownTypes.map((t) => t.name)),
+    [medias, knownTypes])
   
+    const loggedValues = useMemo(() => {
+      const present = new Set<string>(medias.map(m => logByMediaId.has(m.id) ? "Logged" : "Not logged"))
+      return ["Logged", "Not logged"].filter(v => present.has(v))
+    }, [medias, logByMediaId])
+
+    const statusValues = useMemo(() =>
+      Array.from(new Set(medias.map(m => logByMediaId.get(m.id)?.status ?? "not logged"))).sort(),
+    [medias, logByMediaId])
+
     // Grouping Logic (Visual only)
     // We use 'processedMedias' here so grouping happens AFTER filters are applied
-    const groupedMedias = useMemo(() => {
-      if (groupBy === "none") return null
-      return processedMedias.reduce((acc, media) => {
+    const sections = useMemo(() => {
+      if (groupBy === "none") return processedMedias.length ? [{ key: "all", label: null as string | null, items: processedMedias }] : []
+      const map = new Map<string, Media[]>()
+      for (const media of processedMedias) {
         const type = media.mediaType.name
-        if (!acc[type]) acc[type] = []
-        acc[type].push(media)
-        return acc
-      }, {} as Record<string, Media[]>)
+        if (!map.has(type)) map.set(type, [])
+        map.get(type)!.push(media)
+      }
+      return Array.from(map.entries())
+        .sort(([a], [b]) => a.localeCompare(b, undefined, { sensitivity: "base" }))
+        .map(([type, items]) => ({ key: type, label: (capitalise(type) || "Other") as string | null, items }))
     }, [processedMedias, groupBy])
+
+  // Per-group "Load more…": resets when filters, search or sorts change (and on view / group changes)
+  const reveal = useGroupReveal(
+    view, groupBy,
+    JSON.stringify([searchQuery, activeSorts.map((s) => [s.field, s.direction]), activeFilters])
+  )
 
   //MUTATIONS
   // MEDIA
@@ -194,67 +256,52 @@ export default function MediasSection() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex justify-between p-4 items-center bg-stone-200">
+      <div className="flex flex-col gap-4 px-6 pt-6 pb-4">
         <div>
-          <p className="text-lg font-semibold">Your Medias</p>
-          <p className="text-sm text-gray-600">List of medias you created</p>
+          <h1 className="font-display text-4xl font-semibold">Your media</h1>
         </div>
 
-        <div className="flex gap-4">
-          <div>
-            <Button size="default" variant="amber" onClick={() => handleCreateClick()}>
-              + Add Media
-            </Button>
-          </div>
-
-          {/* Controls Area */}
-          <div className="flex flex-col items-end gap-3">
-            <div className="flex flex-wrap gap-2 items-center">
-                <DataControls
-                    searchQuery={searchQuery}
-                    setSearchQuery={setSearchQuery}
-                    addSort={addSort}
-                    activeSorts={activeSorts}
-                    toggleSortDirection={toggleSortDirection}
-                    removeSort={removeSort}
-                    availableSorts={AVAILABLE_SORT_FIELDS_MEDIAS}
-                    activeFilters={activeFilters}
-                    toggleFilter={toggleFilter}
-                    clearAll={clearAll}
-                    filterOptions={[
-                        { id: "type", label: "Type", values: uniqueMediaTypes, badgeColor: "stone" },
-                    ]}
-                    extraControls={
-                      <div className="flex items-center border rounded-md h-9 overflow-hidden bg-white shadow-sm">
-                          <Button
-                            variant="ghost" size="sm"
-                            className={`h-full rounded-none px-3 gap-2 font-normal ${groupBy === 'type' ? 'bg-stone-100 text-stone-900' : 'bg-white text-stone-500 hover:text-stone-900'}`}
-                            onClick={() => setGroupBy('type')}
-                          >
-                            <Layers className="h-3.5 w-3.5" />
-                            <span className="hidden sm:inline">Grouped</span>
-                          </Button>
-                          <div className="w-[1px] h-4 bg-stone-200" />
-                          <Button 
-                            variant="ghost" size="sm" 
-                            className={`h-full rounded-none px-3 font-normal ${groupBy === 'none' ? 'bg-stone-100 text-stone-900' : 'bg-white text-stone-500 hover:text-stone-900'}`}
-                            onClick={() => setGroupBy('none')}
-                          >
-                            List
-                          </Button>
-                      </div>
-                    }
-                />
-            </div>
-          </div>
+        <div className="flex flex-col items-start gap-3 w-full">
+        <DataControls
+            leadingControls={
+              <Button size="default" variant="amber" className="h-10 rounded-full" onClick={() => handleCreateClick()}>
+                + Add Media
+              </Button>
+            }
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            addSort={markSorted(addSort)}
+            activeSorts={activeSorts}
+            toggleSortDirection={markSorted(toggleSortDirection)}
+            removeSort={markSorted(removeSort)}
+            availableSorts={AVAILABLE_SORT_FIELDS_MEDIAS}
+            activeFilters={activeFilters}
+            toggleFilter={toggleFilter}
+            clearAll={clearAll}
+            filterOptions={[
+                { id: "type", label: "Type", values: uniqueMediaTypes, badgeColor: "stone" },
+                { id: "logged", label: "Logged", values: loggedValues, badgeColor: "blue" },
+                { id: "status", label: "Status", values: statusValues, badgeColor: "amber" },
+            ]}
+            extraControls={
+              <ViewControls
+                view={view}
+                onView={setView}
+                group={groupBy}
+                onGroup={(g) => setGroupBy(g as MediaGroup)}
+                groupAriaLabel="Group media"
+                groupOptions={[{ value: "type", label: "Type" }, { value: "none", label: "None" }]}
+              />
+            }
+        />
         </div>
       </div>
 
-      {pending && <p className="text-gray-500 m-4 animate-pulse">Loading medias...</p>}
+      {pending && <p className="text-muted-foreground m-4 animate-pulse">{loadingLine}</p>}
 
       {/* Error message */}
       {errorMessage && (
-          <p className="mt-2 text-center text-sm text-red-500">
+          <p className="mt-2 text-center text-sm text-destructive">
               {errorMessage}
           </p>
       )}
@@ -262,48 +309,49 @@ export default function MediasSection() {
       {/* Media list */}
       <div className="flex-1 overflow-y-auto min-h-0 scrollbar-hide">
         {!(medias.length > 0) && !pending && 
-          <p className=" text-gray-600 m-4">You have no medias. Create one!</p>
+          <EmptyState line={EMPTY_LINES.noMedias}>
+            <p>Create one!</p>
+          </EmptyState>
         }
 
         {!pending && medias.length > 0 && !(processedMedias.length > 0) && (
-             <div className="flex flex-col items-center justify-center h-40 text-stone-500">
-                 <Search className="h-8 w-8 mb-2 opacity-20"/>
+             <EmptyState line={EMPTY_LINES.noMatch}>
                  <p>No medias match your filters.</p>
-             </div>
+             </EmptyState>
         )}
 
 
         {!pending && (processedMedias.length > 0) && (
-          <ul className="space-y-4 pb-10 pt-2">
-            {groupBy === 'type' && groupedMedias && 
-              Object.entries(groupedMedias).sort().map(([type, typeMedias]) => (
-                <MediaTypeCard key={type} type={type}>
-                  {typeMedias.map((media) => (
-                    <MediaCard
-                      key={media.id}
-                      media={media}
-                      onEdit={handleEditClick}
-                      onDelete={handleDeleteClick}
-                      onLog={handleLogClick}
-                    />
-                  ))}
-                </MediaTypeCard>
-            ))}
-
-            {/* LIST VIEW */}
-            {groupBy === 'none' && 
-                processedMedias.map((media) => (
-                  <div key={media.id} className="px-6">
-                    <MediaCard
-                      key={media.id}
-                      media={media}
-                      onEdit={handleEditClick}
-                      onDelete={handleDeleteClick}
-                      onLog={handleLogClick}
-                    />
-                  </div>
-            ))}
-          </ul>
+          <div className="px-6 pb-10 pt-2">
+            {sections.map((section) => {
+              const { visible, remaining } = reveal.slice(section.key, section.items)
+              return (
+                <section key={section.key} className="mb-6">
+                  <GroupHeading label={section.label} expanded={reveal.isExpanded(section.key)} onCollapse={() => reveal.collapse(section.key)} headingRef={reveal.headingRef(section.key)} />
+                  {view === "list" ? (
+                    <ul ref={reveal.listRef(section.key)} className="flex flex-col gap-3">
+                      {visible.map((media) => (
+                        <MediaRow key={media.id} media={media} log={logByMediaId.get(media.id)} onEdit={handleEditClick} onDelete={handleDeleteClick} onLog={handleLogClick} />
+                      ))}
+                    </ul>
+                  ) : (
+                    <ul ref={reveal.listRef(section.key)} className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-x-5 gap-y-7">
+                      {visible.map((media) => (
+                        <MediaTile key={media.id} media={media} log={logByMediaId.get(media.id)} onEdit={handleEditClick} onDelete={handleDeleteClick} onLog={handleLogClick} />
+                      ))}
+                    </ul>
+                  )}
+                  <GroupFooter
+                    total={section.items.length} remaining={remaining} step={step(view, groupBy)}
+                    expanded={reveal.isExpanded(section.key)} groupLabel={section.label}
+                    onLoadMore={() => reveal.loadMore(section.key)}
+                    onLoadAll={() => reveal.loadAll(section.key, section.items.length)}
+                    onCollapse={() => reveal.collapse(section.key)}
+                  />
+                </section>
+              )
+            })}
+          </div>
         )}
       </div>
 

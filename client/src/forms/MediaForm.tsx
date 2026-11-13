@@ -78,7 +78,7 @@ export function MediaForm({
         <div className="space-y-4 max-h-[520px] overflow-y-auto pr-2 p-2">
             {/* Error message */}
             {errorMessage && (
-                <p className="mt-2 text-center text-sm text-red-500">
+                <p className="mt-2 text-center text-sm text-destructive">
                     {errorMessage}
                 </p>
             )}
@@ -92,7 +92,7 @@ export function MediaForm({
                     onChange={(e) =>
                     setFormData((prev) => ({ ...prev, title: e.target.value }))
                     }
-                    className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none "
+                    className="mt-1 block w-full rounded-md border border-input bg-card px-3 py-2 text-sm focus:ring-2 focus:outline-none "
                     placeholder="e.g. The Lord of the Rings"
                 />
             </label>
@@ -107,7 +107,7 @@ export function MediaForm({
                         setFormData(prev => ({ ...prev, mediaType: selectedType }))
                     }}>
 
-                    <SelectTrigger className="mt-1 flex w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none ">
+                    <SelectTrigger className="mt-1 flex w-full rounded-md border border-input bg-card px-3 py-2 text-sm focus:ring-2 focus:outline-none ">
                         <SelectValue placeholder="Select a type" />
                     </SelectTrigger>
 
@@ -130,7 +130,7 @@ export function MediaForm({
                     onChange={(e) =>
                         setFormData((prev) => ({ ...prev, creator: e.target.value }))
                     }
-                    className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none "
+                    className="mt-1 block w-full rounded-md border border-input bg-card px-3 py-2 text-sm focus:ring-2 focus:outline-none "
                     placeholder="e.g. J.R.R. Tolkien"
                 />
             </label>
@@ -147,7 +147,7 @@ export function MediaForm({
                         year: e.target.value ? Number(e.target.value) : undefined,
                     }))
                     }
-                    className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none "
+                    className="mt-1 block w-full rounded-md border border-input bg-card px-3 py-2 text-sm focus:ring-2 focus:outline-none "
                     placeholder="e.g. 1954"
                 />
             </label>
@@ -161,7 +161,7 @@ export function MediaForm({
                     onChange={(e) =>
                         setFormData((prev) => ({ ...prev, imageUrl: e.target.value }))
                     }
-                    className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none "
+                    className="mt-1 block w-full rounded-md border border-input bg-card px-3 py-2 text-sm focus:ring-2 focus:outline-none "
                     placeholder="Only allow https:// links"
                 />
             </label>
@@ -174,7 +174,7 @@ export function MediaForm({
                     onChange={(e) =>
                         setFormData((prev) => ({ ...prev, description: e.target.value }))
                     }
-                    className="mt-1 block w-full h-40 rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none "
+                    className="mt-1 block w-full h-40 rounded-md border border-input bg-card px-3 py-2 text-sm focus:ring-2 focus:outline-none "
                     placeholder="Descibe this media"
                     />
             </label>
@@ -190,17 +190,17 @@ export function MediaForm({
                     onValueChange={(val) => setSelectedMetadata(val)}
                     >
                     <SelectTrigger
-                        className="w-[280px] flex rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none "
+                        className="w-[280px] flex rounded-md border border-input bg-card px-3 py-2 text-sm focus:ring-2 focus:outline-none "
                     >
                         <SelectValue placeholder="Select metadata field" />
                     </SelectTrigger>
 
-                    <SelectContent className="rounded-md border border-gray-200 bg-white shadow-md">
+                    <SelectContent className="rounded-md border border-border bg-card shadow-md">
                         {AVAILABLE_METADATA_FIELDS.map((field) => (
                         <SelectItem
                             key={field}
                             value={field}
-                            className="cursor-pointer text-sm hover:bg-gray-100 focus:bg-gray-100"
+                            className="cursor-pointer text-sm hover:bg-muted focus:bg-muted"
                         >
                             {field}
                         </SelectItem>
@@ -211,7 +211,7 @@ export function MediaForm({
                     <button
                     type="button"
                     onClick={addMetadataField}
-                    className="px-3 py-2 rounded-md bg-stone-500 text-sm text-white hover:bg-stone-600 focus:ring-2 focus:outline-none"
+                    className="px-3 py-2 rounded-md bg-secondary text-sm text-secondary-foreground hover:bg-muted border border-border-strong focus:ring-2 focus:outline-none"
                     >
                     Add
                     </button>
@@ -227,13 +227,13 @@ export function MediaForm({
                             type="text"
                             value={value as string}
                             onChange={(e) => updateMetadataValue(key, e.target.value)}
-                            className="flex-1 rounded-md border border-gray-300 bg-gray-50 px-2 py-1 text-sm focus:ring-2 "
+                            className="flex-1 rounded-md border border-input bg-card px-2 py-1 text-sm focus:ring-2 "
                             placeholder={`Enter ${key}`}
                         />
                         <button
                             type="button"
                             onClick={() => removeMetadataField(key)}
-                            className="px-2 py-1 rounded-md bg-red-400 text-white text-xs hover:bg-red-500"
+                            className="px-2 py-1 rounded-md bg-destructive text-primary-foreground text-xs hover:bg-destructive/90"
                         >
                             ✕
                         </button>

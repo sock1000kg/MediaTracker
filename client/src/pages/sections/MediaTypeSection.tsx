@@ -1,3 +1,5 @@
+import EmptyState from "@/components/EmptyState"
+import { EMPTY_LINES, pickLoadingLine } from "@/lib/whimsy"
 import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -13,6 +15,7 @@ import { fetchMediasQueryOptions } from "@/queryOptions/fetchMediasQueryOptions"
 import { fetchLogsQueryOptions } from "@/queryOptions/fetchLogsQueryOptions"
 
 export default function MediaTypesSection() {
+  const [loadingLine] = useState(() => pickLoadingLine())
   const queryClient = useQueryClient()
 
   const [openDialog, setOpenDialog] = useState<DialogName>(null)
@@ -79,7 +82,7 @@ export default function MediaTypesSection() {
           onChange={(e) =>
             setFormData((prev) => ({ ...prev, name: e.target.value }))
           }
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none "
+          className="mt-1 block w-full rounded-md border border-input bg-card px-3 py-2 text-sm focus:ring-2 focus:outline-none "
           placeholder="Media type name (e.g. Book, Movie, Game)"
         />
       </label>
@@ -90,46 +93,45 @@ export default function MediaTypesSection() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex justify-between p-4 items-center bg-stone-200">
+      <div className="flex justify-between px-6 pt-6 pb-4 items-end gap-4">
         <div>
-          <p className="text-lg font-semibold">Your Media Types</p>
-          <p className="text-sm text-gray-600">List of categories you have created</p>
+          <h1 className="font-display text-4xl font-semibold">Media types</h1>
         </div>
         <Button size="default" variant="amber" onClick={() => handleCreateClick()}>
           + Add Media Type
         </Button>
       </div>
 
-      {isPending && <p className="text-gray-500 m-4 animate-pulse">Loading media types...</p>}
+      {isPending && <p className="text-muted-foreground m-4 animate-pulse">{loadingLine}</p>}
 
       {/* Error message */}
       {error && (
-          <p className="mt-2 text-center text-sm text-red-500">
+          <p className="mt-2 text-center text-sm text-destructive">
               {error.message}
           </p>
       )}
 
       {/* Media Type list */}
       <div className="flex-1 overflow-y-auto min-h-0 scrollbar-hide">
-        {!(mediaTypes.length > 0) && !isPending && <p className="text-gray-600 m-4">You have no media types. Create one!</p>}
+        {!(mediaTypes.length > 0) && !isPending && <EmptyState line={EMPTY_LINES.noTypes}><p>You have no media types. Create one!</p></EmptyState>}
         {!isPending && (
           <ul className="space-y-2">
             {mediaTypes
               .slice() //copy so we dont mess with cache
               .sort((a,b) => a.name.localeCompare(b.name)) // alphabetical sort
               .map((mediaType) => (
-              <li key={mediaType.id} className="p-3 bg-white rounded-xl shadow-sm border border-stone-200 m-4 capitalize">
+              <li key={mediaType.id} className="p-3 rounded-xl border border-border bg-card shadow-paper transition-colors hover:border-border-strong m-4 capitalize">
                 <div className="flex justify-between items-center">
                   {/* Left side info */}
                   <div className="flex-col items-center gap-1">
-                    <p className="font-bold text-stone-800">{mediaType.name}</p>
+                    <p className="font-bold text-foreground">{mediaType.name}</p>
                     {mediaType.userId == 0 && <p className="text-xs">(system)</p>}
                   </div>
 
                   {/* Right side info */}
                   <div className="flex items-center gap-4">
                     {/* Creation date display */}
-                    <span className="text-xs rounded-2xl px-2 py-0.5 bg-amber-100 text-amber-800">
+                    <span className="text-xs rounded-2xl px-2 py-0.5 bg-tag text-tag-foreground tabular-nums">
                       {new Date(mediaType.created_at).toLocaleDateString("en-US", {
                         year: "numeric",
                         month: "short",

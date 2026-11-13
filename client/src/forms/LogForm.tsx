@@ -31,7 +31,7 @@ export function LogForm({
   return (
     <div className="space-y-4 max-h-[520px] overflow-y-auto pr-2 p-2">
         {targetMedia && (
-            <p className="text-sm text-gray-600 italic">
+            <p className="text-sm text-muted-foreground italic">
                 Logging for <span className="font-semibold">{targetMedia.title}</span>
             </p>
         )}
@@ -44,7 +44,7 @@ export function LogForm({
             setFormData((prev) => ({ ...prev, status: val }))
           }
         >
-          <SelectTrigger className="mt-1 flex w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none ">
+          <SelectTrigger className="mt-1 flex w-full rounded-md border border-input bg-card px-3 py-2 text-sm focus:ring-2 focus:outline-none ">
             <SelectValue placeholder="Select status" />
           </SelectTrigger>
 
@@ -71,7 +71,7 @@ export function LogForm({
           }
           min={0}
           max={100}
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none "
+          className="mt-1 block w-full rounded-md border border-input bg-card px-3 py-2 text-sm focus:ring-2 focus:outline-none "
           placeholder="0–100"
         />
       </label>
@@ -87,13 +87,13 @@ export function LogForm({
           maxLength={10000}
           className="
             mt-1 block w-full h-40 rounded-md 
-            border border-gray-300 bg-gray-50 
+            border border-input bg-card 
             px-3 py-2 text-sm 
             focus:ring-2 focus:outline-none resize-none
           "
           placeholder="Write your thoughts..."
         />
-        <div className="text-right text-xs text-gray-500 mt-1">
+        <div className="text-right text-xs text-muted-foreground mt-1">
           {(formData.notes?.length ?? 0)}/10000
         </div>
       </label>

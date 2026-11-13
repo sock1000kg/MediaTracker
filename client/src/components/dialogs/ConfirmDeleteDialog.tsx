@@ -7,6 +7,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import BlueDude from "@/components/BlueDude"
 import { Button } from "@/components/ui/button"
 import type { MediaType } from "@/types/mainTypes"
 import { useState, useEffect } from "react"
@@ -88,14 +89,20 @@ export function ConfirmDeleteDialog<T = MediaType>({
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <div className="flex items-center gap-2">
+            <BlueDude size={32} mood="lookAway" />
+            <AlertDialogTitle className="font-display font-semibold">{title}</AlertDialogTitle>
+          </div>
           {/* Render only error OR description/warning */}
           {error ? (
-            <p className="text-sm text-red-500 mt-2">{error}</p>
+            <p className="text-sm text-destructive mt-2">{error}</p>
           ) : (
-            <AlertDialogDescription>
-              {warning ?? description ?? "Are you sure you want to delete this item?"}
-            </AlertDialogDescription>
+            <>
+              <AlertDialogDescription>
+                {warning ?? description ?? "Are you sure you want to delete this item?"}
+              </AlertDialogDescription>
+              <p className="font-hand text-muted-foreground">it'll be like it never happened.</p>
+            </>
           )}
         </AlertDialogHeader>
         <AlertDialogFooter>

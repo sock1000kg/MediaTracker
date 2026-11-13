@@ -79,11 +79,11 @@ export default function EntityDialog<T extends EditableEntity>({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="font-display font-semibold">
             {title ?? (mode === "edit" ? "Edit" : "Create")}
           </DialogTitle>
           {errorMessage && (
-            <p className="text-sm text-red-500">{errorMessage}</p>
+            <p className="text-sm text-destructive">{errorMessage}</p>
           )}
         </DialogHeader>
 

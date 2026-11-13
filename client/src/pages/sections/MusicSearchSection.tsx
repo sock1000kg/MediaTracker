@@ -1,9 +1,15 @@
+import { PageBackdrop } from "@/components/media-view/PageBackdrop"
+import { effectiveHideLogged } from "@/lib/preferences"
+import { usePreferences } from "@/hooks/usePreferences"
+import EmptyState from "@/components/EmptyState"
+import { EMPTY_LINES, pickLoadingLine } from "@/lib/whimsy"
 import { Search } from "lucide-react"
 import { Button } from "../../components/ui/button"
 import { Input } from "../../components/ui/input"
 
 import { searchAlbums, searchTracks } from "@/api/search"
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
+import { findLogForResult, isResultLogged, readStoredBool, writeStoredBool } from "@/lib/utils"
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData  } from "@tanstack/react-query"
 
 import type { MusicResult } from "@/types/search"
@@ -15,10 +21,13 @@ import { fetchLogsQueryOptions } from "@/queryOptions/fetchLogsQueryOptions"
 import { fetchMediasQueryOptions } from "@/queryOptions/fetchMediasQueryOptions"
 import { MediaSearchLogForm } from "@/forms/MediaSearchLogForm"
 import { createMediaAndLog } from "@/api/media"
-import { MusicCard } from "@/components/cards/MusicCard"
+import { ResultList } from "@/components/search/ResultList"
+import { ViewControls } from "@/components/media-view/ViewControls"
+import { useStoredView } from "@/hooks/useStoredView"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export function MusicSearchSection() {
+  const [loadingLine] = useState(() => pickLoadingLine())
     const [openDialog, setOpenDialog] = useState<DialogName>(null)
     const [inputValue, setInputValue] = useState("")
     const [query, setQuery] = useState("")
@@ -26,6 +35,23 @@ export function MusicSearchSection() {
 
     const [targetMedia, setTargetMedia] = useState<MusicResult>()
     const [targetLog, setTargetLog] = useState<Log | null>(null)
+
+    const { prefs, isLoaded: prefsLoaded, updatePrefs } = usePreferences()
+    const [view, setView] = useStoredView("search.view.music")
+    const [hideLogged, setHideLogged] = useState(() => effectiveHideLogged(prefs.hideLogged?.music, readStoredBool("hideLogged.music")))
+    const hideTouched = useRef(false)
+    // Prefs arriving after mount: adopt the server value unless the toggle was used
+    useEffect(() => {
+        const v = prefs.hideLogged?.music
+        if (prefsLoaded && !hideTouched.current && v !== undefined) setHideLogged(v)
+    }, [prefsLoaded, prefs.hideLogged?.music])
+    const toggleHideLogged = () => {
+        const next = !hideLogged
+        hideTouched.current = true
+        setHideLogged(next)
+        writeStoredBool("hideLogged.music", next)
+        updatePrefs({ hideLogged: { music: next } })
+    }
 
     const queryClient = useQueryClient()
 
@@ -66,6 +92,9 @@ export function MusicSearchSection() {
         ).values()
     )
 
+    const visibleResults = hideLogged ? results.filter(r => !isResultLogged(logs, r)) : results
+    const hiddenCount = results.length - visibleResults.length
+
     //MUTATIONS
     const createMediaAndLogMutation = useMutation({
         mutationFn: ({ mediaData, logData }: { mediaData: MusicResult, logData: Partial<Log> }) =>
@@ -90,10 +119,7 @@ export function MusicSearchSection() {
 
     const handleLogClick = (item: MusicResult) => {
         //Check if log of this item exists already
-        const existingLog = logs.find(l => {
-            if(!l.media.source && !l.media.sourceId) return false
-            return l.media.sourceId === item.sourceId && l.media.source === item.source
-        })
+        const existingLog = findLogForResult(logs, item)
 
         //set the data of the clicked media item
         const mediaData: MusicResult = {
@@ -144,37 +170,15 @@ export function MusicSearchSection() {
     
 
     return(
-        <div className="flex flex-col h-full">
+        <div className="relative isolate flex flex-col h-full overflow-hidden">
+            <PageBackdrop page="music" />
             {/* Header */}
-            <div className="flex justify-between p-4 items-center bg-stone-200">
+            <div className="flex flex-col gap-4 px-6 pt-6 pb-4">
                 <div>
-                <p className="text-lg font-semibold">Music search</p>
-                <p className="text-sm text-gray-600">Search and discover songs and albums</p>
+                <h1 className="font-display text-4xl font-semibold">Music search</h1>
                 </div>
 
-                <div className="flex gap-2">
-                    {/* MODE SELECT */}
-                    <Select 
-                        onValueChange={(val: "albums" | "tracks") => setSearchMode(val)} 
-                        value={searchMode}
-                    >
-                        <SelectTrigger className="rounded-md border border-gray-300 bg-gray-50 focus:ring-2">
-                            <SelectValue placeholder="Mode" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="defaultMode" disabled className="text-gray-400">
-                                Search Mode
-                            </SelectItem>
-                            <SelectItem value="albums">
-                                Albums
-                            </SelectItem>
-                            <SelectItem value="tracks">
-                                Tracks
-                            </SelectItem>
-                        </SelectContent>
-                    </Select>
-
-                    {/* SEARCH INPUT */}
+                <div className="flex flex-wrap gap-2 items-center">
                     <Input
                         placeholder="Type book name..."
                         value={inputValue}
@@ -186,28 +190,74 @@ export function MusicSearchSection() {
                                 handleSearch()
                             }
                         }}
-                        className="block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none "
-                    />
-                    <Button size="default" variant="amber" onClick={() => handleSearch()}>
+                        className="h-10 flex-1 min-w-[12rem] rounded-full border-border-strong bg-card px-4"
+                        />
+                    <Button size="icon" variant="amber" aria-label="Search" className="h-10 w-10 rounded-full" onClick={() => handleSearch()}>
                         <Search />
                     </Button>
+                    <div className="basis-full sm:basis-auto flex flex-wrap items-center gap-2">
+                    {/* MODE SELECT */}
+                    <Select 
+                        onValueChange={(val: "albums" | "tracks") => setSearchMode(val)} 
+                        value={searchMode}
+                    >
+                        <SelectTrigger className="rounded-md border border-input bg-card focus:ring-2">
+                            <SelectValue placeholder="Mode" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="defaultMode" disabled className="text-muted-foreground">
+                                Search Mode
+                            </SelectItem>
+                            <SelectItem value="albums">
+                                Albums
+                            </SelectItem>
+                            <SelectItem value="tracks">
+                                Tracks
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                    </div>
                 </div>
             </div>
 
             {/* Results */}
-            <div className="p-4 flex-1 overflow-y-auto min-h-0 scrollbar-hide">
-                {isLoading && <p className="animate-pulse">Loading...</p>}
+            <div className="p-4 flex-1 overflow-y-auto min-h-0 scrollbar-hide border-t border-border">
+                {isLoading && <p className="animate-pulse">{loadingLine}</p>}
                 {error && 
-                    <p className="text-red-500">
+                    <p className="text-destructive">
                         {error.message}
                     </p>
                 }
 
+                {results.length > 0 && (
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                        <p className="text-xs text-muted-foreground">
+                            {hideLogged && hiddenCount > 0 ? `${hiddenCount} logged result${hiddenCount === 1 ? "" : "s"} hidden` : ""}
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <ViewControls view={view} onView={setView} />
+                            <Button size="sm" variant="outline" onClick={toggleHideLogged} aria-pressed={hideLogged}>
+                            {hideLogged ? "Showing unlogged only" : "Hide logged"}
+                        </Button>
+                        </div>
+                    </div>
+                )}
+
                 {results.length > 0 ? (
                 <div className="grid gap-4">
-                    {results.map((item) => {
-                        return <MusicCard key={item.sourceId} book={item} onLog={(item) => handleLogClick(item)} />
-                    })}
+                    <ResultList
+                        results={visibleResults}
+                        view={view}
+                        kindOf={() => "music"}
+                        isLogged={(item) => isResultLogged(logs, item)}
+                        onLog={handleLogClick}
+                    />
+
+                    {hideLogged && visibleResults.length === 0 && (
+                        <EmptyState line={EMPTY_LINES.allHidden}>
+                            <p>All loaded results are already logged.</p>
+                        </EmptyState>
+                    )}
 
                     {hasNextPage && (
                         <Button variant={"amber"} onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
@@ -216,7 +266,9 @@ export function MusicSearchSection() {
                     )}
                 </div>
                 ) : (
-                !isLoading && <p>No results</p> 
+                !isLoading && !error && query !== "" && (
+                    <EmptyState line={EMPTY_LINES.noResults}><p>No results</p></EmptyState>
+                )
                 )}
             </div>
 

@@ -5,12 +5,16 @@ import { fetchApiKeysQueryOptions } from "@/queryOptions/fetchApiKeysQueryOption
 import type { AllowedSource, ApiKey } from "@/types/mainTypes"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
+import { TMDB_ATTRIBUTION } from "@/lib/movieFormat"
+import { RAWG_URL, RAWG_ATTRIBUTION_TEXT } from "@/lib/gameFormat"
 
 // This form only allows updating the key
 export function ApiKeyForm() {
     const [serverMessage, setServerMessage] = useState<string | null>(null) //message when delete a key
     // const [googleBooksInput, setGoogleBooksInput] = useState("")
     const [lastFmInput, setLastFmInput] = useState("")
+    const [tmdbInput, setTmdbInput] = useState("")
+    const [rawgInput, setRawgInput] = useState("")
     const queryClient = useQueryClient()
 
     const { data: apiKeys = [], error, isPending } = useQuery(fetchApiKeysQueryOptions())
@@ -44,6 +48,8 @@ export function ApiKeyForm() {
             await createMutation.mutateAsync(payload)
             // if (service === "google_books") setGoogleBooksInput("")
             if (service === "lastfm") setLastFmInput("")
+            if (service === "tmdb") setTmdbInput("")
+            if (service === "rawg") setRawgInput("")
     }
 
     const handleUpdate = (service: AllowedSource, value: string) =>
@@ -54,6 +60,8 @@ export function ApiKeyForm() {
                 await updateMutation.mutateAsync(payload)
                 // if (service === "google_books") setGoogleBooksInput("")
                 if (service === "lastfm") setLastFmInput("")
+                if (service === "tmdb") setTmdbInput("")
+            if (service === "rawg") setRawgInput("")
             }catch(error: unknown){
                 const message = error instanceof Error ? error.message : "Something went wrong"
                 setServerMessage(message)
@@ -68,6 +76,8 @@ export function ApiKeyForm() {
                 setServerMessage(res.message)
                 // if (service === "google_books") setGoogleBooksInput("")
                 if (service === "lastfm") setLastFmInput("")
+                if (service === "tmdb") setTmdbInput("")
+            if (service === "rawg") setRawgInput("")
 
                 // Immediately remove the key from cache to update UI (it'll be stuck when server responds with empty array)
                 queryClient.setQueryData<ApiKey[]>(
@@ -86,27 +96,29 @@ export function ApiKeyForm() {
     // Render
     // const hasGoogleBooksKey = apiKeys.some(key => key.service === "google_books")
     const hasLastFmKey = apiKeys.some(key => key.service === "lastfm")
+    const hasTmdbKey = apiKeys.some(key => key.service === "tmdb")
+    const hasRawgKey = apiKeys.some(key => key.service === "rawg")
 
     return (
         <div className="px-4">
             {/* INFO TEXT */}
-            <p className="text-gray-500 text-sm">
+            <p className="text-muted-foreground text-sm">
                 Please register and enter your own API keys for these services, otherwise your searches will not be available.
             </p>
-            <p className="text-gray-500 text-xs mb-4">
+            <p className="text-muted-foreground text-xs mb-4">
                 Your API keys will not be displayed again. Please store them somewhere safe before submitting.
             </p>
 
             {/* LOADING */}
-            {isPending && <p className="text-gray-500 animate-pulse">Checking your API Keys...</p>}
+            {isPending && <p className="text-muted-foreground animate-pulse">Checking your API Keys...</p>}
             {/* Error message */}
             {error && (
-                <p className="mt text-center text-sm text-red-500">
+                <p className="mt text-center text-sm text-destructive">
                     {error.message}
                 </p>
             )}
             {serverMessage && (
-                <p className="text-center text-sm text-green-600 mb-2">
+                <p className="text-center text-sm text-link mb-2">
                     {serverMessage}
                 </p>
             )}
@@ -118,7 +130,7 @@ export function ApiKeyForm() {
                 : handleCreate("google_books", googleBooksInput)
             }>
                 <label className="block mb-4">
-                    <span className="text-stone-800 font-medium">Google Books</span>
+                    <span className="text-foreground font-medium">Google Books</span>
                     <div className="flex gap-4 mt-1">
                         <input
                             type="text"
@@ -126,7 +138,7 @@ export function ApiKeyForm() {
                             onChange={(e) =>
                                 setGoogleBooksInput(e.target.value)
                             }
-                            className="block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none "
+                            className="block w-full rounded-md border border-input bg-card px-3 py-2 text-sm focus:ring-2 focus:outline-none "
                             placeholder="Google Books API Key"
                         />
 
@@ -161,7 +173,7 @@ export function ApiKeyForm() {
                 : handleCreate("lastfm", lastFmInput)
             }>
                 <label className="block mb-4">
-                    <span className="text-stone-800 font-medium">Last.fm</span>
+                    <span className="text-foreground font-medium">Last.fm</span>
                     <div className="flex gap-4 mt-1">
                         <input
                             type="text"
@@ -169,7 +181,7 @@ export function ApiKeyForm() {
                             onChange={(e) =>
                                 setLastFmInput(e.target.value)
                             }
-                            className="block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:outline-none "
+                            className="block w-full rounded-md border border-input bg-card px-3 py-2 text-sm focus:ring-2 focus:outline-none "
                             placeholder="Last.fm API Key. Used for music search."
                         />
 
@@ -197,6 +209,108 @@ export function ApiKeyForm() {
                             Delete
                         </Button>
                     </div>
+                </label>
+            </form>
+
+            {/* TMDB */}
+            <form onSubmit={
+                hasTmdbKey
+                ? handleUpdate("tmdb", tmdbInput)
+                : handleCreate("tmdb", tmdbInput)
+            }>
+                <label className="block mb-4">
+                    <span className="text-foreground font-medium">TMDB</span>
+                    <div className="flex gap-4 mt-1">
+                        <input
+                            type="text"
+                            value={tmdbInput ?? ""}
+                            onChange={(e) =>
+                                setTmdbInput(e.target.value)
+                            }
+                            className="block w-full rounded-md border border-input bg-card px-3 py-2 text-sm focus:ring-2 focus:outline-none "
+                            placeholder="TMDB API Key or read access token. Used for movie search."
+                        />
+
+                        {hasTmdbKey ?
+                        <Button
+                            type="submit"
+                            variant="amber"
+                            disabled={!tmdbInput}
+                        >
+                            Update
+                        </Button> :
+                        <Button
+                            type="submit"
+                            variant="amber"
+                            disabled={!tmdbInput}
+                        >
+                            Add
+                        </Button>}
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={handleDelete("tmdb")}
+                        >
+                            Delete
+                        </Button>
+                    </div>
+                    <span className="block text-muted-foreground text-xs mt-1">
+                        Get one at themoviedb.org → Settings → API. Either the API key or the read access token works (max 512 characters).
+                    </span>
+                    <span className="block text-muted-foreground text-xs">
+                        {TMDB_ATTRIBUTION}
+                    </span>
+                </label>
+            </form>
+
+            {/* RAWG */}
+            <form onSubmit={
+                hasRawgKey
+                ? handleUpdate("rawg", rawgInput)
+                : handleCreate("rawg", rawgInput)
+            }>
+                <label className="block mb-4">
+                    <span className="text-foreground font-medium">RAWG</span>
+                    <div className="flex gap-4 mt-1">
+                        <input
+                            type="text"
+                            value={rawgInput ?? ""}
+                            onChange={(e) =>
+                                setRawgInput(e.target.value)
+                            }
+                            className="block w-full rounded-md border border-input bg-card px-3 py-2 text-sm focus:ring-2 focus:outline-none "
+                            placeholder="RAWG API Key. Used for game search."
+                        />
+
+                        {hasRawgKey ?
+                        <Button
+                            type="submit"
+                            variant="amber"
+                            disabled={!rawgInput}
+                        >
+                            Update
+                        </Button> :
+                        <Button
+                            type="submit"
+                            variant="amber"
+                            disabled={!rawgInput}
+                        >
+                            Add
+                        </Button>}
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={handleDelete("rawg")}
+                        >
+                            Delete
+                        </Button>
+                    </div>
+                    <span className="block text-muted-foreground text-xs mt-1">
+                        Get a free key at rawg.io/apidocs.
+                    </span>
+                    <span className="block text-muted-foreground text-xs">
+                        <a href={RAWG_URL} target="_blank" rel="noopener noreferrer" className="text-link underline-offset-4 hover:underline">{RAWG_ATTRIBUTION_TEXT}</a>
+                    </span>
                 </label>
             </form>
         </div>

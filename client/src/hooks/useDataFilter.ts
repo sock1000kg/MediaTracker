@@ -6,7 +6,7 @@ interface UseDataFilterProps<T> {
   initialSorts?: SortCriterion[]
   searchFields: (keyof T | string)[] // Fields to search (e.g. "media.title")
   filterableFields?: {
-    field: (item: T) => string // Function to extract the value to filter by
+    field: (item: T) => string | string[] | null | undefined // Value(s) to filter by; arrays match if ANY value is active
     id: string
   }[],
   getSortValue?: (item: T, field: SortField) => string | number | Date | null | undefined
@@ -30,6 +30,8 @@ export function useDataFilter<T>({
     if (activeSorts.find((s) => s.field === field)) return
     setActiveSorts([{ id: crypto.randomUUID(), field, direction: "asc" }, ...activeSorts])
   }
+
+  const replaceSorts = (sorts: SortCriterion[]) => setActiveSorts(sorts)
 
   const removeSort = (id: string) => setActiveSorts(prev => prev.filter(s => s.id !== id))
 
@@ -73,7 +75,11 @@ export function useDataFilter<T>({
       if (activeValues.length === 0) return
       const filterDef = filterableFields.find(f => f.id === filterId)
       if (filterDef) {
-        result = result.filter(item => activeValues.includes(filterDef.field(item)))
+        result = result.filter(item => {
+          const v = filterDef.field(item)
+          if (v === null || v === undefined) return false
+          return Array.isArray(v) ? v.some(x => activeValues.includes(x)) : activeValues.includes(v)
+        })
       }
     })
 
@@ -111,7 +117,7 @@ export function useDataFilter<T>({
   return {
     processedData,
     searchQuery, setSearchQuery,
-    activeSorts, addSort, removeSort, toggleSortDirection,
+    activeSorts, addSort, replaceSorts, removeSort, toggleSortDirection,
     activeFilters, toggleFilter,
     clearAll
   }
