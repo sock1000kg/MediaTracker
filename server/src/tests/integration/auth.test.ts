@@ -132,4 +132,27 @@ describe('Auth Routes', () => {
         expect(res.statusCode).toBe(400) 
         expect(res.body.message).toMatch(/Invalid input/i) 
     }) 
-}) 
+
+    test('Concurrent refreshes with the same cookie: one wins, the loser neither 500s nor clears the cookie', async () => {
+        const reg = await request(app)
+            .post('/auth/register')
+            .send({ username: 'RaceUser1', password: 'StrongPass1!', displayName: 'Racer', registerKey: process.env.REGISTER_KEY })
+            .set('Content-Type', 'application/json')
+        expect(reg.statusCode).toBe(201)
+        const cookie = reg.headers['set-cookie'] as unknown as string[]
+
+        const [a, b] = await Promise.all([
+            request(app).post('/auth/refresh').set('Cookie', cookie),
+            request(app).post('/auth/refresh').set('Cookie', cookie),
+        ])
+        const results = [a, b]
+        expect(results.map(r => r.statusCode).sort()).toEqual([200, 401])
+        const winner = results.find(r => r.statusCode === 200)!
+        const loser = results.find(r => r.statusCode === 401)!
+        expect(((winner.headers['set-cookie'] ?? []) as unknown as string[]).join(';')).toMatch(/refreshToken=[^;]+/)
+        const loserCookies = ((loser.headers['set-cookie'] ?? []) as unknown as string[]).join(';')
+        expect(loserCookies).not.toMatch(/refreshToken=;/)
+
+        await prisma.user.deleteMany({ where: { username: 'RaceUser1' } })
+    })
+})

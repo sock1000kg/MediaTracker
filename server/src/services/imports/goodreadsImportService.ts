@@ -7,7 +7,7 @@ import { validateSchema } from "@/utilities.js"
 import { parse } from "csv-parse/sync"
 import { BookMetadata, createImportedMedia } from "@/api/domain/media.js"
 import { ZodError } from "zod"
-import { ImportFailure, ImportResult } from "@/api/domain/imports.js"
+import { ImportResult } from "@/api/domain/imports.js"
 import { Prisma } from "@prisma/client"
 import { openLibraryService } from "../search/openLibrarySearchService.js"
 
@@ -16,6 +16,30 @@ type BookEnrichmentData = {
     description: string | null
     imageUrl: string | null
     metadata: BookMetadata
+}
+
+export const MAX_IMPORT_FAILURES = 500
+
+export type ImportProgressCallback = (processed: number, total: number) => Promise<void> | void
+
+/**
+ * Wraps a progress callback so it only fires when the integer percent changes
+ * (plus once at 100%). With total 0 it reports 100 straight away via `start()`.
+ * `report(processed)` is called after each row.
+ */
+export function makeProgressReporter(total: number, report: ImportProgressCallback) {
+    let lastPct = -1
+    const emit = async (processed: number) => {
+        const pct = total <= 0 ? 100 : Math.floor((processed / total) * 100)
+        if (pct === lastPct) return
+        lastPct = pct
+        await report(processed, total)
+    }
+    return {
+        /** Call once before the first row: reports immediately when there is nothing to process. */
+        start: async () => { if (total <= 0) await emit(0) },
+        row: (processed: number) => emit(processed),
+    }
 }
 
 export class GoodreadsImportService {
@@ -144,7 +168,13 @@ export class GoodreadsImportService {
             }
     }
 
-    async importFromGoodReads(userId: number, fileBuffer: Buffer): Promise<ImportResult> {
+    // The import is idempotent (existing logs are skipped), so a stalled job
+    // being re-run by BullMQ is safe.
+    async importFromGoodReads(
+        userId: number,
+        fileBuffer: Buffer,
+        opts: { onProgress?: ImportProgressCallback } = {}
+    ): Promise<ImportResult> {
         const rawRecords = parse(fileBuffer, {
             columns: true, //use the headers as fields for JSON, if false it parses data into arrays
             skip_empty_lines: true,
@@ -154,7 +184,6 @@ export class GoodreadsImportService {
         }) as Record<string, unknown>[]
 
         const results: ImportResult = { imported: 0, skipped: 0, failures: [] }
-        const failures: ImportFailure[] = []
 
         /*
         // EXTRACT ALL EXISTING RECORDS TO SAVE ENRICHMENT API calls
@@ -178,6 +207,12 @@ export class GoodreadsImportService {
         //
         //ENRICHMENT OF IMPORTED DATA
         */
+        const progress = makeProgressReporter(
+            rawRecords.length,
+            opts.onProgress ?? (() => undefined)
+        )
+        await progress.start()
+
         for (const [index, unvalidRecord] of rawRecords.entries()) {
             const rowNum = index + 2 //+2 because: 1st entry is on line 2
             const rawTitle = (unvalidRecord['Title'] as string) || "Unknown Title"
@@ -204,12 +239,6 @@ export class GoodreadsImportService {
                     reason = error.issues 
                     ? error.issues.map((i) => i.message).join(", ") 
                     : error.message || "Invalid data format"
-
-                    failures.push({
-                        row: rowNum,
-                        title: rawTitle,
-                        reason: `Validation Error: ${reason}`
-                    })
                 } else if (error instanceof Error) {
                     reason = error.message
                 }
@@ -220,6 +249,14 @@ export class GoodreadsImportService {
                     reason: `Validation Error: ${reason}`
                 })
             }
+            await progress.row(index + 1)
+        }
+
+        if (results.failures.length > MAX_IMPORT_FAILURES) {
+            results.failuresTruncated = results.failures.length - MAX_IMPORT_FAILURES
+            results.failures = results.failures.slice(0, MAX_IMPORT_FAILURES)
+        } else {
+            results.failuresTruncated = 0
         }
         return results
     }

@@ -102,3 +102,46 @@ export const openLibraryResponseSchema = z.object({
     start: z.number().optional(),
     docs: z.array(openLibraryBookSchema).default([])
 })
+
+// BOOK SEARCH QUERY (what the client may send to GET /search/books)
+// Empty strings from the query string count as "not provided"
+const emptyToUndefined = (val: unknown) => (val === "" ? undefined : val)
+
+const optionalText = z.preprocess(
+    emptyToUndefined,
+    z.string().trim().max(100, "Must be at most 100 characters").optional()
+)
+
+const optionalYear = z.preprocess(
+    emptyToUndefined,
+    z.coerce.number().int("Year must be an integer").min(0).max(2100).optional()
+)
+
+export const bookSearchQuerySchema = z.object({
+    q: z.string("Search query must be at least 3 characters")
+        .trim()
+        .min(3, "Search query must be at least 3 characters")
+        .max(100, "Search query must be at most 100 characters"),
+    page: z.preprocess(
+        emptyToUndefined,
+        z.coerce.number().int().positive().default(1)
+    ),
+    author: optionalText,
+    subject: optionalText,
+    language: z.preprocess(
+        emptyToUndefined,
+        z.string().regex(/^[a-z]{3}$/, "Language must be a 3-letter lowercase ISO 639-2 code").optional()
+    ),
+    yearFrom: optionalYear,
+    yearTo: optionalYear,
+    sort: z.preprocess(
+        emptyToUndefined,
+        z.enum(["relevance", "new", "old", "rating"]).default("relevance")
+    ),
+}).refine(
+    d => d.yearFrom === undefined || d.yearTo === undefined || d.yearFrom <= d.yearTo,
+    { message: "yearFrom must be less than or equal to yearTo", path: ["yearFrom"] }
+)
+
+export type BookSearchQuery = z.infer<typeof bookSearchQuerySchema>
+export type BookSearchFilters = Omit<BookSearchQuery, "q" | "page">

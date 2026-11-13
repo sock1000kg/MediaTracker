@@ -21,6 +21,7 @@ model User {
   created_at      DateTime  @default(now())
 
   password        String
+  preferences     Json      @default("{}")
 
   logs            UserLogs[]@relation("UserLogsToUser")
   mediaType       MediaType[]@relation("MediaTypesToUser")

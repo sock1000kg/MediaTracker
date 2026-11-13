@@ -14,11 +14,12 @@ import mediaRoutes from '@/api/routes/mediaRoutes.js'
 import mediaTypeRoutes from '@/api/routes/mediaTypeRoutes.js'
 import searchRoutes from '@/api/routes/searchRoutes.js'
 import apiKeyRoutes from '@/api/routes/apiKeyRoutes.js'
+import userRoutes from '@/api/routes/userRoutes.js'
+import jobRoutes from '@/api/routes/jobRoutes.js'
 import importRoutes from '@/api/routes/importRoutes.js'
 import errorHandler from '@/middleWare/errorHandlerMiddleware.js'
 import logger from '@/middleWare/loggingMiddleware.js'
 import cookieParser from 'cookie-parser'
-import { demoResetJob } from './jobs/resetDemoJob.js'
 
 const app: Application = express()
 
@@ -32,7 +33,8 @@ const allowedOrigins = process.env.ALLOWED_CORS ? process.env.ALLOWED_CORS.split
 app.use(
     cors({
         origin: allowedOrigins,
-        credentials: true
+        credentials: true,
+        exposedHeaders: ["Content-Disposition"]
     })
 )
 
@@ -42,10 +44,6 @@ app.use(express.json())
 app.use(globalLimiter)
 
 app.use(logger)
-
-if (process.env.NODE_ENV !== 'test') {
-    demoResetJob()
-}
 
 //ROUTES
 const apiRouter = express.Router()
@@ -63,6 +61,8 @@ protectedRouter.use('/media-type', mediaTypeRoutes)
 protectedRouter.use('/search', searchRoutes)
 protectedRouter.use('/api-key', apiKeyRoutes)
 protectedRouter.use('/imports', importRoutes)
+protectedRouter.use('/users', userRoutes)
+protectedRouter.use('/jobs', jobRoutes)
 
 apiRouter.use('/', protectedRouter)
 app.use(apiRouter)

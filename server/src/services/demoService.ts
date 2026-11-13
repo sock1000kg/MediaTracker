@@ -15,7 +15,7 @@ export class DemoService {
                 return
             }
 
-            prisma.$transaction(async (tx) => {
+            await prisma.$transaction(async (tx) => {
                 await deleteAllMediaTypeForUser(demoUser.id, tx)
                 await deleteAllMediasForUser(demoUser.id, tx)
                 await deleteAllLogsForUser(demoUser.id, tx)

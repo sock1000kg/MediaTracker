@@ -2,12 +2,13 @@ import dotenv from 'dotenv'
 import { execSync } from 'child_process'
 import { fileURLToPath } from 'url'
 import path from 'path'
+import { redactUrl } from '../redactUrl.js'
 
 // Load test environment
 dotenv.config({ path: '.env.test' })
 
 export default async function resetTestDb() {
-  console.log('Using database:', process.env.DATABASE_URL)
+  console.log('Using database:', redactUrl(process.env.DATABASE_URL))
 
   try {
     // Both commands will use the same environment

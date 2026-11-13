@@ -7,6 +7,10 @@ import {
     updateMediaForUser,
     deleteMedia,
     getAllMediasUserCreated,
+    findMediaBySource,
+    mergeMediaMetadata,
+    setMediaCreatorIfNull,
+    setMediaDescriptionIfNull,
 } from "@/repositories/mediaRepository.js" 
 
 import { findMediaTypeForUserOrGlobal } from "@/repositories/mediaTypeRepository.js" 
@@ -19,6 +23,9 @@ import {
 import { createMediaAndLogSchema } from "@/schemas/search/searchSchemas.js"
 import { AppError } from "@/api/domain/error.js"
 
+import { musicSearchService } from "@/services/search/lastFmSearchService.js"
+import { enrichTmdbOnLog } from "@/services/search/tmdbSearchService.js"
+import { enrichRawgOnLog } from "@/services/search/rawgSearchService.js"
 import { validateSchema } from "@/utilities.js" 
 import { PrismaClient } from "@prisma/client/extension"
 
@@ -149,8 +156,42 @@ export class MediaService {
     async createMediaAndLog(userId: number, payload: unknown) {
         const { mediaData, logData } = validateSchema(createMediaAndLogSchema, payload)
 
+        // Last.fm search results carry no tags, so fetch them once when the media is first logged.
+        // categories: undefined = never tried, null = tried and found nothing (don't fetch again)
+        let enrichExistingId: number | null = null
+        let fetchedCategories: string[] | null | undefined
+        if (mediaData.source === "lastfm") {
+            const existing = await findMediaBySource(mediaData.sourceId, mediaData.source, prisma)
+            const existingMeta = existing?.metadata
+            const alreadyEnriched = !!existing && !!existingMeta && typeof existingMeta === "object"
+                && !Array.isArray(existingMeta) && existingMeta.categories !== undefined
+
+            if (!alreadyEnriched) {
+                try {
+                    const meta = (mediaData.metadata ?? {}) as { kind?: "album" | "track" }
+                    fetchedCategories = await musicSearchService.fetchTopTags(
+                        userId, meta.kind ?? "album", mediaData.creator ?? "", mediaData.title
+                    )
+                } catch (error: unknown) {
+                    console.warn("Failed to fetch Last.fm tags, logging without categories:", error)
+                    fetchedCategories = undefined
+                }
+
+                if (fetchedCategories !== undefined) {
+                    if (existing) enrichExistingId = existing.id
+                    else mediaData.metadata = { ...(mediaData.metadata as object ?? {}), categories: fetchedCategories }
+                }
+            }
+        }
+
+        // TMDB search results carry no director/runtime: fetch them once, when first logged
+        const tmdbEnrichment = mediaData.source === "tmdb" ? await enrichTmdbOnLog(userId, mediaData) : null
+
+        // RAWG search results carry no developers/description/publishers: fetch them once, when first logged
+        const rawgEnrichment = mediaData.source === "rawg" ? await enrichRawgOnLog(userId, mediaData) : null
+
         try {
-            return await prisma.$transaction(async (tx: PrismaClient) => 
+            const result = await prisma.$transaction(async (tx: PrismaClient) => 
                 createImportedMedia(
                     {
                         userId,
@@ -161,6 +202,35 @@ export class MediaService {
                     tx
                 )
             )
+
+            if (enrichExistingId !== null && fetchedCategories !== undefined) {
+                try {
+                    await mergeMediaMetadata(enrichExistingId, { categories: fetchedCategories }, prisma)
+                } catch (error: unknown) {
+                    console.warn("Failed to store Last.fm tags:", error)
+                }
+            }
+
+            if (tmdbEnrichment) {
+                try {
+                    await mergeMediaMetadata(tmdbEnrichment.existingId!, tmdbEnrichment.patch, prisma)
+                    if (tmdbEnrichment.creator) await setMediaCreatorIfNull(tmdbEnrichment.existingId!, tmdbEnrichment.creator, prisma)
+                } catch (error: unknown) {
+                    console.warn("Failed to store TMDB details:", error)
+                }
+            }
+
+            if (rawgEnrichment) {
+                try {
+                    await mergeMediaMetadata(rawgEnrichment.existingId!, rawgEnrichment.patch, prisma)
+                    if (rawgEnrichment.creator) await setMediaCreatorIfNull(rawgEnrichment.existingId!, rawgEnrichment.creator, prisma)
+                    if (rawgEnrichment.description) await setMediaDescriptionIfNull(rawgEnrichment.existingId!, rawgEnrichment.description, prisma)
+                } catch (error: unknown) {
+                    console.warn("Failed to store RAWG details:", error)
+                }
+            }
+
+            return result
         } catch(error: unknown) {
             handlePrismaError(error, {
                 notFoundMessage: "Media or log not found",

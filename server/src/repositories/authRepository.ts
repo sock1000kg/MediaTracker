@@ -55,8 +55,10 @@ export async function findRefreshToken(token: string) {
     })
 }
 
-export async function deleteRefreshToken(token: string) {
-    return await prisma.refreshToken.delete({
+/** Idempotent: returns how many rows were deleted (0 if already gone). */
+export async function deleteRefreshToken(token: string): Promise<number> {
+    const { count } = await prisma.refreshToken.deleteMany({
         where: { token }
     })
+    return count
 }

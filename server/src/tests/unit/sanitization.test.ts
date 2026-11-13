@@ -8,6 +8,9 @@ import { checkPasswordStrength,
   sanitizeStatus,
   sanitizeYear,
   sanitizeMetadata,
+  sanitizeSource,
+  sanitizeApiKey,
+  MAX_API_KEY_LENGTH,
   sanitizeUsername,
   sanitizeDisplayName
 } from "@/utilities.js"
@@ -182,4 +185,40 @@ describe('sanitizeDisplayName', () => {
     const result = sanitizeDisplayName(longName)
     expect(result!.length).toBe(50)
   })
+})
+describe("sanitizeSource", () => {
+    it("allows known sources, normalised", () => {
+        expect(sanitizeSource("jikan")).toBe("jikan")
+        expect(sanitizeSource(" Jikan ")).toBe("jikan")
+        expect(sanitizeSource("lastfm")).toBe("lastfm")
+        expect(sanitizeSource(" TMDB ")).toBe("tmdb")
+        expect(sanitizeSource(" RAWG ")).toBe("rawg")
+    })
+    it("rejects unknown sources", () => {
+        expect(sanitizeSource("unknown")).toBeNull()
+        expect(sanitizeSource(null)).toBeNull()
+    })
+})
+
+describe("sanitizeApiKey", () => {
+    const jwt = `eyJ${"a".repeat(36)}.${"b".repeat(180)}.${"c".repeat(43)}`
+    it("returns a realistic JWT unchanged", () => {
+        expect(jwt.length).toBeGreaterThanOrEqual(240)
+        expect(sanitizeApiKey(jwt)).toBe(jwt)
+    })
+    it("trims surrounding whitespace", () => {
+        expect(sanitizeApiKey(`  ${jwt}\n`)).toBe(jwt)
+    })
+    it("rejects (does not truncate) keys over the limit", () => {
+        expect(MAX_API_KEY_LENGTH).toBe(512)
+        expect(sanitizeApiKey("k".repeat(512))).toBe("k".repeat(512))
+        expect(sanitizeApiKey("k".repeat(513))).toBeNull()
+    })
+    it("leaves a 32-char Last.fm style key and null/undefined as before", () => {
+        const k = "0123456789abcdef0123456789abcdef"
+        expect(sanitizeApiKey(k)).toBe(k)
+        expect(sanitizeApiKey(null)).toBeNull()
+        expect(sanitizeApiKey(undefined)).toBeNull()
+        expect(sanitizeApiKey("   ")).toBe("")
+    })
 })

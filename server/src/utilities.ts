@@ -128,7 +128,8 @@ export function sanitizeDescription(desc: string | undefined | null): string | n
 }
 
 // Sanitize source: only allow known sources (e.g., "google_books")
-const allowedSources = ["google_books", "lastfm", "goodreads", "open_library"] as const
+// Every search provider's `source` must be listed here, or logging its results fails with 400.
+const allowedSources = ["google_books", "lastfm", "goodreads", "open_library", "jikan", "tmdb", "rawg"] as const
 export type AllowedSource = (typeof allowedSources)[number]
 export function sanitizeSource(source: string | undefined | null): AllowedSource | null {
     if (!source) return null
@@ -167,10 +168,14 @@ export function sanitizeSourceId(id: string | undefined | null): string | null {
     return String(id).trim().slice(0, 200)
 }
 
-// Sanitize Api Key: trim and limit to 200 chars
+// Long enough for a TMDB v4 read access token (a ~240-270 char JWT)
+export const MAX_API_KEY_LENGTH = 512
+
+// Sanitize Api Key: trim; keys longer than MAX_API_KEY_LENGTH are rejected (null), never truncated
 export function sanitizeApiKey(key: string | undefined | null): string | null {
     if(key === null || key === undefined) return null
-    return key.trim().slice(0, 200)
+    const trimmed = key.trim()
+    return trimmed.length > MAX_API_KEY_LENGTH ? null : trimmed
 }
 
 // Fetch and parse API results
@@ -250,3 +255,57 @@ export function createUserAgentHeader(): RequestInit {
         }
     }
 }
+// CSV
+const CSV_FORMULA_CHARS = /^[=+\-@\t\r]/
+
+// Build an RFC 4180-style CSV (CRLF, UTF-8 BOM). Strings starting with a formula
+// character get a leading `'` (formula injection guard); numbers are left as is.
+export function toCsv(rows: (string | number | null | undefined)[][]): string {
+    const cell = (v: string | number | null | undefined): string => {
+        if (v === null || v === undefined) return ""
+        let s = String(v)
+        if (typeof v === "string" && CSV_FORMULA_CHARS.test(s)) s = `'${s}`
+        if (/[",\r\n]/.test(s) || s !== s.trim() || /^ | $/.test(s)) {
+            s = `"${s.replace(/"/g, '""')}"`
+        }
+        return s
+    }
+    return "﻿" + rows.map(r => r.map(cell).join(",")).join("\r\n") + "\r\n"
+}
+
+// Content-Disposition helpers
+// Replace anything outside [A-Za-z0-9._-] with `_`; "user" if nothing meaningful is left
+export function safeFilenamePart(s: string): string {
+    const safe = s.replace(/[^A-Za-z0-9._-]/g, "_")
+    return /^[_.]*$/.test(safe) ? "user" : safe
+}
+
+// attachment header with ASCII fallback `filename` and RFC 5987 `filename*` (real name)
+export function attachmentHeader(asciiName: string, realName: string): string {
+    const encoded = encodeURIComponent(realName).replace(/['()*!]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`)
+    return `attachment; filename="${asciiName}"; filename*=UTF-8''${encoded}`
+}
+
+// THROTTLE
+// Spaces out calls so each one starts at least `minGapMs` after the previous one (FIFO).
+// The clock is injectable for tests.
+export type ThrottleClock = { now: () => number, sleep: (ms: number) => Promise<void> }
+
+const realClock: ThrottleClock = {
+    now: () => Date.now(),
+    sleep: ms => new Promise(resolve => setTimeout(resolve, ms)),
+}
+
+export function createThrottle(minGapMs: number, clock: ThrottleClock = realClock) {
+    let nextSlot = 0
+    return async function throttled<T>(fn: () => Promise<T>): Promise<T> {
+        const now = clock.now()
+        const start = Math.max(now, nextSlot)
+        nextSlot = start + minGapMs // reserve synchronously so concurrent callers queue up
+        if (start > now) await clock.sleep(start - now)
+        return fn()
+    }
+}
+
+// Lives in its own import-free module so test setup files can use it before dotenv has loaded
+export { redactUrl } from "./redactUrl.js"

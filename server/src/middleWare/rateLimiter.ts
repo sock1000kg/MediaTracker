@@ -45,3 +45,17 @@ export const loginLimiter = createLimiter({
     },
     message: { message: "Too many login attempts" }
 })
+
+// Password change / account deletion: 5 per 15 min, per user (IP fallback).
+// Like the other limiters this is a no-op unless RATE_LIMIT_ENABLED=true (off in tests).
+export const sensitiveLimiter = createLimiter({
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    keyGenerator: (req) => {
+        if (req.userId !== undefined) return `sensitive-user-${req.userId}`
+        const cfIp = req.headers['cf-connecting-ip']
+        if (cfIp) return ipKeyGenerator(Array.isArray(cfIp) ? cfIp[0] : cfIp)
+        return ipKeyGenerator(req.ip || "unknown")
+    },
+    message: { message: "Too many attempts, try again later" }
+})

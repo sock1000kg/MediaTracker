@@ -176,6 +176,40 @@ export async function seedDatabase() {
         console.log("lastfm Demo Key already exists")
     }
 
+    //Seed tmdb key
+    const hasTmdbKey = demoUser.apiKeys.some(
+        (key) => key.service === "tmdb"
+    )
+    if(!hasTmdbKey && process.env.TMDB_API_KEY) {
+        try {
+            await addApiKeyForUser(demoUser.id, encryptKey(process.env.TMDB_API_KEY), "tmdb")
+            console.log("tmdb Demo Key created")
+        } catch (error) {
+            console.error("Failed to create tmdb API key:", error)
+        }
+    } else if (!process.env.TMDB_API_KEY) {
+        console.log("TMDB_API_KEY environment variable not set")
+    } else {
+        console.log("tmdb Demo Key already exists")
+    }
+
+    //Seed rawg key
+    const hasRawgKey = demoUser.apiKeys.some(
+        (key) => key.service === "rawg"
+    )
+    if(!hasRawgKey && process.env.RAWG_API_KEY) {
+        try {
+            await addApiKeyForUser(demoUser.id, encryptKey(process.env.RAWG_API_KEY), "rawg")
+            console.log("rawg Demo Key created")
+        } catch (error) {
+            console.error("Failed to create rawg API key:", error)
+        }
+    } else if (!process.env.RAWG_API_KEY) {
+        console.log("RAWG_API_KEY environment variable not set")
+    } else {
+        console.log("rawg Demo Key already exists")
+    }
+
 
     // SEED GoodReads import
     if (process.env.NODE_ENV !== 'test') {

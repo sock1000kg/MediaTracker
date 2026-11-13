@@ -98,6 +98,29 @@ export async function findMediaBySource(sourceId: string | null, source: string 
     })
 }
 
+export async function mergeMediaMetadata(
+    mediaId: number,
+    patch: Record<string, Prisma.InputJsonValue | null>,
+    client: PrismaClient
+): Promise<void> {
+    const media = await client.media.findUnique({ where: { id: mediaId }, select: { metadata: true } })
+    const current = (media?.metadata && typeof media.metadata === "object" && !Array.isArray(media.metadata))
+        ? media.metadata
+        : {}
+    await client.media.update({
+        where: { id: mediaId },
+        data: { metadata: { ...current, ...patch } as Prisma.InputJsonValue }
+    })
+}
+
+export async function setMediaCreatorIfNull(mediaId: number, creator: string, client: PrismaClient): Promise<void> {
+    await client.media.updateMany({ where: { id: mediaId, creator: null }, data: { creator } })
+}
+
+export async function setMediaDescriptionIfNull(mediaId: number, description: string, client: PrismaClient): Promise<void> {
+    await client.media.updateMany({ where: { id: mediaId, description: null }, data: { description } })
+}
+
 //**Used in Default Media check upon registration
 export async function findFirstMediaByTitle(
     title: string,

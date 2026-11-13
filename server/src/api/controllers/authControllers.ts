@@ -1,7 +1,8 @@
 import type { NextFunction, Request, Response } from "express"
+import { AppError } from "@/api/domain/error.js"
 import { authService } from "@/services/authService.js"
 
-const COOKIES_OPTIONS = {
+export const COOKIES_OPTIONS = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax' as const,
@@ -40,7 +41,8 @@ export const refreshToken = async (req: Request, res: Response, next: NextFuncti
         res.cookie('refreshToken', refreshToken, COOKIES_OPTIONS)
         res.status(200).json({ accessToken })
     } catch (error) {
-        res.clearCookie('refreshToken')
+        // A losing concurrent refresh must not wipe the cookie the winning request just set
+        if (!(error instanceof AppError && !error.clearSession)) res.clearCookie('refreshToken')
         next(error)
     }
 } 

@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
+import { randomUUID } from "node:crypto"
 import { createUser, deleteRefreshToken, findRefreshToken, findUserByUsername, saveRefreshToken } from "@/repositories/authRepository.js"
 import { findFirstMediaByTitle } from "@/repositories/mediaRepository.js"
 import { createLog } from "@/repositories/logsRepository.js"
@@ -10,9 +11,18 @@ import prisma from "@/prismaClient.js"
 import { handlePrismaError } from "@/middleWare/errorHandlerMiddleware.js"
 
 export class AuthService {
-    private generateTokens(userId: number) {
+    generateTokens(userId: number) {
         const accessToken = jwt.sign({ id: userId }, process.env.JWT_KEY_SECRET!, { expiresIn: "15m" })
-        const refreshToken = jwt.sign({ id: userId }, process.env.JWT_REFRESH_SECRET!, { expiresIn: "7d" })
+        const refreshToken = jwt.sign({ id: userId }, process.env.JWT_REFRESH_SECRET!, { expiresIn: "7d", jwtid: randomUUID() })
+        return { accessToken, refreshToken }
+    }
+
+    // Issue a fresh token pair and persist the refresh token (7 day expiry)
+    async issueSession(userId: number, client: Parameters<typeof saveRefreshToken>[3]) {
+        const { accessToken, refreshToken } = this.generateTokens(userId)
+        const expiresAt = new Date()
+        expiresAt.setDate(expiresAt.getDate() + 7)
+        await saveRefreshToken(userId, refreshToken, expiresAt, client)
         return { accessToken, refreshToken }
     }
 
@@ -99,32 +109,37 @@ export class AuthService {
 
     async refresh(oldRefreshToken: string) {
         const storedToken = await findRefreshToken(oldRefreshToken)
-        
-        if (!storedToken || storedToken.expiresAt < new Date()) {
-            if (storedToken) await deleteRefreshToken(oldRefreshToken)
+
+        // Not found usually means a concurrent request already rotated it: do not treat as suspicious
+        if (!storedToken) {
+            throw new AppError("Refresh token expired or revoked", 401, { clearSession: false })
+        }
+        if (storedToken.expiresAt < new Date()) {
+            await deleteRefreshToken(oldRefreshToken)
             throw new AppError("Refresh token expired or revoked", 401)
         }
 
         // Verify JWT signature
+        let userId: number
         try {
             const decoded = jwt.verify(oldRefreshToken, process.env.JWT_REFRESH_SECRET as string)
-            if (typeof decoded === "string" || !decoded.id) {
-                throw new AppError("Invalid token payload", 401);
-            }
-                    
-            // Token Rotation: Delete old token and generate new ones
-            await deleteRefreshToken(oldRefreshToken) 
-            const tokens = this.generateTokens(decoded.id)
-
-            const expiresAt = new Date()
-            expiresAt.setDate(expiresAt.getDate() + 7)
-            await saveRefreshToken(decoded.id, tokens.refreshToken, expiresAt, prisma)
-
-            return tokens
+            if (typeof decoded === "string" || !decoded.id) throw new Error("Invalid token payload")
+            userId = decoded.id
         } catch {
             await deleteRefreshToken(oldRefreshToken) // delete suspicious token
             throw new AppError("Invalid refresh token", 401)
         }
+
+        // Token rotation: only the request that actually deletes the row wins
+        const deleted = await deleteRefreshToken(oldRefreshToken)
+        if (deleted === 0) {
+            throw new AppError("Refresh token expired or revoked", 401, { clearSession: false })
+        }
+        const tokens = this.generateTokens(userId)
+        const expiresAt = new Date()
+        expiresAt.setDate(expiresAt.getDate() + 7)
+        await saveRefreshToken(userId, tokens.refreshToken, expiresAt, prisma)
+        return tokens
     }
     
     async logout(token: string) {
