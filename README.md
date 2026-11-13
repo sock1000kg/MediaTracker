@@ -68,12 +68,26 @@ Other than Authentication and Health Checks, endpoints require an `Authorization
 - `DELETE /api-key` - Delete an API key
 
 ### Search
-- `GET /search/books?q=...&page=...` - Search book via Open Library API
+- `GET /search/books?q=...&page=...` - Search books via Open Library API. Optional filters: `author`, `subject`, `language` (3-letter ISO 639-2 code, e.g. `eng`), `yearFrom`, `yearTo` (0-2100), `sort` (`relevance` | `new` | `old` | `rating`, default `relevance`). Invalid input returns 400 `{ message }`.
 - `GET /search/music/albums?q=...&page=...` - Search music albums via Last.fm API.
 - `GET /search/music/tracks?q=...&page=...` - Search music tracks via Last.fm API.
 
 ### Health
 - `POST /healthz` - Liveness probe
+
+## Background jobs
+Long-running work runs on a generic, typed job queue (`server/src/queue/`) backed by [BullMQ](https://docs.bullmq.io/) and [Valkey](https://valkey.io/) (BSD-licensed, Redis-compatible). Currently the weekly demo-account reset is the only job (scheduled as `demo-reset-weekly`, Sundays 00:00, 3 attempts). `GET /jobs/:id` returns the status/progress/result of a job owned by the caller (404 otherwise).
+
+| Variable | Purpose |
+| --- | --- |
+| `REDIS_URL` | Valkey/Redis connection (`redis://valkey:6379`, set for the backend by compose; `rediss://` and passwords in the URL work) |
+| `QUEUE_DRIVER` | `bullmq` or `memory`. Empty = `bullmq` if `REDIS_URL` is set, else `memory`. `memory` is for tests/Valkey-less local dev only (no schedules) and is refused in production |
+| `QUEUE_CONCURRENCY` | Jobs processed in parallel per worker (default 2) |
+| `QUEUE_WORKER` | `true` (default) runs the worker inside the API process |
+
+To run the worker separately later, run the same image twice: the API with `QUEUE_WORKER=false` and a second container with `QUEUE_WORKER=true`.
+
+Tests: the BullMQ contract tests run only when `REDIS_URL_TEST` is set (`docker compose -f docker-compose.test-db.yml up` gives Valkey on `localhost:6380`).
 
 ## Demo Account
 

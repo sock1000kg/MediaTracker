@@ -8,8 +8,14 @@ services:
       target: production
     env_file:
       - .env
-    depends_on: # Wait for database to start first
-      - database
+    environment:
+      # Internal service address (not a secret). Named REDIS_URL because that's the URL scheme BullMQ expects; Valkey is Redis-compatible.
+      - REDIS_URL=redis://valkey:6379
+    depends_on: # Wait for database and valkey to be healthy first
+      database:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
 
   database:
     image: postgres:17
@@ -28,5 +34,22 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  valkey:
+    image: valkey/valkey:8-alpine
+    command: ["valkey-server", "--appendonly", "yes"]
+    restart: always
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 20
+    volumes:
+      - valkey_data:/data
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 volumes:
   postgres_data:
+  valkey_data:

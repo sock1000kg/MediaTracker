@@ -9,6 +9,9 @@ services:
       target: dev
     ports:
       - 5000:5000
+    environment:
+      # .env has no ALLOWED_CORS; allow the Vite dev frontend
+      - ALLOWED_CORS=http://localhost:5173
     volumes:
       - ./server/src:/app/src
 
@@ -29,6 +32,10 @@ services:
   database:
     ports:
       - "5432:5432"
+
+  valkey:
+    ports:
+      - "6379:6379"
 
   prisma-studio:
     image: node:lts-alpine3.17

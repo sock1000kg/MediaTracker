@@ -23,6 +23,22 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  valkey_test:
+    image: valkey/valkey:8-alpine
+    restart: always
+    command: ["valkey-server", "--save", "", "--appendonly", "no"] # no persistence
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 20
+    ports:
+      - "6380:6379" # host 6380 -> 6379
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 volumes:
   postgres_data_test:
 
