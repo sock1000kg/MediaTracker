@@ -1,6 +1,7 @@
 # MediaTracker
 
 [![CI](https://github.com/sock1000kg/MediaTracker/actions/workflows/ci.yml/badge.svg)](https://github.com/sock1000kg/MediaTracker/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A self-hostable media journal: books, music, anime, manga, movies and games, all in one place. Search a catalogue, log it, rate it and keep notes, or add your own media.
 
@@ -107,4 +108,4 @@ Search data comes from Open Library, Last.fm, Jikan/MyAnimeList, RAWG and TMDB. 
 
 ## License
 
-No license has been chosen yet. Until one is added, all rights are reserved by the author.
+[MIT](LICENSE) © sock1000kg
