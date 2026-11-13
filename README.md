@@ -1,104 +1,110 @@
-# Media Tracker (WIP)
+# MediaTracker
 
-A solo fullstack media logging webapp to help media lovers track everything in one place. Users won't have to switch between multiple apps to log what they've seen. It can be your own personal hub where you can log, rate and store notes of your favourite medias.
+[![CI](https://github.com/sock1000kg/MediaTracker/actions/workflows/ci.yml/badge.svg)](https://github.com/sock1000kg/MediaTracker/actions/workflows/ci.yml)
 
-## Table of Contents
-- [Setup Guide](./docs/README.setup.md)
-- [Deployment Overview](./docs/README.deployment.md)
+A self-hostable media journal: books, music, anime, manga, movies and games, all in one place. Search a catalogue, log it, rate it and keep notes, or add your own media.
 
-- [Tech Stack](#tech-stack)
-- [Features](#features)
-- [API Overview](#api-overview)
-- [Demo Account](#demo-account)
-- [Planned Features](#planned-features)
-
-## Tech Stack
-- **Backend**: Node.js, Express, Prisma, PostgreSQL
-- **Frontend**: React, Vite, TailwindCSS, Shadcn/ui
-- **Testing**: Jest, Supertest
-- **Ops**: Docker, Docker Compose, GitHub Actions
+**Live demo:** <https://media-tracker.sock1000kg.io.vn/> (username `demo`, password `Demo123!!!`; the demo account is reset weekly).
 
 ## Features
-### Authentication and Security
-- **Hybrid Authentication**: Implements a high-security pattern using short-lived JWT Access Tokens (Header-based) and long-lived Refresh Tokens (**HttpOnly/SameSite Cookies**) to mitigate both XSS and CSRF risks.
-- **Defense**: Uses **Helmet.js** for secure headers, **CORS** configuration, **Zod** schema validation, and **express-rate-limit** to prevent brute-force attacks.
-- **Database Integrity**: Utilizes **Prisma ORM** with **PostgreSQL** for type-safe database queries and automated migrations.
 
-### Media and Logs Management
-- User-tied media types, medias, and logging
-- Support adding custom media types and medias
-- External APIs searching with Google Books and Last.fm
+- **One log for everything:** status, a 0–100 rating and notes for any media type, including your own custom types.
+- **Search built in:**
+  - Books ([Open Library](https://openlibrary.org)), with author, subject, language, year and sort filters
+  - Music ([Last.fm](https://www.last.fm/api)): albums and tracks, with tags saved as categories
+  - Anime and manga ([Jikan](https://jikan.moe) / MyAnimeList)
+  - Movies ([TMDB](https://www.themoviedb.org/documentation/api))
+  - Games ([RAWG](https://rawg.io/apidocs))
+- **Goodreads import:** upload your Goodreads CSV export; it runs as a background job with live progress.
+- **Browse your way:**
+  - list or cover-grid views
+  - grouping by month or type, with Load more / Load all per group
+  - filters by type, status, category, source and rating
+  - multi-key sorting
+- **Settings:** profile and password, preferences synced across devices, JSON/CSV export, account deletion.
+- **A quiet, warm UI:** light and dark themes, plus a small blue mascot who has opinions. Design notes are in [`client/DESIGN.md`](client/DESIGN.md).
+- **Security:** short-lived JWT access tokens plus rotating HttpOnly refresh cookies, Zod validation, Helmet, rate limiting, and encrypted per-user API keys.
 
-### Testing
-- Unit tests for utility functions
-- Integration tests for api routes
+## Tech stack
 
-## API Overview
-Other than Authentication and Health Checks, endpoints require an `Authorization Bearer <JWT>` header
-
-### Authentication
-- `POST /auth/register` - User registration
-- `POST /auth/login` - User login
-- `POST /auth/refresh` - Refresh access token using HttpOnly cookie.
-- `POST /auth/logout` - Revoke refresh token and clear cookies.
-
-### Media Type Management  
-- `GET /media-type` - Get user's media types
-- `POST /media-type` - Create new media type
-- `PUT /media-type/:name` - Update media type
-- `DELETE /media-type/:name` - Delete media type
-
-### Media Management  
-- `GET /media` - Get user's medias
-- `POST /media` - Create new media
-- `PUT /media/:id` - Update media
-- `DELETE /media/:id` - Delete media
-- `PUT /media/media-log` - Atomic operation to create media and log in one step (use when searching)
-
-### Logs Management
-- `GET /logs` - Get user's logs
-- `POST /logs` - Create new log
-- `PUT /logs/:id` - Update log
-- `DELETE /logs/:id` - Delete log
-
-### API Keys
-- `GET /api-key` - Get user's API keys
-- `POST /api-key` - Add new API key
-- `PUT /api-key` - Update an API key
-- `DELETE /api-key` - Delete an API key
-
-### Search
-- `GET /search/books?q=...&page=...` - Search books via Open Library API. Optional filters: `author`, `subject`, `language` (3-letter ISO 639-2 code, e.g. `eng`), `yearFrom`, `yearTo` (0-2100), `sort` (`relevance` | `new` | `old` | `rating`, default `relevance`). Invalid input returns 400 `{ message }`.
-- `GET /search/music/albums?q=...&page=...` - Search music albums via Last.fm API.
-- `GET /search/music/tracks?q=...&page=...` - Search music tracks via Last.fm API.
-
-### Health
-- `POST /healthz` - Liveness probe
-
-## Background jobs
-Long-running work runs on a generic, typed job queue (`server/src/queue/`) backed by [BullMQ](https://docs.bullmq.io/) and [Valkey](https://valkey.io/) (BSD-licensed, Redis-compatible). Currently the weekly demo-account reset is the only job (scheduled as `demo-reset-weekly`, Sundays 00:00, 3 attempts). `GET /jobs/:id` returns the status/progress/result of a job owned by the caller (404 otherwise).
-
-| Variable | Purpose |
+| Area | Tools |
 | --- | --- |
-| `REDIS_URL` | Valkey/Redis connection (`redis://valkey:6379`, set for the backend by compose; `rediss://` and passwords in the URL work) |
-| `QUEUE_DRIVER` | `bullmq` or `memory`. Empty = `bullmq` if `REDIS_URL` is set, else `memory`. `memory` is for tests/Valkey-less local dev only (no schedules) and is refused in production |
-| `QUEUE_CONCURRENCY` | Jobs processed in parallel per worker (default 2) |
-| `QUEUE_WORKER` | `true` (default) runs the worker inside the API process |
+| Frontend | React 19, Vite, TypeScript, Tailwind CSS v4, shadcn/ui (Radix), TanStack Query |
+| Backend | Node.js 22, Express 5, TypeScript, Prisma, PostgreSQL 17, Zod |
+| Background jobs | BullMQ on [Valkey](https://valkey.io) (BSD-licensed, Redis-compatible) |
+| Testing | Jest, Supertest |
+| Ops | Docker, Docker Compose, GitHub Actions |
 
-To run the worker separately later, run the same image twice: the API with `QUEUE_WORKER=false` and a second container with `QUEUE_WORKER=true`.
+## Quick start
 
-Tests: the BullMQ contract tests run only when `REDIS_URL_TEST` is set (`docker compose -f docker-compose.test-db.yml up` gives Valkey on `localhost:6380`).
+You need **Docker** with Docker Compose, plus **Node.js 22** if you want to run scripts outside containers.
 
-## Demo Account
+```bash
+git clone https://github.com/sock1000kg/MediaTracker.git
+cd MediaTracker
+cp .env.example .env    # then fill in the values, see docs/configuration.md
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+```
 
-You can explore the app using the demo account at: https://media-tracker.sock1000kg.io.vn/
-- **Username:** `demo`
-- **Password:** `Demo123!!!`
+| Service | URL |
+| --- | --- |
+| Frontend (Vite, hot reload) | <http://localhost:5173> |
+| API | <http://localhost:5000> (health: `GET /healthz`) |
+| Prisma Studio | <http://localhost:5555> |
 
-## Planned Features
-- More API providers
-- User settings
-- Filtering search and medias
-- API intergration (Goodreads, AOTY,...)
-- User statistics
-- Multi-media recommendation service
+On start, the backend runs the database migrations and seeds the system and demo users. Registering a new account needs the `REGISTER_KEY` from your `.env`.
+
+Searching music, movies and games needs your own free API keys for Last.fm, TMDB and RAWG. Add them in the app under **Settings → API Keys**. Books and anime/manga need no key.
+
+See **[docs/setup.md](docs/setup.md)** for running tests, production builds and running without Docker.
+
+## Documentation
+
+| Doc | Contents |
+| --- | --- |
+| [docs/setup.md](docs/setup.md) | Local development, tests, production build |
+| [docs/configuration.md](docs/configuration.md) | Every environment variable |
+| [docs/api.md](docs/api.md) | REST API reference |
+| [docs/architecture.md](docs/architecture.md) | How the server, search providers, job queue and auth fit together |
+| [docs/deployment.md](docs/deployment.md) | Docker images, Compose files, CI/CD |
+| [client/DESIGN.md](client/DESIGN.md) | Visual design system and UI behaviour |
+
+## Project structure
+
+```
+.
+├── client/               React app (Vite)
+│   ├── src/api/          API client (auth refresh, typed endpoints)
+│   ├── src/components/   UI components (media-view, logs, media, search, ui)
+│   ├── src/pages/        Pages and sections
+│   └── DESIGN.md         Design system
+├── server/               Express API
+│   ├── src/api/          Routes and controllers
+│   ├── src/services/     Business logic and search providers
+│   ├── src/repositories/ Prisma data access
+│   ├── src/queue/        Job queue (BullMQ/Valkey and in-memory drivers)
+│   ├── src/prisma/       Schema and migrations
+│   └── src/tests/        Unit and integration tests
+├── docs/                 Documentation
+└── docker-compose*.yml   Base, dev, prod-like and test stacks
+```
+
+## Roadmap
+
+- User statistics (yearly totals, ratings over time)
+- More importers (e.g. Letterboxd, MyAnimeList lists)
+- Recommendations across media types
+
+Suggestions are welcome: please open an issue.
+
+## Contributing
+
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
+
+## Acknowledgements
+
+Search data comes from Open Library, Last.fm, Jikan/MyAnimeList, RAWG and TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.
+
+## License
+
+No license has been chosen yet. Until one is added, all rights are reserved by the author.
