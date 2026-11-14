@@ -4,7 +4,8 @@ export const ANIME_TYPES = ["tv", "movie", "ova", "special", "ona", "music"] as 
 export const MANGA_TYPES = ["manga", "novel", "lightnovel", "oneshot", "manhwa", "manhua"] as const
 export const ANIME_SORTS = ["relevance", "score", "popularity", "newest"] as const
 
-export type JikanMode = "anime" | "manga"
+export type AniListMode = "anime" | "manga"
+export type JikanMode = AniListMode
 
 export const animeMetadataSchema = z.object({
     url: z.string().optional(),
@@ -14,12 +15,85 @@ export const animeMetadataSchema = z.object({
     chapters: z.number().nullable().optional(),
     volumes: z.number().nullable().optional(),
     score: z.number().nullable().optional(),
+    scoreScale: z.enum(["mal", "anilist"]).optional(),
     originalTitle: z.string().nullable().optional(),
     categories: z.array(z.string()).nullable().optional(),
+    episodeMinutes: z.number().nullable().optional(),
+    idMal: z.number().nullable().optional(),
+    watchedEpisodes: z.number().nullable().optional(),
+    readChapters: z.number().nullable().optional(),
+    readVolumes: z.number().nullable().optional(),
 }).strict()
 
-// Jikan v4 (lenient: every field we read is nullable + optional, unknown keys are stripped)
 const nl = <T extends z.ZodTypeAny>(s: T) => s.nullable().optional()
+
+// AniList GraphQL lenient schemas
+export const anilistMediaSchema = z.object({
+    id: nl(z.number()),
+    idMal: nl(z.number()),
+    type: nl(z.string()),
+    format: nl(z.string()),
+    title: nl(z.object({
+        romaji: nl(z.string()),
+        english: nl(z.string()),
+        native: nl(z.string()),
+    })),
+    episodes: nl(z.number()),
+    duration: nl(z.number()),
+    chapters: nl(z.number()),
+    volumes: nl(z.number()),
+    startDate: nl(z.object({
+        year: nl(z.number()),
+    })),
+    averageScore: nl(z.number()),
+    genres: nl(z.array(z.string())),
+    tags: nl(z.array(z.object({
+        name: nl(z.string()),
+        rank: nl(z.number()),
+        isAdult: nl(z.boolean()),
+        isGeneralSpoiler: nl(z.boolean()),
+        isMediaSpoiler: nl(z.boolean()),
+    }))),
+    studios: nl(z.object({
+        nodes: nl(z.array(z.object({
+            name: nl(z.string()),
+        }))),
+    })),
+    staff: nl(z.object({
+        edges: nl(z.array(z.object({
+            role: nl(z.string()),
+            node: nl(z.object({
+                name: nl(z.object({
+                    full: nl(z.string()),
+                })),
+            })),
+        }))),
+    })),
+    coverImage: nl(z.object({
+        extraLarge: nl(z.string()),
+        large: nl(z.string()),
+    })),
+    siteUrl: nl(z.string()),
+    description: nl(z.string()),
+})
+
+export const anilistResponseSchema = z.object({
+    data: nl(z.object({
+        Page: nl(z.object({
+            pageInfo: nl(z.object({
+                hasNextPage: nl(z.boolean()),
+            })),
+            media: nl(z.array(anilistMediaSchema)),
+        })),
+    })),
+    errors: nl(z.array(z.object({
+        message: nl(z.string()),
+    }))),
+})
+
+export type AniListMedia = z.infer<typeof anilistMediaSchema>
+
+// Jikan v4 (kept for backwards compatibility / existing data)
 const named = z.array(z.object({ name: nl(z.string()) })).nullable().optional()
 const fromYear = z.object({ prop: nl(z.object({ from: nl(z.object({ year: nl(z.number()) })) })) }).nullable().optional()
 
@@ -38,6 +112,7 @@ export const jikanItemSchema = z.object({
     year: nl(z.number()),
     aired: fromYear,
     published: fromYear,
+    duration: nl(z.string()),
     episodes: nl(z.number()),
     chapters: nl(z.number()),
     volumes: nl(z.number()),

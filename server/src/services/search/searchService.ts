@@ -1,7 +1,7 @@
 import { musicSearchService } from "@/services/search/lastFmSearchService.js"
 import { BookSearchFilters } from "@/schemas/search/bookSchemas.js"
 import { AnimeSearchFilters } from "@/schemas/search/animeSchemas.js"
-import { jikanSearchService } from "./jikanSearchService.js"
+import { anilistSearchService } from "./anilistSearchService.js"
 import { tmdbSearchService } from "./tmdbSearchService.js"
 import { rawgSearchService } from "./rawgSearchService.js"
 import { GameSearchFilters } from "@/schemas/search/gameSchemas.js"
@@ -22,15 +22,23 @@ export class SearchService {
     }
 
     async searchAnime(_userId: number, q: string, page: number = 1, filters?: AnimeSearchFilters) {
-        return jikanSearchService.search("anime", q, page, filters)
+        return anilistSearchService.search("anime", q, page, filters)
     }
 
     async searchManga(_userId: number, q: string, page: number = 1, filters?: AnimeSearchFilters) {
-        return jikanSearchService.search("manga", q, page, filters)
+        return anilistSearchService.search("manga", q, page, filters)
     }
 
     async searchMovies(userId: number, q: string, page: number = 1, filters?: { year?: number }) {
         return tmdbSearchService.searchMoviesTmdb(userId, q, page, filters)
+    }
+
+    async searchTv(userId: number, q: string, page: number = 1, filters?: { year?: number }) {
+        return tmdbSearchService.searchTvTmdb(userId, q, page, filters)
+    }
+
+    async getTvSeasons(userId: number, tmdbId: number) {
+        return tmdbSearchService.fetchTvSeasons(userId, tmdbId)
     }
 
     async searchGames(userId: number, q: string, page: number = 1, filters?: GameSearchFilters) {

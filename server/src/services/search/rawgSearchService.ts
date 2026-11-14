@@ -105,6 +105,7 @@ export function mapRawgGame(item: RawgGameItem): SearchResult {
             metacritic: item.metacritic ?? null,
             score: item.rating ? item.rating : null,
             categories: cleanRawgCategories(item.genres, item.tags),
+            playtimeHours: typeof item.playtime === "number" && item.playtime > 0 ? item.playtime : null,
         },
     } as SearchResult
 }

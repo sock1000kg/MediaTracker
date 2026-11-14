@@ -3,6 +3,7 @@
 export interface JobPayloads {
     "demo.reset": Record<string, never>
     "import.goodreads": { csv: string }
+    "import.mal": { xml: string }
 }
 
 export type JobName = keyof JobPayloads

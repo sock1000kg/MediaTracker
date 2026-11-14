@@ -79,7 +79,7 @@ describe('cleanRawgCategories', () => {
 describe('mapRawgGame', () => {
     const item = rawgGameItemSchema.parse({
         id: 3328, slug: 'the-witcher-3', name: 'The Witcher 3', released: '2015-05-18', background_image: 'https://media.rawg.io/a.jpg',
-        rating: 4.66, metacritic: 92,
+        rating: 4.66, metacritic: 92, playtime: 45,
         platforms: [{ platform: { name: 'PC' } }, { platform: { name: 'PC' } }, { platform: { name: 'Xbox One' } }],
         genres: [{ name: 'RPG' }], tags: [{ name: 'Singleplayer', language: 'eng' }, { name: 'Open World', language: 'eng' }],
     })
@@ -89,14 +89,14 @@ describe('mapRawgGame', () => {
             imageUrl: 'https://media.rawg.io/a.jpg',
             metadata: {
                 url: 'https://rawg.io/games/the-witcher-3', kind: 'game', platforms: ['PC', 'Xbox One'],
-                metacritic: 92, score: 4.66, categories: ['RPG', 'Open World'],
+                metacritic: 92, score: 4.66, categories: ['RPG', 'Open World'], playtimeHours: 45,
             },
         })
     })
     it('null released / image, non-https image, rating 0, url falls back to id', () => {
-        const r = mapRawgGame(rawgGameItemSchema.parse({ id: 1, name: 'A', released: null, background_image: 'http://x/y.jpg', rating: 0 }))
+        const r = mapRawgGame(rawgGameItemSchema.parse({ id: 1, name: 'A', released: null, background_image: 'http://x/y.jpg', rating: 0, playtime: 0 }))
         expect(r).toMatchObject({ year: null, imageUrl: null, sourceId: 'game-1' })
-        expect(r.metadata).toEqual({ url: 'https://rawg.io/games/1', kind: 'game', platforms: null, metacritic: null, score: null, categories: null })
+        expect(r.metadata).toEqual({ url: 'https://rawg.io/games/1', kind: 'game', platforms: null, metacritic: null, score: null, categories: null, playtimeHours: null })
     })
     it('all-null fields are safe and validate; kind survives the union', () => {
         const r = mapRawgGame(rawgGameItemSchema.parse({ id: 2, name: null, released: 'TBA', platforms: null, genres: null, tags: null }))

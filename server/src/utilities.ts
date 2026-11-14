@@ -1,4 +1,5 @@
-import { Prisma } from "@prisma/client"
+import '@/env.js'
+import { Prisma } from "@/db.js"
 import { ZodSchema, ZodError } from "zod"
 import crypto from "crypto"
 
@@ -129,7 +130,7 @@ export function sanitizeDescription(desc: string | undefined | null): string | n
 
 // Sanitize source: only allow known sources (e.g., "google_books")
 // Every search provider's `source` must be listed here, or logging its results fails with 400.
-const allowedSources = ["google_books", "lastfm", "goodreads", "open_library", "jikan", "tmdb", "rawg"] as const
+const allowedSources = ["google_books", "lastfm", "goodreads", "open_library", "jikan", "anilist", "tmdb", "rawg", "mal"] as const
 export type AllowedSource = (typeof allowedSources)[number]
 export function sanitizeSource(source: string | undefined | null): AllowedSource | null {
     if (!source) return null
@@ -309,3 +310,99 @@ export function createThrottle(minGapMs: number, clock: ThrottleClock = realCloc
 
 // Lives in its own import-free module so test setup files can use it before dotenv has loaded
 export { redactUrl } from "./redactUrl.js"
+
+
+/**
+ * Parses an import date: "YYYY/MM/DD" (Goodreads) or ISO "YYYY-MM-DD[THH:mm...]".
+ * Returns null for anything missing, malformed or not a real calendar date.
+ */
+export function parseImportDate(value: unknown): Date | null {
+    if (typeof value !== "string") return null
+    const m = /^(\d{4})[/-](\d{2})[/-](\d{2})(?:[T ].*)?$/.exec(value.trim())
+    if (!m) return null
+    const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])]
+    const date = new Date(Date.UTC(y, mo - 1, d, 12))
+    if (date.getUTCFullYear() !== y || date.getUTCMonth() !== mo - 1 || date.getUTCDate() !== d) return null
+    if (value.trim().length > 10) {
+        const full = new Date(value.trim())
+        return Number.isNaN(full.getTime()) ? null : full
+    }
+    return date
+}
+
+/**
+ * Normalizes an ISO date or datetime string (or Date object) to day precision:
+ * noon UTC (12:00:00.000Z) of the given calendar date, so time zones never flip the day.
+ * Returns null if input is null, empty or not a valid date.
+ */
+export function toDayPrecision(val: unknown): Date | null {
+    if (val === null || val === undefined) return null
+    if (val instanceof Date) {
+        if (Number.isNaN(val.getTime())) return null
+        return new Date(Date.UTC(val.getUTCFullYear(), val.getUTCMonth(), val.getUTCDate(), 12))
+    }
+    if (typeof val !== "string") return null
+    const trimmed = val.trim()
+    if (!trimmed) return null
+    const m = /^(\d{4})[/-](\d{2})[/-](\d{2})(?:[T ].*)?$/.exec(trimmed)
+    if (!m) return null
+    const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])]
+    const date = new Date(Date.UTC(y, mo - 1, d, 12))
+    if (date.getUTCFullYear() !== y || date.getUTCMonth() !== mo - 1 || date.getUTCDate() !== d) return null
+    return date
+}
+
+// TAGS
+export const MAX_TAG_LENGTH = 40
+export const MAX_TAGS_PER_LOG = 20
+export const MAX_TAGS_PER_USER = 500
+
+/**
+ * Normalizes a tag name:
+ * - strips leading '#'
+ * - collapses inner whitespace
+ * - trims
+ * Valid names are 1–40 characters and contain no commas.
+ * Returns null if invalid.
+ */
+export function normalizeTagName(raw: unknown): string | null {
+    if (typeof raw !== "string") return null
+    let s = raw.trim()
+    while (s.startsWith("#")) {
+        s = s.slice(1).trim()
+    }
+    s = s.replace(/\s+/g, " ")
+    if (s.length < 1 || s.length > MAX_TAG_LENGTH) return null
+    if (s.includes(",")) return null
+    return s
+}
+
+export function tagKey(name: string): string {
+    return name.toLowerCase()
+}
+
+// COLLECTIONS
+export const MAX_COLLECTION_NAME_LENGTH = 80
+export const MAX_COLLECTION_DESC_LENGTH = 1000
+export const MAX_COLLECTIONS_PER_USER = 200
+export const MAX_ITEMS_PER_COLLECTION = 1000
+
+export function normalizeCollectionName(raw: unknown): string | null {
+    if (typeof raw !== "string") return null
+    const s = raw.trim().replace(/\s+/g, " ")
+    if (s.length < 1 || s.length > MAX_COLLECTION_NAME_LENGTH) return null
+    return s
+}
+
+export function collectionKey(name: string): string {
+    return name.toLowerCase()
+}
+
+export function sanitizeCollectionDescription(raw: unknown): string | null {
+    if (raw === null || raw === undefined) return null
+    if (typeof raw !== "string") return null
+    const s = raw.trim()
+    return s.length === 0 ? null : s
+}
+
+

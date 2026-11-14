@@ -4,6 +4,8 @@ import { findUserByUsername } from "@/repositories/authRepository.js"
 import { deleteAllLogsForUser } from "@/repositories/logsRepository.js"
 import { deleteAllMediasForUser } from "@/repositories/mediaRepository.js"
 import { deleteAllMediaTypeForUser } from "@/repositories/mediaTypeRepository.js"
+import { deleteAllTagsForUser } from "@/repositories/tagRepository.js"
+import { deleteAllCollectionsForUser } from "@/repositories/collectionRepository.js"
 import { seedDatabase } from "@/tests/seed.js"
 
 export class DemoService {
@@ -19,10 +21,12 @@ export class DemoService {
                 await deleteAllMediaTypeForUser(demoUser.id, tx)
                 await deleteAllMediasForUser(demoUser.id, tx)
                 await deleteAllLogsForUser(demoUser.id, tx)
+                await deleteAllTagsForUser(demoUser.id, tx)
+                await deleteAllCollectionsForUser(demoUser.id, tx)
             })
 
             console.log("\x1b[1m\x1b[32mDemo Account Wiped\x1b[0m")
-            await seedDatabase()
+            await seedDatabase({ seedDemoFixture: true, strict: true })
             console.log("\x1b[1m\x1b[32mDemo Account Successful Reset Yay\x1b[0m")
     }
 

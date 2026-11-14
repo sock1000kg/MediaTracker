@@ -128,6 +128,9 @@ describe("User settings routes", () => {
             await prisma.userLogs.create({ data: { userId: me.id, mediaId: m.id, status: "completed", rating: 80, notes } })
         }
         const logCount = await prisma.userLogs.count({ where: { userId: me.id } })
+        const firstLog = await prisma.userLogs.findFirstOrThrow({ where: { userId: me.id } })
+        const tag = await prisma.tag.create({ data: { userId: me.id, name: "=cmd", nameKey: "=cmd" } })
+        await prisma.logTag.create({ data: { logId: firstLog.id, tagId: tag.id } })
 
         const j = await request(app).get("/users/me/export").set(auth(token))
         expect(j.statusCode).toBe(200)
@@ -136,7 +139,13 @@ describe("User settings routes", () => {
         const data = JSON.parse(j.text)
         expect(data.version).toBe(1)
         expect(data.logs).toHaveLength(logCount)
+        expect(data.logs[0]).toHaveProperty("started_at")
+        expect(data.logs[0]).toHaveProperty("finished_at")
+        expect(data.logs[0]).toHaveProperty("tags")
+        expect(data.logs.some((l: { tags?: string[] }) => Array.isArray(l.tags) && l.tags.includes("=cmd"))).toBe(true)
         expect(data.logs[0].media).toHaveProperty("title")
+        expect(data).toHaveProperty("collections")
+        expect(Array.isArray(data.collections)).toBe(true)
         expect(hasKeyDeep(data, ["id", "userId", "password", "key"])).toBe(false)
 
         const c = await request(app).get("/users/me/export?format=csv").set(auth(token)).buffer(true)
@@ -144,9 +153,10 @@ describe("User settings routes", () => {
         expect(c.headers["content-type"]).toMatch(/text\/csv; charset=utf-8/)
         expect(c.headers["content-disposition"]).toMatch(/\.csv"; filename\*=UTF-8''/)
         const rows = parse(c.text.replace(/^\uFEFF/, ""), { columns: true }) as Record<string, string>[]
-        expect(Object.keys(rows[0])).toEqual(["title", "creator", "year", "type", "source", "source_id", "status", "rating", "notes", "logged_at", "categories", "url"])
+        expect(Object.keys(rows[0])).toEqual(["title", "creator", "year", "type", "source", "source_id", "status", "rating", "notes", "logged_at", "started_at", "finished_at", "categories", "tags", "collections", "url"])
         expect(rows).toHaveLength(logCount)
         expect(rows.some((r) => r.title.startsWith("'=HYPERLINK"))).toBe(true)
+        expect(rows.some((r) => r.tags === "'=cmd")).toBe(true)
         expect(rows.some((r) => r.notes === "line1, with comma\nline2")).toBe(true)
 
         const bad = await request(app).get("/users/me/export?format=xml").set(auth(token))

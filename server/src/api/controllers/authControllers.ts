@@ -35,7 +35,8 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
 export const refreshToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const oldToken = req.cookies.refreshToken;
-        if (!oldToken) throw new Error("No refresh token")
+        // No cookie: nothing to clear, and it is the caller's problem (401), not a server error
+        if (!oldToken) throw new AppError("No refresh token", 401, { clearSession: false })
 
         const { accessToken, refreshToken } = await authService.refresh(oldToken);
         res.cookie('refreshToken', refreshToken, COOKIES_OPTIONS)

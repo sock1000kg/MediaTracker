@@ -6,6 +6,7 @@ import { musicMetadataSchema } from "./musicSchemas.js"
 import { animeMetadataSchema } from "./animeSchemas.js"
 import { movieMetadataSchema } from "./movieSchemas.js"
 import { gameMetadataSchema } from "./gameSchemas.js"
+import { tvSeasonMetadataSchema, tvShowMetadataSchema } from "./tvSchemas.js"
 
 //For when user search up a media and wanna log it
 export const createMediaAndLogSchema = z.object({
@@ -16,6 +17,8 @@ export const createMediaAndLogSchema = z.object({
 // Music goes first and is strict: the book schema would otherwise match music results and strip `kind`
 const mediaMetadataSchema = z.union([
   musicMetadataSchema.strict(),
+  tvSeasonMetadataSchema,
+  tvShowMetadataSchema,
   animeMetadataSchema,
   movieMetadataSchema,
   gameMetadataSchema,
@@ -46,6 +49,7 @@ export const searchResultSchema = z.object({
         .nullable()
         .default(null),
     sourceId: z.string(),
+    inLibrary: z.boolean().optional(),
     metadata: mediaMetadataSchema.optional(), // raw Google volumeInfo
 })
 export const searchResultsSchema = z.array(searchResultSchema) //Schema for the results array

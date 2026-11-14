@@ -1,14 +1,28 @@
+import '@/env.js'
 import { addApiKeyForUser } from "@/repositories/apiKeyRepository.js"
 import { createLog, findLogOfUserByMediaId } from "@/repositories/logsRepository.js"
 import { createMedia } from "@/repositories/mediaRepository.js"
 import prisma from "@/prismaClient.js"
 import { encryptKey } from "@/utilities.js"
-import { MediaType, Prisma, User, UserAPIKey } from "@prisma/client"
+import { MediaType, Prisma, User, UserAPIKey } from "@/db.js"
 import bcrypt from "bcryptjs"
 import { fileURLToPath } from "url"
 import path from "path"
 import fs from "fs"
 import { goodreadsImportService } from "@/services/imports/goodreadsImportService.js"
+import { malImportService, createCacheMalResolver } from "@/services/imports/malImportService.js"
+import { seedDemoMedia, demoMediaSeeder } from "./fixtures/demo/seedDemoMedia.js"
+
+export interface SeedOptions {
+    seedDemoFixture?: boolean
+    strict?: boolean
+}
+
+export interface SeedDeps {
+    seedDemo?: typeof seedDemoMedia
+    importGoodreads?: typeof goodreadsImportService.importFromGoodReads
+    importMal?: typeof malImportService.importFromMal
+}
 
 async function createSystemUser(): Promise<{ id: number }> {
     let systemUser = await prisma.user.findUnique({
@@ -87,7 +101,24 @@ async function createMediaTypeSeed(name: string, userId: number): Promise<MediaT
     }
 }
 
-export async function seedDatabase() {
+function findFixtureFile(relativePath: string): string | null {
+    const __filename = fileURLToPath(import.meta.url)
+    const __dirname = path.dirname(__filename)
+    const candidatePaths = [
+        path.join(__dirname, relativePath),
+        path.resolve(__dirname, "../../src/tests", relativePath),
+        path.resolve(process.cwd(), "src/tests", relativePath),
+        path.resolve(process.cwd(), "server/src/tests", relativePath),
+        path.resolve(process.cwd(), "dist/tests", relativePath),
+        path.resolve(process.cwd(), relativePath),
+    ]
+    for (const p of candidatePaths) {
+        if (fs.existsSync(p)) return p
+    }
+    return null
+}
+
+export async function seedDatabase(options?: SeedOptions, deps?: SeedDeps) {
     const systemUser = await createSystemUser()
     const demoUser = await createDemoUser()
 
@@ -96,6 +127,7 @@ export async function seedDatabase() {
     await createMediaTypeSeed("music", systemUser.id)
     await createMediaTypeSeed("game", systemUser.id)
     await createMediaTypeSeed("movie", systemUser.id)
+    await createMediaTypeSeed("tv", systemUser.id)
     await createMediaTypeSeed("anime", systemUser.id)
     await createMediaTypeSeed("manga", systemUser.id)
 
@@ -140,24 +172,6 @@ export async function seedDatabase() {
             console.log("Demo log already exists")
         }
     }
-
-    //Seed Google Books key
-    // console.log("Demo user API keys:", demoUser.apiKeys)
-    // const hasGoogleBooksKey = demoUser.apiKeys.some(
-    //     (key) => key.service === "google_books"
-    // )
-    // if(!hasGoogleBooksKey && process.env.GOOGLE_BOOKS_API_KEY) {
-    //     try {
-    //         await addApiKeyForUser(demoUser.id, encryptKey(process.env.GOOGLE_BOOKS_API_KEY), "google_books")
-    //         console.log("Google Books Demo Key created")
-    //     } catch (error) {
-    //         console.error("Failed to create Google Books API key:", error)
-    //     }
-    // } else if (!process.env.GOOGLE_BOOKS_API_KEY) {
-    //     console.log("GOOGLE_BOOKS_API_KEY environment variable not set")
-    // } else {
-    //     console.log("Google Books Demo Key already exists")
-    // }
 
     //Seed lastfm key
     const hasLastFmKey = demoUser.apiKeys.some(
@@ -211,29 +225,73 @@ export async function seedDatabase() {
     }
 
 
-    // SEED GoodReads import
-    if (process.env.NODE_ENV !== 'test') {
-        const __filename = fileURLToPath(import.meta.url)
-        const __dirname = path.dirname(__filename)
-        const csvPath = path.join(__dirname, "goodreads_seed.csv")
-    
-        if (fs.existsSync(csvPath)) {
-            console.log(`\x1b[1m\x1b[32m\nFound goodreads_seed.csv at ${csvPath}\x1b[0m`)
+    // In test runs, the Goodreads and MAL exports stay skipped unless seedDemoFixture is true
+    if (process.env.NODE_ENV !== 'test' || options?.seedDemoFixture) {
+        // 3. SEED Goodreads import
+        const goodreadsPath = findFixtureFile("fixtures/demo/exports/goodreads.csv")
+        if (goodreadsPath) {
+            console.log(`\x1b[1m\x1b[32m\nFound goodreads.csv at ${goodreadsPath}\x1b[0m`)
             console.log("Importing books for Demo user...")
-            
             try {
-                const fileBuffer = fs.readFileSync(csvPath)
-                const result = await goodreadsImportService.importFromGoodReads(demoUser.id, fileBuffer)
-                
-                console.log(`Goodreads Import Results:`)
-                console.log(`Imported: ${result.imported}`)
-                console.log(`Skipped: ${result.skipped}`)
-                console.log(`Errors: `, JSON.stringify(result.failures, null, 2))
+                const fileBuffer = fs.readFileSync(goodreadsPath)
+                const importFn = deps?.importGoodreads ?? ((u, b, o) => goodreadsImportService.importFromGoodReads(u, b, o))
+                const result = await importFn(demoUser.id, fileBuffer, { enrich: false })
+                console.log(`Goodreads Import Results: imported ${result.imported}, skipped ${result.skipped}`)
             } catch (error) {
+                if (options?.strict) throw error
                 console.error("\x1b[1m\x1b[31mFailed to seed Goodreads CSV:\x1b[0m", error)
             }
         } else {
-            console.log(`\nNo 'goodreads_seed.csv' found in ${__dirname}. Skipping CSV import.`)
+            console.log("\nNo goodreads.csv found. Skipping CSV import.")
+        }
+
+        // 4. SEED MAL anime import, then MAL manga import, with cache resolver
+        const animePath = findFixtureFile("fixtures/demo/exports/mal-anime.xml")
+        const mangaPath = findFixtureFile("fixtures/demo/exports/mal-manga.xml")
+        const cacheResolver = createCacheMalResolver()
+        const importMalFn = deps?.importMal ?? ((u, b, opts) => malImportService.importFromMal(u, b, opts))
+
+        if (animePath) {
+            console.log(`\x1b[1m\x1b[32m\nFound mal-anime.xml at ${animePath}\x1b[0m`)
+            console.log("Importing anime for Demo user...")
+            try {
+                const fileBuffer = fs.readFileSync(animePath)
+                const result = await importMalFn(demoUser.id, fileBuffer, { resolver: cacheResolver })
+                console.log(`MAL Anime Import Results: imported ${result.imported}, skipped ${result.skipped}`)
+            } catch (error) {
+                if (options?.strict) throw error
+                console.error("\x1b[1m\x1b[31mFailed to seed MAL Anime XML:\x1b[0m", error)
+            }
+        } else {
+            console.log("\nNo mal-anime.xml found. Skipping MAL anime import.")
+        }
+
+        if (mangaPath) {
+            console.log(`\x1b[1m\x1b[32m\nFound mal-manga.xml at ${mangaPath}\x1b[0m`)
+            console.log("Importing manga for Demo user...")
+            try {
+                const fileBuffer = fs.readFileSync(mangaPath)
+                const result = await importMalFn(demoUser.id, fileBuffer, { resolver: cacheResolver })
+                console.log(`MAL Manga Import Results: imported ${result.imported}, skipped ${result.skipped}`)
+            } catch (error) {
+                if (options?.strict) throw error
+                console.error("\x1b[1m\x1b[31mFailed to seed MAL Manga XML:\x1b[0m", error)
+            }
+        } else {
+            console.log("\nNo mal-manga.xml found. Skipping MAL manga import.")
+        }
+
+        // 5. SEED Demo Media Fixture (remaining picks) & 6. Collections and tags
+        console.log("\nSeeding demo media fixture...")
+        try {
+            await (deps?.seedDemo ?? demoMediaSeeder.seedDemoMedia)(demoUser.id)
+            console.log("Demo media fixture seeded successfully.")
+        } catch (error) {
+            if (options?.strict) throw error
+            console.error(
+                "Demo fixture seeding failed (continuing startup):",
+                error instanceof Error ? error.message : error
+            )
         }
     }
 }

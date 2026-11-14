@@ -88,65 +88,141 @@ describe('Search Routes - books', () => {
     })
 })
 
-describe('Search Routes - anime & manga (Jikan)', () => {
-    const username = 'JikanTestUser'
+describe('Search Routes - anime & manga (AniList)', () => {
+    const username = 'AniListTestUser'
     const password = 'StrongPass1!'
     let token: string
     let fetchSpy: SpiedFunction<typeof fetch>
 
-    const body = {
-        data: [{
-            mal_id: 777, url: 'https://myanimelist.net/anime/777', title: 'Test JP', title_english: 'Test EN', type: 'TV',
-            synopsis: 'Plot.\n\n[Written by MAL Rewrite]', score: 8.1, year: 2020, episodes: 12,
-            studios: [{ name: 'Studio A' }], genres: [{ name: 'Action' }], themes: [], demographics: [],
-            images: { jpg: { image_url: 'https://cdn/x.jpg' } },
-        }],
-        pagination: { has_next_page: true },
+    const animeGraphqlBody = {
+        data: {
+            Page: {
+                pageInfo: { hasNextPage: true },
+                media: [{
+                    id: 154587,
+                    idMal: 52991,
+                    type: 'ANIME',
+                    format: 'TV',
+                    title: { romaji: 'Sousou no Frieren', english: 'Frieren: Beyond Journey’s End', native: '葬送のフリーレン' },
+                    episodes: 28,
+                    duration: 24,
+                    chapters: null,
+                    volumes: null,
+                    startDate: { year: 2023 },
+                    averageScore: 90,
+                    genres: ['Adventure', 'Fantasy'],
+                    tags: [{ name: 'Magic', rank: 95, isAdult: false, isGeneralSpoiler: false, isMediaSpoiler: false }],
+                    studios: { nodes: [{ name: 'MADHOUSE' }] },
+                    staff: { edges: [] },
+                    coverImage: { extraLarge: 'https://s4.anilist.co/cover/frieren.jpg' },
+                    siteUrl: 'https://anilist.co/anime/154587',
+                    description: 'The adventure is over.<br><br>(Source: Crunchyroll)',
+                }],
+            },
+        },
     }
-    const mangaBody = { data: [{ ...body.data[0], url: 'https://myanimelist.net/manga/777', type: 'Manga', episodes: undefined, chapters: 98, volumes: 10, authors: [{ name: 'Au, Thor' }], studios: undefined }], pagination: { has_next_page: false } }
+
+    const mangaGraphqlBody = {
+        data: {
+            Page: {
+                pageInfo: { hasNextPage: false },
+                media: [{
+                    id: 105398,
+                    idMal: 121496,
+                    type: 'MANGA',
+                    format: 'MANGA',
+                    title: { romaji: 'Solo Leveling', english: 'Solo Leveling', native: '나 혼자만 레벨업' },
+                    episodes: null,
+                    duration: null,
+                    chapters: 200,
+                    volumes: 14,
+                    startDate: { year: 2018 },
+                    averageScore: 84,
+                    genres: ['Action'],
+                    tags: [],
+                    studios: { nodes: [] },
+                    staff: { edges: [{ role: 'Story', node: { name: { full: 'Chugong' } } }] },
+                    coverImage: { extraLarge: 'https://s4.anilist.co/cover/solo.jpg' },
+                    siteUrl: 'https://anilist.co/manga/105398',
+                    description: 'Solo Leveling manga.<br>[Written by D&C Media]',
+                }],
+            },
+        },
+    }
 
     beforeAll(async () => {
         await prisma.user.deleteMany({ where: { username } })
-        await request(app).post('/auth/register').send({ username, password, displayName: 'Jikan', registerKey: process.env.REGISTER_KEY })
+        await request(app).post('/auth/register').send({ username, password, displayName: 'AniList', registerKey: process.env.REGISTER_KEY })
         const login = await request(app).post('/auth/login').send({ username, password })
         token = login.body.accessToken
         expect(token).toBeTruthy()
     })
 
     beforeEach(() => {
-        fetchSpy = jest.spyOn(global, 'fetch').mockImplementation(async (input) =>
-            new Response(JSON.stringify(String(input).includes('/manga') ? mangaBody : body), { status: 200 }))
+        fetchSpy = jest.spyOn(global, 'fetch').mockImplementation(async (_input, init) => {
+            const body = JSON.parse(String(init?.body ?? '{}'))
+            const isManga = body?.variables?.type === 'MANGA'
+            return new Response(JSON.stringify(isManga ? mangaGraphqlBody : animeGraphqlBody), { status: 200 })
+        })
     })
+
     afterEach(() => fetchSpy.mockRestore())
+
     afterAll(async () => {
-        await prisma.media.deleteMany({ where: { source: 'jikan', sourceId: { in: ['anime-777', 'manga-777'] } } })
+        await prisma.media.deleteMany({ where: { source: { in: ['anilist', 'jikan'] }, sourceId: { in: ['anime-154587', 'manga-105398', 'anime-777', 'anime-778', 'anime-99999'] } } })
         await prisma.user.deleteMany({ where: { username } })
     })
 
     const get = (path: string, qs: string) => request(app).get(`/search/${path}?${qs}`).set('Authorization', `Bearer ${token}`)
 
-    it('maps anime results and passes params upstream', async () => {
+    it('maps anime results and passes params upstream via GraphQL POST', async () => {
         const res = await get('anime', 'q=test&type=tv&sort=score&page=2')
         expect(res.statusCode).toBe(200)
         expect(res.body.nextStartIndex).toBe(3)
         expect(res.body.results[0]).toMatchObject({
-            title: 'Test EN', creator: 'Studio A', year: '2020', description: 'Plot.', source: 'jikan', sourceId: 'anime-777',
-            metadata: { kind: 'anime', format: 'TV', episodes: 12, score: 8.1, originalTitle: 'Test JP', categories: ['Action'] },
+            title: 'Frieren: Beyond Journey’s End',
+            creator: 'MADHOUSE',
+            year: '2023',
+            description: 'The adventure is over.',
+            source: 'anilist',
+            sourceId: 'anime-154587',
+            metadata: {
+                kind: 'anime',
+                format: 'TV',
+                episodes: 28,
+                episodeMinutes: 24,
+                score: 90,
+                scoreScale: 'anilist',
+                originalTitle: 'Sousou no Frieren',
+                categories: ['Adventure', 'Fantasy', 'Magic'],
+                idMal: 52991,
+            },
         })
-        const url = new URL(fetchSpy.mock.calls[0][0] as string)
-        expect(url.pathname).toBe('/v4/anime')
-        expect(url.searchParams.get('q')).toBe('test')
-        expect(url.searchParams.get('type')).toBe('tv')
-        expect(url.searchParams.get('order_by')).toBe('score')
-        expect(url.searchParams.get('page')).toBe('2')
-        expect(url.searchParams.get('sfw')).toBe('true')
+
+        expect(fetchSpy).toHaveBeenCalledTimes(1)
+        const [url, init] = fetchSpy.mock.calls[0]
+        expect(String(url)).toBe('https://graphql.anilist.co')
+        expect(init?.method).toBe('POST')
+        const parsedBody = JSON.parse(String(init?.body))
+        expect(parsedBody.variables).toEqual({
+            page: 2,
+            perPage: 25,
+            search: 'test',
+            type: 'ANIME',
+            sort: ['SCORE_DESC'],
+            format_in: ['TV', 'TV_SHORT'],
+        })
     })
 
     it('maps manga results, last page has null nextStartIndex', async () => {
         const res = await get('manga', 'q=test&type=lightnovel')
         expect(res.statusCode).toBe(200)
         expect(res.body.nextStartIndex).toBeNull()
-        expect(res.body.results[0]).toMatchObject({ creator: 'Au, Thor', sourceId: 'manga-777', metadata: { kind: 'manga', chapters: 98, volumes: 10 } })
+        expect(res.body.results[0]).toMatchObject({
+            creator: 'Chugong',
+            sourceId: 'manga-105398',
+            metadata: { kind: 'manga', chapters: 200, volumes: 14, scoreScale: 'anilist' },
+        })
     })
 
     it.each([
@@ -167,10 +243,10 @@ describe('Search Routes - anime & manga (Jikan)', () => {
         fetchSpy.mockImplementation(async () => new Response('{}', { status: 500 }))
         const res = await get('anime', 'q=x')
         expect(res.statusCode).toBe(502)
-        expect(res.body.message).toBe('MyAnimeList search failed')
+        expect(res.body.message).toBe('AniList search failed')
     })
 
-    it('logs anime and manga with the same mal_id as separate media', async () => {
+    it('logging an AniList result works', async () => {
         const [a, m] = [await get('anime', 'q=test'), await get('manga', 'q=test')]
         const log = (r: request.Response, mediaType: string) => request(app).put('/media/media-log')
             .set('Authorization', `Bearer ${token}`)
@@ -179,9 +255,105 @@ describe('Search Routes - anime & manga (Jikan)', () => {
         const rm = await log(m, 'manga')
         expect(ra.statusCode).toBeLessThan(300)
         expect(rm.statusCode).toBeLessThan(300)
-        const rows = await prisma.media.findMany({ where: { source: 'jikan', sourceId: { in: ['anime-777', 'manga-777'] } }, include: { mediaType: true } })
-        expect(rows.map(r => [r.sourceId, r.mediaType?.name]).sort()).toEqual([['anime-777', 'anime'], ['manga-777', 'manga']])
-        expect((rows.find(r => r.sourceId === 'anime-777')!.metadata as { categories: string[] }).categories).toEqual(['Action'])
+        const rows = await prisma.media.findMany({ where: { source: 'anilist', sourceId: { in: ['anime-154587', 'manga-105398'] } }, include: { mediaType: true } })
+        expect(rows.map(r => [r.sourceId, r.mediaType?.name]).sort()).toEqual([['anime-154587', 'anime'], ['manga-105398', 'manga']])
+        expect((rows.find(r => r.sourceId === 'anime-154587')!.metadata as { categories: string[] }).categories).toEqual(['Adventure', 'Fantasy', 'Magic'])
+    })
+
+    it('Jikan dedupe: anilist result with idMal reuses existing jikan media and marks already logged', async () => {
+        // 1. Create a pre-existing Jikan media in DB (system user)
+        const systemUser = await prisma.user.findFirstOrThrow({ where: { username: 'system' } })
+        const animeType = await prisma.mediaType.findFirstOrThrow({ where: { name: 'anime' } })
+
+        const jikanMedia = await prisma.media.create({
+            data: {
+                title: 'Existing Jikan Anime',
+                creator: 'Old Studio',
+                year: 2020,
+                source: 'jikan',
+                sourceId: 'anime-777',
+                userId: systemUser!.id,
+                mediaTypeId: animeType!.id,
+                metadata: { kind: 'anime', score: 8.5, scoreScale: 'mal' },
+            },
+        })
+
+        // 2. User logs this Jikan media
+        const initialLogRes = await request(app).put('/media/media-log')
+            .set('Authorization', `Bearer ${token}`)
+            .send({
+                mediaData: {
+                    title: 'Existing Jikan Anime',
+                    creator: 'Old Studio',
+                    source: 'jikan',
+                    sourceId: 'anime-777',
+                    mediaType: 'anime',
+                },
+                logData: { status: 'in_progress', rating: 80 },
+            })
+        expect(initialLogRes.statusCode).toBeLessThan(300)
+
+        const countBefore = await prisma.media.count()
+
+        // 3. User now logs an AniList result with idMal: 777
+        const anilistLogRes = await request(app).put('/media/media-log')
+            .set('Authorization', `Bearer ${token}`)
+            .send({
+                mediaData: {
+                    title: 'Frieren on AniList',
+                    creator: 'MADHOUSE',
+                    source: 'anilist',
+                    sourceId: 'anime-99999',
+                    mediaType: 'anime',
+                    metadata: { kind: 'anime', idMal: 777, score: 90, scoreScale: 'anilist' },
+                },
+                logData: { status: 'completed', rating: 95 },
+            })
+
+        expect(anilistLogRes.statusCode).toBeLessThan(300)
+        // No new media created!
+        const countAfter = await prisma.media.count()
+        expect(countAfter).toBe(countBefore)
+
+        // The media returned is the existing Jikan media
+        expect(anilistLogRes.body.media.id).toBe(jikanMedia.id)
+        expect(anilistLogRes.body.media.source).toBe('jikan')
+        expect(anilistLogRes.body.media.sourceId).toBe('anime-777')
+        expect(anilistLogRes.body.logCreated).toBe(false)
+    })
+
+    it('existing Jikan media still loads and displays', async () => {
+        const systemUser = await prisma.user.findFirstOrThrow({ where: { username: 'system' } })
+        const animeType = await prisma.mediaType.findFirstOrThrow({ where: { name: 'anime' } })
+        const jikanMedia = await prisma.media.create({
+            data: {
+                title: 'Standalone Jikan Anime',
+                creator: 'Old Studio',
+                year: 2019,
+                source: 'jikan',
+                sourceId: 'anime-778',
+                userId: systemUser.id,
+                mediaTypeId: animeType.id,
+                metadata: { kind: 'anime', score: 8.2, scoreScale: 'mal' },
+            },
+        })
+        await request(app).put('/media/media-log')
+            .set('Authorization', `Bearer ${token}`)
+            .send({
+                mediaData: {
+                    title: 'Standalone Jikan Anime',
+                    creator: 'Old Studio',
+                    source: 'jikan',
+                    sourceId: 'anime-778',
+                    mediaType: 'anime',
+                },
+                logData: { status: 'completed', rating: 85 },
+            })
+        const res = await request(app).get('/logs').set('Authorization', `Bearer ${token}`)
+        expect(res.statusCode).toBe(200)
+        const jikanLog = res.body.find((l: { media: { source: string; sourceId: string } }) => l.media.source === 'jikan' && l.media.sourceId === 'anime-778')
+        expect(jikanLog).toBeTruthy()
+        expect(jikanLog.media.id).toBe(jikanMedia.id)
     })
 
     it('music results still keep kind through the metadata union', async () => {
@@ -600,5 +772,161 @@ describe('Search Routes - games (RAWG)', () => {
             expect(res.statusCode).toBeLessThan(300)
             expect(await findMedia('game-91004')).not.toBeNull()
         })
+    })
+})
+
+describe('Search Routes - TV (TMDB)', () => {
+    const users = ['TvUserA', 'TvUserB']
+    const tokens: string[] = []
+    let fetchSpy: SpiedFunction<typeof fetch>
+    const V3 = '0123456789abcdef0123456789abcdef'
+
+    const tvSearchBody = {
+        page: 1,
+        total_pages: 1,
+        results: [{
+            id: 60625,
+            name: 'Rick and Morty',
+            original_name: 'Rick and Morty',
+            original_language: 'en',
+            first_air_date: '2013-12-02',
+            overview: 'Plot.',
+            poster_path: '/p.jpg',
+            genre_ids: [16, 35],
+            vote_average: 8.7,
+            origin_country: ['US'],
+        }],
+    }
+
+    const tvDetailsBody = {
+        id: 60625,
+        name: 'Rick and Morty',
+        original_name: 'Rick and Morty',
+        first_air_date: '2013-12-02',
+        overview: 'Plot.',
+        poster_path: '/p.jpg',
+        genres: [{ id: 16, name: 'Animation' }, { id: 35, name: 'Comedy' }],
+        created_by: [{ id: 1, name: 'Dan Harmon' }],
+        networks: [{ id: 1, name: 'Adult Swim' }],
+        number_of_seasons: 2,
+        number_of_episodes: 21,
+        status: 'Returning Series',
+        seasons: [
+            {
+                id: 101,
+                name: 'Season 1',
+                season_number: 1,
+                episode_count: 11,
+                air_date: '2013-12-02',
+                poster_path: '/s1.jpg',
+                overview: 'S1 plot',
+            },
+        ],
+    }
+
+    const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { 'Content-Type': 'application/json' } })
+    const isTvDetails = (i: unknown) => /\/3\/tv\/\d+/.test(String(i))
+
+    const setKey = async (i: number, key: string) => {
+        const auth = { Authorization: `Bearer ${tokens[i]}` }
+        let res = await request(app).post('/api-key').set(auth).send({ service: 'tmdb', key })
+        if (res.statusCode === 409) res = await request(app).put('/api-key').set(auth).send({ service: 'tmdb', key })
+        expect(res.statusCode).toBeLessThan(300)
+    }
+
+    const getTv = (i: number, qs: string) => request(app).get(`/search/tv?${qs}`).set('Authorization', `Bearer ${tokens[i]}`)
+    const getSeasons = (i: number, tmdbId: number | string) => request(app).get(`/search/tv/${tmdbId}/seasons`).set('Authorization', `Bearer ${tokens[i]}`)
+    const logItem = (i: number, mediaData: object) => request(app).put('/media/media-log')
+        .set('Authorization', `Bearer ${tokens[i]}`).send({ mediaData, logData: { status: 'completed' } })
+
+    beforeAll(async () => {
+        for (const username of users) {
+            await prisma.user.deleteMany({ where: { username } })
+            await request(app).post('/auth/register')
+                .send({ username, password: 'StrongPass1!', displayName: username, registerKey: process.env.REGISTER_KEY })
+            const login = await request(app).post('/auth/login').send({ username, password: 'StrongPass1!' })
+            tokens.push(login.body.accessToken)
+        }
+    })
+
+    beforeEach(() => {
+        fetchSpy = jest.spyOn(global, 'fetch').mockImplementation(async (input) =>
+            isTvDetails(input) ? json(tvDetailsBody) : json(tvSearchBody))
+    })
+
+    afterEach(() => fetchSpy.mockRestore())
+
+    afterAll(async () => {
+        await prisma.media.deleteMany({ where: { source: 'tmdb', sourceId: { startsWith: 'tv:60625' } } })
+        await prisma.user.deleteMany({ where: { username: { in: users } } })
+    })
+
+    it('no TMDB key -> 404, no fetch', async () => {
+        const res = await getTv(0, 'q=rick')
+        expect(res.statusCode).toBe(404)
+        expect(fetchSpy).not.toHaveBeenCalled()
+    })
+
+    it.each(['', 'q=', 'q=%20'])('missing q (%s) -> 400, no fetch', async qs => {
+        await setKey(0, V3)
+        const res = await getTv(0, qs)
+        expect(res.statusCode).toBe(400)
+        expect(res.body.message).toBe('Missing query')
+        expect(fetchSpy).not.toHaveBeenCalled()
+    })
+
+    it.each(['q=rick&year=abc', 'q=rick&year=1500', 'q=rick&page=0'])('invalid params (%s) -> 400, no fetch', async qs => {
+        await setKey(0, V3)
+        const res = await getTv(0, qs)
+        expect(res.statusCode).toBe(400)
+        expect(fetchSpy).not.toHaveBeenCalled()
+    })
+
+    it('GET /search/tv with valid query returns mapped shows', async () => {
+        await setKey(0, V3)
+        const res = await getTv(0, 'q=rick&year=2013')
+        expect(res.statusCode).toBe(200)
+        expect(res.body.results[0]).toMatchObject({
+            title: 'Rick and Morty',
+            source: 'tmdb',
+            sourceId: 'tv:60625',
+            year: '2013',
+            metadata: { kind: 'show', tmdbId: 60625 },
+        })
+    })
+
+    it('invalid tmdbId in /search/tv/:tmdbId/seasons -> 400', async () => {
+        await setKey(0, V3)
+        const res = await getSeasons(0, 'abc')
+        expect(res.statusCode).toBe(400)
+        expect(fetchSpy).not.toHaveBeenCalled()
+    })
+
+    it('GET /search/tv/:tmdbId/seasons returns show and seasons, marks inLibrary for logged season', async () => {
+        await setKey(0, V3)
+        const before = await getSeasons(0, 60625)
+        expect(before.statusCode).toBe(200)
+        expect(before.body.show).toMatchObject({
+            title: 'Rick and Morty',
+            source: 'tmdb',
+            sourceId: 'tv:60625',
+        })
+        expect(before.body.seasons).toHaveLength(1)
+        expect(before.body.seasons[0]).toMatchObject({
+            title: 'Rick and Morty: Season 1',
+            source: 'tmdb',
+            sourceId: 'tv:60625:s1',
+            inLibrary: false,
+        })
+
+        // Log the season
+        const seasonData = before.body.seasons[0]
+        const logRes = await logItem(0, { ...seasonData, mediaType: 'tv' })
+        expect(logRes.statusCode).toBeLessThan(300)
+
+        // Fetch seasons again -> inLibrary should be true
+        const after = await getSeasons(0, 60625)
+        expect(after.statusCode).toBe(200)
+        expect(after.body.seasons[0].inLibrary).toBe(true)
     })
 })

@@ -1,0 +1,1729 @@
+{
+  "collections": [
+    {
+      "name": "All-time favourites",
+      "description": "Ten pieces of art that left an indelible mark across every medium.",
+      "ranked": true
+    },
+    {
+      "name": "Comfort shelf",
+      "description": "Warm, gentle companions to return to when the world gets loud.",
+      "ranked": false
+    },
+    {
+      "name": "Rainy day",
+      "description": "Quiet, contemplative works best appreciated on slow grey afternoons.",
+      "ranked": false
+    },
+    {
+      "name": "Up next",
+      "description": "Anticipated books, films, games and albums currently on the wishlist.",
+      "ranked": false
+    },
+    {
+      "name": "Shoegaze & dream pop",
+      "description": "Lush reverb, submerged vocals, and walls of shimmering electric sound.",
+      "ranked": true
+    }
+  ],
+  "items": [
+    {
+      "mediaTypeName": "movie",
+      "media": {
+        "title": "Past Lives",
+        "creator": "Celine Song",
+        "year": "2023",
+        "description": "After decades apart, childhood friends Nora and Hae Sung are reunited in New York for one fateful weekend as they confront notions of destiny, love, and the choices that make a life.",
+        "source": "tmdb",
+        "sourceId": "movie-666277",
+        "imageUrl": "https://image.tmdb.org/t/p/w342/k3waqVXSnvCZWfJYNtdamTgTtTA.jpg",
+        "metadata": {
+          "url": "https://www.themoviedb.org/movie/666277",
+          "kind": "movie",
+          "originalLanguage": "en",
+          "score": 7.693,
+          "categories": [
+            "Drama",
+            "Romance"
+          ],
+          "runtime": 106,
+          "imdbId": "tt13238346"
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 94,
+        "notes": "That silent walk to the Uber in the early morning air. Crushed me.",
+        "loggedAt": "2024-02-14T23:00:00.000Z",
+        "startedAt": "2024-02-14T21:00:00.000Z",
+        "finishedAt": "2024-02-14T23:00:00.000Z",
+        "tags": [
+          "cried",
+          "slow burn"
+        ]
+      },
+      "collections": []
+    },
+    {
+      "mediaTypeName": "movie",
+      "media": {
+        "title": "Perfect Days",
+        "creator": "Wim Wenders",
+        "year": "2023",
+        "description": "Hirayama is content with his life as a toilet cleaner in Tokyo. Outside of his structured routine, he cherishes music on cassette tapes, books, and taking photos of trees. Through unexpected encounters, he reflects on finding beauty in the world.",
+        "source": "tmdb",
+        "sourceId": "movie-976893",
+        "imageUrl": "https://image.tmdb.org/t/p/w342/tvUHVSTJV9ITON3oyHaWp7oaAc8.jpg",
+        "metadata": {
+          "url": "https://www.themoviedb.org/movie/976893",
+          "kind": "movie",
+          "originalTitle": "PERFECT DAYS",
+          "originalLanguage": "ja",
+          "score": 7.82,
+          "categories": [
+            "Drama"
+          ],
+          "runtime": 124,
+          "imdbId": "tt27503384"
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 92,
+        "notes": "The simple dignity of cassette tapes, cassette cleaning, and morning sunlight through the leaves.",
+        "loggedAt": "2024-05-02T22:30:00.000Z",
+        "startedAt": "2024-05-02T20:15:00.000Z",
+        "finishedAt": "2024-05-02T22:30:00.000Z",
+        "tags": [
+          "comfort",
+          "cozy"
+        ]
+      },
+      "collections": [
+        "Comfort shelf"
+      ]
+    },
+    {
+      "mediaTypeName": "movie",
+      "media": {
+        "title": "In the Mood for Love",
+        "creator": "Wong Kar-wai",
+        "year": "2000",
+        "description": "In 1960s Hong Kong, two neighbors form an intimate bond after making a discovery about their spouses in this visually stunning tale of unrequited love.",
+        "source": "tmdb",
+        "sourceId": "movie-843",
+        "imageUrl": "https://image.tmdb.org/t/p/w342/8BgGbbWiLNhPtkMkN0gGTnbtvBv.jpg",
+        "metadata": {
+          "url": "https://www.themoviedb.org/movie/843",
+          "kind": "movie",
+          "originalTitle": "花樣年華",
+          "originalLanguage": "cn",
+          "score": 8.1,
+          "categories": [
+            "Drama",
+            "Romance"
+          ],
+          "runtime": 99,
+          "imdbId": "tt0118694"
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 98,
+        "notes": "Unmatched cinematography and longing. The slow-motion noodle vendor walks set to Yumeji's theme.",
+        "loggedAt": "2024-07-06T22:00:00.000Z",
+        "startedAt": "2024-07-06T20:15:00.000Z",
+        "finishedAt": "2024-07-06T22:00:00.000Z",
+        "tags": [
+          "masterpiece",
+          "rewatch"
+        ]
+      },
+      "collections": [
+        "All-time favourites"
+      ]
+    },
+    {
+      "mediaTypeName": "movie",
+      "media": {
+        "title": "Aftersun",
+        "creator": "Charlotte Wells",
+        "year": "2022",
+        "description": "Sophie reflects on the shared joy and private melancholy of a holiday she took with her father twenty years earlier. Memories fill the gaps between camcorder footages as she tries to reconcile the father she knew with the troubled man she didn't.",
+        "source": "tmdb",
+        "sourceId": "movie-965150",
+        "imageUrl": "https://image.tmdb.org/t/p/w342/evKz85EKouVbIr51zy5fOtpNRPg.jpg",
+        "metadata": {
+          "url": "https://www.themoviedb.org/movie/965150",
+          "kind": "movie",
+          "originalLanguage": "en",
+          "score": 7.656,
+          "categories": [
+            "Drama"
+          ],
+          "runtime": 101,
+          "imdbId": "tt19770238"
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 95,
+        "notes": "Under Pressure playing in the strobe lights. A quiet ache that sneaks up on you long after the credits.",
+        "loggedAt": "2024-09-21T21:45:00.000Z",
+        "startedAt": "2024-09-21T19:50:00.000Z",
+        "finishedAt": "2024-09-21T21:45:00.000Z",
+        "tags": [
+          "cried",
+          "slow burn"
+        ]
+      },
+      "collections": [
+        "Rainy day"
+      ]
+    },
+    {
+      "mediaTypeName": "movie",
+      "media": {
+        "title": "Paris, Texas",
+        "creator": "Wim Wenders",
+        "year": "1984",
+        "description": "A man wanders out of the desert not knowing who he is. His brother finds him, and helps to pull his memory back of the life he led before he walked out on his family and disappeared four years earlier.",
+        "source": "tmdb",
+        "sourceId": "movie-655",
+        "imageUrl": "https://image.tmdb.org/t/p/w342/sP27Qm4THyRZyHjHYMfIDtJP6YE.jpg",
+        "metadata": {
+          "url": "https://www.themoviedb.org/movie/655",
+          "kind": "movie",
+          "originalLanguage": "en",
+          "score": 8.078,
+          "categories": [
+            "Drama"
+          ],
+          "runtime": 145,
+          "imdbId": "tt0087884"
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 91,
+        "notes": "Ry Cooder slide guitar and wide West Texas horizons. The two-way mirror scene is acting perfection.",
+        "loggedAt": "2024-11-18T23:30:00.000Z",
+        "startedAt": "2024-11-18T21:00:00.000Z",
+        "finishedAt": "2024-11-18T23:30:00.000Z",
+        "tags": [
+          "slow burn"
+        ]
+      },
+      "collections": []
+    },
+    {
+      "mediaTypeName": "movie",
+      "media": {
+        "title": "Columbus",
+        "creator": "Kogonada",
+        "year": "2017",
+        "description": "When a renowned architecture scholar falls suddenly ill during a speaking tour, his son Jin finds himself stranded in Columbus, Indiana - a small Midwestern city celebrated for its many significant modernist buildings. Jin strikes up a friendship with Casey, a young architecture enthusiast who works at the local library.",
+        "source": "tmdb",
+        "sourceId": "movie-414453",
+        "imageUrl": "https://image.tmdb.org/t/p/w342/3ZE5Wl3CdfUH4BkWRmyMKPHkWHx.jpg",
+        "metadata": {
+          "url": "https://www.themoviedb.org/movie/414453",
+          "kind": "movie",
+          "originalLanguage": "en",
+          "score": 7.077,
+          "categories": [
+            "Drama"
+          ],
+          "runtime": 104,
+          "imdbId": "tt5990474"
+        }
+      },
+      "log": {
+        "status": "wishlist",
+        "rating": null,
+        "loggedAt": "2025-01-20T12:00:00.000Z"
+      },
+      "collections": [
+        "Up next"
+      ]
+    },
+    {
+      "mediaTypeName": "movie",
+      "media": {
+        "title": "Spirited Away",
+        "creator": "Hayao Miyazaki",
+        "year": "2001",
+        "description": "A young girl, Chihiro, becomes trapped in a strange new world of spirits. When her parents undergo a mysterious transformation, she must call upon the courage she never knew she had to free her family.",
+        "source": "tmdb",
+        "sourceId": "movie-129",
+        "imageUrl": "https://image.tmdb.org/t/p/w342/39wmItIWsg5sZMyRUHLkWBcuVCM.jpg",
+        "metadata": {
+          "url": "https://www.themoviedb.org/movie/129",
+          "kind": "movie",
+          "originalTitle": "千と千尋の神隠し",
+          "originalLanguage": "ja",
+          "score": 8.537,
+          "categories": [
+            "Animation",
+            "Family",
+            "Fantasy"
+          ],
+          "runtime": 125,
+          "imdbId": "tt0245429"
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 100,
+        "notes": "The sixth station train ride across the flooded tracks remains the most peaceful sequence in all of cinema.",
+        "loggedAt": "2025-03-30T17:00:00.000Z",
+        "startedAt": "2025-03-30T14:45:00.000Z",
+        "finishedAt": "2025-03-30T17:00:00.000Z",
+        "tags": [
+          "masterpiece",
+          "rewatch",
+          "comfort"
+        ]
+      },
+      "collections": [
+        "All-time favourites"
+      ]
+    },
+    {
+      "mediaTypeName": "movie",
+      "media": {
+        "title": "Everything Everywhere All at Once",
+        "creator": "Daniel Scheinert, Daniel Kwan",
+        "year": "2022",
+        "description": "An aging Chinese immigrant is swept up in an insane adventure, where she alone can save what's important to her by connecting with the lives she could have led in other universes.",
+        "source": "tmdb",
+        "sourceId": "movie-545611",
+        "imageUrl": "https://image.tmdb.org/t/p/w342/u68AjlvlutfEIcpmbYpKcdi09ut.jpg",
+        "metadata": {
+          "url": "https://www.themoviedb.org/movie/545611",
+          "kind": "movie",
+          "originalLanguage": "en",
+          "score": 7.71,
+          "categories": [
+            "Action",
+            "Adventure",
+            "Science Fiction"
+          ],
+          "runtime": 140,
+          "imdbId": "tt6710474"
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 93,
+        "notes": "Watched with friends in a packed room. The rock dialogue scene made the whole room quiet.",
+        "loggedAt": "2025-06-08T22:30:00.000Z",
+        "startedAt": "2025-06-08T20:00:00.000Z",
+        "finishedAt": "2025-06-08T22:30:00.000Z",
+        "tags": [
+          "with friends",
+          "cried"
+        ]
+      },
+      "collections": []
+    },
+    {
+      "mediaTypeName": "movie",
+      "media": {
+        "title": "Stalker",
+        "creator": "Andrei Tarkovsky",
+        "year": "1979",
+        "description": "Near a gray and unnamed city is the Zone, a place guarded by barbed wire and soldiers, and where the normal laws of physics are victim to frequent anomalies. A stalker guides two men into the Zone, specifically to an area in which deep-seated desires are granted.",
+        "source": "tmdb",
+        "sourceId": "movie-1398",
+        "imageUrl": "https://image.tmdb.org/t/p/w342/1qhOyf5C4s9ZdvY8d5JDx9DFMeT.jpg",
+        "metadata": {
+          "url": "https://www.themoviedb.org/movie/1398",
+          "kind": "movie",
+          "originalTitle": "Сталкер",
+          "originalLanguage": "ru",
+          "score": 8.1,
+          "categories": [
+            "Science Fiction",
+            "Drama"
+          ],
+          "runtime": 162,
+          "imdbId": "tt0079944"
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 89,
+        "notes": "Hypnotic rhythm. The sepia cart journey into the Zone puts you in a trance.",
+        "loggedAt": "2025-08-16T23:50:00.000Z",
+        "startedAt": "2025-08-16T21:00:00.000Z",
+        "finishedAt": "2025-08-16T23:50:00.000Z",
+        "tags": [
+          "slow burn",
+          "2am"
+        ]
+      },
+      "collections": [
+        "Rainy day"
+      ]
+    },
+    {
+      "mediaTypeName": "movie",
+      "media": {
+        "title": "Portrait of a Lady on Fire",
+        "creator": "Céline Sciamma",
+        "year": "2019",
+        "description": "On an isolated island in Brittany at the end of the eighteenth century, a female painter is obliged to paint a wedding portrait of a young woman.",
+        "source": "tmdb",
+        "sourceId": "movie-531428",
+        "imageUrl": "https://image.tmdb.org/t/p/w342/rUDuOKpkKBHxx41BScqKej72iT3.jpg",
+        "metadata": {
+          "url": "https://www.themoviedb.org/movie/531428",
+          "kind": "movie",
+          "originalTitle": "Portrait de la jeune fille en feu",
+          "originalLanguage": "fr",
+          "score": 8.085,
+          "categories": [
+            "Drama",
+            "Romance"
+          ],
+          "runtime": 121,
+          "imdbId": "tt8613070"
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 96,
+        "notes": "The choir around the bonfire and the final concert hall gaze. Astonishing craft.",
+        "loggedAt": "2025-10-25T21:30:00.000Z",
+        "startedAt": "2025-10-25T19:25:00.000Z",
+        "finishedAt": "2025-10-25T21:30:00.000Z",
+        "tags": [
+          "masterpiece",
+          "cried"
+        ]
+      },
+      "collections": []
+    },
+    {
+      "mediaTypeName": "movie",
+      "media": {
+        "title": "Burning",
+        "creator": "Lee Chang-dong",
+        "year": "2018",
+        "description": "Deliveryman Jong-su is out on a job when he runs into Hae-mi, a girl who once lived in his neighborhood. She asks if he'd mind looking after her cat while she's away on a trip to Africa. On her return, she introduces to Jong-su an enigmatic young man named Ben, who she met during her trip. One day Ben tells Jong-su about his most unusual hobby.",
+        "source": "tmdb",
+        "sourceId": "movie-491584",
+        "imageUrl": "https://image.tmdb.org/t/p/w342/kXiF80o74fE9gf3Utf9moAI7ar0.jpg",
+        "metadata": {
+          "url": "https://www.themoviedb.org/movie/491584",
+          "kind": "movie",
+          "originalTitle": "버닝",
+          "originalLanguage": "ko",
+          "score": 7.38,
+          "categories": [
+            "Mystery",
+            "Drama",
+            "Thriller"
+          ],
+          "runtime": 148,
+          "imdbId": "tt7282468"
+        }
+      },
+      "log": {
+        "status": "dropped",
+        "rating": 50,
+        "notes": "Tense mood, but paced a little too slowly for the evening I put it on.",
+        "loggedAt": "2025-12-06T00:30:00.000Z",
+        "startedAt": "2025-12-05T22:00:00.000Z"
+      },
+      "collections": []
+    },
+    {
+      "mediaTypeName": "movie",
+      "media": {
+        "title": "The Fall",
+        "creator": "Tarsem Singh",
+        "year": "2008",
+        "description": "In a hospital on the outskirts of 1920s Los Angeles, an injured stuntman begins to tell a fellow patient, a little girl with a broken arm, a fantastic story about 5 mythical heroes. Thanks to his fractured state of mind and her vivid imagination, the line between fiction and reality starts to blur as the tale advances.",
+        "source": "tmdb",
+        "sourceId": "movie-14784",
+        "imageUrl": "https://image.tmdb.org/t/p/w342/ez7xavvDr5yDz4sSvI55xDp0BoU.jpg",
+        "metadata": {
+          "url": "https://www.themoviedb.org/movie/14784",
+          "kind": "movie",
+          "originalLanguage": "en",
+          "score": 7.6,
+          "categories": [
+            "Adventure",
+            "Fantasy",
+            "Drama"
+          ],
+          "runtime": 117,
+          "imdbId": "tt0460791"
+        }
+      },
+      "log": {
+        "status": "wishlist",
+        "rating": null,
+        "loggedAt": "2026-02-14T11:00:00.000Z"
+      },
+      "collections": [
+        "Up next"
+      ]
+    },
+    {
+      "mediaTypeName": "game",
+      "media": {
+        "title": "Outer Wilds",
+        "creator": "Mobius Digital",
+        "year": "2019",
+        "description": "Outer Wilds is an open world mystery about a solar system trapped in an endless time loop.\nWelcome to the Space Program!\nYou're the newest recruit of Outer Wilds Ventures, a fledgling space program searching for answers in a strange, constantly evolving solar system.\n\nMysteries of the Solar System...\nWhat lurks in the heart of the ominous Dark Bramble? Who built the alien ruins on the Moon? Can the endless time loop be stopped? Answers await you in the most dangerous reaches of space.\n\nA World That Changes Over Time\nThe planets of Outer Wilds are packed with hidden locations that change with the passage of time. Visit an underground city of before it's swallowed by sand, or explore the surface of a planet as it crumbles beneath your feet. Every secret is guarded by hazardous environments and natural catastrophes.\n\nGrab Your Intergalactic Hiking Gear!\nStrap on your hiking boots, check your oxygen levels, and get ready to venture into space. Use a variety of unique gadgets to probe your surroundings, track down mysterious signals, decipher ancient alien writing, and roast the perfect marshmallow.",
+        "source": "rawg",
+        "sourceId": "game-58764",
+        "imageUrl": "https://media.rawg.io/media/games/9f4/9f418898f5415668ca47b5f4ab1ecfeb.jpg",
+        "metadata": {
+          "url": "https://rawg.io/games/outer-wilds",
+          "kind": "game",
+          "platforms": [
+            "PlayStation 4",
+            "Nintendo Switch",
+            "Xbox One",
+            "PC"
+          ],
+          "metacritic": 84,
+          "score": 4.36,
+          "categories": [
+            "Adventure",
+            "Indie",
+            "Puzzle",
+            "Space",
+            "Surreal",
+            "vr mod",
+            "planetary"
+          ],
+          "playtimeHours": 4,
+          "publishers": [
+            "Annapurna Interactive"
+          ]
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 100,
+        "notes": "No game has ever made me feel so small and yet so intensely curious at the same time.\nThe dread of hearing the sun go quiet, standing on an ancient ruin watching sand cascade through caverns, and finally piecing together the timeline of a dead civilization across light-minutes.\nIt respects your intelligence in a way almost nothing else in modern gaming does.\nAn absolute masterpiece that I wish I could wipe my memory to experience completely blind again.",
+        "loggedAt": "2024-03-02T22:45:00.000Z",
+        "startedAt": "2024-02-01T15:00:00.000Z",
+        "finishedAt": "2024-03-02T22:45:00.000Z",
+        "tags": [
+          "masterpiece",
+          "2am"
+        ]
+      },
+      "collections": [
+        "All-time favourites"
+      ]
+    },
+    {
+      "mediaTypeName": "game",
+      "media": {
+        "title": "Disco Elysium",
+        "creator": "ZA/UM",
+        "year": "2019",
+        "description": "Disco Elysium is a groundbreaking blend of hardboiled cop show and isometric RPG. Solve a massive, open ended case in a unique urban fantasy setting. Kick in doors, interrogate suspects, or just get lost exploring the gorgeously rendered city of Revachol and unraveling its mysteries. Tough choices need to be made. What kind of cop you are — is up to you.\r\n\r\nYou play a disgraced lieutenant detective in Revachol West, a shore town where corruption’s out of control, murders go unsolved, and the kids just wanna dance. Kick in doors, interrogate suspects, or get lost exploring a gorgeously rendered city and unraveling its mysteries. All the while, tensions rise around you as Revachol threatens to explode.\r\n\r\nDisco Elysium’s completely original skill system makes your innermost feelings, doubts, and memories an integral part of every conversation. Level up your rational faculties, sharpen your wits, or give in to your basest instincts. What kind of cop you are is up to you.",
+        "source": "rawg",
+        "sourceId": "game-262382",
+        "imageUrl": "https://media.rawg.io/media/games/840/8408ad3811289a6a5830cae60fb0b62a.jpg",
+        "metadata": {
+          "url": "https://rawg.io/games/disco-elysium",
+          "kind": "game",
+          "platforms": [
+            "PC",
+            "macOS",
+            "Xbox One",
+            "Nintendo Switch",
+            "PlayStation 4",
+            "Xbox Series S/X",
+            "PlayStation 5"
+          ],
+          "metacritic": 91,
+          "score": 4.36,
+          "categories": [
+            "Adventure",
+            "RPG",
+            "Indie",
+            "Story Rich",
+            "role-playing",
+            "Isometric"
+          ],
+          "playtimeHours": 6,
+          "publishers": null
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 99,
+        "notes": "Woke up on the carpet, couldn't find my shoes, and proceeded to debate political theory with my necktie.\nKim Kitsuragi is the most patient partner in video game history.\nThe sheer density of the writing and worldbuilding in Revachol is staggering, funny, and deeply tragic all at once.\nLeft me staring at the credits for twenty minutes in silence.",
+        "loggedAt": "2024-07-15T23:30:00.000Z",
+        "startedAt": "2024-04-10T18:00:00.000Z",
+        "finishedAt": "2024-07-15T23:30:00.000Z",
+        "tags": [
+          "masterpiece",
+          "slow burn"
+        ]
+      },
+      "collections": [
+        "All-time favourites"
+      ]
+    },
+    {
+      "mediaTypeName": "game",
+      "media": {
+        "title": "Hollow Knight",
+        "creator": "Team Cherry",
+        "year": "2017",
+        "description": "Hollow Knight is a Metroidvania-type game developed by an indie studio named Team Cherry.\r\n\r\nMost of the game's story is told through the in-world items, tablets, and thoughts of other characters. Many plot aspects are told to the player indirectly or through the secret areas that provide a bit of lore in addition to an upgrade. At the beginning of the game, the player visits a town of Dirtmouth. A town built above the ruins of Hallownest. The players descend down into the ruins to find some answers to his questions.\r\n\r\nThe game revolves mainly around the exploration of the in-game world, which requires the players to have some platforming skills. The players have to find secrets that are scattered around the level and battle their enemies. There is a certain degree of backtracking in the game as some areas are locked until the player defeats a certain boss or picks up a specific item. Each area changes as the plot advances so it may be surprising to come back in a certain area. \r\n\r\nThe Protagonist uses a nail which serves as a replacement for a sword. Players can attack in four directions. The nail is upgradable.",
+        "source": "rawg",
+        "sourceId": "game-9767",
+        "imageUrl": "https://media.rawg.io/media/games/4cf/4cfc6b7f1850590a4634b08bfab308ab.jpg",
+        "metadata": {
+          "url": "https://rawg.io/games/hollow-knight",
+          "kind": "game",
+          "platforms": [
+            "PlayStation 4",
+            "Linux",
+            "macOS",
+            "PC",
+            "Nintendo Switch",
+            "Xbox One"
+          ],
+          "metacritic": 88,
+          "score": 4.4,
+          "categories": [
+            "Action",
+            "Indie",
+            "Platformer",
+            "Atmospheric",
+            "Great Soundtrack",
+            "Story Rich",
+            "Open World",
+            "2D",
+            "Exploration",
+            "Difficult"
+          ],
+          "playtimeHours": 7,
+          "publishers": [
+            "Team Cherry"
+          ]
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 95,
+        "notes": "City of Tears theme playing while looking out the glass window. Christopher Larkin's score carried the whole journey.",
+        "loggedAt": "2024-10-18T21:00:00.000Z",
+        "startedAt": "2024-08-20T14:00:00.000Z",
+        "finishedAt": "2024-10-18T21:00:00.000Z",
+        "tags": [
+          "masterpiece"
+        ]
+      },
+      "collections": []
+    },
+    {
+      "mediaTypeName": "game",
+      "media": {
+        "title": "Celeste",
+        "creator": "Matt Makes Games, Extremely OK Games, Noel",
+        "year": "2018",
+        "description": "Celeste is a platformer about climbing a mountain, from the creators of TowerFall.\nExplore a sprawling mountain with over 500 levels bursting with secrets, across 8 unique areas. Unlock a hardcore Remix for each area, with completely new levels that will push your climbing skills to the limit.\nMadeline can air-dash and climb any surface to gain ground. Controls are simple and accessible, but super tight and expressive with layers of depth to master. Deaths are sudden and respawns are fast. You'll die a lot, but you'll learn something every time.\nMeet peculiar characters and climb through a personal story of breaking through your self-doubt to find yourself, set in the present-day Pacific Northwest. Uncover the mystery of the mountain's power and outrun your reflection on your journey to reach the top.",
+        "source": "rawg",
+        "sourceId": "game-22121",
+        "imageUrl": "https://media.rawg.io/media/games/594/59487800889ebac294c7c2c070d02356.jpg",
+        "metadata": {
+          "url": "https://rawg.io/games/celeste",
+          "kind": "game",
+          "platforms": [
+            "Xbox One",
+            "PC",
+            "macOS",
+            "Nintendo Switch",
+            "PlayStation 4",
+            "Linux"
+          ],
+          "metacritic": 91,
+          "score": 4.37,
+          "categories": [
+            "Indie",
+            "Platformer",
+            "Story Rich",
+            "2D",
+            "Horror",
+            "Female Protagonist",
+            "celeste",
+            "xna",
+            "miniboss",
+            "fna"
+          ],
+          "playtimeHours": 6,
+          "publishers": [
+            "Matt Makes Games"
+          ]
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 92,
+        "notes": "Tough platforming with so much warmth in its heart. You really do breathe with the feather.",
+        "loggedAt": "2024-12-28T18:30:00.000Z",
+        "startedAt": "2024-12-01T12:00:00.000Z",
+        "finishedAt": "2024-12-28T18:30:00.000Z",
+        "tags": [
+          "comfort"
+        ]
+      },
+      "collections": [
+        "Comfort shelf"
+      ]
+    },
+    {
+      "mediaTypeName": "game",
+      "media": {
+        "title": "A Short Hike",
+        "creator": "adamgryu",
+        "year": "2019",
+        "description": "Hike, climb, and soar through the peaceful mountainside landscapes of Hawk Peak Provincial Park.\nFollow the marked trails or explore the backcountry as you make your way to the summit.\nAlong the way, meet other hikers, discover hidden treasures, and take in the world around you.\n\nKey Features:\n- Explore the island any way you like. Choose your own path to follow and see where it leads you. You never know what you might stumble into!\n- Hike at your own pace — there’s no need to rush to the summit! Take your time fishing along the river banks or swimming by the lakeshore.\n- Collect hidden treasures to reach new heights. Try taking a dive off the mountain peaks to soar above the forests.\n- Chat with the other hikers you meet along your route. You might be able to help each other out!\n- Listen to a lush original soundtrack by Mark Sparling that progresses dynamically as you explore the wilderness.",
+        "source": "rawg",
+        "sourceId": "game-304247",
+        "imageUrl": "https://media.rawg.io/media/games/c38/c38deeb8f331a78c89e64ad71a1db361.jpg",
+        "metadata": {
+          "url": "https://rawg.io/games/a-short-hike",
+          "kind": "game",
+          "platforms": [
+            "Nintendo Switch",
+            "Linux",
+            "macOS",
+            "PC",
+            "PlayStation 4"
+          ],
+          "metacritic": 84,
+          "score": 4.35,
+          "categories": [
+            "Adventure",
+            "Indie",
+            "Isometric"
+          ],
+          "playtimeHours": 2,
+          "publishers": [
+            "adamgryu"
+          ]
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 90,
+        "notes": "Gliding down from Hawk Peak on a breezy Saturday morning. The definition of charming.",
+        "loggedAt": "2025-02-16T16:00:00.000Z",
+        "startedAt": "2025-02-15T13:00:00.000Z",
+        "finishedAt": "2025-02-16T16:00:00.000Z",
+        "tags": [
+          "comfort",
+          "cozy"
+        ]
+      },
+      "collections": [
+        "Comfort shelf"
+      ]
+    },
+    {
+      "mediaTypeName": "game",
+      "media": {
+        "title": "Kentucky Route Zero",
+        "creator": "Netflix, Cardboard Computer",
+        "year": "2020",
+        "description": "At twilight in Kentucky, as bird songs give way to the choir of frogs and insects, familiar roads become strange, and it's easy to get lost. Those who are already lost may find their way to a secret highway winding through underground caves. The people who live and work along this highway are themselves a little strange at first, but soon seem familiar: the aging driver making the last delivery for a doomed antique shop; the young woman who fixes obsolete TVs surrounded by ghosts; the child and his giant eagle companion; the robot musicians; the invisible power company lurking everywhere, and the threadbare communities who struggle against its grip.\n\nKENTUCKY ROUTE ZERO is a magical realist adventure game in five acts, featuring a haunting electronic score, and a suite of hymns and bluegrass standards recorded by The Bedquilt Ramblers. Rendered in a striking visual style that draws as much from theater, film, and experimental electronic art as it does from the history of videogames, this is a story of unpayable debts, abandoned futures, and the human drive to find community.\n\nOriginally published episodically over a span of years, the game now includes all five acts along with the \"interludes,\" which were originally published separately. It has also been painstakingly localized for French, German, Italian, Japanese, Korean, Russian, and Spanish (both European Spanish and Latin American).",
+        "source": "rawg",
+        "sourceId": "game-17010",
+        "imageUrl": "https://media.rawg.io/media/games/177/1775aacedb915b0e0880476530dc87b4.jpg",
+        "metadata": {
+          "url": "https://rawg.io/games/kentucky-route-zero",
+          "kind": "game",
+          "platforms": [
+            "iOS",
+            "Nintendo Switch",
+            "PlayStation 4",
+            "PC",
+            "macOS",
+            "Linux"
+          ],
+          "metacritic": 81,
+          "score": 3.98,
+          "categories": [
+            "Adventure",
+            "Indie",
+            "Atmospheric",
+            "Great Soundtrack",
+            "Story Rich",
+            "2D",
+            "Horror",
+            "Exploration",
+            "Point & Click",
+            "Mystery"
+          ],
+          "playtimeHours": 2,
+          "publishers": [
+            "Annapurna Interactive",
+            "Netflix",
+            "Cardboard Computer"
+          ]
+        }
+      },
+      "log": {
+        "status": "in progress",
+        "rating": null,
+        "notes": "Haunting magical realism on a slow back road.",
+        "loggedAt": "2026-09-12T20:00:00.000Z",
+        "startedAt": "2026-09-12T20:00:00.000Z"
+      },
+      "collections": []
+    },
+    {
+      "mediaTypeName": "game",
+      "media": {
+        "title": "Return Of The Obra Dinn",
+        "creator": "Lucas Pope, 3909, dukope",
+        "year": "2018",
+        "description": "In 1802, the merchant ship \"Obra Dinn\" set out from London for the Orient with over 200 tons of trade goods. Six months later it hadn't met its rendezvous point at the Cape of Good Hope and was declared lost at sea.  \r\n \r\nEarly this morning of October 14th, 1807, the Obra Dinn drifted into port with sails damaged and no visible crew. As insurance adjustor for the East India Company's London Office, find means to board the ship and recover the Crew Muster Roll book for assessment.\r\n\r\n(\"Obra\" is pronounced like \"Cobra\" without the C).\r\n\r\nFrom the author:\r\n\r\nGoals\r\n\r\nI want to challenge myself so this'll be a very different game from anything I've done before, including Papers Please. There'll be less creativity with the gameplay and instead I want to experiment with the rendering, story, and a few technical features. Right now I have only a rough idea about the narrative. I'm hoping to capture a compelling mystery with suspense and twists in the limited space of an old merchant sailing ship. It won't be the typical \"collect items and look for clues\" structure. There's a slightly cool gameplay hook but I won't go into details on that until much later.\r\n\r\n\r\nDevlog\r\n\r\nI'll try to keep this (https://forums.tigsource.com/index.php?topic=40832.0) devlog lively as I make progress. Because the gameplay itself is more standard, there probably won't be as many creative updates as the Papers Please devlog. I will post lots of pictures and builds as soon as I'm able. Things will likely also move slower than Papers Please did too, at least at the start. P,P still takes a good amount of my time so there's less chance for me to maintain a laser-like focus on one project like last time. The lower bound for finishing this game is around 3 months but realistically I think it'll take me around half a year. My Maya skills are pretty rusty so I expect the modeling/animation to take the most time.\r\n\r\n\r\n1-bit Rendering\r\n\r\nMy first computer was a Mac Plus. I've always had a nostalgia-softened spot in my heart for 1-bit graphics. I'd like to capture the detailed black & white look of old Mac games in a realtime 1st person game. I plan to push it grittier and less cartoon-like than those old games; the hard part will be keeping everything legible without it becoming an unreadable mess of dithered pixels. One interesting problem with 1-bit rendering is that it doesn't scale well for images and it compresses to video like shit - so YouTube stuff may look really poor. We'll see how it goes.\r\n\r\n\r\nUnity 3D\r\n\r\nI'm gonna use Unity for this one. I fell in love with Haxe/OpenFL on my last project but unfortunately the 3D situation is not that great there yet. Also, it's time to finally see why 90% of the indie scene is using Unity. I have a good amount of experience with 3D games and the few days I've played around with Unity so far have been pretty productive. The animated title screen scene up there (with post-processing shaders and all) was created in one day. I now have unrealis",
+        "source": "rawg",
+        "sourceId": "game-46508",
+        "imageUrl": "https://media.rawg.io/media/games/052/052f9afc7aaeea3e2c5d46eafa92c64e.jpg",
+        "metadata": {
+          "url": "https://rawg.io/games/return-of-the-obra-dinn",
+          "kind": "game",
+          "platforms": [
+            "Nintendo Switch",
+            "PlayStation 4",
+            "Xbox One",
+            "PC",
+            "macOS"
+          ],
+          "metacritic": 88,
+          "score": 4.33,
+          "categories": [
+            "Adventure",
+            "Indie",
+            "Horror",
+            "Gore",
+            "Violent",
+            "Mystery",
+            "Detective",
+            "Pirates",
+            "Time Manipulation",
+            "ship"
+          ],
+          "playtimeHours": 5,
+          "publishers": [
+            "3909"
+          ]
+        }
+      },
+      "log": {
+        "status": "wishlist",
+        "rating": null,
+        "loggedAt": "2025-05-10T14:00:00.000Z"
+      },
+      "collections": [
+        "Up next"
+      ]
+    },
+    {
+      "mediaTypeName": "game",
+      "media": {
+        "title": "Hades",
+        "creator": "Supergiant Games",
+        "year": "2020",
+        "description": "Hades is a rogue-like dungeon crawler that combines the best aspects of Supergiant's critically acclaimed titles, including the fast-paced action of Bastion, the rich atmosphere and depth of Transistor, and the character-driven storytelling of Pyre.\n\nBATTLE OUT OF HELL\nAs the immortal Prince of the Underworld, you'll wield the powers and mythic weapons of Olympus to break free from the clutches of the god of the dead himself, while growing stronger and unraveling more of the story with each unique escape attempt.\n\nUNLEASH THE FURY OF OLYMPUS\nThe Olympians have your back! Meet Zeus, Athena, Poseidon, and many more, and choose from their dozens of powerful Boons that enhance your abilities. There are thousands of viable character builds to discover as you go.\n\nBEFRIEND GODS, GHOSTS, AND MONSTERS\nA fully-voiced cast of colorful, larger-than-life characters is waiting to meet you! Grow your relationships with them, and experience hundreds of unique story events as you learn about what's really at stake for this big, dysfunctional family.\n\nBUILT FOR REPLAYABILITY\nNew surprises await each time you delve into the ever-shifting Underworld, whose guardian bosses will remember you. Use the powerful Mirror of Night to grow permanently stronger, and give yourself a leg up the next time you run away from home.\n\nNOTHING IS IMPOSSIBLE\nPermanent upgrades mean you don't have to be a god yourself to experience the exciting combat and gripping story. Though, if you happen to be one, crank up the challenge and get ready for some white-knuckle action that will put your well-practiced skills to the test.\n\nSIGNATURE SUPERGIANT STYLE\nThe rich, atmospheric presentation and unique melding of gameplay and narrative that's been core to Supergiant's games is here in full force: spectacular hand-painted Underworld environments and a blood-pumping original score bring the Underworld to life.",
+        "source": "rawg",
+        "sourceId": "game-274755",
+        "imageUrl": "https://media.rawg.io/media/games/1f4/1f47a270b8f241e4676b14d39ec620f7.jpg",
+        "metadata": {
+          "url": "https://rawg.io/games/hades-2018",
+          "kind": "game",
+          "platforms": [
+            "PlayStation 5",
+            "Xbox Series S/X",
+            "PlayStation 4",
+            "Nintendo Switch",
+            "PC",
+            "Xbox One"
+          ],
+          "metacritic": 93,
+          "score": 4.41,
+          "categories": [
+            "Action",
+            "Adventure",
+            "RPG",
+            "Indie",
+            "Atmospheric",
+            "Great Soundtrack",
+            "Story Rich",
+            "2D",
+            "Fantasy",
+            "Action-Adventure"
+          ],
+          "playtimeHours": 10,
+          "publishers": [
+            "Supergiant Games"
+          ]
+        }
+      },
+      "log": {
+        "status": "in progress",
+        "rating": 88,
+        "notes": "Can't stop doing 'just one more run' before bed.",
+        "loggedAt": "2026-10-02T22:00:00.000Z",
+        "startedAt": "2026-10-02T22:00:00.000Z"
+      },
+      "collections": []
+    },
+    {
+      "mediaTypeName": "game",
+      "media": {
+        "title": "Tunic",
+        "creator": "ISOMETRICORP Games, Andrew Shouldice",
+        "year": "2022",
+        "description": "Explore a land filled with lost legends, ancient powers, and ferocious monsters in TUNIC, an isometric action game about a small fox on a big adventure. Stranded on a mysterious beach, armed with only your own curiosity, you will confront colossal beasts, collect strange and powerful items, and unravel long-lost secrets.\n\nExplore a hostile and intricately-connected world of shady forests, sprawling ruins, and labyrinthine catacombs\nFight mighty bosses deep beneath the earth, high above the clouds, and in places stranger still\nCollect the missing manual pages, bursting with hints and original full-colour illustrations\nDiscover hidden treasures to help you on your way\nUnearth secret relics, secret techniques, secret puzzles, and… listen, there’s a lot of secrets!\nFeaturing sound design by Power Up Audio (Celeste, Darkest Dungeon, Subnautica: Below Zero)\nAnd an original soundtrack by Lifeformed (Dustforce, Double Fine Adventure)\n\nKeep your wits about you and be brave, little fox!",
+        "source": "rawg",
+        "sourceId": "game-29236",
+        "imageUrl": "https://media.rawg.io/media/games/2c1/2c1984e128ac48b89953ed4de4904a3b.jpg",
+        "metadata": {
+          "url": "https://rawg.io/games/tunic",
+          "kind": "game",
+          "platforms": [
+            "PlayStation 5",
+            "PlayStation 4",
+            "macOS",
+            "PC",
+            "Nintendo Switch",
+            "Xbox One",
+            "Xbox Series S/X"
+          ],
+          "metacritic": 86,
+          "score": 4.11,
+          "categories": [
+            "Action",
+            "Adventure",
+            "Indie",
+            "Isometric"
+          ],
+          "playtimeHours": 5,
+          "publishers": [
+            "Finji"
+          ]
+        }
+      },
+      "log": {
+        "status": "wishlist",
+        "rating": null,
+        "loggedAt": "2025-08-01T15:00:00.000Z"
+      },
+      "collections": [
+        "Up next"
+      ]
+    },
+    {
+      "mediaTypeName": "game",
+      "media": {
+        "title": "NieR:Automata",
+        "creator": "Platinum Games, 8-4",
+        "year": "2017",
+        "description": "NieR: Automata is an action RPG, a sequel to Nier and a spin-off to the Drakenguard series. The story is set in the middle of the war between humans and machines where you take on the role of an android warrior called 2B. The story develops around the theme of androids' ability to feel and make their own decisions.\nThe gameplay of NieR: Automata combines RPG elements, such as character progression,  with action-based combat and some platforming features, including climbing and jumping over obstacles. Except for traditional light and heavy attacks, there are quick time events that if the completed result in a highly damaging counterattack. You can use four weapon types during the battles: short swords, long swords, bracers, and spears. While you play as a robot, you can upgrade your body with special chips that increase your stats. \nThe game is set in an open world and features numerous NPCs and side quests. You can explore it on foot as well as ride a wild animal or pilot a flying mech. There are also shops where you can get useful items including potions to restore health.",
+        "source": "rawg",
+        "sourceId": "game-10141",
+        "imageUrl": "https://media.rawg.io/media/games/5a4/5a44112251d70a25291cc33757220fce.jpg",
+        "metadata": {
+          "url": "https://rawg.io/games/nierautomata",
+          "kind": "game",
+          "platforms": [
+            "PlayStation 4",
+            "Nintendo Switch",
+            "PC",
+            "Xbox One"
+          ],
+          "metacritic": 86,
+          "score": 4.37,
+          "categories": [
+            "Action",
+            "RPG",
+            "Atmospheric",
+            "Great Soundtrack",
+            "Story Rich",
+            "Open World",
+            "Sci-fi",
+            "Female Protagonist",
+            "Violent",
+            "Anime"
+          ],
+          "playtimeHours": 13,
+          "publishers": [
+            "Square Enix"
+          ]
+        }
+      },
+      "log": {
+        "status": "dropped",
+        "rating": 60,
+        "notes": "Loved the music and premise, but couldn't get into the combat flow on keyboard.",
+        "loggedAt": "2025-11-20T19:00:00.000Z",
+        "startedAt": "2025-11-10T16:00:00.000Z"
+      },
+      "collections": []
+    },
+    {
+      "mediaTypeName": "music",
+      "media": {
+        "title": "Loveless",
+        "creator": "my bloody valentine",
+        "year": null,
+        "description": null,
+        "source": "lastfm",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/510546e3b6df7504392274c528c77780.png",
+        "sourceId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe",
+        "metadata": {
+          "url": "https://www.last.fm/music/my+bloody+valentine/Loveless",
+          "kind": "album",
+          "categories": [
+            "shoegaze",
+            "dream pop",
+            "noise pop",
+            "90s"
+          ]
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 100,
+        "notes": "The golden standard of texture. Turn it all the way up until your room buzzes.",
+        "loggedAt": "2024-01-18T22:00:00.000Z",
+        "startedAt": "2024-01-18T21:10:00.000Z",
+        "finishedAt": "2024-01-18T22:00:00.000Z",
+        "tags": [
+          "masterpiece",
+          "shoegaze"
+        ]
+      },
+      "collections": [
+        "All-time favourites",
+        "Shoegaze & dream pop"
+      ]
+    },
+    {
+      "mediaTypeName": "music",
+      "media": {
+        "title": "Souvlaki",
+        "creator": "Slowdive",
+        "year": null,
+        "description": null,
+        "source": "lastfm",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.png",
+        "sourceId": "07d02411-6722-4071-8130-14fb8512288a",
+        "metadata": {
+          "url": "https://www.last.fm/music/Slowdive/Souvlaki",
+          "kind": "album",
+          "categories": [
+            "shoegaze",
+            "dream pop",
+            "90s"
+          ]
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 97,
+        "notes": "Alison into Machine Gun into 40 Days. Flawless front half.",
+        "loggedAt": "2024-03-05T20:45:00.000Z",
+        "startedAt": "2024-03-05T20:00:00.000Z",
+        "finishedAt": "2024-03-05T20:45:00.000Z",
+        "tags": [
+          "shoegaze",
+          "comfort"
+        ]
+      },
+      "collections": [
+        "Rainy day",
+        "Shoegaze & dream pop"
+      ]
+    },
+    {
+      "mediaTypeName": "music",
+      "media": {
+        "title": "Heaven or Las Vegas",
+        "creator": "Cocteau Twins",
+        "year": null,
+        "description": null,
+        "source": "lastfm",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/c34df33d23f970baafdfea3f846e489f.png",
+        "sourceId": "151d2e60-8dad-4934-a8a3-6cccbd2f5d31",
+        "metadata": {
+          "url": "https://www.last.fm/music/Cocteau+Twins/Heaven+or+Las+Vegas",
+          "kind": "album",
+          "categories": [
+            "dream pop",
+            "shoegaze",
+            "ethereal",
+            "ethereal wave",
+            "90s"
+          ]
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 96,
+        "notes": "Elizabeth Fraser singing glossolalia over shimmering Guthrie chords. Pure bliss.",
+        "loggedAt": "2024-05-15T18:40:00.000Z",
+        "startedAt": "2024-05-15T18:00:00.000Z",
+        "finishedAt": "2024-05-15T18:40:00.000Z",
+        "tags": [
+          "shoegaze",
+          "comfort"
+        ]
+      },
+      "collections": [
+        "Shoegaze & dream pop"
+      ]
+    },
+    {
+      "mediaTypeName": "music",
+      "media": {
+        "title": "Ágætis byrjun",
+        "creator": "Sigur Rós",
+        "year": null,
+        "description": null,
+        "source": "lastfm",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/82ea4f4b490b4e288c9247e2b4ecb58c.png",
+        "sourceId": "0041638d-a5fc-3449-91e8-878b48d81815",
+        "metadata": {
+          "url": "https://www.last.fm/music/Sigur+R%C3%B3s/%C3%81g%C3%A6tis+byrjun",
+          "kind": "album",
+          "categories": [
+            "post-rock",
+            "experimental",
+            "icelandic",
+            "post rock"
+          ]
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 93,
+        "notes": "Bowed electric guitar echoing like an arctic breeze.",
+        "loggedAt": "2024-07-22T23:15:00.000Z",
+        "startedAt": "2024-07-22T22:00:00.000Z",
+        "finishedAt": "2024-07-22T23:15:00.000Z",
+        "tags": [
+          "slow burn"
+        ]
+      },
+      "collections": [
+        "Shoegaze & dream pop"
+      ]
+    },
+    {
+      "mediaTypeName": "music",
+      "media": {
+        "title": "In Rainbows",
+        "creator": "Radiohead",
+        "year": null,
+        "description": null,
+        "source": "lastfm",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/9dbcd9399ac3e622b4f508323155b644.png",
+        "sourceId": "1475431a-cfd3-43ad-bf09-b3826118446f",
+        "metadata": {
+          "url": "https://www.last.fm/music/Radiohead/In+Rainbows",
+          "kind": "album",
+          "categories": [
+            "alternative rock",
+            "alternative",
+            "art rock",
+            "rock",
+            "best of 2007"
+          ]
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 98,
+        "notes": "Warmest record they ever made. Weird Fishes / Arpeggi is transcendent.",
+        "loggedAt": "2024-09-10T21:45:00.000Z",
+        "startedAt": "2024-09-10T21:00:00.000Z",
+        "finishedAt": "2024-09-10T21:45:00.000Z",
+        "tags": [
+          "masterpiece",
+          "rewatch"
+        ]
+      },
+      "collections": [
+        "All-time favourites"
+      ]
+    },
+    {
+      "mediaTypeName": "music",
+      "media": {
+        "title": "Blonde",
+        "creator": "Frank Ocean",
+        "year": null,
+        "description": null,
+        "source": "lastfm",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/82c92f044b27db86328ed6be3f8a735a.png",
+        "sourceId": "08f54f68-7c89-4e22-8a0f-ac2b06e48568",
+        "metadata": {
+          "url": "https://www.last.fm/music/Frank+Ocean/Blonde",
+          "kind": "album",
+          "categories": [
+            "alternative rnb",
+            "art pop",
+            "Neo-Soul",
+            "rnb",
+            "ambient pop"
+          ]
+        }
+      },
+      "log": {
+        "status": "dropped",
+        "rating": null,
+        "notes": "Recognize the songwriting craft, just never quite resonated with my usual rotation.",
+        "loggedAt": "2024-11-29T14:00:00.000Z",
+        "startedAt": "2024-11-28T20:00:00.000Z"
+      },
+      "collections": []
+    },
+    {
+      "mediaTypeName": "music",
+      "media": {
+        "title": "Spirit of Eden",
+        "creator": "Talk Talk",
+        "year": null,
+        "description": null,
+        "source": "lastfm",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/ce1ba44449a0b97661a9c2d65fe8568b.png",
+        "sourceId": "0331c46f-b9b6-4bb9-8c96-5d94ecbde08a",
+        "metadata": {
+          "url": "https://www.last.fm/music/Talk+Talk/Spirit+of+Eden",
+          "kind": "album",
+          "categories": [
+            "post-rock",
+            "art rock",
+            "experimental",
+            "80s"
+          ]
+        }
+      },
+      "log": {
+        "status": "wishlist",
+        "rating": null,
+        "loggedAt": "2025-01-10T16:00:00.000Z"
+      },
+      "collections": [
+        "Up next"
+      ]
+    },
+    {
+      "mediaTypeName": "music",
+      "media": {
+        "title": "Carrie & Lowell",
+        "creator": "Sufjan Stevens",
+        "year": null,
+        "description": null,
+        "source": "lastfm",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/7568c8fa48cc4fb6cf688fe89161f8a5.png",
+        "sourceId": "395152c9-1ba2-4c44-80ab-5d1488818344",
+        "metadata": {
+          "url": "https://www.last.fm/music/Sufjan+Stevens/Carrie+&+Lowell",
+          "kind": "album",
+          "categories": [
+            "indie folk",
+            "singer-songwriter",
+            "best of 2015",
+            "folk",
+            "chamber folk"
+          ]
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 94,
+        "notes": "Devastatingly quiet and fragile acoustic songs. Fourth of July broke my heart.",
+        "loggedAt": "2025-03-12T22:45:00.000Z",
+        "startedAt": "2025-03-12T22:00:00.000Z",
+        "finishedAt": "2025-03-12T22:45:00.000Z",
+        "tags": [
+          "cried"
+        ]
+      },
+      "collections": [
+        "Rainy day"
+      ]
+    },
+    {
+      "mediaTypeName": "music",
+      "media": {
+        "title": "Have One on Me",
+        "creator": "Joanna Newsom",
+        "year": null,
+        "description": null,
+        "source": "lastfm",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/5f863cceffcb45c692e648f11fce5160.png",
+        "sourceId": "58a1015b-b297-415e-9581-f889a0e668eb",
+        "metadata": {
+          "url": "https://www.last.fm/music/Joanna+Newsom/Have+One+on+Me",
+          "kind": "album",
+          "categories": [
+            "folk",
+            "chamber folk",
+            "progressive folk",
+            "best of 2010",
+            "singer-songwriter"
+          ]
+        }
+      },
+      "log": {
+        "status": "wishlist",
+        "rating": null,
+        "loggedAt": "2025-06-01T12:00:00.000Z"
+      },
+      "collections": [
+        "Up next"
+      ]
+    },
+    {
+      "mediaTypeName": "music",
+      "media": {
+        "title": "Since I Left You",
+        "creator": "The Avalanches",
+        "year": null,
+        "description": null,
+        "source": "lastfm",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/83f16d352da8e6e4fd0cb32c49bf9cfc.png",
+        "sourceId": "0ae16051-e092-3919-ba51-976dfc027cc0",
+        "metadata": {
+          "url": "https://www.last.fm/music/The+Avalanches/Since+I+Left+You",
+          "kind": "album",
+          "categories": [
+            "plunderphonics",
+            "electronic",
+            "dance",
+            "turntablism",
+            "electronica"
+          ]
+        }
+      },
+      "log": {
+        "status": "in progress",
+        "rating": null,
+        "loggedAt": "2026-11-05T17:00:00.000Z",
+        "startedAt": "2026-11-05T17:00:00.000Z"
+      },
+      "collections": []
+    },
+    {
+      "mediaTypeName": "music",
+      "media": {
+        "title": "Pink Moon",
+        "creator": "Nick Drake",
+        "year": null,
+        "description": null,
+        "source": "lastfm",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/dc70139e0457a04d2749fe062647fc79.png",
+        "sourceId": "278903c5-465e-4dfe-b278-10e7ce02f0d3",
+        "metadata": {
+          "url": "https://www.last.fm/music/Nick+Drake/Pink+Moon",
+          "kind": "album",
+          "categories": [
+            "folk",
+            "singer-songwriter",
+            "acoustic",
+            "70s",
+            "contemporary folk"
+          ]
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 91,
+        "notes": "Under thirty minutes of just a voice and an acoustic guitar. Simple perfection.",
+        "loggedAt": "2025-10-10T23:30:00.000Z",
+        "startedAt": "2025-10-10T23:00:00.000Z",
+        "finishedAt": "2025-10-10T23:30:00.000Z",
+        "tags": [
+          "comfort",
+          "2am"
+        ]
+      },
+      "collections": [
+        "Comfort shelf"
+      ]
+    },
+    {
+      "mediaTypeName": "music",
+      "media": {
+        "title": "Floral Shoppe",
+        "creator": "Macintosh Plus",
+        "year": null,
+        "description": null,
+        "source": "lastfm",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/77a37724b70842199072e0a0df578130.png",
+        "sourceId": "165a3396-c023-42f5-a1fb-174b262ef862",
+        "metadata": {
+          "url": "https://www.last.fm/music/Macintosh+Plus/Floral+Shoppe",
+          "kind": "album",
+          "categories": [
+            "vaporwave",
+            "electronic",
+            "plunderphonics",
+            "ambient"
+          ]
+        }
+      },
+      "log": {
+        "status": "dropped",
+        "rating": 40,
+        "notes": "Fun as a piece of internet lore, but not something I listen to front-to-back.",
+        "loggedAt": "2025-12-15T15:00:00.000Z",
+        "startedAt": "2025-12-14T20:00:00.000Z"
+      },
+      "collections": []
+    },
+    {
+      "mediaTypeName": "music",
+      "media": {
+        "title": "When the Sun Hits",
+        "creator": "Slowdive",
+        "year": null,
+        "description": null,
+        "source": "lastfm",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/2a96cbd8b46e442fc41c2b86b821562f.png",
+        "sourceId": "0cecc75b-50d7-3465-a834-6fb9b3201887",
+        "metadata": {
+          "url": "https://www.last.fm/music/Slowdive/_/When+the+Sun+Hits",
+          "kind": "track",
+          "categories": [
+            "shoegaze",
+            "dream pop",
+            "Dreamy",
+            "90s",
+            "indie"
+          ]
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 98,
+        "notes": "That sudden explosion of distortion at 0:48 gives me goosebumps every single time.",
+        "loggedAt": "2024-03-05T21:00:00.000Z",
+        "startedAt": "2024-03-05T20:55:00.000Z",
+        "finishedAt": "2024-03-05T21:00:00.000Z",
+        "tags": [
+          "shoegaze"
+        ]
+      },
+      "collections": [
+        "Shoegaze & dream pop"
+      ]
+    },
+    {
+      "mediaTypeName": "music",
+      "media": {
+        "title": "Avril 14th",
+        "creator": "Aphex Twin",
+        "year": null,
+        "description": null,
+        "source": "lastfm",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/2a96cbd8b46e442fc41c2b86b821562f.png",
+        "sourceId": "076205ee-7f45-3325-a5a4-38d27ceabd61",
+        "metadata": {
+          "url": "https://www.last.fm/music/Aphex+Twin/_/Avril+14th",
+          "kind": "track",
+          "categories": [
+            "piano",
+            "ambient",
+            "instrumental",
+            "electronic",
+            "chillout"
+          ]
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 95,
+        "notes": "A gentle prepared piano melody that feels like watching rain tap against a dark window.",
+        "loggedAt": "2024-04-12T23:45:00.000Z",
+        "startedAt": "2024-04-12T23:40:00.000Z",
+        "finishedAt": "2024-04-12T23:45:00.000Z",
+        "tags": [
+          "comfort",
+          "2am"
+        ]
+      },
+      "collections": [
+        "Rainy day"
+      ]
+    },
+    {
+      "mediaTypeName": "tv",
+      "media": {
+        "title": "Rick and Morty: Season 1",
+        "creator": "Dan Harmon, Justin Roiland",
+        "year": "2013",
+        "description": "Rick and Morty visit a pawn shop in space, encounter various alternate and virtual realities, and meet the devil at his antique shop.",
+        "source": "tmdb",
+        "imageUrl": "https://image.tmdb.org/t/p/w342/8BXUZ0nnR3DZsf30DYMFHfuTxxi.jpg",
+        "sourceId": "tv:60625:s1",
+        "metadata": {
+          "url": "https://www.themoviedb.org/tv/60625/season/1",
+          "kind": "season",
+          "tmdbId": 60625,
+          "showTitle": "Rick and Morty",
+          "seasonNumber": 1,
+          "episodeCount": 11,
+          "airDate": "2013-12-02",
+          "networks": [
+            "Adult Swim"
+          ],
+          "genres": [
+            "Animation",
+            "Comedy",
+            "Sci-Fi & Fantasy",
+            "Action & Adventure"
+          ]
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 90,
+        "notes": "Inventive sci-fi chaos right out of the gate. Rixty Minutes is a classic.",
+        "loggedAt": "2024-02-10T21:00:00.000Z",
+        "startedAt": "2024-02-01T20:00:00.000Z",
+        "finishedAt": "2024-02-10T21:00:00.000Z",
+        "tags": [
+          "animation",
+          "sci-fi"
+        ]
+      },
+      "collections": []
+    },
+    {
+      "mediaTypeName": "tv",
+      "media": {
+        "title": "Rick and Morty: Season 3",
+        "creator": "Dan Harmon, Justin Roiland",
+        "year": "2017",
+        "description": "Rick and Morty travel to Atlantis and take some time to relax, plus Rick turns himself into a pickle and faces off against the president.",
+        "source": "tmdb",
+        "imageUrl": "https://image.tmdb.org/t/p/w342/xOSKU3rvKiKFdKgIs0y6n3zscBJ.jpg",
+        "sourceId": "tv:60625:s3",
+        "metadata": {
+          "url": "https://www.themoviedb.org/tv/60625/season/3",
+          "kind": "season",
+          "tmdbId": 60625,
+          "showTitle": "Rick and Morty",
+          "seasonNumber": 3,
+          "episodeCount": 10,
+          "airDate": "2017-04-01",
+          "networks": [
+            "Adult Swim"
+          ],
+          "genres": [
+            "Animation",
+            "Comedy",
+            "Sci-Fi & Fantasy",
+            "Action & Adventure"
+          ]
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 88,
+        "notes": "Pickle Rick and The Ricklantis Mixup are peak episodes.",
+        "loggedAt": "2024-05-15T22:00:00.000Z",
+        "startedAt": "2024-05-10T19:00:00.000Z",
+        "finishedAt": "2024-05-15T22:00:00.000Z",
+        "tags": [
+          "animation",
+          "sci-fi"
+        ]
+      },
+      "collections": []
+    },
+    {
+      "mediaTypeName": "tv",
+      "media": {
+        "title": "The Glory: Season 1",
+        "creator": "Kim Eun-sook, An Gil-ho",
+        "year": "2022",
+        "description": "A high school student dreams of becoming an architect. However, she had to drop out of school after suffering from brutal school violence. Years later, the perpetrator gets married and has a kid. Once the kid is in elementary school, the former victim becomes her homeroom teacher and starts her thorough revenge towards the perpetrators and bystanders of her bullying days.",
+        "source": "tmdb",
+        "imageUrl": "https://image.tmdb.org/t/p/w342/uS2dQ7ukij2ifLwjMBzTjqEDg2x.jpg",
+        "sourceId": "tv:136283:s1",
+        "metadata": {
+          "url": "https://www.themoviedb.org/tv/136283/season/1",
+          "kind": "season",
+          "tmdbId": 136283,
+          "showTitle": "The Glory",
+          "seasonNumber": 1,
+          "episodeCount": 16,
+          "airDate": "2022-12-30",
+          "networks": [
+            "Netflix"
+          ],
+          "genres": [
+            "Drama",
+            "Crime"
+          ]
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 94,
+        "notes": "Relentless kitchen tension with an extraordinary soundtrack. Episode 7 is a masterclass.",
+        "loggedAt": "2024-07-20T21:30:00.000Z",
+        "startedAt": "2024-07-18T19:00:00.000Z",
+        "finishedAt": "2024-07-20T21:30:00.000Z",
+        "tags": [
+          "drama",
+          "chef"
+        ]
+      },
+      "collections": []
+    },
+    {
+      "mediaTypeName": "tv",
+      "media": {
+        "title": "Severance: Season 1",
+        "creator": "Dan Erickson",
+        "year": "2022",
+        "description": "At Lumon Industries, employees undergo \"severance,\" a procedure dividing their work and personal memories. Mark, a grieving team leader, begins to uncover the dark secrets of the company, forcing him and his coworkers to confront questions of identity, free will, and corporate control.",
+        "source": "tmdb",
+        "imageUrl": "https://image.tmdb.org/t/p/w342/lFf6LLrQjYldcZItzOkGmMMigP7.jpg",
+        "sourceId": "tv:95396:s1",
+        "metadata": {
+          "url": "https://www.themoviedb.org/tv/95396/season/1",
+          "kind": "season",
+          "tmdbId": 95396,
+          "showTitle": "Severance",
+          "seasonNumber": 1,
+          "episodeCount": 9,
+          "airDate": "2022-02-17",
+          "networks": [
+            "Apple TV"
+          ],
+          "genres": [
+            "Drama",
+            "Mystery",
+            "Sci-Fi & Fantasy"
+          ]
+        }
+      },
+      "log": {
+        "status": "in progress",
+        "rating": 92,
+        "notes": "Intriguing corporate dystopia. The finale buildup is incredible.",
+        "loggedAt": "2024-08-01T20:00:00.000Z",
+        "startedAt": "2024-08-01T19:00:00.000Z",
+        "tags": [
+          "sci-fi",
+          "mystery"
+        ]
+      },
+      "collections": []
+    },
+    {
+      "mediaTypeName": "tv",
+      "media": {
+        "title": "Arcane: Season 1",
+        "creator": "Christian Linke, Alex Yee",
+        "year": "2021",
+        "description": "Two sisters. Two cities. One discovery that will change the world forever. In the cities of Piltover and Zaun, unrest stirs as inventors and thieves, politicians and crime lords chafe against the constraints of a society torn asunder.",
+        "source": "tmdb",
+        "imageUrl": "https://image.tmdb.org/t/p/w342/6FMWx79iAtZx8WHtOrRj0VlM8Tp.jpg",
+        "sourceId": "tv:94605:s1",
+        "metadata": {
+          "url": "https://www.themoviedb.org/tv/94605/season/1",
+          "kind": "season",
+          "tmdbId": 94605,
+          "showTitle": "Arcane",
+          "seasonNumber": 1,
+          "episodeCount": 9,
+          "airDate": "2021-11-06",
+          "networks": [
+            "Netflix"
+          ],
+          "genres": [
+            "Animation",
+            "Action & Adventure",
+            "Sci-Fi & Fantasy"
+          ]
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 96,
+        "notes": "Breathtaking painterly animation and emotional character arcs.",
+        "loggedAt": "2024-04-10T22:00:00.000Z",
+        "startedAt": "2024-04-01T20:00:00.000Z",
+        "finishedAt": "2024-04-10T22:00:00.000Z",
+        "tags": [
+          "animation",
+          "masterpiece"
+        ]
+      },
+      "collections": [
+        "All-time favourites"
+      ]
+    },
+    {
+      "mediaTypeName": "tv",
+      "media": {
+        "title": "Breaking Bad",
+        "creator": "Vince Gilligan",
+        "year": "2008",
+        "description": "Walter White, a New Mexico chemistry teacher, is diagnosed with Stage III cancer and given a prognosis of only two years left to live. He becomes filled with a sense of fearlessness and an unrelenting desire to secure his family's financial future at any cost as he enters the dangerous world of drugs and crime.",
+        "source": "tmdb",
+        "imageUrl": "https://image.tmdb.org/t/p/w342/anFx9aTOOYqgS3v7x3R84Kz67ly.jpg",
+        "sourceId": "tv:1396",
+        "metadata": {
+          "url": "https://www.themoviedb.org/tv/1396",
+          "kind": "show",
+          "tmdbId": 1396,
+          "firstAirDate": "2008-01-20",
+          "genres": [
+            "Drama",
+            "Crime"
+          ],
+          "originCountry": [
+            "US"
+          ],
+          "seasonCount": 5,
+          "episodeCount": 62,
+          "status": "Ended",
+          "networks": [
+            "AMC"
+          ],
+          "creator": "Vince Gilligan"
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": null,
+        "notes": "One of the greatest complete television dramas ever made. Revisit pending.",
+        "loggedAt": "2024-01-15T21:00:00.000Z",
+        "startedAt": "2023-11-01T19:00:00.000Z",
+        "finishedAt": "2024-01-15T21:00:00.000Z",
+        "tags": [
+          "drama",
+          "crime"
+        ]
+      },
+      "collections": []
+    }
+  ]
+}

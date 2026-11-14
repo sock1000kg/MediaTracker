@@ -8,6 +8,7 @@ export const gameMetadataSchema = z.object({
     score: z.number().nullable().optional(), // RAWG rating, 0-5
     publishers: z.array(z.string()).nullable().optional(),
     categories: z.array(z.string()).nullable().optional(),
+    playtimeHours: z.number().nullable().optional(),
 }).strict()
 
 const nl = <T extends z.ZodTypeAny>(s: T) => s.nullable().optional()
@@ -19,6 +20,7 @@ export const rawgGameItemSchema = z.object({
     name: nl(z.string()),
     released: nl(z.string()),
     background_image: nl(z.string()),
+    playtime: nl(z.number()),
     rating: nl(z.number()),
     metacritic: nl(z.number()),
     platforms: nl(z.array(z.object({ platform: nl(z.object({ name: nl(z.string()) })) }))),

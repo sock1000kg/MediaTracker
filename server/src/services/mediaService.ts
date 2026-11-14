@@ -27,7 +27,7 @@ import { musicSearchService } from "@/services/search/lastFmSearchService.js"
 import { enrichTmdbOnLog } from "@/services/search/tmdbSearchService.js"
 import { enrichRawgOnLog } from "@/services/search/rawgSearchService.js"
 import { validateSchema } from "@/utilities.js" 
-import { PrismaClient } from "@prisma/client/extension"
+import { DbClient } from "@/db.js"
 
 export class MediaService {
     async getAll(userId: number) {
@@ -191,7 +191,7 @@ export class MediaService {
         const rawgEnrichment = mediaData.source === "rawg" ? await enrichRawgOnLog(userId, mediaData) : null
 
         try {
-            const result = await prisma.$transaction(async (tx: PrismaClient) => 
+            const result = await prisma.$transaction(async (tx: DbClient) => 
                 createImportedMedia(
                     {
                         userId,

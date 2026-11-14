@@ -4,6 +4,20 @@ import { mergePreferences, preferencesPatchSchema, preferencesSchema, readPrefer
 
 const sort = (field: "title" | "creator" | "rating" | "date", direction: "asc" | "desc" = "asc") => ({ field, direction })
 
+describe("stats start tab", () => {
+    test("defaultTab accepts stats", () => {
+        expect(preferencesSchema.safeParse({ defaultTab: "stats", hideLogged: {} }).success).toBe(true)
+        expect(preferencesPatchSchema.parse({ defaultTab: "stats" })).toEqual({ defaultTab: "stats" })
+    })
+})
+
+describe("collections start tab", () => {
+    test("defaultTab accepts collections", () => {
+        expect(preferencesSchema.safeParse({ defaultTab: "collections", hideLogged: {} }).success).toBe(true)
+        expect(preferencesPatchSchema.parse({ defaultTab: "collections" })).toEqual({ defaultTab: "collections" })
+    })
+})
+
 describe("preferences merge", () => {
     test("null deletes a key", () => {
         const patch = preferencesPatchSchema.parse({ theme: null })

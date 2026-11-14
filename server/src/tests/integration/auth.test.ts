@@ -155,4 +155,17 @@ describe('Auth Routes', () => {
 
         await prisma.user.deleteMany({ where: { username: 'RaceUser1' } })
     })
+
+    test('Refresh without a cookie is a 401 with a message, not a 500, and sets no cookie', async () => {
+        const res = await request(app).post('/auth/refresh')
+        expect(res.statusCode).toBe(401)
+        expect(res.body.message).toMatch(/No refresh token/i)
+        expect(res.headers['set-cookie']).toBeUndefined()
+    })
+
+    test('Refresh with a garbage cookie keeps its status (401)', async () => {
+        const res = await request(app).post('/auth/refresh').set('Cookie', ['refreshToken=not-a-real-token'])
+        expect(res.statusCode).toBe(401)
+        expect(typeof res.body.message).toBe('string')
+    })
 })

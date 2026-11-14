@@ -1,6 +1,5 @@
 import prisma from "@/prismaClient.js"
-import { Prisma, Media, MediaType, UserLogs } from "@prisma/client"
-import { PrismaClient } from "@prisma/client/extension"
+import { Prisma, Media, MediaType, UserLogs, DbClient } from "@/db.js"
 
 
 //MEDIA
@@ -40,7 +39,7 @@ export async function findMediaForUser(
     sourceId: string | null,
     description: string | null,
     imageUrl: string | null,
-    client: PrismaClient
+    client: DbClient
 ): Promise<(Media & { mediaType: MediaType | null, logs: UserLogs[] }) | null> {
     return client.media.findFirst({
         where: {
@@ -64,7 +63,7 @@ export async function findMediaForUser(
 export async function findMediaForUserById(
     mediaId: number, 
     userId: number, 
-    client: PrismaClient
+    client: DbClient
 ): Promise<(Media & { mediaType: MediaType | null, logs: UserLogs[] }) | null> {
     return client.media.findFirst({
         where: { 
@@ -88,7 +87,7 @@ export async function findMediaById(id: number): Promise<(Media & { mediaType: M
     })
 }
 
-export async function findMediaBySource(sourceId: string | null, source: string | null, client: PrismaClient): Promise<Media | null> {
+export async function findMediaBySource(sourceId: string | null, source: string | null, client: DbClient): Promise<Media | null> {
     if(source === null || sourceId === null) return null
     return client.media.findFirst({
         where: {
@@ -101,7 +100,7 @@ export async function findMediaBySource(sourceId: string | null, source: string 
 export async function mergeMediaMetadata(
     mediaId: number,
     patch: Record<string, Prisma.InputJsonValue | null>,
-    client: PrismaClient
+    client: DbClient
 ): Promise<void> {
     const media = await client.media.findUnique({ where: { id: mediaId }, select: { metadata: true } })
     const current = (media?.metadata && typeof media.metadata === "object" && !Array.isArray(media.metadata))
@@ -113,18 +112,18 @@ export async function mergeMediaMetadata(
     })
 }
 
-export async function setMediaCreatorIfNull(mediaId: number, creator: string, client: PrismaClient): Promise<void> {
+export async function setMediaCreatorIfNull(mediaId: number, creator: string, client: DbClient): Promise<void> {
     await client.media.updateMany({ where: { id: mediaId, creator: null }, data: { creator } })
 }
 
-export async function setMediaDescriptionIfNull(mediaId: number, description: string, client: PrismaClient): Promise<void> {
+export async function setMediaDescriptionIfNull(mediaId: number, description: string, client: DbClient): Promise<void> {
     await client.media.updateMany({ where: { id: mediaId, description: null }, data: { description } })
 }
 
 //**Used in Default Media check upon registration
 export async function findFirstMediaByTitle(
     title: string,
-    client: PrismaClient
+    client: DbClient
 ): Promise<(Media & { mediaType: MediaType | null, logs: UserLogs[] }) | null> {
     return client.media.findFirst({
         where: { title },
@@ -147,7 +146,7 @@ export async function createMedia(
     metadata: Prisma.JsonValue | null,
     imageUrl: string | null,
     userId: number,
-    client: PrismaClient
+    client: DbClient
 ): Promise<Media & { mediaType: MediaType | null }> {
     return client.media.create({
         data: {
@@ -201,6 +200,6 @@ export async function deleteMedia(id: number): Promise<void> {
     await prisma.media.delete({ where: { id } })
 }
 
-export async function deleteAllMediasForUser(userId: number, client: PrismaClient): Promise<void> {
+export async function deleteAllMediasForUser(userId: number, client: DbClient): Promise<void> {
     await client.media.deleteMany({ where: { userId } })
 }

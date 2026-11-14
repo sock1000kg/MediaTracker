@@ -1,6 +1,5 @@
 import prisma from "@/prismaClient.js"
-import { Media, MediaType } from "@prisma/client"
-import { PrismaClient } from "@prisma/client/extension"
+import { Media, MediaType, DbClient } from "@/db.js"
 
 //MEDIA TYPE
 export async function getAllMediaTypesForUser(userId: number): Promise<(MediaType & { media: Media[] })[]> {
@@ -16,7 +15,7 @@ export async function getAllMediaTypesForUser(userId: number): Promise<(MediaTyp
 }
 
 // Each user has uniquely tied mediaType names (except the global ones)
-export async function findMediaTypeForUserOrGlobal(typeName: string, userId: number, client: PrismaClient): Promise<(MediaType & { media: Media[] }) | null>  {
+export async function findMediaTypeForUserOrGlobal(typeName: string, userId: number, client: DbClient): Promise<(MediaType & { media: Media[] }) | null>  {
     return client.mediaType.findFirst({
         where: {
             name: typeName,
@@ -39,7 +38,7 @@ export async function findMediaTypeForUser(name: string, userId: number): Promis
     })
 }
 
-export async function createMediaTypeForUser(name: string, userId: number, client: PrismaClient): Promise<MediaType & { media: Media[] }> {
+export async function createMediaTypeForUser(name: string, userId: number, client: DbClient): Promise<MediaType & { media: Media[] }> {
     return client.mediaType.create({ 
         data: { 
             name, 
@@ -50,7 +49,7 @@ export async function createMediaTypeForUser(name: string, userId: number, clien
 }
 
 // User can only delete media types that is tied to their ID (aka their own created types)
-export async function deleteMediaTypeForUser(name: string, userId: number, client: PrismaClient): Promise<void> {
+export async function deleteMediaTypeForUser(name: string, userId: number, client: DbClient): Promise<void> {
     await client.mediaType.delete({ 
         where: { 
             userId_name: { 
@@ -61,7 +60,7 @@ export async function deleteMediaTypeForUser(name: string, userId: number, clien
     })
 }
 
-export async function deleteAllMediaTypeForUser(userId: number, client: PrismaClient): Promise<void> {
+export async function deleteAllMediaTypeForUser(userId: number, client: DbClient): Promise<void> {
     await client.mediaType.deleteMany({ 
         where: { 
             userId

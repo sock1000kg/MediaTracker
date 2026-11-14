@@ -5,13 +5,12 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
-  // output   = "../src/generated/prisma"
+  provider = "prisma-client"
+  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -29,6 +28,8 @@ model User {
   refreshToken    RefreshToken[]@relation("RefreshTokenToUser")
 
   apiKeys         UserAPIKey[]@relation("APIToUser")
+  tags            Tag[]     @relation("TagsToUser")
+  collections     Collection[] @relation("CollectionsToUser")
 }
 
 model Media {
@@ -78,6 +79,8 @@ model UserLogs {
   status          String?   //"Completed" "In progress" "Wishlist" "Dropped"
   rating          Float?    //scale 100
   notes           String?
+  started_at      DateTime?
+  finished_at     DateTime?
   logged_at       DateTime  @default(now())
 
   userId          Int
@@ -86,7 +89,60 @@ model UserLogs {
   mediaId         Int
   media           Media     @relation(fields: [mediaId], references: [id], name: "UserLogsToMedia", onDelete: Cascade)
 
+  tags            LogTag[]  @relation("LogTagsToLog")
+  collectionItems CollectionItem[] @relation("CollectionItemsToLog")
+
   @@unique([userId, mediaId]) //avoid duplicate logs of the same media for the same user
+}
+
+model Tag {
+  id              Int       @id @default(autoincrement())
+  userId          Int
+  user            User      @relation(fields: [userId], references: [id], name: "TagsToUser", onDelete: Cascade)
+  name            String
+  nameKey         String
+  created_at      DateTime  @default(now())
+
+  logs            LogTag[]  @relation("LogTagsToTag")
+
+  @@unique([userId, nameKey])
+}
+
+model LogTag {
+  logId           Int
+  tagId           Int
+  log             UserLogs  @relation(fields: [logId], references: [id], name: "LogTagsToLog", onDelete: Cascade)
+  tag             Tag       @relation(fields: [tagId], references: [id], name: "LogTagsToTag", onDelete: Cascade)
+
+  @@id([logId, tagId])
+  @@index([tagId])
+}
+
+model Collection {
+  id              Int              @id @default(autoincrement())
+  userId          Int
+  user            User             @relation(fields: [userId], references: [id], name: "CollectionsToUser", onDelete: Cascade)
+  name            String
+  nameKey         String
+  description     String?
+  ranked          Boolean          @default(false)
+  created_at      DateTime         @default(now())
+  updated_at      DateTime         @updatedAt
+  items           CollectionItem[] @relation("CollectionItemsToCollection")
+
+  @@unique([userId, nameKey])
+}
+
+model CollectionItem {
+  collectionId    Int
+  logId           Int
+  position        Int
+  added_at        DateTime   @default(now())
+  collection      Collection @relation(fields: [collectionId], references: [id], name: "CollectionItemsToCollection", onDelete: Cascade)
+  log             UserLogs   @relation(fields: [logId], references: [id], name: "CollectionItemsToLog", onDelete: Cascade)
+
+  @@id([collectionId, logId])
+  @@index([logId])
 }
 
 model UserAPIKey {

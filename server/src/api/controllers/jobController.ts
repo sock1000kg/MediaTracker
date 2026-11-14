@@ -4,7 +4,7 @@ import { getQueue } from "@/queue/index.js"
 import type { JobInfo, JobName } from "@/queue/types.js"
 
 // Names clients may filter by. Add new user-facing job names here.
-const LISTABLE_JOBS: JobName[] = ["import.goodreads"]
+const LISTABLE_JOBS: JobName[] = ["import.goodreads", "import.mal"]
 
 const toPublic = (job: JobInfo) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -1,6 +1,26 @@
 import prisma from "@/prismaClient.js"
-import { Media, MediaType, UserLogs } from "@prisma/client"
-import { PrismaClient } from "@prisma/client/extension"
+import { DbClient } from "@/db.js"
+
+export type LogTagItem = { id: number; name: string }
+
+export function mapLogWithTags<T extends {
+    tags?: { tag: { id: number; name: string } }[]
+    collectionItems?: { collectionId: number }[]
+}>(log: T): Omit<T, "collectionItems"> & { tags: LogTagItem[]; collectionIds: number[] } {
+    const rawTags = log.tags ?? []
+    const tags: LogTagItem[] = rawTags
+        .map(t => ({ id: t.tag.id, name: t.tag.name }))
+        .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }))
+    const rawCollections = log.collectionItems ?? []
+    const collectionIds: number[] = rawCollections.map(c => c.collectionId)
+    const copy = { ...log }
+    delete (copy as { collectionItems?: unknown }).collectionItems
+    return {
+        ...copy,
+        tags,
+        collectionIds,
+    }
+}
 
 //LOGS
 export async function createLog(
@@ -9,24 +29,45 @@ export async function createLog(
     status: string | null,
     rating: number | null, 
     notes: string | null,
-    client: PrismaClient
-): Promise<UserLogs> {
-    return client.userLogs.create({
-        data: { userId, mediaId, status, rating, notes },
-    })
-}
-
-export async function getAllLogs(userId: number): Promise<(UserLogs & { media: Media & { mediaType: MediaType | null } })[]> {
-    return prisma.userLogs.findMany({
-        where: { userId },
-        include: { 
-            media: { include: { mediaType: true } } 
+    client: DbClient,
+    loggedAt?: Date | null,
+    startedAt?: Date | null,
+    finishedAt?: Date | null
+) {
+    const log = await client.userLogs.create({
+        data: {
+            userId,
+            mediaId,
+            status,
+            rating,
+            notes,
+            ...(loggedAt ? { logged_at: loggedAt } : {}),
+            ...(startedAt ? { started_at: startedAt } : {}),
+            ...(finishedAt ? { finished_at: finishedAt } : {}),
+        },
+        include: {
+            media: { include: { mediaType: true } },
+            tags: { include: { tag: true } },
+            collectionItems: { select: { collectionId: true } },
         },
     })
+    return mapLogWithTags(log)
 }
 
-export async function findLogOfUserByMediaId(userId: number, mediaId: number, client: PrismaClient): Promise<(UserLogs & { media: Media & { mediaType: MediaType | null } }) | null> {
-    return client.userLogs.findUnique({
+export async function getAllLogs(userId: number, client: DbClient = prisma) {
+    const logs = await client.userLogs.findMany({
+        where: { userId },
+        include: { 
+            media: { include: { mediaType: true } },
+            tags: { include: { tag: true } },
+            collectionItems: { select: { collectionId: true } },
+        },
+    })
+    return logs.map(mapLogWithTags)
+}
+
+export async function findLogOfUserByMediaId(userId: number, mediaId: number, client: DbClient) {
+    const log = await client.userLogs.findUnique({
         where: { 
             userId_mediaId: { 
                 userId, 
@@ -34,18 +75,24 @@ export async function findLogOfUserByMediaId(userId: number, mediaId: number, cl
             } 
         },
         include: { 
-            media: { include: { mediaType: true } } },
+            media: { include: { mediaType: true } },
+            tags: { include: { tag: true } },
+            collectionItems: { select: { collectionId: true } },
+        },
     })
+    return log ? mapLogWithTags(log) : null
 }
 
-export async function findLogById(logId: number): Promise<(UserLogs & { media: Media & { mediaType: MediaType | null } }) | null> {
-    return prisma.userLogs.findFirst({ 
+export async function findLogById(logId: number, client: DbClient = prisma) {
+    const log = await client.userLogs.findFirst({ 
         where: { id: logId }, 
-        include: { media: { 
-            include: { mediaType: true } 
-            } 
+        include: { 
+            media: { include: { mediaType: true } },
+            tags: { include: { tag: true } },
+            collectionItems: { select: { collectionId: true } },
         } 
     })
+    return log ? mapLogWithTags(log) : null
 }
 
 export async function updateLog(
@@ -53,28 +100,35 @@ export async function updateLog(
     newStatus: string | null, 
     newRating: number | null, 
     newNotes: string | null,
-    client: PrismaClient
-): Promise<UserLogs & { media: Media & { mediaType: MediaType | null } }> {
-    return client.userLogs.update({
+    client: DbClient,
+    startedAt?: Date | null,
+    finishedAt?: Date | null
+) {
+    const log = await client.userLogs.update({
         where: { id: logId },
         data: { 
             ...(newStatus ? { status: newStatus } : {}), 
             ...(newRating ? { rating: newRating } : {}),
-            ...(newNotes ? { notes: newNotes } : {}) 
+            ...(newNotes ? { notes: newNotes } : {}),
+            ...(startedAt !== undefined ? { started_at: startedAt } : {}),
+            ...(finishedAt !== undefined ? { finished_at: finishedAt } : {}),
         },
         include: { 
-            media: { include: { mediaType: true } } 
+            media: { include: { mediaType: true } },
+            tags: { include: { tag: true } },
+            collectionItems: { select: { collectionId: true } },
         },
     })
+    return mapLogWithTags(log)
 }
 
-export async function deleteLog(id: number) {
-    await prisma.userLogs.delete({
+export async function deleteLog(id: number, client: DbClient = prisma) {
+    await client.userLogs.delete({
         where: { id }
     })
 }
 
-export async function deleteAllLogsForUser(userId: number, client: PrismaClient) {
+export async function deleteAllLogsForUser(userId: number, client: DbClient) {
     await client.userLogs.deleteMany({
         where: { userId }
     })
