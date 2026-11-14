@@ -1,5 +1,6 @@
-import { startGoodreadsImport, startMalImport, ImportAlreadyRunningError } from "@/api/imports"
+import { startGoodreadsImport, startMalImport, startLetterboxdImport, ImportAlreadyRunningError } from "@/api/imports"
 import { fetchJob, fetchJobs } from "@/api/jobs"
+import { fetchApiKeysQueryOptions } from "@/queryOptions/fetchApiKeysQueryOptions"
 import { ApiError } from "@/api/clientWrapper"
 import { Button } from "@/components/ui/button"
 import { importAnnouncement, importStatusLabel, INITIAL_ANNOUNCED, type AnnouncedState, isRunning, isTerminal } from "@/lib/jobs"
@@ -15,8 +16,9 @@ interface ImportCardProps {
     inputLabel: string
     helpText?: string
     accept: string
-    jobName: "import.goodreads" | "import.mal"
+    jobName: "import.goodreads" | "import.mal" | "import.letterboxd"
     startImport: (file: File) => Promise<{ jobId: string }>
+    extraHint?: React.ReactNode
 }
 
 function ImportCard({
@@ -26,6 +28,7 @@ function ImportCard({
     accept,
     jobName,
     startImport,
+    extraHint,
 }: ImportCardProps) {
     const queryClient = useQueryClient()
 
@@ -135,6 +138,7 @@ function ImportCard({
                     {helpText}
                 </p>
             )}
+            {extraHint}
 
             {/* Always-mounted live region so announcements are picked up */}
             <p role="status" aria-live="polite" className="sr-only">{announcement}</p>
@@ -239,6 +243,15 @@ function ImportCard({
                         </div>
                     </div>
 
+                    {/* Unmatched note when unmatched > 0 and not already in notes */}
+                    {importResult.unmatched !== undefined &&
+                        importResult.unmatched > 0 &&
+                        (!importResult.notes || !importResult.notes.some(n => n.includes("couldn't be matched to TMDB"))) && (
+                            <p className="text-xs text-muted-foreground mb-3">
+                                {importResult.unmatched} films couldn't be matched to TMDB and were added by title.
+                            </p>
+                        )}
+
                     {/* Notes (e.g. entries without covers) */}
                     {importResult.notes && importResult.notes.length > 0 && (
                         <div className="mb-3 space-y-1 text-xs text-muted-foreground">
@@ -287,7 +300,29 @@ function ImportCard({
     )
 }
 
-export function ImportsForm() {
+interface ImportsFormProps {
+    onNavigateToApiKeys?: () => void
+}
+
+export function ImportsForm({ onNavigateToApiKeys }: ImportsFormProps = {}) {
+    const { data: apiKeys } = useQuery(fetchApiKeysQueryOptions())
+    const hasTmdbKey = apiKeys?.some(k => k.service === "tmdb")
+    const hasNoTmdbKey = apiKeys !== undefined && !hasTmdbKey
+
+    const tmdbHint = hasNoTmdbKey ? (
+        <p className="text-xs text-muted-foreground mb-4">
+            No TMDB key found. Unmatched films won&apos;t have posters or metadata. Add one under{" "}
+            <button
+                type="button"
+                onClick={onNavigateToApiKeys}
+                className="text-primary underline hover:text-primary/80 focus:outline-none"
+            >
+                Settings → API Keys
+            </button>
+            .
+        </p>
+    ) : null
+
     return (
         <div className="px-4">
             {/* Info Text */}
@@ -298,7 +333,7 @@ export function ImportsForm() {
                 The imported medias will not be in the &apos;Your Medias&apos; tab
             </p>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <ImportCard
                     title="Goodreads"
                     inputLabel="Goodreads Export (.csv)"
@@ -314,6 +349,16 @@ export function ImportsForm() {
                     accept=".xml,.gz,application/xml,application/gzip"
                     jobName="import.mal"
                     startImport={startMalImport}
+                />
+
+                <ImportCard
+                    title="Letterboxd"
+                    inputLabel="Letterboxd Export (.zip)"
+                    helpText="Export from letterboxd.com → Settings → Data → Export your data, then upload the ZIP."
+                    accept=".zip,application/zip"
+                    jobName="import.letterboxd"
+                    startImport={startLetterboxdImport}
+                    extraHint={tmdbHint}
                 />
             </div>
         </div>

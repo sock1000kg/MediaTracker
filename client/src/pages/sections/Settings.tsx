@@ -42,7 +42,7 @@ export default function Settings() {
                 {activeTab === "user" && <UserSettingsForm />}
                 {activeTab === "tags" && <TagsManagementForm />}
                 {activeTab === "apiKeys" && <ApiKeyForm />}
-                {activeTab === "imports" && <ImportsForm />}
+                {activeTab === "imports" && <ImportsForm onNavigateToApiKeys={() => setActiveTab("apiKeys")} />}
             </div>
         </div>
     )

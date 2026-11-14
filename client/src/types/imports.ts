@@ -11,4 +11,5 @@ export type ImportResult = {
   failures: ImportFailure[] // Return a list of specific errors (capped by the server)
   failuresTruncated?: number // failures dropped from the list
   notes?: string[]
+  unmatched?: number
 }
