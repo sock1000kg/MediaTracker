@@ -2,7 +2,7 @@
 
 Base URL: the API origin (e.g. `http://localhost:5000`). Bodies are JSON unless noted otherwise.
 
-**Authentication:** every endpoint except `/auth/*` and `/healthz` needs `Authorization: Bearer <access token>`.
+**Authentication:** every endpoint except `/auth/*`, `/healthz`, and `/config` needs `Authorization: Bearer <access token>`.
 - Access tokens last 15 minutes.
 - The refresh token is a rotating, HttpOnly `refreshToken` cookie (7 days). Call `POST /auth/refresh` with credentials included to get a new access token.
 
@@ -21,6 +21,12 @@ Base URL: the API origin (e.g. `http://localhost:5000`). Bodies are JSON unless 
 | Method | Path | Description |
 | --- | --- | --- |
 | GET | `/healthz` | Liveness and database check |
+
+## Config
+
+| Method | Path | Description |
+| --- | --- | --- |
+| GET | `/config` | Public application configuration and client limits (`Cache-Control: public, max-age=3600`). Returns `{ limits: { notes, tags, collections, imports, search } }`. |
 
 ## Auth
 
