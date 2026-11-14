@@ -5,7 +5,7 @@
 
 A self-hostable media journal: books, music, anime, manga, movies and games, all in one place. Search a catalogue, log it, rate it and keep notes, or add your own media.
 
-**Live demo:** <https://media-tracker.sock1000kg.io.vn/> (username `demo`, password `Demo123!!!`; the demo account is reset weekly).
+**Live demo:** <https://media-tracker.sock1000kg.io.vn/> (username `demo`, password `Demo123!!!`; the demo account is reset weekly). It features sample logs across all media types (books, music, anime, manga, movies, games) with real covers, metadata, personal tags, and ranked collections.
 
 ## Features
 
@@ -13,14 +13,18 @@ A self-hostable media journal: books, music, anime, manga, movies and games, all
 - **Search built in:**
   - Books ([Open Library](https://openlibrary.org)), with author, subject, language, year and sort filters
   - Music ([Last.fm](https://www.last.fm/api)): albums and tracks, with tags saved as categories
-  - Anime and manga ([Jikan](https://jikan.moe) / MyAnimeList)
+  - Anime and manga ([AniList](https://anilist.co))
   - Movies ([TMDB](https://www.themoviedb.org/documentation/api))
   - Games ([RAWG](https://rawg.io/apidocs))
-- **Goodreads import:** upload your Goodreads CSV export; it runs as a background job with live progress.
+- **Stats:** activity over time, ratings, top categories, top tags and creators, and type-specific stats.
+- **Personal tags:** private tags per user with autocomplete, set semantics on logs, and management in Settings.
+- **Collections:** private collections (ordered lists) with optional ranking, cover mosaics, and accessible reordering controls.
+- **Goodreads import:** upload your Goodreads CSV export; it runs as a background job with live progress; re-importing a Goodreads export fills in missing details.
+- **MyAnimeList import:** upload your MAL anime or manga export (`.xml` or `.xml.gz`); it runs as a background job with live progress, resolves covers and metadata via AniList, imports bare media when unresolved, and fills gaps on re-import.
 - **Browse your way:**
   - list or cover-grid views
   - grouping by month or type, with Load more / Load all per group
-  - filters by type, status, category, source and rating
+  - filters by type, status, category, tag, source and rating
   - multi-key sorting
 - **Settings:** profile and password, preferences synced across devices, JSON/CSV export, account deletion.
 - **A quiet, warm UI:** light and dark themes, plus a small blue mascot who has opinions. Design notes are in [`client/DESIGN.md`](client/DESIGN.md).
@@ -43,8 +47,8 @@ You need **Docker** with Docker Compose, plus **Node.js 22** if you want to run 
 ```bash
 git clone https://github.com/sock1000kg/MediaTracker.git
 cd MediaTracker
-cp .env.example .env    # then fill in the values, see docs/configuration.md
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+cp server/.env.example server/.env    # then fill in the values, see docs/configuration.md
+docker compose --env-file server/.env -f docker-compose.yml -f docker-compose.dev.yml up --build
 ```
 
 | Service | URL |
@@ -100,11 +104,11 @@ Suggestions are welcome: please open an issue.
 
 ## Contributing
 
-Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
+Issues and pull requests are welcome. See [docs/setup.md](docs/setup.md) for running the app, linting, and running tests.
 
 ## Acknowledgements
 
-Search data comes from Open Library, Last.fm, Jikan/MyAnimeList, RAWG and TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.
+Search data comes from Open Library, Last.fm, AniList, RAWG and TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.
 
 ## License
 

@@ -8,12 +8,9 @@
 ## 1. Configure
 
 ```bash
-cp .env.example .env                    # Docker Compose and the backend
-cp .env.test.example .env.test          # test database container (docker-compose.test-db.yml)
-cp .env.test.example server/.env.test   # Jest (read from server/)
+cp server/.env.example server/.env          # Docker Compose and the backend
+cp server/.env.test.example server/.env.test # Jest and test database
 ```
-
-Keep the two `.env.test` copies in sync: the test containers get their credentials from the root one, and Jest connects using `server/.env.test`.
 
 Fill in the values. Every variable is described in [configuration.md](configuration.md). At minimum you need:
 - the Postgres credentials and `DATABASE_URL`
@@ -27,7 +24,7 @@ Fill in the values. Every variable is described in [configuration.md](configurat
 From the repository root:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+docker compose --env-file server/.env -f docker-compose.yml -f docker-compose.dev.yml up --build
 ```
 
 (or `npm run dev:start` from `server/`)
@@ -42,12 +39,12 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 
 On start, the backend runs `prisma migrate deploy` and then the seed, which creates:
 - the `system` user and the built-in media types
-- the `demo` user, with sample logs from `server/src/tests/goodreads_seed.csv`
+- the `demo` user, with sample logs from `server/src/tests/goodreads_seed.csv` and the committed demo media fixture
 
 Stop it with:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml down
+docker compose --env-file server/.env -f docker-compose.yml -f docker-compose.dev.yml down
 ```
 
 ### Port 5173 already in use?
@@ -66,12 +63,10 @@ services:
 ```
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml -f compose.local.yml up --build
+docker compose --env-file server/.env -f docker-compose.yml -f docker-compose.dev.yml -f compose.local.yml up --build
 ```
 
 ## 3. API keys for search
-
-Books (Open Library) and anime/manga (Jikan) work without keys. Music, movies and games need each user's own free key, added in the app under **Settings → API Keys**:
 
 | Search | Service | Get a key |
 | --- | --- | --- |
@@ -79,7 +74,18 @@ Books (Open Library) and anime/manga (Jikan) work without keys. Music, movies an
 | Movies | TMDB (API key or v4 read access token) | <https://www.themoviedb.org/settings/api> |
 | Games | RAWG | <https://rawg.io/apidocs> |
 
-Setting `LASTFM_API_KEY`, `TMDB_API_KEY` or `RAWG_API_KEY` in `.env` gives the demo user a key when the seed runs.
+Setting `LASTFM_API_KEY`, `TMDB_API_KEY` or `RAWG_API_KEY` in `server/.env` gives the demo user a key when the seed runs.
+
+### Demo media fixture
+
+The demo account seeds from a committed offline fixture (`server/src/tests/fixtures/demo/demo-media.json`), so seeding never makes provider calls. To re-fetch and rebuild the fixture:
+
+```bash
+cd server
+npm run build-demo-fixture
+```
+
+This requires `LASTFM_API_KEY`, `TMDB_API_KEY` (a TMDB API Read Access Token) and `RAWG_API_KEY` in `server/.env`.
 
 ## 4. Run the tests
 
@@ -91,13 +97,23 @@ npm run db-test:start   # Postgres on localhost:5433, Valkey on localhost:6380
 npm test                # builds, then runs Jest (unit + integration) with coverage
 ```
 
-- `server/.env.test` must point `DATABASE_URL` at a database whose name contains `_test`. The setup refuses anything else, because it **resets that database** before running.
+- The test suite never drops databases: it deploys migrations once (`prisma migrate deploy` in `globalSetup`), then resets data between files using fast SQL `TRUNCATE ... RESTART IDENTITY CASCADE` and in-process seeding.
+- A test database guard (`assertSafeTestDatabase`) strictly verifies that `NODE_ENV=test`, `DATABASE_URL` is set, the database name ends with `_test`, and the host is local (`localhost`, `127.0.0.1`, `::1`, `postgres`, `database_test`). Running against a remote host requires explicitly setting `ALLOW_REMOTE_TEST_DB=1`.
 - The BullMQ queue contract tests run only when `REDIS_URL_TEST` is set (e.g. `REDIS_URL_TEST=redis://localhost:6380`). Without it they're skipped, and the in-memory driver is tested instead.
+
+### Client tests
+
+The client uses [Vitest](https://vitest.dev) for its pure helpers and the API wrapper. It needs no database or browser:
+
+```bash
+cd client
+npm test    # vitest run; tests are src/**/*.test.ts, with the "@/" alias
+```
 
 Shut the test stack down with:
 
 ```bash
-docker compose -f docker-compose.test-db.yml down -v
+docker compose --env-file server/.env.test -f docker-compose.test-db.yml down -v
 ```
 
 Other checks (CI runs these too):
@@ -110,7 +126,7 @@ cd client && npm run lint && npm run build
 ## 5. Production-like build
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build
+docker compose --env-file server/.env -f docker-compose.yml -f docker-compose.prod.yml up --build
 ```
 
 (or `npm run prod:start` from `server/`)
@@ -122,7 +138,7 @@ This builds the production images: the frontend is served by nginx on <http://lo
 You can run the backend and frontend on the host:
 
 ```bash
-cd server && npm ci && npx prisma migrate deploy && npm run seed && npm run dev
+cd server && npm ci && npx prisma generate && npx prisma migrate deploy && npm run seed && npm run dev
 cd client && npm ci && VITE_API_URL=http://localhost:5000 npm run dev
 ```
 

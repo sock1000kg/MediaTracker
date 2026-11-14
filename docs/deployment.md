@@ -24,17 +24,21 @@
 ## Running in production
 
 1. Build or pull the images. Set `VITE_API_URL` to your public API URL when building the frontend.
-2. Provide `.env` with `NODE_ENV=production`, strong secrets, `ALLOWED_CORS` set to your frontend origin, and the database credentials. See [configuration.md](configuration.md).
-3. `docker compose -f docker-compose.yml up -d` starts the backend, PostgreSQL and Valkey. Put the frontend (or any static host serving the built client) and the API behind your reverse proxy with HTTPS. Refresh cookies are `Secure` in production.
+2. Provide `server/.env` with `NODE_ENV=production`, strong secrets, `ALLOWED_CORS` set to your frontend origin, and the database credentials. See [configuration.md](configuration.md).
+3. `docker compose --env-file server/.env -f docker-compose.yml up -d` starts the backend, PostgreSQL and Valkey. Put the frontend (or any static host serving the built client) and the API behind your reverse proxy with HTTPS. Refresh cookies are `Secure` in production.
 4. Back up the `postgres_data` volume. The `valkey_data` volume only holds queue state (jobs and schedules), and losing it just drops pending jobs.
+
+**Kubernetes note:** In Kubernetes deployments, environment variables are mounted from Secrets/ConfigMaps rather than env files. A future demo-reset Kubernetes Job can reuse the backend deployment's `envFrom`.
 
 **Scaling the worker:** by default the job worker runs inside the API process. To run it separately, start a second container from the backend image with `QUEUE_WORKER=true`, and set `QUEUE_WORKER=false` on the API containers.
 
 ## Continuous integration
 
 `.github/workflows/ci.yml` runs on every pull request, and on pushes to `main` that touch `server/` or `client/`:
-1. **Lint and type-check:** `client/` and `server/`.
-2. **Security audit:** `npm audit --audit-level=high` for both images.
+1. **Lint and type-check:** `client/` and `server/`. The client job also runs its Vitest suite (`npm test`).
+2. **Security audit** for both images:
+   - **Blocking:** `npm audit --omit=dev --audit-level=high` fails the job on a high or critical advisory in a production dependency. `npm audit` reads `package-lock.json`, not the installed tree, so `--omit=dev` is what limits the scope to production packages.
+   - **Non-blocking:** a second step (`continue-on-error: true`) runs the full `npm audit`, including dev dependencies and every severity, so it stays visible in the logs.
 3. **Tests:** a PostgreSQL sidecar and a Valkey sidecar. It applies migrations, then runs Jest/Supertest. The BullMQ contract tests run against Valkey through `REDIS_URL_TEST`.
 
 ## Continuous delivery
