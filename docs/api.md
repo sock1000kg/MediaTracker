@@ -150,7 +150,8 @@ The `metadata` field varies by provider. For example: `kind` (`album` / `track` 
 | --- | --- | --- |
 | POST | `/imports/goodreads` | `multipart/form-data` with `file` (a Goodreads CSV export, max 10 MB). It's checked up front, then queued: returns `202 { jobId }`. If an import is already running, returns `409 { message, jobId }`. Not available on the demo account. |
 | POST | `/imports/mal` | `multipart/form-data` with `file` (a MyAnimeList anime or manga export in `.xml` or `.xml.gz`, max 10 MB). It's checked up front, then queued: returns `202 { jobId }`. If an import is already running, returns `409 { message, jobId }`. Not available on the demo account. |
-| GET | `/jobs?name=import.goodreads&limit=10` | Your recent jobs, newest first (`limit` 1–20). Filter by `import.goodreads` or `import.mal`. |
+| POST | `/imports/letterboxd` | `multipart/form-data` with `file` (a Letterboxd data export ZIP, max 10 MB). It's checked up front, then queued: returns `202 { jobId }`. If an import is already running, returns `409 { message, jobId }`. Not available on the demo account. |
+| GET | `/jobs?name=import.goodreads&limit=10` | Your recent jobs, newest first (`limit` 1–20). Filter by `import.goodreads`, `import.mal`, or `import.letterboxd`. |
 | GET | `/jobs/:id` | `{ id, name, status, progress, result, error, createdAt, finishedAt }`. `status` is `queued`, `active`, `completed` or `failed`, and `progress` is 0–100. Other users' jobs return `404`. |
 
-A finished import's `result` is `{ imported, updated, skipped, failures: [{ row, title, reason }], failuresTruncated, notes }`. Failures are capped at 500. Entries that had no AniList match are imported as bare MAL entries without covers and reported in `notes`.
+A finished import's `result` is `{ imported, updated, skipped, failures: [{ row, title, reason }], failuresTruncated, notes, unmatched }`. Failures are capped at 500. Entries that had no AniList match are imported as bare MAL entries without covers and reported in `notes`. Letterboxd films that couldn't be matched to TMDB are imported by title and reported in `unmatched` and `notes`.
