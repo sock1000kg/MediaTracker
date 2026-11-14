@@ -153,7 +153,7 @@ export function TagsManagementForm() {
         </div>
 
         {isLoading && (
-          <p className="text-sm text-muted-foreground animate-pulse">Loading tags…</p>
+          <p className="font-hand text-lg text-muted-foreground animate-pulse">Loading tags…</p>
         )}
 
         {!isLoading && tags.length === 0 && (

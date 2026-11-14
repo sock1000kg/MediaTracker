@@ -103,7 +103,7 @@ export default function MediaTypesSection() {
         </Button>
       </div>
 
-      {isPending && <p className="text-muted-foreground m-4 animate-pulse">{loadingLine}</p>}
+      {isPending && <p className="font-hand text-lg text-muted-foreground m-4 animate-pulse">{loadingLine}</p>}
 
       {/* Error message */}
       {error && (

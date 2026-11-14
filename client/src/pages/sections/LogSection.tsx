@@ -314,7 +314,7 @@ export default function LogsSection() {
 
       {/* List Content */}
       <div className="relative flex-1 overflow-y-auto min-h-0 scrollbar-hide">
-        {isPending && <p className="text-muted-foreground m-4 animate-pulse">{loadingLine}</p>}
+        {isPending && <p className="font-hand text-lg text-muted-foreground m-4 animate-pulse">{loadingLine}</p>}
         {error && <p className="mt-2 text-center text-sm m-4 text-destructive">{error.message}</p>}
 
         {!isPending && !(logs.length > 0) && (

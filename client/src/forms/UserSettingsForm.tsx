@@ -644,7 +644,7 @@ export function UserSettingsForm() {
   const [loadingLine] = useState(() => pickLoadingLine())
   const { data: me, error, isPending, refetch, isFetching } = useQuery(fetchMeQueryOptions())
 
-  if (isPending) return <p className="text-muted-foreground animate-pulse">{loadingLine}</p>
+  if (isPending) return <p className="font-hand text-lg text-muted-foreground animate-pulse">{loadingLine}</p>
 
   if (error || !me) {
     return (

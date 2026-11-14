@@ -282,7 +282,7 @@ export default function StatsSection() {
       }
       contentClassName="overflow-x-hidden scrollbar-hide"
     >
-      {isPending && <p className="animate-pulse text-muted-foreground">{loadingLine}</p>}
+      {isPending && <p className="font-hand text-lg animate-pulse text-muted-foreground">{loadingLine}</p>}
       {error && <p className="text-center text-sm text-destructive">{error.message}</p>}
 
       {!isPending && !hasLogs && (

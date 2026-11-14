@@ -303,7 +303,7 @@ export default function MediasSection() {
         </div>
       </div>
 
-      {pending && <p className="text-muted-foreground m-4 animate-pulse">{loadingLine}</p>}
+      {pending && <p className="font-hand text-lg text-muted-foreground m-4 animate-pulse">{loadingLine}</p>}
 
       {/* Error message */}
       {errorMessage && (

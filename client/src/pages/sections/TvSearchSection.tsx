@@ -76,7 +76,7 @@ function TvShowItem({ show, view, logs, onLog }: TvShowItemProps) {
         Seasons
       </h4>
       {seasonsLoading && (
-        <p className="animate-pulse text-xs text-muted-foreground">Loading seasons...</p>
+        <p className="animate-pulse font-hand text-base text-muted-foreground">Loading seasons...</p>
       )}
       {seasonsError && (
         <p className="text-xs text-destructive">Failed to load seasons.</p>
@@ -455,7 +455,7 @@ export function TvSearchSection() {
 
       {/* Results */}
       <div className="p-4 flex-1 overflow-y-auto min-h-0 scrollbar-hide border-t border-border">
-        {isLoading && <p className="animate-pulse">{loadingLine}</p>}
+        {isLoading && <p className="font-hand text-lg animate-pulse">{loadingLine}</p>}
         {error && (error.message === "Missing TV API Key" || error.message === "Missing Movie API Key") && (
           <EmptyState line="You'll need a TMDB key first.">
             <p>Add one under Settings → API Keys, then search again.</p>

@@ -17,6 +17,8 @@ export default defineConfig({
     environment: "node",
     include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
     setupFiles: ["src/test/setup.ts"],
+    // Each jsdom worker takes a few hundred MB; the default (cores - 1) can exhaust WSL memory.
+    maxWorkers: 4,
   },
   server: {
     host: '0.0.0.0',

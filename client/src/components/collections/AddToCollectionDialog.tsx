@@ -98,7 +98,7 @@ export function AddToCollectionDialog({ log, open, onOpenChange }: AddToCollecti
 
         <div className="max-h-60 overflow-y-auto space-y-2 py-2">
           {isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading collections…</p>
+            <p className="font-hand text-lg text-muted-foreground">Loading collections…</p>
           ) : collections.length === 0 ? (
             <p className="text-sm text-muted-foreground">No collections yet. Create one below.</p>
           ) : (

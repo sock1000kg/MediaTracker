@@ -230,7 +230,7 @@ export function MovieSearchSection() {
 
             {/* Results */}
             <div className="p-4 flex-1 overflow-y-auto min-h-0 scrollbar-hide border-t border-border">
-                {isLoading && <p className="animate-pulse">{loadingLine}</p>}
+                {isLoading && <p className="font-hand text-lg animate-pulse">{loadingLine}</p>}
                 {error && error.message === "Missing Movie API Key" && (
                     <EmptyState line="You'll need a TMDB key first.">
                         <p>Add one under Settings → API Keys, then search again.</p>

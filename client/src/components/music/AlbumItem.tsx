@@ -145,7 +145,7 @@ export function AlbumItem({ album, view, logs, onLog, onMore, onErrorToast }: Al
       </div>
 
       {tracksLoading && (
-        <p className="animate-pulse text-xs text-muted-foreground">Loading tracks...</p>
+        <p className="animate-pulse font-hand text-base text-muted-foreground">Loading tracks...</p>
       )}
 
       {tracksError && (

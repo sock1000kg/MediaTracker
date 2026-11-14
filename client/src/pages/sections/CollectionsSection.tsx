@@ -60,6 +60,7 @@ export default function CollectionsSection() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [addLogsDialogOpen, setAddLogsDialogOpen] = useState(false)
   const [announcement, setAnnouncement] = useState("")
+  const [loadingLine] = useState(() => pickLoadingLine())
 
   // Log editing & deleting
   const [openLogDialog, setOpenLogDialog] = useState<DialogName>(null)
@@ -294,7 +295,7 @@ export default function CollectionsSection() {
           }
           title="Collection"
         >
-          <p className="text-sm text-muted-foreground">{pickLoadingLine()}</p>
+          <p className="font-hand text-lg text-muted-foreground animate-pulse">{loadingLine}</p>
         </PageShell>
       )
     }
@@ -603,7 +604,7 @@ export default function CollectionsSection() {
       {liveRegion}
 
       {isListLoading ? (
-        <p className="text-sm text-muted-foreground">{pickLoadingLine()}</p>
+        <p className="font-hand text-lg text-muted-foreground animate-pulse">{loadingLine}</p>
       ) : collections.length === 0 ? (
         <EmptyState line={EMPTY_LINES.noCollections} />
       ) : (

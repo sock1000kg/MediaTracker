@@ -249,7 +249,7 @@ export function AnimeSearchSection() {
 
             {/* Results */}
             <div className="p-4 flex-1 overflow-y-auto min-h-0 scrollbar-hide border-t border-border">
-                {isLoading && <p className="animate-pulse">{loadingLine}</p>}
+                {isLoading && <p className="font-hand text-lg animate-pulse">{loadingLine}</p>}
                 {error && 
                     <p className="text-destructive">
                         {error.message}
