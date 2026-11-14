@@ -13,9 +13,11 @@ import {
 } from "@/components/ui/dialog"
 import EmptyState from "@/components/EmptyState"
 import { normalizeTagName } from "@/lib/tagHelpers"
+import { useLimits } from "@/hooks/useLimits"
 
 export function TagsManagementForm() {
   const queryClient = useQueryClient()
+  const limits = useLimits()
 
   const { data: tags = [], isLoading } = useQuery({
     queryKey: ["tags"],
@@ -82,9 +84,9 @@ export function TagsManagementForm() {
 
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    const norm = normalizeTagName(newTagName)
+    const norm = normalizeTagName(newTagName, limits.tags.maxLength)
     if (!norm) {
-      setCreateError("Tag must be 1–40 characters without commas")
+      setCreateError(`Tag must be 1–${limits.tags.maxLength} characters without commas`)
       return
     }
     setCreateError(null)
@@ -104,9 +106,9 @@ export function TagsManagementForm() {
   }
 
   const handleSaveRename = (tagId: number) => {
-    const norm = normalizeTagName(editingName)
+    const norm = normalizeTagName(editingName, limits.tags.maxLength)
     if (!norm) {
-      setRenameError("Tag must be 1–40 characters without commas")
+      setRenameError(`Tag must be 1–${limits.tags.maxLength} characters without commas`)
       return
     }
     setRenameError(null)

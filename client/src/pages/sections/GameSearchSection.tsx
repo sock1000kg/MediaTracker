@@ -2,6 +2,7 @@ import { ProviderAttribution } from "@/components/search/ProviderAttribution"
 import { PageBackdrop } from "@/components/media-view/PageBackdrop"
 import { effectiveHideLogged } from "@/lib/preferences"
 import { usePreferences } from "@/hooks/usePreferences"
+import { useLimits } from "@/hooks/useLimits"
 import EmptyState from "@/components/EmptyState"
 import { EMPTY_LINES, pickLoadingLine } from "@/lib/whimsy"
 import { Search } from "lucide-react"
@@ -69,6 +70,7 @@ export function GameSearchSection() {
     }
 
     const queryClient = useQueryClient()
+    const limits = useLimits()
 
     //Infinite search
     const {
@@ -204,7 +206,7 @@ export function GameSearchSection() {
                     <Input
                         placeholder="Type a game title..."
                         value={inputValue}
-                        maxLength={100}
+                        maxLength={limits.search.queryMaxLength}
                         onChange={(e) => setInputValue(e.target.value)}
                         onKeyDown={(e) => { 
                             if(e.key === "Enter") {

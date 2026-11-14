@@ -4,9 +4,6 @@ import { aspectForMedia, capitalise, coverToken, type CoverAspect } from "./medi
 export { coverToken }
 export type { CoverAspect }
 
-// Server caps log notes at the same length (server/src/utilities.ts MAX_NOTES_LENGTH).
-export const MAX_NOTES_LENGTH = 50_000
-
 export type GroupMode = "month" | "type" | "none"
 export interface LogGroup { key: string; label: string | null; logs: Log[] }
 

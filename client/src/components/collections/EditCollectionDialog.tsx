@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { normalizeCollectionName } from "@/lib/collectionHelpers"
+import { useLimits } from "@/hooks/useLimits"
 import type { CreateCollectionInput } from "@/types/mainTypes"
 
 interface EditCollectionDialogProps {
@@ -33,6 +34,7 @@ export function EditCollectionDialog({
   submitText,
   onSubmit,
 }: EditCollectionDialogProps) {
+  const limits = useLimits()
   const [name, setName] = useState(initialValues?.name ?? "")
   const [description, setDescription] = useState(initialValues?.description ?? "")
   const [ranked, setRanked] = useState(initialValues?.ranked ?? false)
@@ -50,9 +52,9 @@ export function EditCollectionDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const norm = normalizeCollectionName(name)
+    const norm = normalizeCollectionName(name, limits.collections.nameMaxLength)
     if (!norm) {
-      setError("Please enter a valid collection name (1-80 characters)")
+      setError(`Please enter a valid collection name (1-${limits.collections.nameMaxLength} characters)`)
       return
     }
 
@@ -89,7 +91,7 @@ export function EditCollectionDialog({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Favorite Sci-Fi"
-              maxLength={80}
+              maxLength={limits.collections.nameMaxLength}
               required
             />
           </div>
@@ -101,7 +103,7 @@ export function EditCollectionDialog({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="A few words about this list…"
-              maxLength={1000}
+              maxLength={limits.collections.descMaxLength}
               rows={3}
               className="w-full rounded-md border border-input bg-card px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
             />

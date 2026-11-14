@@ -11,6 +11,7 @@ import {
   removeCollectionItem,
 } from "@/api/collections"
 import { normalizeCollectionName } from "@/lib/collectionHelpers"
+import { useLimits } from "@/hooks/useLimits"
 import type { Log } from "@/types/mainTypes"
 
 interface AddToCollectionDialogProps {
@@ -21,6 +22,7 @@ interface AddToCollectionDialogProps {
 
 export function AddToCollectionDialog({ log, open, onOpenChange }: AddToCollectionDialogProps) {
   const queryClient = useQueryClient()
+  const limits = useLimits()
   const [newColName, setNewColName] = useState("")
   const [error, setError] = useState<string | null>(null)
 
@@ -75,9 +77,9 @@ export function AddToCollectionDialog({ log, open, onOpenChange }: AddToCollecti
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault()
-    const norm = normalizeCollectionName(newColName)
+    const norm = normalizeCollectionName(newColName, limits.collections.nameMaxLength)
     if (!norm) {
-      setError("Please enter a valid collection name (1-80 characters)")
+      setError(`Please enter a valid collection name (1-${limits.collections.nameMaxLength} characters)`)
       return
     }
     setError(null)
@@ -134,7 +136,7 @@ export function AddToCollectionDialog({ log, open, onOpenChange }: AddToCollecti
             value={newColName}
             onChange={(e) => setNewColName(e.target.value)}
             placeholder="New collection name…"
-            maxLength={80}
+            maxLength={limits.collections.nameMaxLength}
             className="flex-1"
             aria-label="New collection name"
           />

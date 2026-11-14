@@ -54,23 +54,23 @@ describe("collectionHelpers", () => {
 
   describe("normalizeCollectionName & collectionKey", () => {
     it("trims and collapses whitespace", () => {
-      expect(normalizeCollectionName("   Best   Sci-Fi   ")).toBe("Best Sci-Fi")
+      expect(normalizeCollectionName("   Best   Sci-Fi   ", 80)).toBe("Best Sci-Fi")
     })
 
     it("returns null for empty or whitespace-only", () => {
-      expect(normalizeCollectionName("")).toBeNull()
-      expect(normalizeCollectionName("   ")).toBeNull()
-      expect(normalizeCollectionName(null)).toBeNull()
+      expect(normalizeCollectionName("", 80)).toBeNull()
+      expect(normalizeCollectionName("   ", 80)).toBeNull()
+      expect(normalizeCollectionName(null, 80)).toBeNull()
     })
 
     it("returns null for names exceeding 80 chars", () => {
-      expect(normalizeCollectionName("x".repeat(81))).toBeNull()
-      expect(normalizeCollectionName("x".repeat(80))).toBe("x".repeat(80))
+      expect(normalizeCollectionName("x".repeat(81), 80)).toBeNull()
+      expect(normalizeCollectionName("x".repeat(80), 80)).toBe("x".repeat(80))
     })
 
     it("collectionKey converts to lowercase", () => {
-      expect(collectionKey("  Favorites  ")).toBe("favorites")
-      expect(collectionKey("")).toBe("")
+      expect(collectionKey("  Favorites  ", 80)).toBe("favorites")
+      expect(collectionKey("", 80)).toBe("")
     })
   })
 

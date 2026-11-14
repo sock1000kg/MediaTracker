@@ -1,5 +1,5 @@
 import type { Log, Media, LogStatus } from "@/types/mainTypes"
-import { MAX_NOTES_LENGTH } from "@/lib/logView"
+import { useLimits } from "@/hooks/useLimits"
 
 import {
   Select,
@@ -38,6 +38,7 @@ export function LogForm({
   setFormData,
   targetMedia,
 }: LogFormProps) {
+  const limits = useLimits()
   useEffect(() => { //edit mode's prefilling is handled in EntityDialog
     if (targetMedia && !formData.id && !formData.media) {
       // create mode: set the media to logForm
@@ -233,7 +234,7 @@ export function LogForm({
           onChange={(e) =>
             setFormData((prev) => ({ ...prev, notes: e.target.value }))
           }
-          maxLength={MAX_NOTES_LENGTH}
+          maxLength={limits.notes.maxLength}
           className="
             mt-1 block w-full h-40 rounded-md 
             border border-input bg-card 
@@ -243,7 +244,7 @@ export function LogForm({
           placeholder="Write your thoughts..."
         />
         <div className="text-right text-xs text-muted-foreground mt-1">
-          {(formData.notes?.length ?? 0)}/{MAX_NOTES_LENGTH}
+          {(formData.notes?.length ?? 0)}/{limits.notes.maxLength}
         </div>
       </label>
     </div>

@@ -1,5 +1,5 @@
 import type { Log, LogStatus } from "@/types/mainTypes"
-import { MAX_NOTES_LENGTH } from "@/lib/logView"
+import { useLimits } from "@/hooks/useLimits"
 import {
   Select,
   SelectContent,
@@ -37,6 +37,7 @@ export function MediaSearchLogForm({
   setFormData,
   targetMedia,
 }: MediaSearchLogFormProps) {
+  const limits = useLimits()
   // Track initial tags to send tags only when modified
   const initialTagsRef = useRef<string[] | null>(null)
   if (initialTagsRef.current === null) {
@@ -224,7 +225,7 @@ export function MediaSearchLogForm({
           onChange={(e) =>
             setFormData((prev) => ({ ...prev, notes: e.target.value }))
           }
-          maxLength={MAX_NOTES_LENGTH}
+          maxLength={limits.notes.maxLength}
           className="
             mt-1 block w-full h-40 rounded-md 
             border border-input bg-card 
@@ -234,7 +235,7 @@ export function MediaSearchLogForm({
           placeholder="Write your thoughts..."
         />
         <div className="text-right text-xs text-muted-foreground mt-1">
-          {(formData.notes?.length ?? 0)}/{MAX_NOTES_LENGTH}
+          {(formData.notes?.length ?? 0)}/{limits.notes.maxLength}
         </div>
       </label>
     </div>

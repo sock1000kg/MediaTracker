@@ -5,9 +5,8 @@ import { fetchTags } from "@/api/tags"
 import {
   normalizeTagName,
   tagKey,
-  MAX_TAGS_PER_LOG,
-  MAX_TAG_LENGTH,
 } from "@/lib/tagHelpers"
+import { useLimits } from "@/hooks/useLimits"
 
 interface TagInputProps {
   value: string[]
@@ -21,9 +20,12 @@ export function TagInput({
   value = [],
   onChange,
   disabled = false,
-  maxTags = MAX_TAGS_PER_LOG,
+  maxTags: propMaxTags,
   id: propId,
 }: TagInputProps) {
+  const limits = useLimits()
+  const maxTags = propMaxTags ?? limits.tags.maxPerLog
+  const maxTagLength = limits.tags.maxLength
   const autoId = useId()
   const inputId = propId || autoId
   const listboxId = `${inputId}-listbox`
@@ -82,14 +84,14 @@ export function TagInput({
   }, [])
 
   const commitTag = (rawName: string) => {
-    const norm = normalizeTagName(rawName)
+    const norm = normalizeTagName(rawName, maxTagLength)
     if (!norm) {
       if (rawName.includes(",")) {
         setError("Tags cannot contain commas")
-      } else if (rawName.length > MAX_TAG_LENGTH) {
-        setError(`Tag cannot exceed ${MAX_TAG_LENGTH} characters`)
+      } else if (rawName.length > maxTagLength) {
+        setError(`Tag cannot exceed ${maxTagLength} characters`)
       } else {
-        setError("Tag must be 1–40 characters without commas")
+        setError(`Tag must be 1–${maxTagLength} characters without commas`)
       }
       return
     }

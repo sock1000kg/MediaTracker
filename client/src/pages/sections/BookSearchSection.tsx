@@ -3,6 +3,7 @@ import { OPEN_LIBRARY_URL, OPEN_LIBRARY_ATTRIBUTION_TEXT } from "@/lib/bookForma
 import { PageBackdrop } from "@/components/media-view/PageBackdrop"
 import { effectiveHideLogged } from "@/lib/preferences"
 import { usePreferences } from "@/hooks/usePreferences"
+import { useLimits } from "@/hooks/useLimits"
 import EmptyState from "@/components/EmptyState"
 import { EMPTY_LINES, pickLoadingLine } from "@/lib/whimsy"
 import { Filter, Search, X } from "lucide-react"
@@ -108,6 +109,7 @@ export default function BooksSearchSection() {
     }
 
     const queryClient = useQueryClient()
+    const limits = useLimits()
 
     //Infinite search
     const {
@@ -254,7 +256,7 @@ export default function BooksSearchSection() {
                     <Input
                         placeholder="Type book name..."
                         value={inputValue}
-                        maxLength={100}
+                        maxLength={limits.search.queryMaxLength}
                         onChange={(e) => setInputValue(e.target.value)}
                         onKeyDown={(e) => { 
                             if(e.key === "Enter") {
@@ -294,12 +296,12 @@ export default function BooksSearchSection() {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-4 bg-background border-b border-border">
                     <div className="grid gap-1">
                         <Label htmlFor="book-filter-author">Author</Label>
-                        <Input id="book-filter-author" maxLength={100} value={draftFilters.author ?? ""}
+                        <Input id="book-filter-author" maxLength={limits.search.queryMaxLength} value={draftFilters.author ?? ""}
                             onChange={(e) => setDraftFilters(f => ({ ...f, author: e.target.value }))} />
                     </div>
                     <div className="grid gap-1">
                         <Label htmlFor="book-filter-subject">Subject</Label>
-                        <Input id="book-filter-subject" maxLength={100} value={draftFilters.subject ?? ""}
+                        <Input id="book-filter-subject" maxLength={limits.search.queryMaxLength} value={draftFilters.subject ?? ""}
                             onChange={(e) => setDraftFilters(f => ({ ...f, subject: e.target.value }))} />
                     </div>
                     <div className="grid gap-1">

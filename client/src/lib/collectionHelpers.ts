@@ -1,6 +1,3 @@
-export const MAX_COLLECTION_NAME_LENGTH = 80
-export const MAX_COLLECTION_DESC_LENGTH = 1000
-
 /**
  * Moves an item in an array from `fromIndex` to `toIndex`.
  * Returns a new array. If indices are out of range or equal, returns a shallow copy.
@@ -40,18 +37,18 @@ export function buildOrderPayload<
  * Normalizes a collection name:
  * - collapses inner whitespace
  * - trims
- * Valid names are 1–80 characters.
+ * Valid names are 1 to maxLength characters.
  * Returns null if invalid.
  */
-export function normalizeCollectionName(raw: unknown): string | null {
+export function normalizeCollectionName(raw: unknown, maxLength: number): string | null {
   if (typeof raw !== "string") return null
   const s = raw.trim().replace(/\s+/g, " ")
-  if (s.length < 1 || s.length > MAX_COLLECTION_NAME_LENGTH) return null
+  if (s.length < 1 || s.length > maxLength) return null
   return s
 }
 
-export function collectionKey(name: string): string {
-  const norm = normalizeCollectionName(name)
+export function collectionKey(name: string, maxLength: number): string {
+  const norm = normalizeCollectionName(name, maxLength)
   return norm ? norm.toLowerCase() : ""
 }
 

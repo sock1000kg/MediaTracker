@@ -153,7 +153,26 @@ async function errorMessageFrom(res: Response): Promise<string> {
   return (await errorFrom(res)).message
 }
 
-export async function apiFetch<T>(url: string, options: RequestInit = {}): Promise<T> {
+export type ApiFetchOptions = RequestInit & {
+  auth?: boolean
+}
+
+/** Fetches a public unauthenticated endpoint without checking or sending access tokens. */
+export async function publicFetch<T>(url: string, options: RequestInit = {}): Promise<T> {
+  const headers = new Headers(options.headers || {})
+  if (!headers.has("Content-Type") && options.body && !(options.body instanceof FormData)) {
+    headers.set("Content-Type", "application/json")
+  }
+  const res = await fetch(`${API_BASE}${url}`, { ...options, headers })
+  if (!res.ok) throw await errorFrom(res)
+  if (res.status === 204) return {} as T
+  return await res.json()
+}
+
+export async function apiFetch<T>(url: string, options: ApiFetchOptions = {}): Promise<T> {
+  if (options.auth === false) {
+    return publicFetch<T>(url, options)
+  }
   try {
     const res = await apiFetchRaw(url, options)
 
