@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 import { searchService } from "@/services/search/searchService.js"
 import { sanitizeQuery } from '@/utilities.js'
+import { LIMITS } from '@/config/limits.js'
 import { animeSearchQuerySchema, mangaSearchQuerySchema } from '@/schemas/search/animeSchemas.js'
 import { movieSearchQuerySchema } from '@/schemas/search/movieSchemas.js'
 import { tvSearchQuerySchema } from '@/schemas/search/tvSchemas.js'
@@ -39,6 +40,9 @@ export const searchAlbums = async (req: Request, res: Response, next: NextFuncti
     sanitizeQuery(q)
     if (!q) {
         return res.status(400).json({ message: "Missing query" })
+    }
+    if (q.length > LIMITS.search.queryMaxLength) {
+        return res.status(400).json({ message: `Search query must be at most ${LIMITS.search.queryMaxLength} characters` })
     }
 
     const page = parseInt(req.query.page as string) || 1
@@ -83,6 +87,9 @@ export const searchTracks = async (req: Request, res: Response, next: NextFuncti
     sanitizeQuery(q)
     if (!q) {
         return res.status(400).json({ message: "Missing query" })
+    }
+    if (q.length > LIMITS.search.queryMaxLength) {
+        return res.status(400).json({ message: `Search query must be at most ${LIMITS.search.queryMaxLength} characters` })
     }
 
     const page = parseInt(req.query.page as string) || 1

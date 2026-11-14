@@ -1,11 +1,12 @@
 import { z } from "zod"
 import { displayNameSchema, passwordSchema } from "@/schemas/authSchemas.js"
+import { LIMITS } from "@/config/limits.js"
 
 // Mirrors SortField in client/src/types/sort.ts
 export const SORT_FIELDS = ["title", "creator", "rating", "status", "date", "pageCount", "categories"] as const
 const TABS = ["logs", "medias", "collections", "mediaTypes", "stats", "settings", "bookSearch", "musicSearch", "animeSearch", "movieSearch", "tvSearch", "gameSearch"] as const
 const THEMES = ["light", "dark", "system"] as const
-export const MAX_PREFS_BYTES = 4096
+export const MAX_PREFS_BYTES = LIMITS.prefs.maxBytes
 
 export const updateProfileSchema = z.object({ displayName: displayNameSchema }).strict()
 

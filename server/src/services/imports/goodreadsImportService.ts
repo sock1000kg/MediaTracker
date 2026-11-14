@@ -13,6 +13,8 @@ import { openLibraryService } from "../search/openLibrarySearchService.js"
 import { executeBatchImport, BatchRowItem } from "./batchWrite.js"
 import { findMediaByExternalIds, ExternalIdKey } from "@/repositories/mediaRepository.js"
 
+import { LIMITS } from "@/config/limits.js"
+
 // Helpers for preparing rich or unrich data
 type BookEnrichmentData = {
     description: string | null
@@ -20,7 +22,7 @@ type BookEnrichmentData = {
     metadata: BookMetadata
 }
 
-export const MAX_IMPORT_FAILURES = 500
+export const MAX_IMPORT_FAILURES = LIMITS.imports.maxFailures
 
 export type ImportProgressCallback = (processed: number, total: number) => Promise<void> | void
 

@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { LIMITS } from "@/config/limits.js"
 
 export const ANIME_TYPES = ["tv", "movie", "ova", "special", "ona", "music"] as const
 export const MANGA_TYPES = ["manga", "novel", "lightnovel", "oneshot", "manhwa", "manhua"] as const
@@ -136,7 +137,7 @@ const baseQuery = {
     q: z.string("Missing query")
         .trim()
         .min(1, "Missing query")
-        .max(100, "Search query must be at most 100 characters"),
+        .max(LIMITS.search.queryMaxLength, `Search query must be at most ${LIMITS.search.queryMaxLength} characters`),
     page: z.preprocess(emptyToUndefined, z.coerce.number().int().positive().default(1)),
     sort: z.preprocess(emptyToUndefined, z.enum(ANIME_SORTS).default("relevance")),
 }

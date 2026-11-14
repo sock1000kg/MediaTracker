@@ -2,6 +2,7 @@ import '@/env.js'
 import { Prisma } from "@/db.js"
 import { ZodSchema, ZodError } from "zod"
 import crypto from "crypto"
+import { LIMITS } from "@/config/limits.js"
 
 // USERS
 // password strength check
@@ -56,7 +57,7 @@ export function sanitizeRating(rating: number | string | undefined | null): numb
 }
 
 // Long enough for imported reviews (Goodreads, Letterboxd) to survive whole. Keep in sync with client/src/lib/logView.ts.
-export const MAX_NOTES_LENGTH = 50_000
+export const MAX_NOTES_LENGTH = LIMITS.notes.maxLength
 
 // Sanitize notes: trim whitespace, limit length to MAX_NOTES_LENGTH chars
 export function sanitizeNotes(notes: string | undefined | null): string | null{
@@ -173,7 +174,7 @@ export function sanitizeSourceId(id: string | undefined | null): string | null {
 }
 
 // Long enough for a TMDB v4 read access token (a ~240-270 char JWT)
-export const MAX_API_KEY_LENGTH = 512
+export const MAX_API_KEY_LENGTH = LIMITS.apiKeys.maxLength
 
 // Sanitize Api Key: trim; keys longer than MAX_API_KEY_LENGTH are rejected (null), never truncated
 export function sanitizeApiKey(key: string | undefined | null): string | null {
@@ -208,7 +209,7 @@ export async function fetchAndParse<T>(
 export function sanitizeQuery(query: string | undefined | null): string | null {
     if (!query) return null
 
-    query = String(query).trim().slice(0, 100)
+    query = String(query).trim().slice(0, LIMITS.search.queryMaxLength)
     if(query === "") return null
 
     return query
@@ -356,9 +357,9 @@ export function toDayPrecision(val: unknown): Date | null {
 }
 
 // TAGS
-export const MAX_TAG_LENGTH = 40
-export const MAX_TAGS_PER_LOG = 20
-export const MAX_TAGS_PER_USER = 500
+export const MAX_TAG_LENGTH = LIMITS.tags.maxLength
+export const MAX_TAGS_PER_LOG = LIMITS.tags.maxPerLog
+export const MAX_TAGS_PER_USER = LIMITS.tags.maxPerUser
 
 /**
  * Normalizes a tag name:
@@ -385,10 +386,10 @@ export function tagKey(name: string): string {
 }
 
 // COLLECTIONS
-export const MAX_COLLECTION_NAME_LENGTH = 80
-export const MAX_COLLECTION_DESC_LENGTH = 1000
-export const MAX_COLLECTIONS_PER_USER = 200
-export const MAX_ITEMS_PER_COLLECTION = 1000
+export const MAX_COLLECTION_NAME_LENGTH = LIMITS.collections.nameMaxLength
+export const MAX_COLLECTION_DESC_LENGTH = LIMITS.collections.descMaxLength
+export const MAX_COLLECTIONS_PER_USER = LIMITS.collections.maxPerUser
+export const MAX_ITEMS_PER_COLLECTION = LIMITS.collections.maxItemsPerCollection
 
 export function normalizeCollectionName(raw: unknown): string | null {
     if (typeof raw !== "string") return null

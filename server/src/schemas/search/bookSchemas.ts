@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { LIMITS } from "@/config/limits.js"
 
 export const bookMetadataSchema = z.object({
     pageCount: z.number().nullable().optional(),
@@ -109,7 +110,7 @@ const emptyToUndefined = (val: unknown) => (val === "" ? undefined : val)
 
 const optionalText = z.preprocess(
     emptyToUndefined,
-    z.string().trim().max(100, "Must be at most 100 characters").optional()
+    z.string().trim().max(LIMITS.search.queryMaxLength, `Must be at most ${LIMITS.search.queryMaxLength} characters`).optional()
 )
 
 const optionalYear = z.preprocess(
@@ -121,7 +122,7 @@ export const bookSearchQuerySchema = z.object({
     q: z.string("Search query must be at least 3 characters")
         .trim()
         .min(3, "Search query must be at least 3 characters")
-        .max(100, "Search query must be at most 100 characters"),
+        .max(LIMITS.search.queryMaxLength, `Search query must be at most ${LIMITS.search.queryMaxLength} characters`),
     page: z.preprocess(
         emptyToUndefined,
         z.coerce.number().int().positive().default(1)

@@ -8,6 +8,7 @@ import {globalLimiter} from '@/middleWare/rateLimiter.js'
 import authMiddleWare from '@/middleWare/authMiddleware.js'
 
 import healthRoutes from '@/api/routes/healthRoutes.js'
+import configRoutes from '@/api/routes/configRoutes.js'
 import authRoutes from '@/api/routes/authRoutes.js'
 import logRoutes from '@/api/routes/logRoutes.js'
 import mediaRoutes from '@/api/routes/mediaRoutes.js'
@@ -52,6 +53,7 @@ const apiRouter = express.Router()
 
 // Public
 apiRouter.use('/healthz', healthRoutes)
+apiRouter.use('/config', configRoutes)
 apiRouter.use('/auth', authRoutes)
 
 // Protected by login

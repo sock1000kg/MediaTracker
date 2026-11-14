@@ -25,14 +25,15 @@ import { executeBatchImport, BatchRowItem } from "./batchWrite.js"
 import { type ImportProgressCallback } from "./goodreadsImportService.js"
 import { parseImportDate, normalizeTagName, tagKey, createUserAgentHeader, collectionKey, MAX_ITEMS_PER_COLLECTION } from "@/utilities.js"
 import { Prisma, Media } from "@/db.js"
+import { LIMITS } from "@/config/limits.js"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-export const MAX_IMPORT_FAILURES = 500
-export const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
-export const MAX_UNPACKED_ENTRY_SIZE = 10 * 1024 * 1024 // 10 MB
-export const MAX_UNPACKED_TOTAL_SIZE = 20 * 1024 * 1024 // 20 MB
+export const MAX_IMPORT_FAILURES = LIMITS.imports.maxFailures
+export const MAX_FILE_SIZE = LIMITS.imports.maxFileBytes
+export const MAX_UNPACKED_ENTRY_SIZE = LIMITS.imports.letterboxdUnpackedEntryBytes
+export const MAX_UNPACKED_TOTAL_SIZE = LIMITS.imports.letterboxdUnpackedTotalBytes
 
 const ALLOWED_FILES = new Set([
     "watched.csv",

@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { LIMITS } from "@/config/limits.js"
 
 const nl = <T extends z.ZodTypeAny>(s: T) => s.nullable().optional()
 
@@ -85,7 +86,7 @@ export const tvSearchQuerySchema = z.object({
     q: z.string("Missing query")
         .trim()
         .min(1, "Missing query")
-        .max(100, "Search query must be at most 100 characters"),
+        .max(LIMITS.search.queryMaxLength, `Search query must be at most ${LIMITS.search.queryMaxLength} characters`),
     page: z.preprocess(emptyToUndefined, z.coerce.number().int().positive().default(1)),
     year: z.preprocess(
         emptyToUndefined,

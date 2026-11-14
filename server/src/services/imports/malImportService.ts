@@ -16,13 +16,14 @@ import prisma from "@/prismaClient.js"
 import { executeBatchImport, BatchRowItem } from "./batchWrite.js"
 import { type ImportProgressCallback } from "./goodreadsImportService.js"
 import { findMediaByExternalIds } from "@/repositories/mediaRepository.js"
+import { LIMITS } from "@/config/limits.js"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-export const MAX_IMPORT_FAILURES = 500
-export const MAX_XML_SIZE = 10 * 1024 * 1024 // 10 MB
-export const MAX_MAL_ENTRIES = 5000
+export const MAX_IMPORT_FAILURES = LIMITS.imports.maxFailures
+export const MAX_XML_SIZE = LIMITS.imports.maxFileBytes
+export const MAX_MAL_ENTRIES = LIMITS.imports.malMaxEntries
 
 const ANILIST_ENDPOINT = "https://graphql.anilist.co"
 const BATCH_SIZE = 50

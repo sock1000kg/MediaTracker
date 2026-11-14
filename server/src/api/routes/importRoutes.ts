@@ -1,8 +1,9 @@
 import express from 'express'
 import multer from 'multer'
 import { importGoodReads, importMal, importLetterboxd } from '../controllers/importController.js'
+import { LIMITS } from '@/config/limits.js'
 
-export const MAX_IMPORT_FILE_BYTES = 10 * 1024 * 1024
+export const MAX_IMPORT_FILE_BYTES = LIMITS.imports.maxFileBytes
 
 const router = express.Router()
 // Size is enforced while streaming the upload, so an oversized body is never buffered.
