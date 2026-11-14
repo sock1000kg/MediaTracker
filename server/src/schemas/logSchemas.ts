@@ -3,6 +3,7 @@ import {
     sanitizeStatus,
     sanitizeRating,
     sanitizeNotes,
+    MAX_NOTES_LENGTH,
     allowedStatuses,
     AllowedStatus,
     toDayPrecision,
@@ -67,7 +68,7 @@ const updateRatingSchema = z.preprocess((val: unknown) => {
 const updateNotesSchema = z.preprocess((val: unknown) => {
     if (val === undefined) return undefined
     if (val === null || val === "") return null
-    return String(val).trim().slice(0, 10000)
+    return String(val).trim().slice(0, MAX_NOTES_LENGTH)
 }, z.string().nullable().optional())
 
 const mediaIdSchema = z

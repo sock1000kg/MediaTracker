@@ -55,10 +55,13 @@ export function sanitizeRating(rating: number | string | undefined | null): numb
     return num
 }
 
-// Sanitize notes: trim whitespace, limit length to 10000 chars
+// Long enough for imported reviews (Goodreads, Letterboxd) to survive whole. Keep in sync with client/src/lib/logView.ts.
+export const MAX_NOTES_LENGTH = 50_000
+
+// Sanitize notes: trim whitespace, limit length to MAX_NOTES_LENGTH chars
 export function sanitizeNotes(notes: string | undefined | null): string | null{
     if (!notes) return null
-    return String(notes).trim().slice(0, 10000)
+    return String(notes).trim().slice(0, MAX_NOTES_LENGTH)
 }
 
 // Sanitize title: trim, limit length to 100 chars

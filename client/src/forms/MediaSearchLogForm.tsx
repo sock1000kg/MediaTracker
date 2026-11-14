@@ -1,4 +1,5 @@
 import type { Log, LogStatus } from "@/types/mainTypes"
+import { MAX_NOTES_LENGTH } from "@/lib/logView"
 import {
   Select,
   SelectContent,
@@ -223,7 +224,7 @@ export function MediaSearchLogForm({
           onChange={(e) =>
             setFormData((prev) => ({ ...prev, notes: e.target.value }))
           }
-          maxLength={10000}
+          maxLength={MAX_NOTES_LENGTH}
           className="
             mt-1 block w-full h-40 rounded-md 
             border border-input bg-card 
@@ -233,7 +234,7 @@ export function MediaSearchLogForm({
           placeholder="Write your thoughts..."
         />
         <div className="text-right text-xs text-muted-foreground mt-1">
-          {(formData.notes?.length ?? 0)}/10000
+          {(formData.notes?.length ?? 0)}/{MAX_NOTES_LENGTH}
         </div>
       </label>
     </div>

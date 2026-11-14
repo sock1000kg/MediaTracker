@@ -1,7 +1,7 @@
 import prisma from "@/prismaClient.js"
 import { Prisma, Media, UserLogs } from "@/db.js"
 import { mergeMediaMetadata, findMediaByExternalIds, ExternalIdKey } from "@/repositories/mediaRepository.js"
-import { tagKey, normalizeTagName } from "@/utilities.js"
+import { tagKey, normalizeTagName, sanitizeNotes } from "@/utilities.js"
 import { ImportResult } from "@/api/domain/imports.js"
 import { makeProgressReporter, type ImportProgressCallback } from "./goodreadsImportService.js"
 import {
@@ -582,7 +582,7 @@ export async function executeBatchImport(options: {
                             mediaId: r.mediaId!,
                             status: r.item.logData.status,
                             rating: r.item.logData.rating,
-                            notes: r.item.logData.notes,
+                            notes: sanitizeNotes(r.item.logData.notes),
                             progress: (r.item.logData.progress as Prisma.InputJsonValue) ?? Prisma.JsonNull,
                             logged_at: r.item.logData.loggedAt ?? new Date(),
                             started_at: r.item.logData.startedAt,
@@ -619,7 +619,12 @@ export async function executeBatchImport(options: {
                     if (r.gapFill?.logUpdates && Object.keys(r.gapFill.logUpdates).length > 0) {
                         await tx.userLogs.update({
                             where: { id: r.logId },
-                            data: r.gapFill.logUpdates,
+                            data: {
+                                ...r.gapFill.logUpdates,
+                                ...(typeof r.gapFill.logUpdates.notes === "string"
+                                    ? { notes: sanitizeNotes(r.gapFill.logUpdates.notes) }
+                                    : {}),
+                            },
                         })
                     }
                     if (r.mediaId && r.gapFill?.mediaPatch && Object.keys(r.gapFill.mediaPatch).length > 0) {

@@ -65,7 +65,7 @@ describe("sanitizeNotes", () => {
   test("trims whitespace and limits length", () => {
     const input = " ".repeat(5) + "Hello World" + " ".repeat(5)
     expect(sanitizeNotes(input)).toBe("Hello World")
-    expect(sanitizeNotes("a".repeat(11000))!.length).toBe(10000)
+    expect(sanitizeNotes("a".repeat(50_001))!.length).toBe(50_000)
   })
 
   test("returns undefined for empty or falsy values", () => {
