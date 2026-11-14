@@ -51,6 +51,28 @@ export const searchAlbums = async (req: Request, res: Response, next: NextFuncti
     }
 }
 
+export const getAlbumTracks = async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.userId
+    if (!userId) {
+        return res.status(401).json({ message: "Unauthorized: missing userId" })
+    }
+
+    const artist = typeof req.query.artist === "string" ? req.query.artist.trim() : ""
+    const album = typeof req.query.album === "string" ? req.query.album.trim() : ""
+    const mbid = typeof req.query.mbid === "string" && req.query.mbid.trim() ? req.query.mbid.trim() : undefined
+
+    if (!mbid && (!artist || !album)) {
+        return res.status(400).json({ message: "Artist and album or mbid are required" })
+    }
+
+    try {
+        const results = await searchService.getAlbumTracks(userId, artist, album, mbid)
+        res.status(200).json(results)
+    } catch (error) {
+        next(error)
+    }
+}
+
 export const searchTracks = async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId
     if (!userId) {

@@ -1,9 +1,9 @@
 // domain/media/mediaFactory.ts
-import { DbClient, Media } from "@/db.js"
+import { DbClient, Media, Prisma } from "@/db.js"
 import { AppError } from "@/api/domain/error.js"
 
 import { findUserByUsername } from "@/repositories/authRepository.js"
-import { findMediaBySource, createMedia } from "@/repositories/mediaRepository.js"
+import { findMediaBySource, createMedia, findMediaByExternalIds, attachExternalIdsToMedia, ExternalIdKey } from "@/repositories/mediaRepository.js"
 import { findMediaTypeForUserOrGlobal } from "@/repositories/mediaTypeRepository.js"
 import { findLogOfUserByMediaId, createLog, updateLog, findLogById } from "@/repositories/logsRepository.js"
 import { tagService } from "@/services/tagService.js"
@@ -37,7 +37,19 @@ type CreateImportedMediaInput = {
         startedAt?: Date | null
         finishedAt?: Date | null
         tags?: string[]
+        progress?: unknown
     }
+    parent?: {
+        title: string
+        mediaType?: string
+        creator?: string | null
+        year?: number | null
+        source: string
+        sourceId: string | null
+        description?: string | null
+        metadata?: unknown
+        imageUrl?: string | null
+    } | null
 }
 
 /**
@@ -48,64 +60,98 @@ export async function createImportedMedia(
     input: CreateImportedMediaInput,
     tx: DbClient
 ) {
-    const { userId, mediaTypeName, mediaData, logData } = input
+    const { userId, mediaTypeName, mediaData, logData, parent } = input
+
+    let parentMedia: Media | null = null
+    if (parent && parent.source && parent.sourceId) {
+        parentMedia = await findMediaBySource(parent.sourceId, parent.source, tx)
+        if (!parentMedia) {
+            const parentTypeName = parent.mediaType || mediaTypeName
+            const parentType = await findMediaTypeForUserOrGlobal(parentTypeName, userId, tx)
+            if (!parentType) {
+                throw new AppError("Parent media type not found", 404)
+            }
+            const systemUser = await findUserByUsername("system", tx)
+            if (!systemUser) {
+                throw new AppError("System user missing", 500)
+            }
+            parentMedia = await createMedia(
+                parent.title,
+                parentType,
+                parent.creator ?? null,
+                parent.year ? Number(parent.year) : null,
+                parent.source,
+                parent.sourceId,
+                parent.description ?? null,
+                (parent.metadata as Prisma.JsonValue) ?? null,
+                parent.imageUrl ?? null,
+                systemUser.id,
+                tx
+            )
+        }
+    }
+
+    const meta = mediaData.metadata as Record<string, unknown> | null | undefined
+    let position: number | null = null
+    if (meta?.trackNumber != null && !Number.isNaN(Number(meta.trackNumber))) {
+        position = Number(meta.trackNumber)
+    } else if (meta?.seasonNumber != null && !Number.isNaN(Number(meta.seasonNumber))) {
+        position = Number(meta.seasonNumber)
+    }
 
     const mediaType = await findMediaTypeForUserOrGlobal(mediaTypeName, userId, tx)
     if (!mediaType) {
         throw new AppError("Media type not found", 404)
     }
 
-    let media: Media | null = null
-    if (mediaData.source === "anilist") {
-        const meta = mediaData.metadata as { kind?: "anime" | "manga"; idMal?: number | null } | null | undefined
-        const kind = meta?.kind ?? mediaData.sourceId?.split("-")[0]
-        if (meta?.idMal != null && kind) {
-            const jikanSourceId = `${kind}-${meta.idMal}`
-            media = await findMediaBySource(jikanSourceId, "jikan", tx)
-            if (!media) {
-                media = await findMediaBySource(String(meta.idMal), "mal", tx)
-            }
-            if (!media) {
-                media = await tx.media.findFirst({
-                    where: {
-                        source: "anilist",
-                        metadata: {
-                            path: ["idMal"],
-                            equals: meta.idMal,
-                        },
-                    },
-                })
-            }
-        }
-    } else if (mediaData.source === "mal" && mediaData.sourceId) {
-        media = await findMediaBySource(mediaData.sourceId, "mal", tx)
-        if (!media) {
-            const malId = Number(mediaData.sourceId)
-            if (Number.isFinite(malId)) {
-                const meta = mediaData.metadata as { kind?: "anime" | "manga" } | null | undefined
-                const kind = meta?.kind
-                if (kind) {
-                    media = await findMediaBySource(`${kind}-${malId}`, "jikan", tx)
-                }
-                if (!media) {
-                    media = await tx.media.findFirst({
-                        where: {
-                            source: "anilist",
-                            metadata: {
-                                path: ["idMal"],
-                                equals: malId,
-                            },
-                        },
-                    })
-                }
-            }
+    const lookupKeys: ExternalIdKey[] = []
+    if (mediaData.source && mediaData.sourceId) {
+        lookupKeys.push({ provider: mediaData.source, externalId: mediaData.sourceId })
+    }
+    if (meta?.idMal != null && !Number.isNaN(Number(meta.idMal))) {
+        lookupKeys.push({ provider: "mal", externalId: String(meta.idMal) })
+        const kind = (meta.kind as string) ?? mediaData.sourceId?.split("-")[0]
+        if (kind) {
+            lookupKeys.push({ provider: "jikan", externalId: `${kind}-${meta.idMal}` })
         }
     }
-    if (!media) {
+    if (meta?.imdb_id != null && typeof meta.imdb_id === "string") {
+        lookupKeys.push({ provider: "imdb", externalId: meta.imdb_id })
+    }
+    if (meta?.imdbId != null && typeof meta.imdbId === "string") {
+        lookupKeys.push({ provider: "imdb", externalId: meta.imdbId })
+    }
+
+    const externalKeyMap = await findMediaByExternalIds(lookupKeys, tx)
+    let media: Media | null = null
+    for (const k of lookupKeys) {
+        const found = externalKeyMap.get(`${k.provider.toLowerCase()}:${k.externalId}`)
+        if (found) {
+            media = found
+            break
+        }
+    }
+    if (!media && mediaData.source && mediaData.sourceId) {
         media = await findMediaBySource(mediaData.sourceId, mediaData.source, tx)
     }
 
-    if (!media) {
+    if (media) {
+        const needsParent = parentMedia && !media.parentId
+        const needsPos = position != null && media.position == null
+        if (needsParent || needsPos) {
+            media = await tx.media.update({
+                where: { id: media.id },
+                data: {
+                    ...(needsParent ? { parentId: parentMedia!.id } : {}),
+                    ...(needsPos ? { position } : {}),
+                },
+                include: { mediaType: true, logs: true }
+            })
+        }
+        if (lookupKeys.length > 0) {
+            await attachExternalIdsToMedia(media.id, lookupKeys, tx)
+        }
+    } else {
         const systemUser = await findUserByUsername("system", tx)
         if (!systemUser) {
             throw new AppError("System user missing", 500)
@@ -122,7 +168,10 @@ export async function createImportedMedia(
             mediaData.metadata ?? null,
             mediaData.imageUrl ?? null,
             systemUser.id,
-            tx
+            tx,
+            parentMedia?.id ?? null,
+            position ?? null,
+            lookupKeys
         )
     }
 
@@ -141,7 +190,8 @@ export async function createImportedMedia(
             logData.notes ?? null,
             tx,
             logData.startedAt,
-            logData.finishedAt
+            logData.finishedAt,
+            logData.progress
         )
         if (logData.tags !== undefined) {
             await tagService.resolveAndSyncTags(userId, existingLog.id, logData.tags, tx)
@@ -161,7 +211,8 @@ export async function createImportedMedia(
             tx,
             logData.loggedAt ?? null,
             logData.startedAt ?? null,
-            logData.finishedAt ?? null
+            logData.finishedAt ?? null,
+            logData.progress
         )
         if (logData.tags !== undefined) {
             await tagService.resolveAndSyncTags(userId, log.id, logData.tags, tx)

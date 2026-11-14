@@ -7,6 +7,7 @@
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
@@ -55,7 +56,27 @@ model Media {
 
   logs            UserLogs[]@relation("UserLogsToMedia")
 
-  @@unique([userId, creator, title, year, mediaTypeId, source]) //user only have 1 entry of one media
+  parentId        Int?
+  parent          Media?    @relation("MediaChildren", fields: [parentId], references: [id], onDelete: SetNull)
+  children        Media[]   @relation("MediaChildren")
+  position        Int?      // track number / season number
+  externalIds     MediaExternalId[]
+
+  @@index([parentId])
+  @@unique([source, sourceId], where: { sourceId: { not: null } })
+  @@unique([userId, creator, title, year, mediaTypeId, source], where: { sourceId: null })
+}
+
+model MediaExternalId {
+  id         Int      @id @default(autoincrement())
+  mediaId    Int
+  media      Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  provider   String   // lower-case provider key, e.g. "anilist", "mal", "tmdb", "goodreads", "isbn13", "letterboxd", "lastfm", "musicbrainz"
+  externalId String
+  created_at DateTime @default(now())
+
+  @@unique([provider, externalId])
+  @@index([mediaId])
 }
 
 model MediaType {
@@ -82,6 +103,7 @@ model UserLogs {
   started_at      DateTime?
   finished_at     DateTime?
   logged_at       DateTime  @default(now())
+  progress        Json?
 
   userId          Int
   user            User      @relation(fields: [userId], references: [id], name: "UserLogsToUser", onDelete: Cascade)

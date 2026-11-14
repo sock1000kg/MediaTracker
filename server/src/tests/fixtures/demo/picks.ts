@@ -6,6 +6,7 @@ export interface DemoPick {
         query?: string
         artist?: string
         title?: string
+        album?: string
         kind?: "album" | "track" | "anime" | "manga" | "show" | "season"
         seasonNumber?: number
         year?: number
@@ -529,19 +530,183 @@ export const DEMO_PICKS: DemoPick[] = [
     },
 
     // ==========================================
-    // MUSIC TRACKS (Last.fm) - 2 picks
+    // MUSIC TRACKS (Last.fm)
     // ==========================================
+    // Loveless tracks
     {
         mediaTypeName: "music",
         provider: "lastfm",
-        lookup: { kind: "track", artist: "Slowdive", title: "When the Sun Hits" },
+        lookup: { kind: "track", artist: "my bloody valentine", album: "Loveless", title: "Only Shallow" },
+        log: {
+            status: "completed",
+            rating: 100,
+            notes: "Four snare hits and then the earth shatters under distorted fuzz.",
+            loggedAt: "2024-01-18T22:05:00.000Z",
+            startedAt: "2024-01-18T22:00:00.000Z",
+            finishedAt: "2024-01-18T22:05:00.000Z",
+            tags: ["shoegaze"],
+        },
+    },
+    {
+        mediaTypeName: "music",
+        provider: "lastfm",
+        lookup: { kind: "track", artist: "my bloody valentine", album: "Loveless", title: "Loomer" },
+        log: {
+            status: "completed",
+            rating: 92,
+            notes: "Hazy, sun-drenched swirl of noise and muffled vocals.",
+            loggedAt: "2024-01-18T22:10:00.000Z",
+            startedAt: "2024-01-18T22:05:00.000Z",
+            finishedAt: "2024-01-18T22:10:00.000Z",
+        },
+    },
+    {
+        mediaTypeName: "music",
+        provider: "lastfm",
+        lookup: { kind: "track", artist: "my bloody valentine", album: "Loveless", title: "Touched" },
+        log: {
+            status: "completed",
+            rating: 84,
+            notes: "A brief, unsettling instrumental interlude that bridges the noise perfectly.",
+            loggedAt: "2024-01-18T22:12:00.000Z",
+            startedAt: "2024-01-18T22:10:00.000Z",
+            finishedAt: "2024-01-18T22:12:00.000Z",
+        },
+    },
+    {
+        mediaTypeName: "music",
+        provider: "lastfm",
+        lookup: { kind: "track", artist: "my bloody valentine", album: "Loveless", title: "To Here Knows When" },
+        log: {
+            status: "completed",
+            rating: 97,
+            notes: "A wall of ocean waves made out of inverted tremolo arms.",
+            loggedAt: "2024-01-18T22:18:00.000Z",
+            startedAt: "2024-01-18T22:12:00.000Z",
+            finishedAt: "2024-01-18T22:18:00.000Z",
+            tags: ["shoegaze"],
+        },
+    },
+    {
+        mediaTypeName: "music",
+        provider: "lastfm",
+        lookup: { kind: "track", artist: "my bloody valentine", album: "Loveless", title: "When You Sleep" },
+        log: {
+            status: "completed",
+            rating: 100,
+            notes: "One of the catchiest pop melodies hidden underneath an avalanche of sound.",
+            loggedAt: "2024-01-18T22:23:00.000Z",
+            startedAt: "2024-01-18T22:18:00.000Z",
+            finishedAt: "2024-01-18T22:23:00.000Z",
+            tags: ["masterpiece", "shoegaze"],
+        },
+    },
+    {
+        mediaTypeName: "music",
+        provider: "lastfm",
+        lookup: { kind: "track", artist: "my bloody valentine", album: "Loveless", title: "I Only Said" },
+        log: {
+            status: "completed",
+            rating: 95,
+            notes: "That looped vocal hook echoing through the distortion is hypnotic.",
+            loggedAt: "2024-01-18T22:30:00.000Z",
+            startedAt: "2024-01-18T22:23:00.000Z",
+            finishedAt: "2024-01-18T22:30:00.000Z",
+        },
+    },
+    // Souvlaki tracks
+    {
+        mediaTypeName: "music",
+        provider: "lastfm",
+        lookup: { kind: "track", artist: "Slowdive", album: "Souvlaki", title: "Alison" },
+        log: {
+            status: "completed",
+            rating: 99,
+            notes: "Listen close and don't be stoned. Flawless dream pop anthem.",
+            loggedAt: "2024-03-05T20:50:00.000Z",
+            startedAt: "2024-03-05T20:45:00.000Z",
+            finishedAt: "2024-03-05T20:50:00.000Z",
+            tags: ["shoegaze", "comfort"],
+        },
+    },
+    {
+        mediaTypeName: "music",
+        provider: "lastfm",
+        lookup: { kind: "track", artist: "Slowdive", album: "Souvlaki", title: "Machine Gun" },
+        log: {
+            status: "completed",
+            rating: 94,
+            notes: "Lush vocal harmonies draped in delays.",
+            loggedAt: "2024-03-05T20:55:00.000Z",
+            startedAt: "2024-03-05T20:50:00.000Z",
+            finishedAt: "2024-03-05T20:55:00.000Z",
+        },
+    },
+    {
+        mediaTypeName: "music",
+        provider: "lastfm",
+        lookup: { kind: "track", artist: "Slowdive", album: "Souvlaki", title: "40 Days" },
+        log: {
+            status: "completed",
+            rating: 97,
+            notes: "The emotional core of the record. That chorus hits right in the chest.",
+            loggedAt: "2024-03-05T21:00:00.000Z",
+            startedAt: "2024-03-05T20:55:00.000Z",
+            finishedAt: "2024-03-05T21:00:00.000Z",
+            tags: ["shoegaze"],
+        },
+    },
+    {
+        mediaTypeName: "music",
+        provider: "lastfm",
+        lookup: { kind: "track", artist: "Slowdive", album: "Souvlaki", title: "Sing" },
+        log: {
+            status: "completed",
+            rating: 90,
+            notes: "Co-written with Brian Eno, ambient and hauntingly minimal rhythm.",
+            loggedAt: "2024-03-05T21:05:00.000Z",
+            startedAt: "2024-03-05T21:00:00.000Z",
+            finishedAt: "2024-03-05T21:05:00.000Z",
+        },
+    },
+    {
+        mediaTypeName: "music",
+        provider: "lastfm",
+        lookup: { kind: "track", artist: "Slowdive", album: "Souvlaki", title: "Here She Comes" },
+        log: {
+            status: "completed",
+            rating: 92,
+            notes: "Gentle acoustic guitar with Neil Halstead's whispery delivery.",
+            loggedAt: "2024-03-05T21:10:00.000Z",
+            startedAt: "2024-03-05T21:05:00.000Z",
+            finishedAt: "2024-03-05T21:10:00.000Z",
+        },
+    },
+    {
+        mediaTypeName: "music",
+        provider: "lastfm",
+        lookup: { kind: "track", artist: "Slowdive", album: "Souvlaki", title: "Souvlaki Space Station" },
+        log: {
+            status: "completed",
+            rating: 98,
+            notes: "Space-rock dub delay bliss. The bass line carries you into orbit.",
+            loggedAt: "2024-03-05T21:16:00.000Z",
+            startedAt: "2024-03-05T21:10:00.000Z",
+            finishedAt: "2024-03-05T21:16:00.000Z",
+            tags: ["shoegaze"],
+        },
+    },
+    {
+        mediaTypeName: "music",
+        provider: "lastfm",
+        lookup: { kind: "track", artist: "Slowdive", album: "Souvlaki", title: "When the Sun Hits" },
         log: {
             status: "completed",
             rating: 98,
             notes: "That sudden explosion of distortion at 0:48 gives me goosebumps every single time.",
-            loggedAt: "2024-03-05T21:00:00.000Z",
-            startedAt: "2024-03-05T20:55:00.000Z",
-            finishedAt: "2024-03-05T21:00:00.000Z",
+            loggedAt: "2024-03-05T21:20:00.000Z",
+            startedAt: "2024-03-05T21:16:00.000Z",
+            finishedAt: "2024-03-05T21:20:00.000Z",
             tags: ["shoegaze"],
         },
         collections: ["Shoegaze & dream pop"],

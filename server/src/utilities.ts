@@ -78,7 +78,7 @@ export function sanitizeCreator(creator: string | undefined | null): string | nu
 }
 
 // Sanitize status: only allow known statuses
-const allowedStatuses = ["completed", "in progress", "wishlist", "dropped"] as const //declare as array to check if status belongs there
+export const allowedStatuses = ["completed", "in progress", "wishlist", "dropped"] as const //declare as array to check if status belongs there
 export type AllowedStatus = (typeof allowedStatuses)[number]
 export function sanitizeStatus(status: string | undefined | null): AllowedStatus | null {
   if (status === undefined || status === null) return null

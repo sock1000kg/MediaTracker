@@ -21,6 +21,10 @@ export class SearchService {
         return musicSearchService.searchAlbumsLastFm(userId, q, page)
     }
 
+    async getAlbumTracks(userId: number, artist: string, album: string, mbid?: string) {
+        return musicSearchService.fetchAlbumTracks(userId, artist, album, mbid)
+    }
+
     async searchAnime(_userId: number, q: string, page: number = 1, filters?: AnimeSearchFilters) {
         return anilistSearchService.search("anime", q, page, filters)
     }

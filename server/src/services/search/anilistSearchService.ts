@@ -292,6 +292,7 @@ export function mapAniListMedia(mode: AniListMode, item: AniListMedia): SearchRe
             categories,
             idMal: item.idMal ?? null,
         },
+        ...(item.idMal != null ? { externalIds: [{ provider: "mal", id: String(item.idMal) }] } : {}),
     }
 }
 

@@ -9,7 +9,7 @@ import { createUserAgentHeader, decryptKey, validateSchema } from "@/utilities.j
 import { findUserById } from "@/repositories/authRepository.js"
 import { AppError } from "@/api/domain/error.js"
 import prisma from "@/prismaClient.js"
-import { findMediaBySource } from "@/repositories/mediaRepository.js"
+import { findMediaBySource, attachExternalIdsToMedia } from "@/repositories/mediaRepository.js"
 
 const BASE_URL = "https://api.themoviedb.org/3"
 const IMAGE_BASE = "https://image.tmdb.org/t/p/w342"
@@ -440,6 +440,9 @@ export async function enrichTmdbOnLog(
         }
 
         if (existing) {
+            if (details.imdbId) {
+                await attachExternalIdsToMedia(existing.id, [{ provider: "imdb", externalId: details.imdbId }], prisma)
+            }
             return { existingId: existing.id, creator: existing.creator ? null : directors, patch }
         }
         mediaData.creator = mediaData.creator ?? directors

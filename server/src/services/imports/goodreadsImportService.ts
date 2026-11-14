@@ -11,6 +11,7 @@ import { ZodError } from "zod"
 import { ImportResult } from "@/api/domain/imports.js"
 import { openLibraryService } from "../search/openLibrarySearchService.js"
 import { executeBatchImport, BatchRowItem } from "./batchWrite.js"
+import { findMediaByExternalIds, ExternalIdKey } from "@/repositories/mediaRepository.js"
 
 // Helpers for preparing rich or unrich data
 type BookEnrichmentData = {
@@ -111,19 +112,17 @@ export class GoodreadsImportService {
         const bookType = await findMediaTypeForUserOrGlobal("book", userId, prisma)
         if (!systemUser || !bookType) throw new AppError("System config missing", 500)
 
-        const sourceIds = rawRecords
-            .map(r => r['Book Id'])
-            .filter(Boolean)
-            .map(id => String(id))
-
-        const existingMedia = await prisma.media.findMany({
-            where: {
-                source: "goodreads",
-                sourceId: { in: sourceIds },
-            },
-            select: { sourceId: true },
-        })
-        const existingSourceIds = new Set(existingMedia.map(m => m.sourceId))
+        const lookupKeys: ExternalIdKey[] = []
+        for (const unvalidRecord of rawRecords) {
+            const raw = unvalidRecord as Record<string, unknown>
+            const bId = raw['Book Id'] ? String(raw['Book Id']).trim() : null
+            if (bId) lookupKeys.push({ provider: "goodreads", externalId: bId })
+            const isbn13 = raw['ISBN13'] ? String(raw['ISBN13']).replace(/["'=]/g, "").trim() : null
+            if (isbn13) lookupKeys.push({ provider: "isbn13", externalId: isbn13 })
+            const isbn = raw['ISBN'] ? String(raw['ISBN']).replace(/["'=]/g, "").trim() : null
+            if (isbn) lookupKeys.push({ provider: "isbn", externalId: isbn })
+        }
+        const existingMediaMap = await findMediaByExternalIds(lookupKeys, prisma)
 
         const validItems: BatchRowItem[] = []
         const shouldEnrich = opts.enrich !== false
@@ -134,9 +133,15 @@ export class GoodreadsImportService {
             try {
                 const record = validateSchema(goodreadsRowSchema, unvalidRecord)
                 const sourceId = record['Book Id'] ? String(record['Book Id']) : null
+                const rawIsbn13 = record['ISBN13'] ? String(record['ISBN13']).replace(/["'=]/g, "").trim() : null
+                const rawIsbn = record['ISBN'] ? String(record['ISBN']).replace(/["'=]/g, "").trim() : null
+
+                const matchedMedia = (sourceId && existingMediaMap.get(`goodreads:${sourceId}`)) ||
+                                     (rawIsbn13 && existingMediaMap.get(`isbn13:${rawIsbn13}`)) ||
+                                     (rawIsbn && existingMediaMap.get(`isbn:${rawIsbn}`)) || null
 
                 let enrichmentData: BookEnrichmentData | undefined
-                if (shouldEnrich && sourceId && !existingSourceIds.has(sourceId)) {
+                if (shouldEnrich && !matchedMedia) {
                     await new Promise(r => setTimeout(r, 100))
                     const data = await this.fetchEnrichmentData(userId, record)
                     if (data) enrichmentData = data
@@ -163,9 +168,15 @@ export class GoodreadsImportService {
                 const csvPageCount = typeof rawPageCount === "number" && rawPageCount > 0 ? rawPageCount : null
                 const pageCount = enrichmentData?.metadata?.pageCount ?? csvPageCount
 
+                const externalIds: { provider: string; id: string }[] = []
+                if (sourceId) externalIds.push({ provider: "goodreads", id: sourceId })
+                if (rawIsbn13) externalIds.push({ provider: "isbn13", id: rawIsbn13 })
+                if (rawIsbn && rawIsbn !== rawIsbn13) externalIds.push({ provider: "isbn", id: rawIsbn })
+
                 validItems.push({
                     rowNum,
                     title: record['Title'],
+                    externalIds,
                     mediaData: {
                         title: record['Title'],
                         creator: author,
@@ -214,6 +225,12 @@ export class GoodreadsImportService {
             mediaTypeId: bookType.id,
             items: validItems,
             findExistingMediaMatch: (item, bySourceKey) => {
+                if (item.externalIds) {
+                    for (const x of item.externalIds) {
+                        const m = bySourceKey.get(`${x.provider.toLowerCase()}:${x.id}`)
+                        if (m) return m
+                    }
+                }
                 if (item.mediaData.sourceId) {
                     return bySourceKey.get(`goodreads:${item.mediaData.sourceId}`) ?? null
                 }

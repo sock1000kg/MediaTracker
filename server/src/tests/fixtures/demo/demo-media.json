@@ -1396,32 +1396,514 @@
     {
       "mediaTypeName": "music",
       "media": {
+        "title": "Only Shallow",
+        "creator": "my bloody valentine",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/510546e3b6df7504392274c528c77780.jpg",
+        "source": "lastfm",
+        "sourceId": "lastfm:09a09037-1ebd-3d38-a128-38ab11e6b0fe#1",
+        "year": null,
+        "metadata": {
+          "url": "https://www.last.fm/music/my+bloody+valentine/Loveless/Only+Shallow",
+          "kind": "track",
+          "album": "Loveless",
+          "albumSourceId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe",
+          "trackNumber": 1,
+          "durationSec": 240
+        }
+      },
+      "parent": {
+        "title": "Loveless",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/510546e3b6df7504392274c528c77780.jpg",
+        "source": "lastfm",
+        "sourceId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe",
+        "year": null,
+        "metadata": {
+          "kind": "album"
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 100,
+        "notes": "Four snare hits and then the earth shatters under distorted fuzz.",
+        "loggedAt": "2024-01-18T22:05:00.000Z",
+        "startedAt": "2024-01-18T22:00:00.000Z",
+        "finishedAt": "2024-01-18T22:05:00.000Z",
+        "tags": [
+          "shoegaze"
+        ]
+      },
+      "collections": []
+    },
+    {
+      "mediaTypeName": "music",
+      "media": {
+        "title": "Loomer",
+        "creator": "my bloody valentine",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/510546e3b6df7504392274c528c77780.jpg",
+        "source": "lastfm",
+        "sourceId": "lastfm:09a09037-1ebd-3d38-a128-38ab11e6b0fe#2",
+        "year": null,
+        "metadata": {
+          "url": "https://www.last.fm/music/my+bloody+valentine/Loveless/Loomer",
+          "kind": "track",
+          "album": "Loveless",
+          "albumSourceId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe",
+          "trackNumber": 2,
+          "durationSec": 158
+        }
+      },
+      "parent": {
+        "title": "Loveless",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/510546e3b6df7504392274c528c77780.jpg",
+        "source": "lastfm",
+        "sourceId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe",
+        "year": null,
+        "metadata": {
+          "kind": "album"
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 92,
+        "notes": "Hazy, sun-drenched swirl of noise and muffled vocals.",
+        "loggedAt": "2024-01-18T22:10:00.000Z",
+        "startedAt": "2024-01-18T22:05:00.000Z",
+        "finishedAt": "2024-01-18T22:10:00.000Z"
+      },
+      "collections": []
+    },
+    {
+      "mediaTypeName": "music",
+      "media": {
+        "title": "Touched",
+        "creator": "my bloody valentine",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/510546e3b6df7504392274c528c77780.jpg",
+        "source": "lastfm",
+        "sourceId": "lastfm:09a09037-1ebd-3d38-a128-38ab11e6b0fe#3",
+        "year": null,
+        "metadata": {
+          "url": "https://www.last.fm/music/my+bloody+valentine/Loveless/Touched",
+          "kind": "track",
+          "album": "Loveless",
+          "albumSourceId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe",
+          "trackNumber": 3,
+          "durationSec": 56
+        }
+      },
+      "parent": {
+        "title": "Loveless",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/510546e3b6df7504392274c528c77780.jpg",
+        "source": "lastfm",
+        "sourceId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe",
+        "year": null,
+        "metadata": {
+          "kind": "album"
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 84,
+        "notes": "A brief, unsettling instrumental interlude that bridges the noise perfectly.",
+        "loggedAt": "2024-01-18T22:12:00.000Z",
+        "startedAt": "2024-01-18T22:10:00.000Z",
+        "finishedAt": "2024-01-18T22:12:00.000Z"
+      },
+      "collections": []
+    },
+    {
+      "mediaTypeName": "music",
+      "media": {
+        "title": "To Here Knows When",
+        "creator": "my bloody valentine",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/510546e3b6df7504392274c528c77780.jpg",
+        "source": "lastfm",
+        "sourceId": "lastfm:09a09037-1ebd-3d38-a128-38ab11e6b0fe#4",
+        "year": null,
+        "metadata": {
+          "url": "https://www.last.fm/music/my+bloody+valentine/Loveless/To+Here+Knows+When",
+          "kind": "track",
+          "album": "Loveless",
+          "albumSourceId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe",
+          "trackNumber": 4,
+          "durationSec": 430
+        }
+      },
+      "parent": {
+        "title": "Loveless",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/510546e3b6df7504392274c528c77780.jpg",
+        "source": "lastfm",
+        "sourceId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe",
+        "year": null,
+        "metadata": {
+          "kind": "album"
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 97,
+        "notes": "A wall of ocean waves made out of inverted tremolo arms.",
+        "loggedAt": "2024-01-18T22:18:00.000Z",
+        "startedAt": "2024-01-18T22:12:00.000Z",
+        "finishedAt": "2024-01-18T22:18:00.000Z",
+        "tags": [
+          "shoegaze"
+        ]
+      },
+      "collections": []
+    },
+    {
+      "mediaTypeName": "music",
+      "media": {
+        "title": "When You Sleep",
+        "creator": "my bloody valentine",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/510546e3b6df7504392274c528c77780.jpg",
+        "source": "lastfm",
+        "sourceId": "lastfm:09a09037-1ebd-3d38-a128-38ab11e6b0fe#5",
+        "year": null,
+        "metadata": {
+          "url": "https://www.last.fm/music/my+bloody+valentine/Loveless/When+You+Sleep",
+          "kind": "track",
+          "album": "Loveless",
+          "albumSourceId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe",
+          "trackNumber": 5,
+          "durationSec": 357
+        }
+      },
+      "parent": {
+        "title": "Loveless",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/510546e3b6df7504392274c528c77780.jpg",
+        "source": "lastfm",
+        "sourceId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe",
+        "year": null,
+        "metadata": {
+          "kind": "album"
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 100,
+        "notes": "One of the catchiest pop melodies hidden underneath an avalanche of sound.",
+        "loggedAt": "2024-01-18T22:23:00.000Z",
+        "startedAt": "2024-01-18T22:18:00.000Z",
+        "finishedAt": "2024-01-18T22:23:00.000Z",
+        "tags": [
+          "masterpiece",
+          "shoegaze"
+        ]
+      },
+      "collections": []
+    },
+    {
+      "mediaTypeName": "music",
+      "media": {
+        "title": "I Only Said",
+        "creator": "my bloody valentine",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/510546e3b6df7504392274c528c77780.jpg",
+        "source": "lastfm",
+        "sourceId": "lastfm:09a09037-1ebd-3d38-a128-38ab11e6b0fe#6",
+        "year": null,
+        "metadata": {
+          "url": "https://www.last.fm/music/my+bloody+valentine/Loveless/I+Only+Said",
+          "kind": "track",
+          "album": "Loveless",
+          "albumSourceId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe",
+          "trackNumber": 6,
+          "durationSec": 394
+        }
+      },
+      "parent": {
+        "title": "Loveless",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/510546e3b6df7504392274c528c77780.jpg",
+        "source": "lastfm",
+        "sourceId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe",
+        "year": null,
+        "metadata": {
+          "kind": "album"
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 95,
+        "notes": "That looped vocal hook echoing through the distortion is hypnotic.",
+        "loggedAt": "2024-01-18T22:30:00.000Z",
+        "startedAt": "2024-01-18T22:23:00.000Z",
+        "finishedAt": "2024-01-18T22:30:00.000Z"
+      },
+      "collections": []
+    },
+    {
+      "mediaTypeName": "music",
+      "media": {
+        "title": "Alison",
+        "creator": "Slowdive",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.jpg",
+        "source": "lastfm",
+        "sourceId": "lastfm:07d02411-6722-4071-8130-14fb8512288a#1",
+        "year": null,
+        "metadata": {
+          "url": "https://www.last.fm/music/Slowdive/Souvlaki/Alison",
+          "kind": "track",
+          "album": "Souvlaki",
+          "albumSourceId": "07d02411-6722-4071-8130-14fb8512288a",
+          "trackNumber": 1,
+          "durationSec": 203
+        }
+      },
+      "parent": {
+        "title": "Souvlaki",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.jpg",
+        "source": "lastfm",
+        "sourceId": "07d02411-6722-4071-8130-14fb8512288a",
+        "year": null,
+        "metadata": {
+          "kind": "album"
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 99,
+        "notes": "Listen close and don't be stoned. Flawless dream pop anthem.",
+        "loggedAt": "2024-03-05T20:50:00.000Z",
+        "startedAt": "2024-03-05T20:45:00.000Z",
+        "finishedAt": "2024-03-05T20:50:00.000Z",
+        "tags": [
+          "shoegaze",
+          "comfort"
+        ]
+      },
+      "collections": []
+    },
+    {
+      "mediaTypeName": "music",
+      "media": {
+        "title": "Machine Gun",
+        "creator": "Slowdive",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.jpg",
+        "source": "lastfm",
+        "sourceId": "lastfm:07d02411-6722-4071-8130-14fb8512288a#2",
+        "year": null,
+        "metadata": {
+          "url": "https://www.last.fm/music/Slowdive/Souvlaki/Machine+Gun",
+          "kind": "track",
+          "album": "Souvlaki",
+          "albumSourceId": "07d02411-6722-4071-8130-14fb8512288a",
+          "trackNumber": 2,
+          "durationSec": 262
+        }
+      },
+      "parent": {
+        "title": "Souvlaki",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.jpg",
+        "source": "lastfm",
+        "sourceId": "07d02411-6722-4071-8130-14fb8512288a",
+        "year": null,
+        "metadata": {
+          "kind": "album"
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 94,
+        "notes": "Lush vocal harmonies draped in delays.",
+        "loggedAt": "2024-03-05T20:55:00.000Z",
+        "startedAt": "2024-03-05T20:50:00.000Z",
+        "finishedAt": "2024-03-05T20:55:00.000Z"
+      },
+      "collections": []
+    },
+    {
+      "mediaTypeName": "music",
+      "media": {
+        "title": "40 Days",
+        "creator": "Slowdive",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.jpg",
+        "source": "lastfm",
+        "sourceId": "lastfm:07d02411-6722-4071-8130-14fb8512288a#3",
+        "year": null,
+        "metadata": {
+          "url": "https://www.last.fm/music/Slowdive/Souvlaki/40+Days",
+          "kind": "track",
+          "album": "Souvlaki",
+          "albumSourceId": "07d02411-6722-4071-8130-14fb8512288a",
+          "trackNumber": 3,
+          "durationSec": 194
+        }
+      },
+      "parent": {
+        "title": "Souvlaki",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.jpg",
+        "source": "lastfm",
+        "sourceId": "07d02411-6722-4071-8130-14fb8512288a",
+        "year": null,
+        "metadata": {
+          "kind": "album"
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 97,
+        "notes": "The emotional core of the record. That chorus hits right in the chest.",
+        "loggedAt": "2024-03-05T21:00:00.000Z",
+        "startedAt": "2024-03-05T20:55:00.000Z",
+        "finishedAt": "2024-03-05T21:00:00.000Z",
+        "tags": [
+          "shoegaze"
+        ]
+      },
+      "collections": []
+    },
+    {
+      "mediaTypeName": "music",
+      "media": {
+        "title": "Sing",
+        "creator": "Slowdive",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.jpg",
+        "source": "lastfm",
+        "sourceId": "lastfm:07d02411-6722-4071-8130-14fb8512288a#4",
+        "year": null,
+        "metadata": {
+          "url": "https://www.last.fm/music/Slowdive/Souvlaki/Sing",
+          "kind": "track",
+          "album": "Souvlaki",
+          "albumSourceId": "07d02411-6722-4071-8130-14fb8512288a",
+          "trackNumber": 4,
+          "durationSec": 288
+        }
+      },
+      "parent": {
+        "title": "Souvlaki",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.jpg",
+        "source": "lastfm",
+        "sourceId": "07d02411-6722-4071-8130-14fb8512288a",
+        "year": null,
+        "metadata": {
+          "kind": "album"
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 90,
+        "notes": "Co-written with Brian Eno, ambient and hauntingly minimal rhythm.",
+        "loggedAt": "2024-03-05T21:05:00.000Z",
+        "startedAt": "2024-03-05T21:00:00.000Z",
+        "finishedAt": "2024-03-05T21:05:00.000Z"
+      },
+      "collections": []
+    },
+    {
+      "mediaTypeName": "music",
+      "media": {
+        "title": "Here She Comes",
+        "creator": "Slowdive",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.jpg",
+        "source": "lastfm",
+        "sourceId": "lastfm:07d02411-6722-4071-8130-14fb8512288a#5",
+        "year": null,
+        "metadata": {
+          "url": "https://www.last.fm/music/Slowdive/Souvlaki/Here+She+Comes",
+          "kind": "track",
+          "album": "Souvlaki",
+          "albumSourceId": "07d02411-6722-4071-8130-14fb8512288a",
+          "trackNumber": 5,
+          "durationSec": 137
+        }
+      },
+      "parent": {
+        "title": "Souvlaki",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.jpg",
+        "source": "lastfm",
+        "sourceId": "07d02411-6722-4071-8130-14fb8512288a",
+        "year": null,
+        "metadata": {
+          "kind": "album"
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 92,
+        "notes": "Gentle acoustic guitar with Neil Halstead's whispery delivery.",
+        "loggedAt": "2024-03-05T21:10:00.000Z",
+        "startedAt": "2024-03-05T21:05:00.000Z",
+        "finishedAt": "2024-03-05T21:10:00.000Z"
+      },
+      "collections": []
+    },
+    {
+      "mediaTypeName": "music",
+      "media": {
+        "title": "Souvlaki Space Station",
+        "creator": "Slowdive",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.jpg",
+        "source": "lastfm",
+        "sourceId": "lastfm:07d02411-6722-4071-8130-14fb8512288a#6",
+        "year": null,
+        "metadata": {
+          "url": "https://www.last.fm/music/Slowdive/Souvlaki/Souvlaki+Space+Station",
+          "kind": "track",
+          "album": "Souvlaki",
+          "albumSourceId": "07d02411-6722-4071-8130-14fb8512288a",
+          "trackNumber": 6,
+          "durationSec": 359
+        }
+      },
+      "parent": {
+        "title": "Souvlaki",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.jpg",
+        "source": "lastfm",
+        "sourceId": "07d02411-6722-4071-8130-14fb8512288a",
+        "year": null,
+        "metadata": {
+          "kind": "album"
+        }
+      },
+      "log": {
+        "status": "completed",
+        "rating": 98,
+        "notes": "Space-rock dub delay bliss. The bass line carries you into orbit.",
+        "loggedAt": "2024-03-05T21:16:00.000Z",
+        "startedAt": "2024-03-05T21:10:00.000Z",
+        "finishedAt": "2024-03-05T21:16:00.000Z",
+        "tags": [
+          "shoegaze"
+        ]
+      },
+      "collections": []
+    },
+    {
+      "mediaTypeName": "music",
+      "media": {
         "title": "When the Sun Hits",
         "creator": "Slowdive",
-        "year": null,
-        "description": null,
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.jpg",
         "source": "lastfm",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/2a96cbd8b46e442fc41c2b86b821562f.png",
-        "sourceId": "0cecc75b-50d7-3465-a834-6fb9b3201887",
+        "sourceId": "lastfm:07d02411-6722-4071-8130-14fb8512288a#7",
+        "year": null,
         "metadata": {
-          "url": "https://www.last.fm/music/Slowdive/_/When+the+Sun+Hits",
+          "url": "https://www.last.fm/music/Slowdive/Souvlaki/When+the+Sun+Hits",
           "kind": "track",
-          "categories": [
-            "shoegaze",
-            "dream pop",
-            "Dreamy",
-            "90s",
-            "indie"
-          ]
+          "album": "Souvlaki",
+          "albumSourceId": "07d02411-6722-4071-8130-14fb8512288a",
+          "trackNumber": 7,
+          "durationSec": 287
+        }
+      },
+      "parent": {
+        "title": "Souvlaki",
+        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.jpg",
+        "source": "lastfm",
+        "sourceId": "07d02411-6722-4071-8130-14fb8512288a",
+        "year": null,
+        "metadata": {
+          "kind": "album"
         }
       },
       "log": {
         "status": "completed",
         "rating": 98,
         "notes": "That sudden explosion of distortion at 0:48 gives me goosebumps every single time.",
-        "loggedAt": "2024-03-05T21:00:00.000Z",
-        "startedAt": "2024-03-05T20:55:00.000Z",
-        "finishedAt": "2024-03-05T21:00:00.000Z",
+        "loggedAt": "2024-03-05T21:20:00.000Z",
+        "startedAt": "2024-03-05T21:16:00.000Z",
+        "finishedAt": "2024-03-05T21:20:00.000Z",
         "tags": [
           "shoegaze"
         ]
@@ -1497,6 +1979,37 @@
           ]
         }
       },
+      "parent": {
+        "title": "Rick and Morty",
+        "creator": "Dan Harmon, Justin Roiland",
+        "year": "2013",
+        "description": "Follows a sociopathic genius scientist who drags his inherently timid grandson on adventures across the universe.",
+        "source": "tmdb",
+        "imageUrl": "https://image.tmdb.org/t/p/w342/owhkU6KRqdXoUQpjV8uyZGPtX58.jpg",
+        "sourceId": "tv:60625",
+        "metadata": {
+          "url": "https://www.themoviedb.org/tv/60625",
+          "kind": "show",
+          "tmdbId": 60625,
+          "firstAirDate": "2013-12-02",
+          "genres": [
+            "Animation",
+            "Comedy",
+            "Sci-Fi & Fantasy",
+            "Action & Adventure"
+          ],
+          "originCountry": [
+            "US"
+          ],
+          "seasonCount": 9,
+          "episodeCount": 91,
+          "status": "Returning Series",
+          "networks": [
+            "Adult Swim"
+          ],
+          "creator": "Dan Harmon, Justin Roiland"
+        }
+      },
       "log": {
         "status": "completed",
         "rating": 90,
@@ -1540,6 +2053,37 @@
           ]
         }
       },
+      "parent": {
+        "title": "Rick and Morty",
+        "creator": "Dan Harmon, Justin Roiland",
+        "year": "2013",
+        "description": "Follows a sociopathic genius scientist who drags his inherently timid grandson on adventures across the universe.",
+        "source": "tmdb",
+        "imageUrl": "https://image.tmdb.org/t/p/w342/owhkU6KRqdXoUQpjV8uyZGPtX58.jpg",
+        "sourceId": "tv:60625",
+        "metadata": {
+          "url": "https://www.themoviedb.org/tv/60625",
+          "kind": "show",
+          "tmdbId": 60625,
+          "firstAirDate": "2013-12-02",
+          "genres": [
+            "Animation",
+            "Comedy",
+            "Sci-Fi & Fantasy",
+            "Action & Adventure"
+          ],
+          "originCountry": [
+            "US"
+          ],
+          "seasonCount": 9,
+          "episodeCount": 91,
+          "status": "Returning Series",
+          "networks": [
+            "Adult Swim"
+          ],
+          "creator": "Dan Harmon, Justin Roiland"
+        }
+      },
       "log": {
         "status": "completed",
         "rating": 88,
@@ -1579,6 +2123,36 @@
             "Drama",
             "Crime"
           ]
+        }
+      },
+      "parent": {
+        "title": "The Glory",
+        "creator": "Kim Eun-sook, An Gil-ho",
+        "year": "2022",
+        "description": "Years after surviving horrific abuse in high school, a woman puts an elaborate revenge scheme in motion to make the perpetrators pay for their crimes.",
+        "source": "tmdb",
+        "imageUrl": "https://image.tmdb.org/t/p/w342/uUM4LVlPgIrww07OoEKrGWlS1Ej.jpg",
+        "sourceId": "tv:136283",
+        "metadata": {
+          "url": "https://www.themoviedb.org/tv/136283",
+          "kind": "show",
+          "tmdbId": 136283,
+          "originalTitle": "더 글로리",
+          "firstAirDate": "2022-12-30",
+          "genres": [
+            "Drama",
+            "Crime"
+          ],
+          "originCountry": [
+            "KR"
+          ],
+          "seasonCount": 1,
+          "episodeCount": 16,
+          "status": "Ended",
+          "networks": [
+            "Netflix"
+          ],
+          "creator": "Kim Eun-sook, An Gil-ho"
         }
       },
       "log": {
@@ -1623,6 +2197,36 @@
           ]
         }
       },
+      "parent": {
+        "title": "Severance",
+        "creator": "Dan Erickson",
+        "year": "2022",
+        "description": "Mark leads a team of office workers whose memories have been surgically divided between their work and personal lives. When a mysterious colleague appears outside of work, it begins a journey to discover the truth about their jobs.",
+        "source": "tmdb",
+        "imageUrl": "https://image.tmdb.org/t/p/w342/pPHpeI2X1qEd1CS1SeyrdhZ4qnT.jpg",
+        "sourceId": "tv:95396",
+        "metadata": {
+          "url": "https://www.themoviedb.org/tv/95396",
+          "kind": "show",
+          "tmdbId": 95396,
+          "firstAirDate": "2022-02-17",
+          "genres": [
+            "Drama",
+            "Mystery",
+            "Sci-Fi & Fantasy"
+          ],
+          "originCountry": [
+            "US"
+          ],
+          "seasonCount": 3,
+          "episodeCount": 19,
+          "status": "Returning Series",
+          "networks": [
+            "Apple TV"
+          ],
+          "creator": "Dan Erickson"
+        }
+      },
       "log": {
         "status": "in progress",
         "rating": 92,
@@ -1662,6 +2266,36 @@
             "Action & Adventure",
             "Sci-Fi & Fantasy"
           ]
+        }
+      },
+      "parent": {
+        "title": "Arcane",
+        "creator": "Christian Linke, Alex Yee",
+        "year": "2021",
+        "description": "Amid the stark discord of twin cities Piltover and Zaun, two sisters fight on rival sides of a war between magic technologies and clashing convictions.",
+        "source": "tmdb",
+        "imageUrl": "https://image.tmdb.org/t/p/w342/87C0wecB8bHb1PsrKBI4kJiEkgV.jpg",
+        "sourceId": "tv:94605",
+        "metadata": {
+          "url": "https://www.themoviedb.org/tv/94605",
+          "kind": "show",
+          "tmdbId": 94605,
+          "firstAirDate": "2021-11-06",
+          "genres": [
+            "Animation",
+            "Action & Adventure",
+            "Sci-Fi & Fantasy"
+          ],
+          "originCountry": [
+            "US"
+          ],
+          "seasonCount": 2,
+          "episodeCount": 18,
+          "status": "Ended",
+          "networks": [
+            "Netflix"
+          ],
+          "creator": "Christian Linke, Alex Yee"
         }
       },
       "log": {

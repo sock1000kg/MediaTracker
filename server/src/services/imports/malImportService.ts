@@ -15,6 +15,7 @@ import { findMediaTypeForUserOrGlobal } from "@/repositories/mediaTypeRepository
 import prisma from "@/prismaClient.js"
 import { executeBatchImport, BatchRowItem } from "./batchWrite.js"
 import { type ImportProgressCallback } from "./goodreadsImportService.js"
+import { findMediaByExternalIds } from "@/repositories/mediaRepository.js"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -424,6 +425,20 @@ export function createCacheMalResolver(cachePath?: string): MalResolver {
     }
 }
 
+/** MAL ids that already have a Media row of this type: matched via MediaExternalId. */
+async function findCatalogueMalIds(ids: number[], _mediaTypeId: number): Promise<Set<number>> {
+    if (ids.length === 0) return new Set()
+    const keys = ids.map((id) => ({ provider: "mal", externalId: String(id) }))
+    const mediaMap = await findMediaByExternalIds(keys, prisma)
+    const result = new Set<number>()
+    for (const id of ids) {
+        if (mediaMap.has(`mal:${id}`)) {
+            result.add(id)
+        }
+    }
+    return result
+}
+
 export class MalImportService {
     async importFromMal(
         userId: number,
@@ -440,8 +455,18 @@ export class MalImportService {
             failures: [],
         }
 
+        const systemUser = await findUserByUsername("system", prisma)
+        const mediaType = await findMediaTypeForUserOrGlobal(kind, userId, prisma)
+        if (!systemUser || !mediaType) throw new AppError("System config missing", 500)
+
+        // Titles already in the shared catalogue (resolved earlier, or bare MAL rows) are reused as they are:
+        // only the unknown ids go to the resolver, so a re-import or a demo reset makes no lookups.
         const ids = entries.map(e => e.malId)
-        const resolvedMap = await resolver(ids, kind)
+        const knownIds = await findCatalogueMalIds(ids, mediaType.id)
+        const resolvedMap = await resolver(
+            ids.filter(id => !knownIds.has(id)),
+            kind
+        )
 
         let missCount = 0
         const validItems: BatchRowItem[] = []
@@ -472,7 +497,7 @@ export class MalImportService {
             }
 
             const rawResolved = resolvedMap.get(entry.malId)
-            const isMiss = !rawResolved
+            const isMiss = !rawResolved && !knownIds.has(entry.malId)
             if (isMiss) {
                 missCount++
             }
@@ -493,28 +518,24 @@ export class MalImportService {
                     ...(kind === "anime" ? {
                         episodes: entry.seriesEpisodes,
                         idMal: entry.malId,
-                        ...(entry.watchedEpisodes != null ? { watchedEpisodes: entry.watchedEpisodes } : {}),
                     } : {
                         chapters: entry.mangaChapters,
                         volumes: entry.mangaVolumes,
                         idMal: entry.malId,
-                        ...(entry.readChapters != null ? { readChapters: entry.readChapters } : {}),
-                        ...(entry.readVolumes != null ? { readVolumes: entry.readVolumes } : {}),
                     }),
                 },
             }
 
-            if (resolved && resolved.metadata && typeof resolved.metadata === "object") {
-                const meta = resolved.metadata as Record<string, unknown>
-                if (kind === "anime" && entry.watchedEpisodes != null) {
-                    meta.watchedEpisodes = entry.watchedEpisodes
-                } else if (kind === "manga") {
-                    if (entry.readChapters != null) meta.readChapters = entry.readChapters
-                    if (entry.readVolumes != null) meta.readVolumes = entry.readVolumes
-                }
-            }
-
             const target = resolved ?? bareMedia
+
+            const progress = kind === "anime"
+                ? (entry.watchedEpisodes != null ? { watchedEpisodes: entry.watchedEpisodes } : null)
+                : (entry.readChapters != null || entry.readVolumes != null
+                    ? {
+                        ...(entry.readChapters != null ? { readChapters: entry.readChapters } : {}),
+                        ...(entry.readVolumes != null ? { readVolumes: entry.readVolumes } : {}),
+                      }
+                    : null)
 
             validItems.push({
                 rowNum,
@@ -537,14 +558,11 @@ export class MalImportService {
                     startedAt: entry.startDate,
                     finishedAt: entry.finishDate,
                     tags: entry.tags,
+                    progress: progress ?? null,
                 },
                 idMal: entry.malId,
             })
         }
-
-        const systemUser = await findUserByUsername("system", prisma)
-        const mediaType = await findMediaTypeForUserOrGlobal(kind, userId, prisma)
-        if (!systemUser || !mediaType) throw new AppError("System config missing", 500)
 
         await executeBatchImport({
             userId,
@@ -575,6 +593,7 @@ export class MalImportService {
                     started_at?: Date | null
                     notes?: string | null
                     status?: string | null
+                    progress?: Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput
                 } = {}
                 let mediaPatch: Record<string, Prisma.InputJsonValue | null> | undefined
                 let newTags: string[] | undefined
@@ -603,6 +622,12 @@ export class MalImportService {
                 // Notes: fill only if null / empty
                 if ((log.notes === null || log.notes.trim() === "") && (item.logData.notes && item.logData.notes.trim() !== "")) {
                     logUpdates.notes = item.logData.notes
+                    filled = true
+                }
+
+                // Progress gap fill: fill only if null / empty
+                if (log.progress == null && item.logData.progress != null) {
+                    logUpdates.progress = item.logData.progress as Prisma.InputJsonValue
                     filled = true
                 }
 

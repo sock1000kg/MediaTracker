@@ -22,5 +22,7 @@ export default defineConfig({
   },
   datasource: {
     url: process.env.DATABASE_URL || "postgresql://unset@invalid:5432/unset",
+    // Only needed for `prisma migrate diff --from-migrations` (drift checks)
+    shadowDatabaseUrl: process.env.SHADOW_DATABASE_URL,
   },
 })

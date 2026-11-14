@@ -1,0 +1,247 @@
+import { jest } from '@jest/globals'
+import { musicSearchService } from '@/services/search/lastFmSearchService.js'
+import { musicBrainzService } from '@/services/search/musicBrainzService.js'
+import prisma from '@/prismaClient.js'
+
+describe('Tracklist Resolution and Fetching', () => {
+    const originalFetch = global.fetch
+
+    beforeEach(() => {
+        jest.restoreAllMocks()
+        // Provide dummy API key so getUserApiKey does not fail
+        jest.spyOn(musicSearchService, 'getUserApiKey').mockResolvedValue('test-key')
+        jest.spyOn(prisma.userLogs, 'findFirst').mockResolvedValue(null)
+    })
+
+    afterEach(() => {
+        global.fetch = originalFetch
+    })
+
+    it('maps multiple Last.fm tracks correctly', async () => {
+        const mockAlbumResponse = {
+            album: {
+                name: 'Loveless',
+                artist: 'my bloody valentine',
+                mbid: 'mbid-123',
+                url: 'https://last.fm/music/my+bloody+valentine/Loveless',
+                image: [{ size: 'large', '#text': 'https://cover.jpg' }],
+                tracks: {
+                    track: [
+                        {
+                            name: 'Only Shallow',
+                            duration: '257',
+                            url: 'https://last.fm/track/1',
+                            '@attr': { rank: 1 },
+                            artist: { name: 'my bloody valentine' },
+                        },
+                        {
+                            name: 'Loomer',
+                            duration: '158',
+                            url: 'https://last.fm/track/2',
+                            '@attr': { rank: 2 },
+                            artist: { name: 'my bloody valentine' },
+                        },
+                    ],
+                },
+            },
+        }
+
+        global.fetch = jest.fn<typeof fetch>().mockResolvedValue({
+            ok: true,
+            status: 200,
+            json: async () => mockAlbumResponse,
+        } as Response)
+
+        // Mock DB calls in attachLogInfo to empty array
+        jest.spyOn(prisma.media, 'findMany').mockResolvedValue([])
+
+        const res = await musicSearchService.fetchAlbumTracks(1, 'my bloody valentine', 'Loveless')
+
+        expect(res.provider).toBe('lastfm')
+        expect(res.album.title).toBe('Loveless')
+        expect(res.album.creator).toBe('my bloody valentine')
+        expect(res.album.imageUrl).toBe('https://cover.jpg')
+        expect(res.tracks).toHaveLength(2)
+        expect(res.tracks[0].title).toBe('Only Shallow')
+        expect(res.tracks[0].metadata).toMatchObject({
+            trackNumber: 1,
+            durationSec: 257,
+            kind: 'track',
+            album: 'Loveless',
+        })
+        expect(res.tracks[1].title).toBe('Loomer')
+        expect(res.tracks[1].metadata).toMatchObject({
+            trackNumber: 2,
+            durationSec: 158,
+        })
+    })
+
+    it('handles a single track object from Last.fm response correctly', async () => {
+        const mockAlbumResponse = {
+            album: {
+                name: 'Single Track EP',
+                artist: 'Solo Artist',
+                url: 'https://last.fm/music/solo',
+                tracks: {
+                    track: {
+                        name: 'Solo Track',
+                        duration: '180',
+                        url: 'https://last.fm/track/solo',
+                        '@attr': { rank: 1 },
+                        artist: 'Solo Artist',
+                    },
+                },
+            },
+        }
+
+        global.fetch = jest.fn<typeof fetch>().mockResolvedValue({
+            ok: true,
+            status: 200,
+            json: async () => mockAlbumResponse,
+        } as Response)
+
+        jest.spyOn(prisma.media, 'findMany').mockResolvedValue([])
+
+        const res = await musicSearchService.fetchAlbumTracks(1, 'Solo Artist', 'Single Track EP')
+
+        expect(res.provider).toBe('lastfm')
+        expect(res.tracks).toHaveLength(1)
+        expect(res.tracks[0].title).toBe('Solo Track')
+        expect(res.tracks[0].metadata).toMatchObject({
+            trackNumber: 1,
+            durationSec: 180,
+        })
+    })
+
+    it('falls back to MusicBrainz when Last.fm has no tracks', async () => {
+        // Last.fm returns album with empty tracks
+        const mockLastFmResponse = {
+            album: {
+                name: 'Obscure Album',
+                artist: 'Obscure Artist',
+                mbid: 'mbid-obscure',
+                tracks: { track: [] },
+            },
+        }
+
+        global.fetch = jest.fn<typeof fetch>().mockResolvedValue({
+            ok: true,
+            status: 200,
+            json: async () => mockLastFmResponse,
+        } as Response)
+
+        const mbRelease = {
+            id: 'mbid-obscure',
+            title: 'Obscure Album',
+            date: '2020-05-01',
+            'artist-credit': [{ name: 'Obscure Artist' }],
+            media: [
+                {
+                    position: 1,
+                    tracks: [
+                        {
+                            id: 'mb-trk-1',
+                            position: 1,
+                            title: 'Track A',
+                            length: 200000,
+                        },
+                        {
+                            id: 'mb-trk-2',
+                            position: 2,
+                            title: 'Track B',
+                            length: 150000,
+                        },
+                    ],
+                },
+            ],
+        }
+
+        jest.spyOn(musicBrainzService, 'getRelease').mockResolvedValue(mbRelease)
+        jest.spyOn(prisma.media, 'findMany').mockResolvedValue([])
+
+        const res = await musicSearchService.fetchAlbumTracks(1, 'Obscure Artist', 'Obscure Album', 'mbid-obscure')
+
+        expect(res.provider).toBe('musicbrainz')
+        expect(res.tracks).toHaveLength(2)
+        expect(res.tracks[0].title).toBe('Track A')
+        expect(res.tracks[0].source).toBe('musicbrainz')
+        expect(res.tracks[0].sourceId).toBe('mb-trk-1')
+        expect(res.tracks[0].metadata).toMatchObject({
+            trackNumber: 1,
+            durationSec: 200,
+        })
+    })
+
+    it('returns empty tracks and provider null when both Last.fm and MusicBrainz have no tracks', async () => {
+        // Last.fm returns empty tracks
+        global.fetch = jest.fn<typeof fetch>().mockResolvedValue({
+            ok: true,
+            status: 200,
+            json: async () => ({ album: { name: 'Empty Album', artist: 'Unknown' } }),
+        } as Response)
+
+        jest.spyOn(musicBrainzService, 'getRelease').mockResolvedValue(null)
+        jest.spyOn(musicBrainzService, 'searchRelease').mockResolvedValue(null)
+        jest.spyOn(prisma.media, 'findMany').mockResolvedValue([])
+
+        const res = await musicSearchService.fetchAlbumTracks(1, 'Unknown', 'Empty Album')
+
+        expect(res.provider).toBeNull()
+        expect(res.tracks).toEqual([])
+        expect(res.album.title).toBe('Empty Album')
+    })
+
+    it('populates myLog and inLibrary when user has rated a track', async () => {
+        const mockAlbumResponse = {
+            album: {
+                name: 'Souvlaki',
+                artist: 'Slowdive',
+                url: 'https://last.fm/music/slowdive/souvlaki',
+                tracks: {
+                    track: [
+                        {
+                            name: 'Alison',
+                            url: 'https://last.fm/track/alison',
+                            '@attr': { rank: 1 },
+                        },
+                        {
+                            name: 'Machine Gun',
+                            url: 'https://last.fm/track/machine-gun',
+                            '@attr': { rank: 2 },
+                        },
+                    ],
+                },
+            },
+        }
+
+        global.fetch = jest.fn<typeof fetch>().mockResolvedValue({
+            ok: true,
+            status: 200,
+            json: async () => mockAlbumResponse,
+        } as Response)
+
+        const fakeMedia = [
+            { id: 101, sourceId: 'lastfm:https://last.fm/music/slowdive/souvlaki#1' },
+            { id: 102, sourceId: 'lastfm:https://last.fm/music/slowdive/souvlaki#2' },
+        ]
+
+        jest.spyOn(prisma.media, 'findMany').mockResolvedValue(fakeMedia as never)
+        jest.spyOn(prisma.userLogs, 'findMany').mockResolvedValue([
+            { id: 501, mediaId: 101, rating: 95, status: 'completed' },
+        ] as never)
+
+        const res = await musicSearchService.fetchAlbumTracks(42, 'Slowdive', 'Souvlaki')
+
+        expect(res.tracks).toHaveLength(2)
+        // Alison has log
+        expect(res.tracks[0].inLibrary).toBe(true)
+        expect(res.tracks[0].myLog).toEqual({
+            id: 501,
+            rating: 95,
+            status: 'completed',
+        })
+        // Machine Gun has media in DB but no user log
+        expect(res.tracks[1].inLibrary).toBe(false)
+        expect(res.tracks[1].myLog).toBeNull()
+    })
+})

@@ -20,6 +20,7 @@ const __dirname = path.dirname(__filename)
 export interface DemoFixtureItem {
     mediaTypeName: string
     media: SearchResult
+    parent?: SearchResult
     log: {
         status: "completed" | "in progress" | "wishlist" | "dropped"
         rating?: number | null
@@ -99,6 +100,12 @@ export async function seedDemoMedia(
                         imageUrl: item.media.imageUrl ?? null,
                         metadata: item.media.metadata ?? null,
                     },
+                    parent: item.parent
+                        ? {
+                              ...item.parent,
+                              year: item.parent.year ? Number(item.parent.year) : null,
+                          }
+                        : undefined,
                     logData: {
                         status: item.log.status,
                         rating: item.log.rating ?? null,

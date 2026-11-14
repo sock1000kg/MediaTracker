@@ -24,7 +24,7 @@ export class LogService {
     async create(userId: number, payload: unknown) {
         // Use a transaction because we might create a MediaType AND a Log
         return await prisma.$transaction(async (tx: DbClient) => {
-            const { mediaId, status, rating, notes, startedAt, finishedAt, tags } = validateSchema(createLogSchema, payload)
+            const { mediaId, status, rating, notes, startedAt, finishedAt, progress, tags } = validateSchema(createLogSchema, payload)
 
             // Ownership check
             const media = await findMediaForUserById(mediaId, userId, tx)
@@ -44,7 +44,7 @@ export class LogService {
 
             try {
                 //Final Log creation
-                const log = await createLog(userId, mediaId, status, rating, notes, tx, null, startedAt, finishedAt)
+                const log = await createLog(userId, mediaId, status, rating, notes, tx, null, startedAt, finishedAt, progress)
                 if (tags !== undefined) {
                     await tagService.resolveAndSyncTags(userId, log.id, tags, tx)
                     return await findLogById(log.id, tx)
@@ -60,7 +60,7 @@ export class LogService {
     }
 
     async update(userId: number, logId: number, payload: unknown) {
-        const { status, rating, notes, startedAt, finishedAt, tags } = validateSchema(updateLogSchema, payload)
+        const { status, rating, notes, startedAt, finishedAt, progress, tags } = validateSchema(updateLogSchema, payload)
 
         return await prisma.$transaction(async (tx: DbClient) => {
             // Ownership check
@@ -80,7 +80,7 @@ export class LogService {
             }
 
             try {
-                const updated = await updateLog(logId, status, rating, notes, tx, startedAt, finishedAt)
+                const updated = await updateLog(logId, status, rating, notes, tx, startedAt, finishedAt, progress)
                 if (tags !== undefined) {
                     await tagService.resolveAndSyncTags(userId, logId, tags, tx)
                     return await findLogById(logId, tx)

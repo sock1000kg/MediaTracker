@@ -117,18 +117,18 @@ async function resolveAniList(pick: DemoPick): Promise<SearchResult> {
     return mapAniListMedia(mode, json.data.Media)
 }
 
-async function resolveTmdbTv(pick: DemoPick): Promise<SearchResult> {
+async function resolveTmdbTv(pick: DemoPick): Promise<{ media: SearchResult; parent?: SearchResult }> {
     const tmdbId = Number(pick.lookup.id)
     const { show, seasons } = await tmdbSearchService.fetchTvSeasons(0, tmdbId)
     if (pick.lookup.kind === "show") {
-        return show
+        return { media: show }
     }
     const targetSeasonNum = pick.lookup.seasonNumber ?? 1
     const season = seasons.find(s => (s.metadata as { seasonNumber?: number })?.seasonNumber === targetSeasonNum)
     if (!season) {
         throw new Error(`Season ${targetSeasonNum} not found for TMDB TV show ${tmdbId}`)
     }
-    return season
+    return { media: season, parent: show }
 }
 
 async function resolveTmdb(pick: DemoPick, key: string): Promise<SearchResult> {
@@ -183,10 +183,43 @@ async function resolveRawg(pick: DemoPick, key: string): Promise<SearchResult> {
     return mapped
 }
 
-async function resolveLastFm(pick: DemoPick): Promise<SearchResult> {
+async function resolveLastFm(pick: DemoPick): Promise<{ media: SearchResult; parent?: SearchResult }> {
     const kind = pick.lookup.kind === "track" ? "track" : "album"
     const artist = pick.lookup.artist!
     const title = pick.lookup.title!
+
+    if (kind === "track" && pick.lookup.album) {
+        const albumTracks = await musicSearchService.fetchAlbumTracks(0, artist, pick.lookup.album)
+        const match = albumTracks.tracks.find(t => t.title.toLowerCase() === title.toLowerCase())
+            || albumTracks.tracks.find(t => t.title.toLowerCase().includes(title.toLowerCase()))
+            || albumTracks.tracks[0]
+
+        if (!match) {
+            throw new Error(`Track ${title} not found on album ${pick.lookup.album} by ${artist}`)
+        }
+
+        const parent: SearchResult = {
+            title: albumTracks.album.title,
+            creator: albumTracks.album.artist,
+            imageUrl: albumTracks.album.imageUrl,
+            source: albumTracks.album.source,
+            sourceId: albumTracks.album.sourceId,
+            year: albumTracks.album.year,
+            metadata: { kind: "album" },
+        }
+
+        const media: SearchResult = {
+            title: match.title,
+            creator: match.creator || artist,
+            imageUrl: match.imageUrl ?? albumTracks.album.imageUrl,
+            source: match.source,
+            sourceId: match.sourceId,
+            year: match.year ?? albumTracks.album.year,
+            metadata: match.metadata,
+        }
+
+        return { media, parent }
+    }
 
     let mapped: SearchResult
     if (kind === "album") {
@@ -211,12 +244,13 @@ async function resolveLastFm(pick: DemoPick): Promise<SearchResult> {
         kind,
         categories: topTags,
     }
-    return mapped
+    return { media: mapped }
 }
 
 export interface DemoFixtureItem {
     mediaTypeName: string
     media: SearchResult
+    parent?: SearchResult
     log: DemoPick["log"]
     collections: string[]
 }
@@ -272,24 +306,25 @@ async function buildFixture() {
         const label = `[${i + 1}/${DEMO_PICKS.length}] ${pick.mediaTypeName} - ${pick.lookup.title || pick.lookup.id}`
         console.log(`Resolving ${label}...`)
 
-        let media: SearchResult
+        let resolved: { media: SearchResult; parent?: SearchResult }
         if (pick.mediaTypeName === "tv") {
-            media = await resolveTmdbTv(pick)
+            resolved = await resolveTmdbTv(pick)
         } else if (pick.provider === "anilist") {
-            media = await resolveAniList(pick)
+            resolved = { media: await resolveAniList(pick) }
         } else if (pick.provider === "tmdb") {
-            media = await resolveTmdb(pick, tmdbKey!)
+            resolved = { media: await resolveTmdb(pick, tmdbKey!) }
         } else if (pick.provider === "rawg") {
-            media = await resolveRawg(pick, rawgKey!)
+            resolved = { media: await resolveRawg(pick, rawgKey!) }
         } else if (pick.provider === "lastfm") {
-            media = await resolveLastFm(pick)
+            resolved = await resolveLastFm(pick)
         } else {
             throw new Error(`Unknown provider ${(pick as DemoPick).provider}`)
         }
 
         items.push({
             mediaTypeName: pick.mediaTypeName,
-            media,
+            media: resolved.media,
+            parent: resolved.parent,
             log: pick.log,
             collections: pick.collections || [],
         })

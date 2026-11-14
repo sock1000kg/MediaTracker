@@ -1,6 +1,6 @@
 import prisma from "@/prismaClient.js"
 import { Prisma, Media, UserLogs } from "@/db.js"
-import { mergeMediaMetadata } from "@/repositories/mediaRepository.js"
+import { mergeMediaMetadata, findMediaByExternalIds, ExternalIdKey } from "@/repositories/mediaRepository.js"
 import { tagKey, normalizeTagName } from "@/utilities.js"
 import { ImportResult } from "@/api/domain/imports.js"
 import { makeProgressReporter, type ImportProgressCallback } from "./goodreadsImportService.js"
@@ -28,8 +28,10 @@ export interface BatchRowItem {
         startedAt: Date | null
         finishedAt: Date | null
         tags: string[]
+        progress?: Prisma.InputJsonValue | null
     }
     idMal?: number | null
+    externalIds?: { provider: string; id: string }[]
 }
 
 export interface GapFillResult {
@@ -39,6 +41,7 @@ export interface GapFillResult {
         started_at?: Date | null
         notes?: string | null
         status?: string | null
+        progress?: Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput
     }
     mediaPatch?: Record<string, Prisma.InputJsonValue | null>
     newTags?: string[]
@@ -95,53 +98,47 @@ export async function executeBatchImport(options: {
         return results
     }
 
-    // 1. Pre-load existing Media for this file in one query outside transactions
-    const sourceIds = items
-        .map(it => it.mediaData.sourceId)
-        .filter((id): id is string => Boolean(id))
-    const sources = Array.from(new Set(items.map(it => it.mediaData.source).filter(Boolean)))
-    const malIds = items.map(it => it.idMal).filter((id): id is number => typeof id === "number")
-
-    // AniList media added from search carry metadata.idMal. Prisma can't filter a JSON path with IN,
-    // so find those ids with one raw query.
-    const idMalMediaIds = malIds.length > 0
-        ? (await prisma.$queryRaw<{ id: number }[]>`
-            SELECT id FROM "Media"
-            WHERE "mediaTypeId" = ${mediaTypeId}
-              AND jsonb_typeof(metadata->'idMal') = 'number'
-              AND (metadata->>'idMal')::int = ANY(${malIds}::int[])`).map(r => r.id)
-        : []
-
-    const existingMedias = await prisma.media.findMany({
-        where: {
-            OR: [
-                { source: { in: sources }, sourceId: { in: sourceIds } },
-                ...(idMalMediaIds.length > 0 ? [{ id: { in: idMalMediaIds } }] : []),
-                ...(malIds.length > 0 ? [{ source: "jikan", sourceId: { in: malIds.map(id => `anime-${id}`) } }] : []),
-                ...(malIds.length > 0 ? [{ source: "jikan", sourceId: { in: malIds.map(id => `manga-${id}`) } }] : []),
-            ],
-        },
-    })
-
-    const mediaBySourceKey = new Map<string, Media>()
-    const mediaByIdMal = new Map<number, Media>()
-    for (const m of existingMedias) {
-        if (m.source && m.sourceId) {
-            mediaBySourceKey.set(`${m.source}:${m.sourceId}`, m)
+    // 1. Pre-load existing Media for this file using MediaExternalId
+    const externalKeys: ExternalIdKey[] = []
+    for (const it of items) {
+        if (it.mediaData.source && it.mediaData.sourceId) {
+            externalKeys.push({ provider: it.mediaData.source, externalId: it.mediaData.sourceId })
         }
-        const meta = (m.metadata && typeof m.metadata === "object" && !Array.isArray(m.metadata))
-            ? (m.metadata as Record<string, unknown>)
-            : null
-        if (meta && typeof meta.idMal === "number") {
-            mediaByIdMal.set(meta.idMal, m)
+        if (it.externalIds) {
+            for (const x of it.externalIds) {
+                if (x.provider && x.id) {
+                    externalKeys.push({ provider: x.provider, externalId: x.id })
+                }
+            }
+        }
+        if (typeof it.idMal === "number") {
+            externalKeys.push({ provider: "mal", externalId: String(it.idMal) })
+            externalKeys.push({ provider: "jikan", externalId: `anime-${it.idMal}` })
+            externalKeys.push({ provider: "jikan", externalId: `manga-${it.idMal}` })
         }
     }
 
-    // Pre-load existing logs for this user matching these media
+    const mediaByExternalKey = await findMediaByExternalIds(externalKeys, prisma)
+    const mediaBySourceKey = new Map<string, Media>()
+    const mediaByIdMal = new Map<number, Media>()
+    const allFoundMedia: Media[] = []
+
+    for (const [key, m] of mediaByExternalKey.entries()) {
+        mediaBySourceKey.set(key, m)
+        if (key.startsWith("mal:")) {
+            const malId = Number(key.slice(4))
+            if (Number.isFinite(malId)) {
+                mediaByIdMal.set(malId, m)
+            }
+        }
+        allFoundMedia.push(m)
+    }
+
+    const foundMediaIds = Array.from(new Set(allFoundMedia.map(m => m.id)))
     const existingLogs = await prisma.userLogs.findMany({
         where: {
             userId,
-            mediaId: { in: existingMedias.map(m => m.id) },
+            mediaId: { in: foundMediaIds },
         },
     })
     const logByMediaId = new Map<number, UserLogs>()
@@ -292,6 +289,44 @@ export async function executeBatchImport(options: {
                             r.mediaId = m.id
                         }
                     }
+
+                    // Insert into MediaExternalId
+                    const extIdData: { mediaId: number; provider: string; externalId: string }[] = []
+                    for (const r of chunkRowsNeedingMedia) {
+                        if (r.mediaId && r.mediaId > 0) {
+                            if (r.item.mediaData.source && r.item.mediaData.sourceId) {
+                                extIdData.push({
+                                    mediaId: r.mediaId,
+                                    provider: r.item.mediaData.source.toLowerCase(),
+                                    externalId: r.item.mediaData.sourceId,
+                                })
+                            }
+                            if (r.item.externalIds) {
+                                for (const x of r.item.externalIds) {
+                                    if (x.provider && x.id) {
+                                        extIdData.push({
+                                            mediaId: r.mediaId,
+                                            provider: x.provider.toLowerCase(),
+                                            externalId: x.id,
+                                        })
+                                    }
+                                }
+                            }
+                            if (typeof r.item.idMal === "number") {
+                                extIdData.push({
+                                    mediaId: r.mediaId,
+                                    provider: "mal",
+                                    externalId: String(r.item.idMal),
+                                })
+                            }
+                        }
+                    }
+                    if (extIdData.length > 0) {
+                        await tx.mediaExternalId.createMany({
+                            data: extIdData,
+                            skipDuplicates: true,
+                        })
+                    }
                 }
 
                 // b. Insert new logs
@@ -304,6 +339,7 @@ export async function executeBatchImport(options: {
                             status: r.item.logData.status,
                             rating: r.item.logData.rating,
                             notes: r.item.logData.notes,
+                            progress: (r.item.logData.progress as Prisma.InputJsonValue) ?? Prisma.JsonNull,
                             logged_at: r.item.logData.loggedAt ?? new Date(),
                             started_at: r.item.logData.startedAt,
                             finished_at: r.item.logData.finishedAt,

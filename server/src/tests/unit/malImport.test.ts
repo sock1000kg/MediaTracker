@@ -28,6 +28,7 @@ describe("MyAnimeList Import (Unit)", () => {
             const parsed = parseMalExport(validAnimeXml)
             expect(parsed.kind).toBe("anime")
             expect(parsed.entries.length).toBe(2)
+            expect(parsed.entries[0].watchedEpisodes).toBe(28)
         })
 
         it("detects manga export correctly from user_export_type or manga tag", () => {
@@ -35,6 +36,8 @@ describe("MyAnimeList Import (Unit)", () => {
             expect(parsed.kind).toBe("manga")
             expect(parsed.entries.length).toBe(1)
             expect(parsed.entries[0].title).toBe("Berserk")
+            expect(parsed.entries[0].readChapters).toBe(364)
+            expect(parsed.entries[0].readVolumes).toBe(41)
         })
 
         it("rejects a file that is not a MAL export with a clear 400 error", () => {

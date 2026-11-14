@@ -3,6 +3,8 @@ import {
     sanitizeStatus,
     sanitizeRating,
     sanitizeNotes,
+    allowedStatuses,
+    AllowedStatus,
     toDayPrecision,
     normalizeTagName,
     tagKey,
@@ -37,6 +39,37 @@ const notesSchema = z
     .default(null)
 )
 
+// Update schemas:
+// - val === undefined: return undefined (preserves existing field)
+// - val === null or "": return null (explicit clear)
+// - invalid input: return undefined (ignored, preserves existing field)
+// - valid input: return validated/sanitized value
+const updateStatusSchema = z.preprocess((val: unknown) => {
+    if (val === undefined) return undefined
+    if (val === null || val === "") return null
+    if (typeof val === "string") {
+        const cleaned = val.trim().toLowerCase()
+        if (allowedStatuses.includes(cleaned as AllowedStatus)) {
+            return cleaned as AllowedStatus
+        }
+    }
+    return undefined
+}, z.string().nullable().optional())
+
+const updateRatingSchema = z.preprocess((val: unknown) => {
+    if (val === undefined) return undefined
+    if (val === null || val === "") return null
+    const num = Number(val)
+    if (isNaN(num) || num < 0 || num > 100) return undefined
+    return num
+}, z.number().nullable().optional())
+
+const updateNotesSchema = z.preprocess((val: unknown) => {
+    if (val === undefined) return undefined
+    if (val === null || val === "") return null
+    return String(val).trim().slice(0, 10000)
+}, z.string().nullable().optional())
+
 const mediaIdSchema = z
     .preprocess((val) => {
         // Convert to number if possible
@@ -56,6 +89,8 @@ const dateInputSchema = z.preprocess((val: unknown) => {
     const d = toDayPrecision(val)
     return d ?? "invalid"
 }, z.union([z.date(), z.null(), z.undefined()]))
+
+export const progressSchema = z.record(z.string(), z.unknown()).nullable().optional()
 
 export const tagsSchema = z.array(z.string()).superRefine((items, ctx) => {
     for (let i = 0; i < items.length; i++) {
@@ -144,6 +179,7 @@ export const searchLogSchema = z.preprocess(
         notes: notesSchema,
         startedAt: dateInputSchema.optional(),
         finishedAt: dateInputSchema.optional(),
+        progress: progressSchema,
         tags: tagsSchema,
     }).superRefine(validateLogDateConstraints)
 )
@@ -157,6 +193,7 @@ export const createLogSchema = z.preprocess(
         notes: notesSchema,
         startedAt: dateInputSchema.optional(),
         finishedAt: dateInputSchema.optional(),
+        progress: progressSchema,
         tags: tagsSchema,
     }).superRefine(validateLogDateConstraints)
 )
@@ -164,11 +201,12 @@ export const createLogSchema = z.preprocess(
 export const updateLogSchema = z.preprocess(
     normalizeDateKeys,
     z.object({
-        status: statusSchema,
-        rating: ratingSchema,
-        notes: notesSchema,
+        status: updateStatusSchema,
+        rating: updateRatingSchema,
+        notes: updateNotesSchema,
         startedAt: dateInputSchema.optional(),
         finishedAt: dateInputSchema.optional(),
+        progress: progressSchema,
         tags: tagsSchema,
     }).superRefine(validateLogDateConstraints)
 )

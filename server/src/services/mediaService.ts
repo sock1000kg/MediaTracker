@@ -11,6 +11,7 @@ import {
     mergeMediaMetadata,
     setMediaCreatorIfNull,
     setMediaDescriptionIfNull,
+    findMediaChildren,
 } from "@/repositories/mediaRepository.js" 
 
 import { findMediaTypeForUserOrGlobal } from "@/repositories/mediaTypeRepository.js" 
@@ -32,6 +33,10 @@ import { DbClient } from "@/db.js"
 export class MediaService {
     async getAll(userId: number) {
         return getAllMediasUserCreated(userId) 
+    }
+
+    async getChildren(mediaId: number, userId: number) {
+        return findMediaChildren(mediaId, userId, prisma)
     }
 
     // Create new media for an userId
@@ -154,7 +159,7 @@ export class MediaService {
     }
 
     async createMediaAndLog(userId: number, payload: unknown) {
-        const { mediaData, logData } = validateSchema(createMediaAndLogSchema, payload)
+        const { mediaData, logData, parent } = validateSchema(createMediaAndLogSchema, payload)
 
         // Last.fm search results carry no tags, so fetch them once when the media is first logged.
         // categories: undefined = never tried, null = tried and found nothing (don't fetch again)
@@ -197,7 +202,8 @@ export class MediaService {
                         userId,
                         mediaTypeName: mediaData.mediaType,
                         mediaData,
-                        logData
+                        logData,
+                        parent: parent ?? null,
                     },
                     tx
                 )

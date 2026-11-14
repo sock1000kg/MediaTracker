@@ -3,6 +3,7 @@ import express from 'express'
 import {
     getTvSeasons,
     searchAlbums,
+    getAlbumTracks,
     searchAnime,
     searchBooks,
     searchGames,
@@ -16,6 +17,7 @@ const router = express.Router()
 
 router.get('/books', searchBooks)
 router.get('/music/albums', searchAlbums)
+router.get('/music/albums/tracks', getAlbumTracks)
 router.get('/music/tracks', searchTracks)
 router.get('/anime', searchAnime)
 router.get('/manga', searchManga)

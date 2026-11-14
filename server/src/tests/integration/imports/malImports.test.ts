@@ -168,12 +168,13 @@ describe("Media Import Routes (MyAnimeList)", () => {
     </anime>
 </myanimelist>`
 
+        const resolver = jest.fn(mockResolver)
         jest.spyOn(malImportService, "importFromMal").mockImplementation(async (u, buf, opts) => {
             return MalImportService.prototype.importFromMal.call(
                 malImportService,
                 u,
                 buf,
-                { ...opts, resolver: mockResolver }
+                { ...opts, resolver }
             )
         })
 
@@ -181,6 +182,8 @@ describe("Media Import Routes (MyAnimeList)", () => {
         expect(job.result.imported).toBe(0)
         expect(job.result.updated).toBe(0)
         expect(job.result.skipped).toBe(1)
+        // The title is already in the catalogue, so nothing is looked up again
+        expect(resolver).toHaveBeenCalledWith([], "anime")
     })
 
     test("An app-set rating is not overwritten on re-import", async () => {

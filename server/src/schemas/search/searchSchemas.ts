@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { searchMediaSchema } from "@schemas/mediaSchemas.js"
 import { searchLogSchema } from "@/schemas/logSchemas.js"
+import { normalizeTypeName } from "@/utilities.js"
 import { bookMetadataSchema } from "./bookSchemas.js"
 import { musicMetadataSchema } from "./musicSchemas.js"
 import { animeMetadataSchema } from "./animeSchemas.js"
@@ -8,10 +9,24 @@ import { movieMetadataSchema } from "./movieSchemas.js"
 import { gameMetadataSchema } from "./gameSchemas.js"
 import { tvSeasonMetadataSchema, tvShowMetadataSchema } from "./tvSchemas.js"
 
+const parentMediaSchema = searchMediaSchema.extend({
+    mediaType: z
+        .string()
+        .transform((val) => normalizeTypeName(val))
+        .refine(val => val.trim().length > 0, { message: "Media Type name is required" })
+        .optional(),
+})
+
 //For when user search up a media and wanna log it
 export const createMediaAndLogSchema = z.object({
     mediaData: searchMediaSchema,
-    logData: searchLogSchema
+    logData: searchLogSchema,
+    parent: parentMediaSchema.nullish(),
+}).transform((data) => {
+    if (data.parent && !data.parent.mediaType) {
+        data.parent.mediaType = data.mediaData.mediaType
+    }
+    return data
 })
 
 // Music goes first and is strict: the book schema would otherwise match music results and strip `kind`
@@ -50,7 +65,16 @@ export const searchResultSchema = z.object({
         .default(null),
     sourceId: z.string(),
     inLibrary: z.boolean().optional(),
+    myLog: z.object({
+        id: z.number(),
+        rating: z.number().nullable(),
+        status: z.string().nullable(),
+    }).nullable().optional(),
     metadata: mediaMetadataSchema.optional(), // raw Google volumeInfo
+    externalIds: z.array(z.object({
+        provider: z.string(),
+        id: z.string(),
+    })).optional(),
 })
 export const searchResultsSchema = z.array(searchResultSchema) //Schema for the results array
 
