@@ -21,7 +21,7 @@ A self-hostable media journal: books, music, anime, manga, movies and games, all
 - **Collections:** private collections (ordered lists) with optional ranking, cover mosaics, and accessible reordering controls.
 - **Goodreads import:** upload your Goodreads CSV export; it runs as a background job with live progress; re-importing a Goodreads export fills in missing details.
 - **MyAnimeList import:** upload your MAL anime or manga export (`.xml` or `.xml.gz`); it runs as a background job with live progress, resolves covers and metadata via AniList, imports bare media when unresolved, and fills gaps on re-import.
-- **Letterboxd import:** upload your Letterboxd ZIP export; it runs as a background job with live progress, merges watched, ratings, watchlist, diary and reviews, checks the catalogue first, and resolves misses via TMDB title + year (needs your TMDB key). Unmatched films are added by title; likes and lists aren't imported. Fills gaps on re-import.
+- **Letterboxd import:** upload your Letterboxd ZIP export; it runs as a background job with live progress, merges watched, ratings, watchlist, diary and reviews, checks the catalogue first, and resolves misses via TMDB title + year (needs your TMDB key). Unmatched films are added by title; likes are imported into the "Letterboxd likes" collection; lists aren't imported. Fills gaps on re-import.
 - **Browse your way:**
   - list or cover-grid views
   - grouping by month or type, with Load more / Load all per group
