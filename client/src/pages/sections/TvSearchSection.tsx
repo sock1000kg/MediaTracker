@@ -41,7 +41,7 @@ interface TvShowItemProps {
   show: TvResult
   view: "list" | "grid"
   logs: Log[]
-  onLog: (item: TvResult | TvSeasonResult) => void
+  onLog: (item: TvResult | TvSeasonResult, parent?: TvResult) => void
 }
 
 function TvShowItem({ show, view, logs, onLog }: TvShowItemProps) {
@@ -129,7 +129,7 @@ function TvShowItem({ show, view, logs, onLog }: TvShowItemProps) {
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 {inMedia && <span className="tag">In your media</span>}
-                <Button size="sm" variant="amber" onClick={() => onLog(season)}>
+                <Button size="sm" variant="amber" onClick={() => onLog(season, show)}>
                   {inMedia ? "Edit log" : "Log season"}
                 </Button>
               </div>
@@ -259,6 +259,7 @@ export function TvSearchSection() {
   const [year, setYear] = useState("")
 
   const [targetMedia, setTargetMedia] = useState<TvResult | TvSeasonResult>()
+  const [targetParent, setTargetParent] = useState<TvResult | undefined>()
   const [targetLog, setTargetLog] = useState<Log | null>(null)
 
   const { prefs, isLoaded: prefsLoaded, updatePrefs } = usePreferences()
@@ -323,10 +324,12 @@ export function TvSearchSection() {
     mutationFn: ({
       mediaData,
       logData,
+      parent,
     }: {
       mediaData: TvResult | TvSeasonResult
       logData: Partial<Log>
-    }) => createMediaAndLog(mediaData, logData),
+      parent?: TvResult
+    }) => createMediaAndLog(mediaData, logData, parent),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: fetchLogsQueryOptions().queryKey })
       queryClient.invalidateQueries({ queryKey: fetchMediasQueryOptions().queryKey })
@@ -355,8 +358,9 @@ export function TvSearchSection() {
     setYear(yearInput.trim())
   }
 
-  const handleLogClick = (item: TvResult | TvSeasonResult) => {
+  const handleLogClick = (item: TvResult | TvSeasonResult, parent?: TvResult) => {
     setTargetMedia(item)
+    setTargetParent(parent)
     const existingLog = findLogForResult(logs, item) ?? null
     setTargetLog(existingLog)
     setOpenDialog("logForm")
@@ -372,6 +376,7 @@ export function TvSearchSection() {
     return await createMediaAndLogMutation.mutateAsync({
       mediaData: targetMedia,
       logData: formData,
+      parent: targetParent,
     })
   }
 

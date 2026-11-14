@@ -11,6 +11,11 @@ type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue }
 export interface MediaMetadata {
   [key: string]: JsonValue | undefined
 }
+export interface ChildSummary {
+  rated: number
+  avgRating: number | null
+}
+
 export interface Media {
   id: number
   userId: number
@@ -24,6 +29,14 @@ export interface Media {
   metadata?: MediaMetadata
   imageUrl?: string | null
   created_at: string
+  parentId?: number | null
+  position?: number | null
+  parent?: {
+    id: number
+    title: string
+    creator?: string | null
+  } | null
+  childSummary?: ChildSummary
 }
 
 export interface TagItem {
@@ -43,14 +56,16 @@ export type LogStatus = "completed" | "in progress" | "wishlist" | "dropped"
 export interface Log {
   id: number
   status: LogStatus
-  rating: number
+  rating: number | null
   notes: string
   started_at?: string | null
   finished_at?: string | null
   logged_at: string
+  progress?: Record<string, unknown> | null
   media: Media
   tags?: TagItem[]
   collectionIds?: number[]
+  childSummary?: ChildSummary
 }
 
 export interface CollectionSummary {

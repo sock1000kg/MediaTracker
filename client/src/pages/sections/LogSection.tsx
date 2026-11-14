@@ -190,8 +190,31 @@ export default function LogsSection() {
     return RATING_BUCKETS.filter(b => present.has(b))
   }, [logs])
 
+  // Set of media IDs of parents that the user has logged
+  const loggedParentMediaIds = useMemo(() => {
+    const set = new Set<number>()
+    const allParentIds = new Set(logs.map(l => l.media.parentId).filter((id): id is number => id != null))
+    for (const l of logs) {
+      if (l.media.id && (l.media.childSummary !== undefined || allParentIds.has(l.media.id))) {
+        set.add(l.media.id)
+      }
+    }
+    return set
+  }, [logs])
+
+  // A child log whose parent the user has also logged is listed under that parent, not as its own top-level row
+  const displayLogs = useMemo(() => {
+    return processedLogs.filter((l) => {
+      const parentId = l.media.parentId
+      if (parentId && loggedParentMediaIds.has(parentId)) {
+        return false
+      }
+      return true
+    })
+  }, [processedLogs, loggedParentMediaIds])
+
   // Grouping happens AFTER filters/sorts, so group order follows the sorted list
-  const groups = useMemo(() => groupLogs(processedLogs, groupBy), [processedLogs, groupBy])
+  const groups = useMemo(() => groupLogs(displayLogs, groupBy), [displayLogs, groupBy])
 
   // Per-group "Load more…": resets when filters, search or sorts change (and on view / group changes)
   const reveal = useGroupReveal(

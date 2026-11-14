@@ -6,7 +6,7 @@ import { formatAnimeScore } from "@/lib/animeFormat"
 import { num, str, strList } from "@/lib/coerce"
 
 // Never shown as raw "key: value" text
-const ALWAYS_HIDDEN = new Set(["url", "categories", "kind", "imdbId", "originalTitle", "showTitle", "watchedEpisodes", "readChapters", "readVolumes"])
+const ALWAYS_HIDDEN = new Set(["url", "categories", "kind", "imdbId", "originalTitle", "showTitle", "watchedEpisodes", "readChapters", "readVolumes", "album", "albumSourceId"])
 
 type Meta = Record<string, unknown>
 interface Branch { parts: string[]; used: Set<string> }
@@ -25,7 +25,7 @@ function bookBranch(meta: Meta): Branch {
   }
 }
 
-function animeBranch(meta: Meta, kind: "anime" | "manga", source?: string): Branch {
+function animeBranch(meta: Meta, kind: "anime" | "manga", source?: string, progress?: Record<string, unknown> | null): Branch {
   const clean: AnimeResult["metadata"] = {
     kind,
     format: str(meta.format),
@@ -51,11 +51,18 @@ function animeBranch(meta: Meta, kind: "anime" | "manga", source?: string): Bran
   const parts: string[] = []
   if (clean.format) parts.push(clean.format)
   if (kind === "anime") {
-    if (clean.episodes) parts.push(`${clean.episodes} eps`)
+    const watched = num(progress?.watchedEpisodes)
+    if (watched != null && watched > 0) {
+      parts.push(clean.episodes ? `${watched}/${clean.episodes} eps` : `${watched} eps`)
+    } else if (clean.episodes) {
+      parts.push(`${clean.episodes} eps`)
+    }
     if (epMinutes != null && epMinutes > 0) parts.push(`${epMinutes} min/ep`)
   } else {
-    const ch = clean.chapters ? `${clean.chapters} ch` : null
-    const vol = clean.volumes ? `${clean.volumes} vol` : null
+    const readCh = num(progress?.readChapters)
+    const readVol = num(progress?.readVolumes)
+    const ch = readCh != null ? (clean.chapters ? `${readCh}/${clean.chapters} ch` : `${readCh} ch`) : (clean.chapters ? `${clean.chapters} ch` : null)
+    const vol = readVol != null ? (clean.volumes ? `${readVol}/${clean.volumes} vol` : `${readVol} vol`) : (clean.volumes ? `${clean.volumes} vol` : null)
     const both = [ch, vol].filter(Boolean).join(" · ")
     if (both) parts.push(both)
   }
@@ -140,12 +147,35 @@ function tvBranch(meta: Meta): Branch {
   return { parts, used }
 }
 
-function branchFor(meta: Meta, source?: string): Branch {
+function trackBranch(meta: Meta): Branch {
+  const used = new Set<string>(["album", "albumSourceId", "url", "kind", "categories"])
+  const trackNum = num(meta.trackNumber)
+  const durationSec = num(meta.durationSec)
+  if (trackNum != null) used.add("trackNumber")
+  if (durationSec != null) used.add("durationSec")
+
+  const trackPart = trackNum != null ? `Track ${trackNum}` : "Track"
+  let timePart: string | null = null
+  if (durationSec != null && durationSec > 0) {
+    const total = Math.round(durationSec)
+    const m = Math.floor(total / 60)
+    const s = total % 60
+    timePart = `${m}:${s < 10 ? "0" : ""}${s}`
+  }
+
+  const parts = [trackPart, timePart].filter(Boolean).join(" · ")
+  return {
+    parts: parts ? [parts] : ["Track"],
+    used,
+  }
+}
+
+function branchFor(meta: Meta, source?: string, progress?: Record<string, unknown> | null): Branch {
   switch (meta.kind) {
     case "album": return { parts: ["Album"], used: new Set() }
-    case "track": return { parts: ["Track"], used: new Set() }
+    case "track": return trackBranch(meta)
     case "anime":
-    case "manga": return animeBranch(meta, meta.kind, source)
+    case "manga": return animeBranch(meta, meta.kind, source, progress)
     case "movie": return movieBranch(meta)
     case "show":
     case "season": return tvBranch(meta)
@@ -169,12 +199,15 @@ function displayValue(v: unknown): string | null {
  * Human-readable metadata parts for a Logs card (join with " • "). Keys that were formatted are hidden;
  * every other key shows as "key: value" (empty values and objects are skipped). Never throws.
  */
-export function formatLogMetadata(media: (Pick<Media, "metadata"> & { source?: string | null }) | null | undefined): string[] {
+export function formatLogMetadata(
+  media: (Pick<Media, "metadata"> & { source?: string | null }) | null | undefined,
+  log?: { progress?: Record<string, unknown> | null } | null
+): string[] {
   try {
     const raw = media?.metadata
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) return []
     const meta = raw as Meta
-    const { parts, used } = branchFor(meta, media?.source ?? undefined)
+    const { parts, used } = branchFor(meta, media?.source ?? undefined, log?.progress ?? null)
     const out = [...parts]
     for (const [key, value] of Object.entries(meta)) {
       if (ALWAYS_HIDDEN.has(key) || used.has(key)) continue

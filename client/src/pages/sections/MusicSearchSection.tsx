@@ -14,7 +14,8 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { findLogForResult, isResultLogged, readStoredBool, writeStoredBool } from "@/lib/utils"
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData  } from "@tanstack/react-query"
 
-import type { MusicResult } from "@/types/search"
+import { AlbumItem } from "@/components/music/AlbumItem"
+import type { MusicResult, MusicTrackResult } from "@/types/search"
 import { type DialogName, type Log } from "@/types/mainTypes"
 
 import EntityDialog from "../../components/dialogs/EntityDialog"
@@ -36,7 +37,15 @@ export function MusicSearchSection() {
     const [searchMode, setSearchMode] = useState<"albums" | "tracks">("albums")
 
     const [targetMedia, setTargetMedia] = useState<MusicResult>()
+    const [targetParent, setTargetParent] = useState<MusicResult | undefined>()
     const [targetLog, setTargetLog] = useState<Log | null>(null)
+    const [toastMessage, setToastMessage] = useState<string | null>(null)
+
+    useEffect(() => {
+        if (!toastMessage) return
+        const t = setTimeout(() => setToastMessage(null), 4000)
+        return () => clearTimeout(t)
+    }, [toastMessage])
 
     const { prefs, isLoaded: prefsLoaded, updatePrefs } = usePreferences()
     const [view, setView] = useStoredView("search.view.music")
@@ -99,12 +108,13 @@ export function MusicSearchSection() {
 
     //MUTATIONS
     const createMediaAndLogMutation = useMutation({
-        mutationFn: ({ mediaData, logData }: { mediaData: MusicResult, logData: Partial<Log> }) =>
-            createMediaAndLog(mediaData, logData),
+        mutationFn: ({ mediaData, logData, parent }: { mediaData: MusicResult, logData: Partial<Log>, parent?: MusicResult }) =>
+            createMediaAndLog(mediaData, logData, parent),
 
         onSuccess: () => {
             queryClient.refetchQueries({ queryKey: fetchMediasQueryOptions().queryKey})
             queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey })
+            queryClient.invalidateQueries({ queryKey: ["albumTracks"] })
             queryClient.invalidateQueries({ queryKey: ["tags"] })
         }
     })
@@ -134,7 +144,19 @@ export function MusicSearchSection() {
         }
 
         setTargetMedia(mediaData)
+        setTargetParent(undefined)
         setTargetLog(existingLog ?? null)
+        setOpenDialog("logForm")
+    }
+
+    const handleTrackMoreClick = (track: MusicTrackResult, album: MusicResult) => {
+        const existingLog = (track.myLog ? logs.find(l => l.id === track.myLog?.id) : null) ?? findLogForResult(logs, track) ?? null
+        setTargetMedia({
+            ...track,
+            mediaType: "music",
+        })
+        setTargetParent(album)
+        setTargetLog(existingLog)
         setOpenDialog("logForm")
     }
 
@@ -152,7 +174,8 @@ export function MusicSearchSection() {
         else {
             return await createMediaAndLogMutation.mutateAsync({
                 mediaData: targetMedia,
-                logData: formData
+                logData: formData,
+                parent: targetParent,
             })
         }
     }
@@ -254,13 +277,45 @@ export function MusicSearchSection() {
 
                 {results.length > 0 ? (
                 <div className="grid gap-4">
-                    <ResultList
-                        results={visibleResults}
-                        view={view}
-                        kindOf={() => "music"}
-                        isLogged={(item) => isResultLogged(logs, item)}
-                        onLog={handleLogClick}
-                    />
+                    {searchMode === "albums" ? (
+                        view === "grid" ? (
+                            <ul className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-x-5 gap-y-7">
+                                {visibleResults.map((album) => (
+                                    <AlbumItem
+                                        key={album.sourceId}
+                                        album={album}
+                                        view="grid"
+                                        logs={logs}
+                                        onLog={handleLogClick}
+                                        onMore={handleTrackMoreClick}
+                                        onErrorToast={setToastMessage}
+                                    />
+                                ))}
+                            </ul>
+                        ) : (
+                            <ul className="flex flex-col gap-3">
+                                {visibleResults.map((album) => (
+                                    <AlbumItem
+                                        key={album.sourceId}
+                                        album={album}
+                                        view="list"
+                                        logs={logs}
+                                        onLog={handleLogClick}
+                                        onMore={handleTrackMoreClick}
+                                        onErrorToast={setToastMessage}
+                                    />
+                                ))}
+                            </ul>
+                        )
+                    ) : (
+                        <ResultList
+                            results={visibleResults}
+                            view={view}
+                            kindOf={() => "music"}
+                            isLogged={(item) => isResultLogged(logs, item)}
+                            onLog={handleLogClick}
+                        />
+                    )}
 
                     {hideLogged && visibleResults.length === 0 && (
                         <EmptyState line={EMPTY_LINES.allHidden}>
@@ -280,6 +335,22 @@ export function MusicSearchSection() {
                 )
                 )}
             </div>
+
+            {toastMessage && (
+                <div
+                    role="alert"
+                    className="fixed bottom-4 right-4 z-50 rounded-lg border border-destructive/20 bg-card px-4 py-2.5 text-sm text-destructive shadow-lg flex items-center gap-2"
+                >
+                    <span>{toastMessage}</span>
+                    <button
+                        type="button"
+                        onClick={() => setToastMessage(null)}
+                        className="text-xs text-muted-foreground hover:text-foreground"
+                    >
+                        ✕
+                    </button>
+                </div>
+            )}
 
             <EntityDialog 
                 mode={targetLog ? "edit" : "create"}

@@ -11,6 +11,7 @@ export interface StatLog {
   logged_at: string
   started_at?: string | null
   finished_at?: string | null
+  progress?: Record<string, unknown> | null
   media: {
     id: number
     title: string

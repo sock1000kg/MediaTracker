@@ -195,7 +195,8 @@ export function computeAnimeStats(logs: StatLog[]): AnimeStats {
   let sumEpMins = 0
 
   for (const log of logs) {
-    const eps = num(log.media?.metadata?.episodes)
+    const prog = (log.progress && typeof log.progress === "object" ? log.progress : null) as Record<string, unknown> | null
+    const eps = num(prog?.watchedEpisodes) ?? num(log.media?.metadata?.episodes)
     const epMins = num(log.media?.metadata?.episodeMinutes)
 
     if (eps !== null && eps > 0) {
@@ -232,8 +233,9 @@ export function computeMangaStats(logs: StatLog[]): MangaStats {
   let sumVolumes = 0
 
   for (const log of logs) {
-    const ch = num(log.media?.metadata?.chapters)
-    const vol = num(log.media?.metadata?.volumes)
+    const prog = (log.progress && typeof log.progress === "object" ? log.progress : null) as Record<string, unknown> | null
+    const ch = num(prog?.readChapters) ?? num(log.media?.metadata?.chapters)
+    const vol = num(prog?.readVolumes) ?? num(log.media?.metadata?.volumes)
 
     if (ch !== null && ch > 0) {
       withChapters++

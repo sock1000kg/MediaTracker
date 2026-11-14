@@ -22,6 +22,9 @@ describe("formatLogMetadata", () => {
   it("music kinds", () => {
     expect(fmt({ kind: "album" })).toEqual(["Album"])
     expect(fmt({ kind: "track" })).toEqual(["Track"])
+    expect(fmt({ kind: "track", trackNumber: 3, durationSec: 240 })).toEqual(["Track 3 · 4:00"])
+    expect(fmt({ kind: "track", trackNumber: 1, durationSec: 65 })).toEqual(["Track 1 · 1:05"])
+    expect(fmt({ kind: "track", trackNumber: 2 })).toEqual(["Track 2"])
   })
 
   it("anime and manga", () => {
