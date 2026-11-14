@@ -4,6 +4,14 @@ import { mergeMediaMetadata, findMediaByExternalIds, ExternalIdKey } from "@/rep
 import { tagKey, normalizeTagName } from "@/utilities.js"
 import { ImportResult } from "@/api/domain/imports.js"
 import { makeProgressReporter, type ImportProgressCallback } from "./goodreadsImportService.js"
+import {
+    isJunkGenre,
+    maxGenresForType,
+    genreNameKey,
+    creatorNameKey,
+    defaultRoleForType,
+    CreatorInput,
+} from "@/services/genreService.js"
 
 export const BATCH_CHUNK_SIZE = 200
 
@@ -32,6 +40,10 @@ export interface BatchRowItem {
     }
     idMal?: number | null
     externalIds?: { provider: string; id: string }[]
+    kind?: string | null
+    originalTitle?: string | null
+    genres?: string[] | null
+    creators?: CreatorInput[] | null
 }
 
 export interface GapFillResult {
@@ -229,6 +241,9 @@ export async function executeBatchImport(options: {
     }
 
     // 3. Write in chunks of 200 rows with progress reported per chunk
+    const targetMediaType = await prisma.mediaType.findUnique({ where: { id: mediaTypeId } })
+    const mediaTypeName = targetMediaType?.name ?? "book"
+
     const progress = makeProgressReporter(items.length, onProgress ?? (() => undefined))
     await progress.start()
 
@@ -246,18 +261,33 @@ export async function executeBatchImport(options: {
                 // a. Insert new Media
                 if (chunkRowsNeedingMedia.length > 0) {
                     await tx.media.createMany({
-                        data: chunkRowsNeedingMedia.map(r => ({
-                            title: r.item.mediaData.title,
-                            creator: r.item.mediaData.creator ?? null,
-                            year: r.item.mediaData.year ?? null,
-                            source: r.item.mediaData.source,
-                            sourceId: r.item.mediaData.sourceId ?? null,
-                            description: r.item.mediaData.description ?? null,
-                            imageUrl: r.item.mediaData.imageUrl ?? null,
-                            metadata: (r.item.mediaData.metadata as Prisma.InputJsonValue) ?? Prisma.JsonNull,
-                            userId: systemUserId,
-                            mediaTypeId,
-                        })),
+                        data: chunkRowsNeedingMedia.map(r => {
+                            const meta = r.item.mediaData.metadata && typeof r.item.mediaData.metadata === "object" && !Array.isArray(r.item.mediaData.metadata)
+                                ? { ...(r.item.mediaData.metadata as Record<string, unknown>) }
+                                : null
+                            const kind = r.item.kind ?? (typeof meta?.kind === "string" ? meta.kind : null)
+                            const originalTitle = r.item.originalTitle ?? (typeof meta?.originalTitle === "string" ? meta.originalTitle : null)
+                            if (meta) {
+                                delete meta.kind
+                                delete meta.originalTitle
+                                delete meta.categories
+                            }
+                            const cleanMeta = meta && Object.keys(meta).length > 0 ? (meta as Prisma.InputJsonValue) : Prisma.JsonNull
+                            return {
+                                title: r.item.mediaData.title,
+                                creator: r.item.mediaData.creator ?? null,
+                                kind,
+                                originalTitle,
+                                year: r.item.mediaData.year ?? null,
+                                source: r.item.mediaData.source,
+                                sourceId: r.item.mediaData.sourceId ?? null,
+                                description: r.item.mediaData.description ?? null,
+                                imageUrl: r.item.mediaData.imageUrl ?? null,
+                                metadata: cleanMeta,
+                                userId: systemUserId,
+                                mediaTypeId,
+                            }
+                        }),
                         skipDuplicates: true,
                     })
 
@@ -326,6 +356,149 @@ export async function executeBatchImport(options: {
                             data: extIdData,
                             skipDuplicates: true,
                         })
+                    }
+
+                    // Insert Genres in bulk
+                    const genreRowsToInsert: { name: string; nameKey: string }[] = []
+                    const mediaGenreLinks: { mediaId: number; nameKey: string; position: number }[] = []
+                    const genreSeen = new Set<string>()
+
+                    for (const r of chunkRowsNeedingMedia) {
+                        if (!r.mediaId || r.mediaId <= 0) continue
+                        const rawCats = r.item.genres ?? ((r.item.mediaData.metadata as Record<string, unknown>)?.categories as string[] | undefined) ?? []
+                        const cleanCats: { name: string; nameKey: string }[] = []
+                        const rowSeen = new Set<string>()
+                        const cap = maxGenresForType(mediaTypeName)
+                        for (const raw of rawCats) {
+                            if (typeof raw !== "string") continue
+                            const name = raw.trim()
+                            if (!name || isJunkGenre(name, mediaTypeName)) continue
+                            const key = genreNameKey(name)
+                            if (rowSeen.has(key)) continue
+                            rowSeen.add(key)
+                            cleanCats.push({ name, nameKey: key })
+                            if (!genreSeen.has(key)) {
+                                genreSeen.add(key)
+                                genreRowsToInsert.push({ name, nameKey: key })
+                            }
+                            if (cleanCats.length === cap) break
+                        }
+                        for (let pos = 0; pos < cleanCats.length; pos++) {
+                            mediaGenreLinks.push({
+                                mediaId: r.mediaId,
+                                nameKey: cleanCats[pos].nameKey,
+                                position: pos,
+                            })
+                        }
+                    }
+
+                    if (genreRowsToInsert.length > 0) {
+                        await tx.genre.createMany({
+                            data: genreRowsToInsert,
+                            skipDuplicates: true,
+                        })
+                    }
+
+                    if (mediaGenreLinks.length > 0) {
+                        const uniqueKeys = Array.from(new Set(mediaGenreLinks.map(l => l.nameKey)))
+                        const dbGenres = await tx.genre.findMany({
+                            where: { nameKey: { in: uniqueKeys } },
+                            select: { id: true, nameKey: true },
+                        })
+                        const genreIdMap = new Map(dbGenres.map(g => [g.nameKey, g.id]))
+                        const mediaGenreData = mediaGenreLinks
+                            .filter(l => genreIdMap.has(l.nameKey))
+                            .map(l => ({
+                                mediaId: l.mediaId,
+                                genreId: genreIdMap.get(l.nameKey)!,
+                                position: l.position,
+                            }))
+                        if (mediaGenreData.length > 0) {
+                            await tx.mediaGenre.createMany({
+                                data: mediaGenreData,
+                                skipDuplicates: true,
+                            })
+                        }
+                    }
+
+                    // Insert Creators in bulk
+                    const creatorRowsToInsert: { name: string; nameKey: string }[] = []
+                    const mediaCreatorLinks: { mediaId: number; nameKey: string; role: string; position: number }[] = []
+                    const creatorSeen = new Set<string>()
+                    const defaultRole = defaultRoleForType(mediaTypeName)
+
+                    for (const r of chunkRowsNeedingMedia) {
+                        if (!r.mediaId || r.mediaId <= 0) continue
+                        let candidateCreators: CreatorInput[] = []
+                        if (r.item.creators && r.item.creators.length > 0) {
+                            candidateCreators = r.item.creators
+                        } else if (r.item.mediaData.creator && r.item.mediaData.creator.trim()) {
+                            if (mediaTypeName?.toLowerCase() === "music") {
+                                candidateCreators = [{ name: r.item.mediaData.creator.trim(), role: "artist" }]
+                            } else {
+                                candidateCreators = r.item.mediaData.creator
+                                    .split(", ")
+                                    .map(s => s.trim())
+                                    .filter(Boolean)
+                                    .map(name => ({ name, role: defaultRole }))
+                            }
+                        }
+
+                        const cleanCreators: { name: string; nameKey: string; role: string }[] = []
+                        const rowSeen = new Set<string>()
+                        for (const c of candidateCreators) {
+                            const name = c.name?.trim()
+                            if (!name) continue
+                            const role = c.role?.trim() || defaultRole
+                            const nameKey = creatorNameKey(name)
+                            const pairKey = `${nameKey}:${role}`
+                            if (rowSeen.has(pairKey)) continue
+                            rowSeen.add(pairKey)
+                            cleanCreators.push({ name, nameKey, role })
+                            if (!creatorSeen.has(nameKey)) {
+                                creatorSeen.add(nameKey)
+                                creatorRowsToInsert.push({ name, nameKey })
+                            }
+                        }
+
+                        for (let pos = 0; pos < cleanCreators.length; pos++) {
+                            mediaCreatorLinks.push({
+                                mediaId: r.mediaId,
+                                nameKey: cleanCreators[pos].nameKey,
+                                role: cleanCreators[pos].role,
+                                position: pos,
+                            })
+                        }
+                    }
+
+                    if (creatorRowsToInsert.length > 0) {
+                        await tx.creator.createMany({
+                            data: creatorRowsToInsert,
+                            skipDuplicates: true,
+                        })
+                    }
+
+                    if (mediaCreatorLinks.length > 0) {
+                        const uniqueKeys = Array.from(new Set(mediaCreatorLinks.map(l => l.nameKey)))
+                        const dbCreators = await tx.creator.findMany({
+                            where: { nameKey: { in: uniqueKeys } },
+                            select: { id: true, nameKey: true },
+                        })
+                        const creatorIdMap = new Map(dbCreators.map(c => [c.nameKey, c.id]))
+                        const mediaCreatorData = mediaCreatorLinks
+                            .filter(l => creatorIdMap.has(l.nameKey))
+                            .map(l => ({
+                                mediaId: l.mediaId,
+                                creatorId: creatorIdMap.get(l.nameKey)!,
+                                role: l.role,
+                                position: l.position,
+                            }))
+                        if (mediaCreatorData.length > 0) {
+                            await tx.mediaCreator.createMany({
+                                data: mediaCreatorData,
+                                skipDuplicates: true,
+                            })
+                        }
                     }
                 }
 

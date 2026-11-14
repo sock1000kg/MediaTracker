@@ -305,6 +305,9 @@ export class TmdbSearchService {
         const createdByNames = (d.created_by ?? []).map(c => c.name?.trim()).filter(Boolean) as string[]
         const firstNetwork = d.networks?.[0]?.name?.trim() || null
         const creator = createdByNames.length > 0 ? createdByNames.join(", ") : firstNetwork
+        const showCreators = createdByNames.length > 0
+            ? createdByNames.map(name => ({ name, role: "creator" }))
+            : (firstNetwork ? [{ name: firstNetwork, role: "creator" }] : undefined)
         const networks = (d.networks ?? []).map(n => n.name?.trim()).filter(Boolean) as string[]
         const genres = (d.genres ?? []).map(g => g.name?.trim()).filter(Boolean) as string[]
         const showImageUrl = d.poster_path ? `${IMAGE_BASE}${d.poster_path}` : null
@@ -312,6 +315,7 @@ export class TmdbSearchService {
         const showResult: SearchResult = {
             title: showTitle,
             creator,
+            creators: showCreators,
             year: validShowYear,
             description: d.overview?.trim() || null,
             source: "tmdb",
@@ -410,7 +414,9 @@ export const tmdbSearchService = new TmdbSearchService()
 export type TmdbEnrichment = {
     existingId: number | null // set when the row already exists and must be updated after the transaction
     creator: string | null
-    patch: { runtime: number | null, imdbId: string | null, categories: string[] | null }
+    creators: { name: string; role: string }[]
+    genres: string[] | null
+    patch: { runtime: number | null, imdbId: string | null }
 }
 
 // Log-time enrichment (runtime: undefined = never tried, null = tried and TMDB has none).
@@ -432,20 +438,27 @@ export async function enrichTmdbOnLog(
 
         const details = await tmdbSearchService.fetchMovieDetails(userId, tmdbId)
         const directors = details.directors.length ? details.directors.join(", ") : null
-        const currentMeta = (existing ? existingMeta : mediaData.metadata) as { categories?: string[] | null } | null | undefined
+        const directorsStructured = details.directors.map(name => ({ name, role: "director" }))
         const patch = {
             runtime: details.runtime,
             imdbId: details.imdbId,
-            categories: details.genres ?? currentMeta?.categories ?? null,
         }
 
         if (existing) {
             if (details.imdbId) {
                 await attachExternalIdsToMedia(existing.id, [{ provider: "imdb", externalId: details.imdbId }], prisma)
             }
-            return { existingId: existing.id, creator: existing.creator ? null : directors, patch }
+            return {
+                existingId: existing.id,
+                creator: existing.creator ? null : directors,
+                creators: directorsStructured,
+                genres: details.genres,
+                patch,
+            }
         }
         mediaData.creator = mediaData.creator ?? directors
+        ;(mediaData as Record<string, unknown>).creators = directorsStructured
+        ;(mediaData as Record<string, unknown>).genres = details.genres
         mediaData.metadata = { ...(mediaData.metadata as object ?? {}), ...patch }
         return null
     } catch (error: unknown) {

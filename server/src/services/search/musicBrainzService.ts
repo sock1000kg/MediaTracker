@@ -117,6 +117,7 @@ export class MusicBrainzService {
                 results.push({
                     title: t.title || t.recording?.title || "Unknown track",
                     creator: trackArtist,
+                    creators: trackArtist ? [{ name: trackArtist, role: "artist" }] : undefined,
                     year: albumYear,
                     description: null,
                     source: "musicbrainz",

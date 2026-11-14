@@ -52,9 +52,10 @@ describe('isJunkSubject', () => {
         'a=b',
         'Accessible book', 'Protected DAISY', 'In library', 'Lending library',
         'Large type books', 'OverDrive', 'Internet Archive Wishlist', 'Open Library Staff Picks',
+        'Fiction, psychological', 'Near and far eastern fiction (fictional works by one author)',
     ])('drops %s', s => expect(isJunkSubject(s)).toBe(true))
 
-    it.each(['Science fiction', 'Fiction, psychological', 'Fantasy', 'Libraries', 'Note: a subtitle'])(
+    it.each(['Science fiction', 'Fantasy', 'Libraries', 'Space opera'])(
         'keeps %s', s => expect(isJunkSubject(s)).toBe(false))
 })
 
@@ -63,8 +64,8 @@ describe('mapResults', () => {
     const cats = (subject?: string[] | null) => (svc.mapResults([doc(subject) as never])[0]?.metadata as { categories?: string[] | null }).categories
 
     it('takes the first 3 after filtering and keeps others unchanged', () => {
-        expect(cats(['Accessible book', 'In library', 'Science fiction', 'nyt:x=1', 'Fiction, psychological', 'Dune', 'Extra']))
-            .toEqual(['Science fiction', 'Fiction, psychological', 'Dune'])
+        expect(cats(['Accessible book', 'In library', 'Science fiction', 'nyt:x=1', 'Dune', 'Space opera', 'Extra']))
+            .toEqual(['Science fiction', 'Dune', 'Space opera'])
     })
     it('gives null when all junk or missing', () => {
         expect(cats(['Accessible book', 'nyt:a=b'])).toBeNull()

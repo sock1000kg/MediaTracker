@@ -527,6 +527,8 @@ export class MalImportService {
             }
 
             const target = resolved ?? bareMedia
+            const targetMeta = target.metadata as { categories?: string[]; kind?: string; originalTitle?: string } | undefined
+            const malGenres = targetMeta?.categories ?? []
 
             const progress = kind === "anime"
                 ? (entry.watchedEpisodes != null ? { watchedEpisodes: entry.watchedEpisodes } : null)
@@ -540,6 +542,10 @@ export class MalImportService {
             validItems.push({
                 rowNum,
                 title: entry.title,
+                kind: targetMeta?.kind ?? kind,
+                originalTitle: targetMeta?.originalTitle ?? null,
+                genres: malGenres,
+                creators: target.creators ?? null,
                 mediaData: {
                     title: target.title,
                     creator: target.creator ?? null,

@@ -12,6 +12,7 @@ import fs from "fs"
 import { goodreadsImportService } from "@/services/imports/goodreadsImportService.js"
 import { malImportService, createCacheMalResolver } from "@/services/imports/malImportService.js"
 import { seedDemoMedia, demoMediaSeeder } from "./fixtures/demo/seedDemoMedia.js"
+import { pruneJunkGenres } from "@/services/genreService.js"
 
 export interface SeedOptions {
     seedDemoFixture?: boolean
@@ -132,7 +133,7 @@ export async function seedDatabase(options?: SeedOptions, deps?: SeedDeps) {
     await createMediaTypeSeed("manga", systemUser.id)
 
     // CREATE SEED MEDIA
-    let defaultMedia = await prisma.media.findFirst({
+    let defaultMedia: { id: number } | null = await prisma.media.findFirst({
         where: { title: "Default Media", userId: systemUser.id },
     })
     if (!defaultMedia && defaultType) {
@@ -293,6 +294,12 @@ export async function seedDatabase(options?: SeedOptions, deps?: SeedDeps) {
                 error instanceof Error ? error.message : error
             )
         }
+    }
+
+    try {
+        await pruneJunkGenres(prisma)
+    } catch (error) {
+        console.error("Failed to prune junk genres during seed:", error)
     }
 }
 

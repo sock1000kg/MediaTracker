@@ -312,7 +312,8 @@ describe("Media Import Routes (MyAnimeList)", () => {
         expect(bare!.title).toBe("Obscure Unresolved Anime")
         expect(bare!.imageUrl).toBeNull()
         expect(bare!.creator).toBeNull()
-        expect((bare!.metadata as Record<string, unknown>)?.kind).toBe("anime")
+        expect(bare!.kind).toBe("anime")
+        expect((bare!.metadata as Record<string, unknown>)?.kind).toBeUndefined()
     })
 
     test("An anime already added from search with matching idMal is not duplicated", async () => {

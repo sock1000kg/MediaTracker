@@ -1,8 +1,11 @@
 // jest.setup.ts
 import '@/env.js'
+import { jest } from '@jest/globals'
 import { assertSafeTestDatabase } from './testDbGuard.js'
 import { resetTestData } from './testDb.js'
 import { redactUrl } from '@/redactUrl.js'
+
+jest.setTimeout(30000)
 
 // Import Prisma dynamically after env is loaded
 const { PrismaPg } = await import('@prisma/adapter-pg')

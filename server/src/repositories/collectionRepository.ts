@@ -1,4 +1,5 @@
 import prisma from "@/prismaClient.js"
+import { MEDIA_INCLUDE } from "./mediaFormat.js"
 import { DbClient } from "@/db.js"
 import { mapLogWithTags } from "@/repositories/logsRepository.js"
 
@@ -63,7 +64,7 @@ export async function findCollectionById(id: number, userId: number, client: DbC
                 include: {
                     log: {
                         include: {
-                            media: { include: { mediaType: true } },
+                            media: { include: MEDIA_INCLUDE },
                             tags: { include: { tag: true } },
                             collectionItems: { select: { collectionId: true } },
                         },

@@ -173,10 +173,24 @@ export class GoodreadsImportService {
                 if (rawIsbn13) externalIds.push({ provider: "isbn13", id: rawIsbn13 })
                 if (rawIsbn && rawIsbn !== rawIsbn13) externalIds.push({ provider: "isbn", id: rawIsbn })
 
+                const structuredCreators: { name: string; role: string }[] = []
+                if (mainAuthor?.trim()) {
+                    structuredCreators.push({ name: mainAuthor.trim(), role: "author" })
+                }
+                if (additionalAuthors?.trim()) {
+                    for (const a of additionalAuthors.split(", ")) {
+                        const trimmed = a.trim()
+                        if (trimmed) structuredCreators.push({ name: trimmed, role: "author" })
+                    }
+                }
+                const bookGenres = (enrichmentData?.metadata as { categories?: string[] } | undefined)?.categories ?? []
+
                 validItems.push({
                     rowNum,
                     title: record['Title'],
                     externalIds,
+                    genres: bookGenres,
+                    creators: structuredCreators,
                     mediaData: {
                         title: record['Title'],
                         creator: author,

@@ -61,10 +61,52 @@ model Media {
   children        Media[]   @relation("MediaChildren")
   position        Int?      // track number / season number
   externalIds     MediaExternalId[]
+  kind            String?
+  originalTitle   String?
+  genres          MediaGenre[]
+  creators        MediaCreator[]
 
   @@index([parentId])
+  @@index([kind])
   @@unique([source, sourceId], where: { sourceId: { not: null } })
   @@unique([userId, creator, title, year, mediaTypeId, source], where: { sourceId: null })
+}
+
+model Genre {
+  id       Int          @id @default(autoincrement())
+  name     String       // as the provider returned it (first spelling seen)
+  nameKey  String       @unique   // lower-case, trimmed, inner whitespace collapsed
+  media    MediaGenre[]
+}
+
+model MediaGenre {
+  mediaId  Int
+  genreId  Int
+  position Int          // provider order, used for "top 3" displays
+  media    Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  genre    Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([mediaId, genreId])
+  @@index([genreId])
+}
+
+model Creator {
+  id       Int            @id @default(autoincrement())
+  name     String
+  nameKey  String         @unique   // lower-case, trimmed, whitespace collapsed
+  media    MediaCreator[]
+}
+
+model MediaCreator {
+  mediaId   Int
+  creatorId Int
+  role      String        // "author" | "artist" | "director" | "developer" | "studio" | "creator"
+  position  Int
+  media     Media   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  creator   Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@id([mediaId, creatorId, role])
+  @@index([creatorId])
 }
 
 model MediaExternalId {

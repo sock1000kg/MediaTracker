@@ -15,13 +15,11 @@ import { AppError } from "@/api/domain/error.js"
 import { musicBrainzService, MusicBrainzRelease } from "./musicBrainzService.js"
 import prisma from "@/prismaClient.js"
 
-export const JUNK_LASTFM_TAGS = [
-    "seen live", "favorites", "favourites", "favorite", "favourite", "my favorite",
-    "albums i own", "albums i have", "love", "loved", "awesome", "beautiful", "amazing",
-    "cool", "check out", "spotify", "vinyl", "owned", "to listen", "under 2000 listeners"
-]
+import { isJunkGenre, JUNK_MUSIC_TAGS } from "@/services/genreService.js"
 
-const JUNK_LASTFM_PREFIXES = ["favorite ", "favourite "]
+export { JUNK_MUSIC_TAGS }
+export const JUNK_LASTFM_TAGS = JUNK_MUSIC_TAGS
+
 const MIN_TAG_COUNT = 5
 const MAX_TAGS = 5
 
@@ -62,9 +60,7 @@ export function cleanLastFmTags(tags: { name: string, count: number }[] | null |
         const lower = tag.toLowerCase()
 
         if (!tag) continue
-        if (JUNK_LASTFM_TAGS.includes(lower)) continue
-        if (JUNK_LASTFM_PREFIXES.some(p => lower.startsWith(p))) continue
-        if (/^\d{4}$/.test(tag)) continue
+        if (isJunkGenre(tag, "music")) continue
         if (artistLower && lower === artistLower) continue
         if (count < MIN_TAG_COUNT) continue
         if (seen.has(lower)) continue
@@ -110,6 +106,7 @@ export class LastFmSearchService implements ISearchService {
         return items.map(i => ({
             title: i.name,
             creator: i.artist,
+            creators: i.artist ? [{ name: i.artist, role: "artist" }] : undefined,
             year: null,
             description: null,
             source: "lastfm",
@@ -232,6 +229,7 @@ export class LastFmSearchService implements ISearchService {
                 albumResult = {
                     title: album.name,
                     creator: album.artist,
+                    creators: album.artist ? [{ name: album.artist, role: "artist" }] : undefined,
                     year: null,
                     description: album.wiki?.summary || null,
                     source: "lastfm",
@@ -256,6 +254,7 @@ export class LastFmSearchService implements ISearchService {
                         return {
                             title: t.name,
                             creator: trackArtist,
+                            creators: trackArtist ? [{ name: trackArtist, role: "artist" }] : undefined,
                             year: null,
                             description: null,
                             source: "lastfm",
@@ -311,6 +310,7 @@ export class LastFmSearchService implements ISearchService {
                             albumResult = {
                                 title: release.title,
                                 creator: albumArtist,
+                                creators: albumArtist ? [{ name: albumArtist, role: "artist" }] : undefined,
                                 year: albumYear,
                                 description: null,
                                 source: "musicbrainz",
@@ -334,6 +334,7 @@ export class LastFmSearchService implements ISearchService {
             albumResult = {
                 title: albumName || "Unknown album",
                 creator: artist || null,
+                creators: artist ? [{ name: artist, role: "artist" }] : undefined,
                 year: null,
                 description: null,
                 source: provider || "lastfm",

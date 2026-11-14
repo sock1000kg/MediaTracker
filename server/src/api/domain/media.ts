@@ -1,9 +1,11 @@
 // domain/media/mediaFactory.ts
-import { DbClient, Media, Prisma } from "@/db.js"
+import { DbClient, Prisma } from "@/db.js"
 import { AppError } from "@/api/domain/error.js"
 
 import { findUserByUsername } from "@/repositories/authRepository.js"
 import { findMediaBySource, createMedia, findMediaByExternalIds, attachExternalIdsToMedia, ExternalIdKey } from "@/repositories/mediaRepository.js"
+import { MEDIA_INCLUDE, formatMedia } from "@/repositories/mediaFormat.js"
+import { setMediaGenres, setMediaCreators, CreatorInput } from "@/services/genreService.js"
 import { findMediaTypeForUserOrGlobal } from "@/repositories/mediaTypeRepository.js"
 import { findLogOfUserByMediaId, createLog, updateLog, findLogById } from "@/repositories/logsRepository.js"
 import { tagService } from "@/services/tagService.js"
@@ -21,6 +23,8 @@ type CreateImportedMediaInput = {
     mediaData: {
         title: string
         creator: string | null
+        creators?: CreatorInput[]
+        genres?: string[]
         year: number | null
         source: string
         sourceId: string | null
@@ -43,6 +47,8 @@ type CreateImportedMediaInput = {
         title: string
         mediaType?: string
         creator?: string | null
+        creators?: CreatorInput[]
+        genres?: string[]
         year?: number | null
         source: string
         sourceId: string | null
@@ -62,7 +68,7 @@ export async function createImportedMedia(
 ) {
     const { userId, mediaTypeName, mediaData, logData, parent } = input
 
-    let parentMedia: Media | null = null
+    let parentMedia: { id: number } | null = null
     if (parent && parent.source && parent.sourceId) {
         parentMedia = await findMediaBySource(parent.sourceId, parent.source, tx)
         if (!parentMedia) {
@@ -86,7 +92,12 @@ export async function createImportedMedia(
                 (parent.metadata as Prisma.JsonValue) ?? null,
                 parent.imageUrl ?? null,
                 systemUser.id,
-                tx
+                tx,
+                null,
+                null,
+                undefined,
+                parent.genres,
+                parent.creators
             )
         }
     }
@@ -123,34 +134,45 @@ export async function createImportedMedia(
     }
 
     const externalKeyMap = await findMediaByExternalIds(lookupKeys, tx)
-    let media: Media | null = null
+    let mediaMatch: { id: number; parentId: number | null; position: number | null } | null = null
     for (const k of lookupKeys) {
         const found = externalKeyMap.get(`${k.provider.toLowerCase()}:${k.externalId}`)
         if (found) {
-            media = found
+            mediaMatch = found
             break
         }
     }
-    if (!media && mediaData.source && mediaData.sourceId) {
-        media = await findMediaBySource(mediaData.sourceId, mediaData.source, tx)
+    if (!mediaMatch && mediaData.source && mediaData.sourceId) {
+        mediaMatch = await findMediaBySource(mediaData.sourceId, mediaData.source, tx)
     }
 
-    if (media) {
-        const needsParent = parentMedia && !media.parentId
-        const needsPos = position != null && media.position == null
+    let media: Awaited<ReturnType<typeof createMedia>>
+    if (mediaMatch) {
+        const needsParent = parentMedia && !mediaMatch.parentId
+        const needsPos = position != null && mediaMatch.position == null
         if (needsParent || needsPos) {
-            media = await tx.media.update({
-                where: { id: media.id },
+            await tx.media.update({
+                where: { id: mediaMatch.id },
                 data: {
                     ...(needsParent ? { parentId: parentMedia!.id } : {}),
                     ...(needsPos ? { position } : {}),
                 },
-                include: { mediaType: true, logs: true }
             })
         }
         if (lookupKeys.length > 0) {
-            await attachExternalIdsToMedia(media.id, lookupKeys, tx)
+            await attachExternalIdsToMedia(mediaMatch.id, lookupKeys, tx)
         }
+        if (mediaData.genres && mediaData.genres.length > 0) {
+            await setMediaGenres(mediaMatch.id, mediaData.genres, mediaTypeName, tx)
+        }
+        if (mediaData.creators && mediaData.creators.length > 0) {
+            await setMediaCreators(mediaMatch.id, mediaData.creators, mediaTypeName, mediaData.creator, tx)
+        }
+        const updated = await tx.media.findUniqueOrThrow({
+            where: { id: mediaMatch.id },
+            include: MEDIA_INCLUDE,
+        })
+        media = formatMedia(updated)
     } else {
         const systemUser = await findUserByUsername("system", tx)
         if (!systemUser) {
@@ -171,7 +193,9 @@ export async function createImportedMedia(
             tx,
             parentMedia?.id ?? null,
             position ?? null,
-            lookupKeys
+            lookupKeys,
+            mediaData.genres,
+            mediaData.creators
         )
     }
 

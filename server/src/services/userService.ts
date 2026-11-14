@@ -85,7 +85,10 @@ export class UserService {
             const header = ["title", "creator", "year", "type", "source", "source_id", "status", "rating", "notes", "logged_at", "started_at", "finished_at", "categories", "tags", "collections", "url"]
             const rows = data.logs.map((l) => {
                 const meta = (l.media.metadata && typeof l.media.metadata === "object" ? l.media.metadata : {}) as Record<string, unknown>
-                const cats = Array.isArray(meta.categories) ? meta.categories.filter((c) => typeof c === "string").join("; ") : ""
+                const mediaGenres = (l.media as { genres?: string[] }).genres
+                const cats = Array.isArray(mediaGenres) && mediaGenres.length > 0
+                    ? mediaGenres.join("; ")
+                    : (Array.isArray(meta.categories) ? meta.categories.filter((c) => typeof c === "string").join("; ") : "")
                 const logObj = l as { tags?: { tag?: { name: string }; name?: string }[]; collectionItems?: { collection?: { name: string } }[] }
                 const rawTags = logObj.tags ?? []
                 const tagsStr = rawTags.map((t) => t.tag?.name ?? t.name ?? "").filter(Boolean).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })).join("; ")

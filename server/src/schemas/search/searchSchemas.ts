@@ -40,6 +40,11 @@ const mediaMetadataSchema = z.union([
   bookMetadataSchema
 ])
 
+export const searchResultCreatorSchema = z.object({
+    name: z.string(),
+    role: z.string(),
+})
+
 //Schema for ONE result of a search (generic normaliztion for all types)
 export const searchResultSchema = z.object({
     title: z
@@ -50,6 +55,7 @@ export const searchResultSchema = z.object({
         .string()
         .nullable()
         .default(null),
+    creators: z.array(searchResultCreatorSchema).optional(),
     year: z
         .string()
         .nullable()

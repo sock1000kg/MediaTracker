@@ -238,11 +238,13 @@ export function mapAniListMedia(mode: AniListMode, item: AniListMedia): SearchRe
             : null
 
     let creator: string | null = null
+    let creators: { name: string; role: string }[] | undefined = undefined
     if (mode === "anime") {
         const studioNames = (item.studios?.nodes ?? [])
             .map(n => n?.name?.trim())
             .filter((n): n is string => Boolean(n))
         creator = studioNames.length ? studioNames.join(", ") : null
+        creators = studioNames.length ? studioNames.map(name => ({ name, role: "studio" })) : undefined
     } else {
         const seen = new Set<string>()
         const staffNames: string[] = []
@@ -260,6 +262,7 @@ export function mapAniListMedia(mode: AniListMode, item: AniListMedia): SearchRe
             }
         }
         creator = staffNames.length ? staffNames.join(", ") : null
+        creators = staffNames.length ? staffNames.map(name => ({ name, role: "author" })) : undefined
     }
 
     const year = item.startDate?.year != null ? String(item.startDate.year) : null
@@ -268,6 +271,7 @@ export function mapAniListMedia(mode: AniListMode, item: AniListMedia): SearchRe
     return {
         title: title as string,
         creator,
+        creators,
         year,
         description: cleanDescription(item.description),
         source: "anilist",

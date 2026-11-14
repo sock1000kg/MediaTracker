@@ -1,5 +1,6 @@
 import prisma from "@/prismaClient.js"
 import { DbClient, Prisma } from "@/db.js"
+import { MEDIA_INCLUDE, formatMedia } from "./mediaFormat.js"
 
 export type LogTagItem = { id: number; name: string }
 
@@ -9,19 +10,24 @@ export type ChildSummary = {
 }
 
 export function mapLogWithTags<T extends {
+    media?: Record<string, unknown> | null
     tags?: { tag: { id: number; name: string } }[]
     collectionItems?: { collectionId: number }[]
-}>(log: T): Omit<T, "collectionItems"> & { tags: LogTagItem[]; collectionIds: number[] } {
+}>(log: T) {
     const rawTags = log.tags ?? []
     const tags: LogTagItem[] = rawTags
         .map(t => ({ id: t.tag.id, name: t.tag.name }))
         .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }))
     const rawCollections = log.collectionItems ?? []
     const collectionIds: number[] = rawCollections.map(c => c.collectionId)
+    const formattedMedia = log.media ? formatMedia(log.media) : log.media
     const copy = { ...log }
     delete (copy as { collectionItems?: unknown }).collectionItems
     return {
         ...copy,
+        media: formattedMedia,
+        genres: formattedMedia?.genres ?? [],
+        creators: formattedMedia?.creators ?? [],
         tags,
         collectionIds,
     }
@@ -130,7 +136,7 @@ export async function createLog(
             ...(finishedAt ? { finished_at: finishedAt } : {}),
         },
         include: {
-            media: { include: { mediaType: true } },
+            media: { include: MEDIA_INCLUDE },
             tags: { include: { tag: true } },
             collectionItems: { select: { collectionId: true } },
         },
@@ -142,7 +148,7 @@ export async function getAllLogs(userId: number, client: DbClient = prisma) {
     const logs = await client.userLogs.findMany({
         where: { userId },
         include: { 
-            media: { include: { mediaType: true } },
+            media: { include: MEDIA_INCLUDE },
             tags: { include: { tag: true } },
             collectionItems: { select: { collectionId: true } },
         },
@@ -160,7 +166,7 @@ export async function findLogOfUserByMediaId(userId: number, mediaId: number, cl
             } 
         },
         include: { 
-            media: { include: { mediaType: true } },
+            media: { include: MEDIA_INCLUDE },
             tags: { include: { tag: true } },
             collectionItems: { select: { collectionId: true } },
         },
@@ -175,7 +181,7 @@ export async function findLogById(logId: number, client: DbClient = prisma) {
     const log = await client.userLogs.findFirst({ 
         where: { id: logId }, 
         include: { 
-            media: { include: { mediaType: true } },
+            media: { include: MEDIA_INCLUDE },
             tags: { include: { tag: true } },
             collectionItems: { select: { collectionId: true } },
         } 
@@ -207,7 +213,7 @@ export async function updateLog(
             ...(progress !== undefined ? { progress: (progress as Prisma.InputJsonValue) ?? Prisma.JsonNull } : {}),
         },
         include: { 
-            media: { include: { mediaType: true } },
+            media: { include: MEDIA_INCLUDE },
             tags: { include: { tag: true } },
             collectionItems: { select: { collectionId: true } },
         },
