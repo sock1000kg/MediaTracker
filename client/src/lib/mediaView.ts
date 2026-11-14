@@ -3,12 +3,13 @@ export type CoverAspect = "square" | "wide" | "portrait"
 
 interface AspectInput {
   mediaType?: { name?: string | null } | null
+  kind?: unknown
   metadata?: { kind?: unknown } | null
 }
 
 export function aspectForMedia(media: AspectInput): CoverAspect {
   const type = (media.mediaType?.name ?? "").toLowerCase()
-  const kind = media.metadata?.kind
+  const kind = (media as { kind?: unknown }).kind ?? media.metadata?.kind
   if (type === "music" || kind === "album" || kind === "track") return "square"
   if (type === "game") return "wide"
   return "portrait"

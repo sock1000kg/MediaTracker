@@ -26,9 +26,9 @@ export function LogRow({ log, onEdit, onDelete, onTagClick, leading, extraAction
   const [expanded, setExpanded] = useState(false)
   const { media } = log
   const userTags = log.tags ?? []
-  const categories = Array.isArray(media.metadata?.categories) ? (media.metadata.categories as string[]) : []
+  const categories = media.genres ?? (Array.isArray(media.metadata?.categories) ? (media.metadata.categories as string[]) : [])
   const metaParts = formatLogMetadata(media, log)
-  const originalTitle = typeof media.metadata?.originalTitle === "string" ? media.metadata.originalTitle : null
+  const originalTitle = media.originalTitle ?? (typeof media.metadata?.originalTitle === "string" ? media.metadata.originalTitle : null)
   const url = typeof media.metadata?.url === "string" ? media.metadata.url : null
   const byline = [media.creator, media.year].filter(Boolean).join(" · ")
   const rating = displayRating(log.rating)
@@ -44,7 +44,7 @@ export function LogRow({ log, onEdit, onDelete, onTagClick, leading, extraAction
     ? `${childSummary.rated} ${unit} rated · avg ${avgStr}`
     : null
 
-  const isChild = Boolean(media.parentId || media.metadata?.kind === "track" || media.metadata?.kind === "season")
+  const isChild = Boolean(media.parentId || media.kind === "track" || media.kind === "season" || media.metadata?.kind === "track" || media.metadata?.kind === "season")
   const parentTitle = (typeof media.parent?.title === "string" && media.parent.title.trim())
     || (typeof media.metadata?.album === "string" && media.metadata.album.trim())
     || (typeof media.metadata?.showTitle === "string" && media.metadata.showTitle.trim())

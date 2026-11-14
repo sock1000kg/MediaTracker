@@ -16,6 +16,11 @@ export interface ChildSummary {
   avgRating: number | null
 }
 
+export interface MediaCreatorItem {
+  name: string
+  role: string
+}
+
 export interface Media {
   id: number
   userId: number
@@ -31,6 +36,10 @@ export interface Media {
   created_at: string
   parentId?: number | null
   position?: number | null
+  kind?: string | null
+  originalTitle?: string | null
+  genres?: string[]
+  creators?: MediaCreatorItem[]
   parent?: {
     id: number
     title: string
@@ -63,6 +72,8 @@ export interface Log {
   logged_at: string
   progress?: Record<string, unknown> | null
   media: Media
+  genres?: string[]
+  creators?: MediaCreatorItem[]
   tags?: TagItem[]
   collectionIds?: number[]
   childSummary?: ChildSummary

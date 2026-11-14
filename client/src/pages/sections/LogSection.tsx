@@ -42,7 +42,7 @@ const getLogSortValue = (log: Log, field: SortField) => {
       case "date": return new Date(log.logged_at).getTime()
       case "pageCount": return Number((log.media.metadata as MediaMetadata)?.pageCount ?? 0)
       case "categories": {
-          const cats = (log.media.metadata as MediaMetadata)?.categories
+          const cats = log.media.genres ?? (log.media.metadata as MediaMetadata)?.categories
           return Array.isArray(cats) ? cats.join(", ") : String(cats || "")
       }
       default: return ""
@@ -91,7 +91,7 @@ export default function LogsSection() {
   // Case-insensitive unique categories, first spelling seen wins
   const uniqueCategories = useMemo(() => {
     const seen = new Map<string, string>()
-    logs.forEach(l => getCategories(l.media.metadata).forEach(c => {
+    logs.forEach(l => (l.media.genres ?? getCategories(l.media.metadata)).forEach(c => {
       const key = c.toLowerCase()
       if (!seen.has(key)) seen.set(key, c)
     }))
@@ -122,7 +122,7 @@ export default function LogsSection() {
     return [
       { id: "type", field: (log: Log) => log.media.mediaType.name },
       { id: "status", field: (log: Log) => log.status },
-      { id: "category", field: (log: Log) => getCategories(log.media.metadata).map(c => canonicalCat.get(c.toLowerCase()) ?? c) },
+      { id: "category", field: (log: Log) => (log.media.genres ?? getCategories(log.media.metadata)).map(c => canonicalCat.get(c.toLowerCase()) ?? c) },
       {
         id: "tag",
         field: (log: Log) => {

@@ -306,7 +306,7 @@ export function computeMusicStats(logs: StatLog[]): MusicStats {
   let tracks = 0
 
   for (const log of logs) {
-    const k = str(log.media?.metadata?.kind)?.toLowerCase()
+    const k = str((log.media as { kind?: string | null })?.kind ?? log.media?.metadata?.kind)?.toLowerCase()
     if (k === "album") albums++
     else if (k === "track") tracks++
   }
@@ -328,7 +328,7 @@ export function computeTvStats(logs: StatLog[]): TvStats {
   let sumEpisodes = 0
 
   for (const log of logs) {
-    const k = str(log.media?.metadata?.kind)?.toLowerCase()
+    const k = str((log.media as { kind?: string | null })?.kind ?? log.media?.metadata?.kind)?.toLowerCase()
     if (k === "show") {
       shows++
     } else if (k === "season") {

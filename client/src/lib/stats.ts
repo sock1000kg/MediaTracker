@@ -16,6 +16,8 @@ export interface StatLog {
     id: number
     title: string
     creator?: string | null
+    creators?: { name: string; role: string }[] | null
+    genres?: string[] | null
     imageUrl?: string | null
     metadata?: Record<string, unknown> | null
     mediaType?: { name: string } | null
@@ -303,7 +305,8 @@ export function topCategories(logs: StatLog[], n = 10): RankedStat[] {
   const groups = new Map<string, { name: string; count: number; ratings: number[] }>()
   for (const l of logs) {
     const seen = new Set<string>()
-    for (const raw of getCategories(l.media.metadata)) {
+    const cats = l.media.genres ?? getCategories(l.media.metadata)
+    for (const raw of cats) {
       const c = raw.trim()
       if (!c || seen.has(c.toLowerCase())) continue
       seen.add(c.toLowerCase())
@@ -328,12 +331,22 @@ export function topTags(logs: StatLog[], n = 10): RankedStat[] {
   return rank(groups, n)
 }
 
-/** Creators with at least 2 logs. The whole creator string is one creator (the Logs page doesn't split it). */
+/** Creators with at least 2 logs. Each creator is counted separately from media.creators. */
 export function topCreators(logs: StatLog[], n = 10): RankedStat[] {
   const groups = new Map<string, { name: string; count: number; ratings: number[] }>()
   for (const l of logs) {
-    const c = (l.media.creator ?? "").trim()
-    if (c) add(groups, c, ratingOf(l))
+    const seen = new Set<string>()
+    if (l.media.creators && l.media.creators.length > 0) {
+      for (const cr of l.media.creators) {
+        const c = cr.name.trim()
+        if (!c || seen.has(c.toLowerCase())) continue
+        seen.add(c.toLowerCase())
+        add(groups, c, ratingOf(l))
+      }
+    } else {
+      const c = (l.media.creator ?? "").trim()
+      if (c) add(groups, c, ratingOf(l))
+    }
   }
   return rank(groups, n, 2)
 }

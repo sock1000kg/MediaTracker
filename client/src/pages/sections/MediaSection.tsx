@@ -42,7 +42,7 @@ const getMediaSortValue = (media: Media, field: SortField) => {
       case "date": return new Date(media.created_at).getTime()
       case "pageCount": return Number((media.metadata as MediaMetadata)?.pageCount ?? 0)
       case "categories": {
-          const cats = (media.metadata as MediaMetadata)?.categories
+          const cats = media.genres ?? (media.metadata as MediaMetadata)?.categories
           return Array.isArray(cats) ? cats.join(", ") : String(cats || "")
       }
       default: return ""

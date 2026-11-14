@@ -17,7 +17,7 @@ interface MediaRowProps {
 }
 
 export function MediaRow({ media, log, onEdit, onDelete, onLog }: MediaRowProps) {
-  const categories = Array.isArray(media.metadata?.categories) ? (media.metadata.categories as string[]) : []
+  const categories = media.genres ?? (Array.isArray(media.metadata?.categories) ? (media.metadata.categories as string[]) : [])
   const metaParts = formatLogMetadata(media)
   const url = typeof media.metadata?.url === "string" ? media.metadata.url : null
   const byline = [media.creator, media.year].filter(Boolean).join(" · ")

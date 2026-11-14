@@ -15,6 +15,8 @@ function log(o: Partial<{
   finished_at?: string | null
   type: string
   creator: string | null
+  creators?: { name: string; role: string }[] | null
+  genres?: string[] | null
   cats: unknown
   title: string
   tags?: { id?: number; name: string }[]
@@ -30,6 +32,8 @@ function log(o: Partial<{
     tags: o.tags?.map((t, idx) => ({ id: t.id ?? idx + 1, name: t.name })),
     media: {
       id, title: o.title ?? `t${id}`, creator: o.creator ?? null,
+      creators: o.creators ?? null,
+      genres: o.genres ?? (Array.isArray(o.cats) ? (o.cats.filter((x): x is string => typeof x === "string")) : null),
       metadata: o.cats === undefined ? null : { categories: o.cats },
       mediaType: { name: o.type ?? "book" },
     },
@@ -213,10 +217,13 @@ describe("topTags", () => {
 })
 
 describe("topCreators", () => {
-  test("needs at least 2 logs, uses whole string, case-insensitive", () => {
-    const r = topCreators([log({ creator: "Murakami" }), log({ creator: "murakami", rating: 80 }), log({ creator: "Solo" }), log({ creator: "" }), log({ creator: null }), log({ creator: "A, B" }), log({ creator: "A, B" })])
+  test("needs at least 2 logs, counts co-authored book toward both authors, case-insensitive", () => {
+    const coauthored = log({ creators: [{ name: "Neil Gaiman", role: "author" }, { name: "Terry Pratchett", role: "author" }] })
+    const gaimanSolo = log({ creators: [{ name: "neil gaiman", role: "author" }], rating: 80 })
+    const pratchettSolo = log({ creators: [{ name: "Terry Pratchett", role: "author" }] })
+    const r = topCreators([coauthored, gaimanSolo, pratchettSolo])
     // equal count: the rated creator (avg 80) comes before the unrated one
-    expect(r.map((x) => [x.name, x.count])).toEqual([["Murakami", 2], ["A, B", 2]])
+    expect(r.map((x) => [x.name, x.count])).toEqual([["Neil Gaiman", 2], ["Terry Pratchett", 2]])
     expect(topCreators([])).toEqual([])
   })
 })

@@ -35,7 +35,7 @@ export function AlbumItem({ album, view, logs, onLog, onMore, onErrorToast }: Al
   const isAlbumLogged = isResultLogged(logs, album)
   const byline = [album.creator, album.year].filter(Boolean).join(" · ")
   const url = typeof album.metadata?.url === "string" ? album.metadata.url : null
-  const categories = Array.isArray(album.metadata?.categories) ? (album.metadata.categories as string[]) : []
+  const categories = (album as { genres?: string[] }).genres ?? (Array.isArray(album.metadata?.categories) ? (album.metadata.categories as string[]) : [])
 
   const mbid = album.sourceId && album.sourceId.includes("-") && !album.sourceId.startsWith("http")
     ? album.sourceId

@@ -44,6 +44,18 @@ export function MediaForm({
         loadMediaTypes()
     }, [])
 
+    useEffect(() => {
+        if (formData.genres && formData.genres.length > 0 && formData.metadata?.categories === undefined) {
+            setFormData(prev => ({
+                ...prev,
+                metadata: {
+                    ...(prev.metadata ?? {}),
+                    categories: formData.genres!.join(", "),
+                }
+            }))
+        }
+    }, [formData.genres, formData.metadata?.categories, setFormData])
+
     const addMetadataField = () => {
         if (!selectedMetadata) return
         setFormData(prev => ({
@@ -70,7 +82,10 @@ export function MediaForm({
         setFormData(prev => {
             const newMetadata = { ...(prev.metadata ?? {}) }
             delete newMetadata[key]
-            return { ...prev, metadata: newMetadata }
+            // Clearing genres too stops the seeding effect above from re-adding "categories".
+            return key === "categories"
+                ? { ...prev, metadata: newMetadata, genres: [] }
+                : { ...prev, metadata: newMetadata }
         })
     }
 
@@ -233,6 +248,7 @@ export function MediaForm({
                         <button
                             type="button"
                             onClick={() => removeMetadataField(key)}
+                            aria-label={`Remove ${key}`}
                             className="px-2 py-1 rounded-md bg-destructive text-primary-foreground text-xs hover:bg-destructive/90"
                         >
                             ✕

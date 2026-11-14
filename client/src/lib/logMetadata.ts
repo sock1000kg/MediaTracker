@@ -200,14 +200,16 @@ function displayValue(v: unknown): string | null {
  * every other key shows as "key: value" (empty values and objects are skipped). Never throws.
  */
 export function formatLogMetadata(
-  media: (Pick<Media, "metadata"> & { source?: string | null }) | null | undefined,
+  media: (Pick<Media, "metadata"> & { source?: string | null; kind?: string | null }) | null | undefined,
   log?: { progress?: Record<string, unknown> | null } | null
 ): string[] {
   try {
     const raw = media?.metadata
-    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return []
-    const meta = raw as Meta
-    const { parts, used } = branchFor(meta, media?.source ?? undefined, log?.progress ?? null)
+    const meta = (raw && typeof raw === "object" && !Array.isArray(raw)) ? (raw as Meta) : ({} as Meta)
+    const effectiveKind = media?.kind ?? (typeof meta.kind === "string" ? meta.kind : undefined)
+    const effectiveMeta: Meta = effectiveKind ? { ...meta, kind: effectiveKind } : meta
+    if (Object.keys(effectiveMeta).length === 0) return []
+    const { parts, used } = branchFor(effectiveMeta, media?.source ?? undefined, log?.progress ?? null)
     const out = [...parts]
     for (const [key, value] of Object.entries(meta)) {
       if (ALWAYS_HIDDEN.has(key) || used.has(key)) continue
