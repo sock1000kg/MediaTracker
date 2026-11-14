@@ -14,3 +14,4 @@ coverage
 .vuepress/dist
 .serverless
 .vercel
+src/generated

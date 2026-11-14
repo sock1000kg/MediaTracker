@@ -1,43 +1,40 @@
-import dotenv from 'dotenv'
+import '@/env.js'
 import { execSync } from 'child_process'
 import { fileURLToPath } from 'url'
 import path from 'path'
 import { redactUrl } from '../redactUrl.js'
-
-// Load test environment
-dotenv.config({ path: '.env.test' })
+import { assertSafeTestDatabase } from './testDbGuard.js'
+import { resetTestData } from './testDb.js'
 
 export default async function resetTestDb() {
+  assertSafeTestDatabase(process.env)
   console.log('Using database:', redactUrl(process.env.DATABASE_URL))
 
   try {
-    // Both commands will use the same environment
-    execSync('npx prisma migrate reset --force --skip-seed', {
+    execSync('npx prisma migrate deploy', {
       stdio: 'inherit',
       env: { ...process.env }
     })
-    
-    execSync('tsx src/tests/seed.ts', {
-      stdio: 'inherit',
-      env: { ...process.env } 
-    })
-    
-    console.log('Test database reset and seeded!')
 
-  } catch(error: unknown) {
+    await resetTestData()
+    console.log('Test database reset and seeded!')
+  } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Failed to reset test db"
     console.error('Error:', msg)
+    throw error
   }
 }
 
 const __filename = fileURLToPath(import.meta.url)
 
-// Check if this file is the one being executed directly
-// We use path.resolve to ensure slashes and drive letters match
-if (process.argv[1] === fileURLToPath(import.meta.url))  {
-    resetTestDb().then(() => process.exit(0))
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  resetTestDb()
+    .then(() => process.exit(0))
+    .catch((err) => {
+      console.error('Failed to reset test db:', err)
+      process.exit(1)
+    })
 } else {
-    // This will help see the mismatch if it fails
-    console.log('Normalized Meta:', path.resolve(__filename));
-    console.log('Normalized Argv:', path.resolve(process.argv[1]));
+  console.log('Normalized Meta:', path.resolve(__filename))
+  console.log('Normalized Argv:', path.resolve(process.argv[1]))
 }

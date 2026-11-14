@@ -38,7 +38,7 @@ services:
       - "6379:6379"
 
   prisma-studio:
-    image: node:lts-alpine3.17
+    image: node:22-alpine
     working_dir: /app
     volumes:
       - ./server:/app
@@ -46,7 +46,9 @@ services:
     ports:
       - "5555:5555"
     env_file:
-      - .env
+      - ./server/.env
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
     depends_on:
       - database
       - backend

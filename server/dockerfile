@@ -7,6 +7,7 @@ WORKDIR /app
 # Copy to container
 COPY package*.json ./
 COPY tsconfig*.json ./
+COPY prisma.config.ts ./
 COPY src/prisma ./src/prisma
 
 # Install dependencies
@@ -55,14 +56,11 @@ RUN apk add --no-cache curl
 RUN addgroup -S sock && adduser -S sock -G sock
 USER sock
 
-# Copy prisma client from builder
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-
 # Copy JS files built from TS
 COPY --from=builder /app/dist ./dist
 
-# Copy Prisma schema + migrations
+# Copy Prisma schema + migrations and config
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/src/prisma ./src/prisma
 
 # healthcheck hits /healthz

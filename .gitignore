@@ -4,5 +4,8 @@
 /output
 /server/coverage
 /server/dist
-/server/node_modules
+node_modules/
 *.tsbuildinfo
+/server/src/generated/
+
+.claude/settings.local.json

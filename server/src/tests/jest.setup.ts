@@ -1,38 +1,37 @@
-// jest.setup.mjs
-import dotenv from 'dotenv'
-dotenv.config({ path: '.env.test' })
-
-// Import Prisma dynamically after env is loaded cus apparently 'import' is hoisted before everything in ES Modules (fucking stupid)
-const { PrismaClient } = await import('@prisma/client')
-const prisma = new PrismaClient()
-
+// jest.setup.ts
+import '@/env.js'
+import { assertSafeTestDatabase } from './testDbGuard.js'
+import { resetTestData } from './testDb.js'
 import { redactUrl } from '@/redactUrl.js'
-import resetTestDb from '@/tests/reset-test-db.js'  //reset+seed test db
 
-//Check if Jest is connected to the correct db
+// Import Prisma dynamically after env is loaded
+const { PrismaPg } = await import('@prisma/adapter-pg')
+const { PrismaClient } = await import('@/db.js')
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
+const prisma = new PrismaClient({ adapter })
+
 beforeAll(async () => {
-    if (process.env.NODE_ENV !== 'test') {
-        throw new Error('Tests must be run with NODE_ENV=test')
-    }
+    assertSafeTestDatabase(process.env)
+    console.log('Using database:', redactUrl(process.env.DATABASE_URL))
 
-    
-        const dbUrl = process.env.DATABASE_URL;
-    if (!dbUrl) throw new Error('DATABASE_URL is not defined');
-
-    console.log('Using database:', redactUrl(dbUrl));
-    if (!dbUrl.includes('_test')) {
-        throw new Error('DATABASE_URL must point to test database')
-    }
-
-    await prisma.$connect();
-    await resetTestDb();
+    await prisma.$connect()
+    await resetTestData(prisma)
 })
 
 afterEach(async () => {
 })
 
 afterAll(async () => {
-    await prisma.$disconnect()
+    try {
+        const appPrisma = (await import('@/prismaClient.js')).default
+        await appPrisma.$disconnect().catch(() => undefined)
+    } catch { /* ignore */ }
+    await prisma.$disconnect().catch(() => undefined)
+    try {
+        const { getQueue, resetQueueForTests } = await import('@/queue/index.js')
+        await getQueue().close().catch(() => undefined)
+        resetQueueForTests()
+    } catch { /* ignore */ }
 })
 
-export {prisma}
+export { prisma }

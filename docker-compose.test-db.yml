@@ -1,6 +1,5 @@
 #docker compose -f docker-compose.test-db.yml up
 
-version: "3.9"
 services:
   database_test:
     image: postgres:17
@@ -13,7 +12,7 @@ services:
       timeout: 2s
       retries: 20
     env_file:
-      - .env.test
+      - ./server/.env.test
     volumes:
       - postgres_data_test:/var/lib/postgresql/data_test
     ports:
