@@ -12,4 +12,5 @@ export type ImportResult = {
   failuresTruncated?: number // failures dropped from the list
   notes?: string[]
   unmatched?: number
+  liked?: number
 }

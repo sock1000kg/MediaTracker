@@ -11,6 +11,7 @@ export interface JobPayloads {
             watchlist?: string
             diary?: string
             reviews?: string
+            likes?: string
         }
     }
 }

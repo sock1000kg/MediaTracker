@@ -12,4 +12,5 @@ export type ImportResult = {
   failuresTruncated?: number // number of failures dropped from `failures` (0 when not capped)
   notes?: string[]
   unmatched?: number
+  liked?: number
 }

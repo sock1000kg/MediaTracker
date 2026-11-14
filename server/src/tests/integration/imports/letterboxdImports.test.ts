@@ -384,4 +384,106 @@ describe("Media Import Routes (Letterboxd)", () => {
         expect(res.statusCode).toBe(400)
         expect(res.body.message).toBe("File is too large (max 10 MB)")
     })
+
+    it("an import with likes creates the 'Letterboxd likes' collection with those films, and a re-import adds nothing and doesn't duplicate", async () => {
+        const zipBytes = zipSync({
+            "watched.csv": strToU8("Date,Name,Year,Letterboxd URI\n2025-06-27,Whiplash,2014,https://boxd.it/7bQA\n2025-08-10,Creep,2014,https://boxd.it/7l4c\n"),
+            "likes/films.csv": strToU8("Date,Name,Year,Letterboxd URI\n2025-06-27,Whiplash,2014,https://boxd.it/7bQA\n2025-08-10,Creep,2014,https://boxd.it/7l4c\n"),
+        })
+
+        jest.spyOn(letterboxdImportService, "importFromLetterboxd").mockImplementation(async (u, files, opts) => {
+            return LetterboxdImportService.prototype.importFromLetterboxd.call(
+                letterboxdImportService,
+                u,
+                files,
+                { ...opts, resolver: mockResolver }
+            )
+        })
+
+        const first = await importAndWait(token, Buffer.from(zipBytes))
+        expect(first.job.result.imported).toBe(2)
+        expect(first.job.result.liked).toBe(2)
+        expect(first.job.result.notes).toContain("Added 2 liked films to the Letterboxd likes collection")
+
+        const coll = await prisma.collection.findFirst({
+            where: { userId, nameKey: "letterboxd likes" },
+            include: { items: { include: { log: { include: { media: true } } }, orderBy: { position: "asc" } } },
+        })
+        expect(coll).not.toBeNull()
+        expect(coll!.items).toHaveLength(2)
+        expect(coll!.items[0].log.media.title).toBe("Whiplash")
+        expect(coll!.items[1].log.media.title).toBe("Creep")
+
+        // Re-import
+        const second = await importAndWait(token, Buffer.from(zipBytes))
+        expect(second.job.result.imported).toBe(0)
+        expect(second.job.result.liked).toBe(0)
+
+        const collAfter = await prisma.collection.findFirst({
+            where: { userId, nameKey: "letterboxd likes" },
+            include: { items: { include: { log: { include: { media: true } } }, orderBy: { position: "asc" } } },
+        })
+        expect(collAfter!.items).toHaveLength(2)
+        expect(collAfter!.items[0].log.media.title).toBe("Whiplash")
+        expect(collAfter!.items[1].log.media.title).toBe("Creep")
+    })
+
+    it("appends new liked films to an existing 'Letterboxd likes' collection without duplicating", async () => {
+        const coll = await prisma.collection.create({
+            data: {
+                userId,
+                name: "Letterboxd likes",
+                nameKey: "letterboxd likes",
+                ranked: false,
+            },
+        })
+
+        const existingMedia = await prisma.media.create({
+            data: {
+                title: "Existing Film",
+                mediaTypeId: movieTypeId,
+                source: "custom",
+                sourceId: "custom-1",
+            },
+        })
+        const existingLog = await prisma.userLogs.create({
+            data: {
+                userId,
+                mediaId: existingMedia.id,
+                status: "completed",
+            },
+        })
+        await prisma.collectionItem.create({
+            data: {
+                collectionId: coll.id,
+                logId: existingLog.id,
+                position: 0,
+            },
+        })
+
+        const zipBytes = zipSync({
+            "likes/films.csv": strToU8("Date,Name,Year,Letterboxd URI\n2025-06-27,Whiplash,2014,https://boxd.it/7bQA\n"),
+        })
+
+        jest.spyOn(letterboxdImportService, "importFromLetterboxd").mockImplementation(async (u, files, opts) => {
+            return LetterboxdImportService.prototype.importFromLetterboxd.call(
+                letterboxdImportService,
+                u,
+                files,
+                { ...opts, resolver: mockResolver }
+            )
+        })
+
+        const res = await importAndWait(token, Buffer.from(zipBytes))
+        expect(res.job.result.liked).toBe(1)
+        expect(res.job.result.notes).toContain("Added 1 liked films to the Letterboxd likes collection")
+
+        const collAfter = await prisma.collection.findFirst({
+            where: { userId, id: coll.id },
+            include: { items: { include: { log: { include: { media: true } } }, orderBy: { position: "asc" } } },
+        })
+        expect(collAfter!.items).toHaveLength(2)
+        expect(collAfter!.items[0].log.media.title).toBe("Existing Film")
+        expect(collAfter!.items[1].log.media.title).toBe("Whiplash")
+    })
 })

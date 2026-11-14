@@ -45,6 +45,11 @@ describe('buildTmdbSearchUrl', () => {
         expect(u.searchParams.get('page')).toBe('1')
         expect(u.searchParams.has('api_key')).toBe(false)
     })
+    it('anyReleaseYear filters on a release in any country instead', () => {
+        const u = buildTmdbSearchUrl({ q: 'the cabin in the woods', year: 2011, anyReleaseYear: true }, tmdbAuth(V3))
+        expect(u.searchParams.get('year')).toBe('2011')
+        expect(u.searchParams.has('primary_release_year')).toBe(false)
+    })
     it('details url appends credits', () => {
         const u = buildTmdbDetailsUrl(348, tmdbAuth(V3))
         expect(u.pathname).toBe('/3/movie/348')

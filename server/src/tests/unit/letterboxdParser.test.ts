@@ -105,9 +105,52 @@ describe("Letterboxd parser and unzipper", () => {
             expect(film.tags).toEqual(["festival", "indies"])
             expect(film.progress).toBeNull()
         })
+
+        it("a likes-only film comes through as completed", () => {
+            const likesCsv = "Date,Name,Year,Letterboxd URI\n2025-08-10,Creep,2014,https://boxd.it/7l4c\n"
+            const merged = mergeLetterboxdFiles({
+                likes: likesCsv,
+            })
+            expect(merged).toHaveLength(1)
+            const film = merged[0]
+            expect(film.name).toBe("Creep")
+            expect(film.year).toBe(2014)
+            expect(film.status).toBe("completed")
+            expect(film.rating).toBeNull()
+            expect(film.filmUri).toBe("boxd.it/7l4c")
+            expect(film.liked).toBe(true)
+        })
+
+        it("a liked film that's also rated keeps its rating", () => {
+            const ratingsCsv = "Date,Name,Year,Letterboxd URI,Rating\n2025-06-27,Whiplash,2014,https://boxd.it/7bQA,4.5\n"
+            const likesCsv = "Date,Name,Year,Letterboxd URI\n2025-06-27,Whiplash,2014,https://boxd.it/7bQA\n"
+            const merged = mergeLetterboxdFiles({
+                ratings: ratingsCsv,
+                likes: likesCsv,
+            })
+            expect(merged).toHaveLength(1)
+            const film = merged[0]
+            expect(film.name).toBe("Whiplash")
+            expect(film.year).toBe(2014)
+            expect(film.status).toBe("completed")
+            expect(film.rating).toBe(90) // 4.5 * 20
+            expect(film.liked).toBe(true)
+        })
     })
 
     describe("unzipLetterboxdExport", () => {
+        it("unzips likes/films.csv while ignoring other likes files", () => {
+            const zipBytes = zipSync({
+                "watched.csv": strToU8("Date,Name,Year,Letterboxd URI\n2024-01-01,Arrival,2016,https://boxd.it/bW9S\n"),
+                "likes/films.csv": strToU8("Date,Name,Year,Letterboxd URI\n2025-06-27,Whiplash,2014,https://boxd.it/7bQA\n"),
+                "likes/reviews.csv": strToU8("Date,Review\n"),
+                "likes/lists.csv": strToU8("Date,List\n"),
+            })
+
+            const files = unzipLetterboxdExport(Buffer.from(zipBytes))
+            expect(files.watched).toContain("Arrival")
+            expect(files.likes).toContain("Whiplash")
+        })
         it("unzips valid archive created with fflate.zipSync", () => {
             const zipBytes = zipSync({
                 "watched.csv": strToU8("Date,Name,Year,Letterboxd URI\n2024-01-01,Arrival,2016,https://boxd.it/bW9S\n"),

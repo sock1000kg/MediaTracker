@@ -1,3 +1,6 @@
+import fs from "fs"
+import path from "path"
+import { fileURLToPath } from "url"
 import { unzipSync, strFromU8, UnzipFileInfo } from "fflate"
 import { parse } from "csv-parse/sync"
 import pThrottle from "p-throttle"
@@ -10,10 +13,21 @@ import { tmdbSearchService, tmdbAuth, buildTmdbSearchUrl, mapTmdbMovie } from ".
 import { findUserByUsername } from "@/repositories/authRepository.js"
 import { findMediaTypeForUserOrGlobal } from "@/repositories/mediaTypeRepository.js"
 import { findMediaByExternalIds } from "@/repositories/mediaRepository.js"
+import {
+    findCollectionByNameKey,
+    createCollection,
+    findCollectionItem,
+    countItemsInCollection,
+    addItem,
+    touchCollection,
+} from "@/repositories/collectionRepository.js"
 import { executeBatchImport, BatchRowItem } from "./batchWrite.js"
 import { type ImportProgressCallback } from "./goodreadsImportService.js"
-import { parseImportDate, normalizeTagName, tagKey, createUserAgentHeader } from "@/utilities.js"
+import { parseImportDate, normalizeTagName, tagKey, createUserAgentHeader, collectionKey, MAX_ITEMS_PER_COLLECTION } from "@/utilities.js"
 import { Prisma, Media } from "@/db.js"
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 export const MAX_IMPORT_FAILURES = 500
 export const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
@@ -34,6 +48,7 @@ export interface LetterboxdExportFiles {
     watchlist?: string
     diary?: string
     reviews?: string
+    likes?: string
 }
 
 export interface LetterboxdMergedFilm {
@@ -47,6 +62,7 @@ export interface LetterboxdMergedFilm {
     notes: string | null
     tags: string[]
     progress: { watches: number } | null
+    liked: boolean
 }
 
 export type LetterboxdResolver = (
@@ -83,10 +99,13 @@ export function unzipLetterboxdExport(buffer: Buffer): LetterboxdExportFiles {
         unzipped = unzipSync(new Uint8Array(buffer), {
             filter: (file: UnzipFileInfo) => {
                 const cleanName = file.name.replace(/^\.\//, "")
-                if (cleanName.includes("/")) return false
-
                 const lower = cleanName.toLowerCase()
-                if (!ALLOWED_FILES.has(lower)) return false
+
+                if (cleanName.includes("/")) {
+                    if (lower !== "likes/films.csv") return false
+                } else {
+                    if (!ALLOWED_FILES.has(lower)) return false
+                }
 
                 if (file.originalSize > MAX_UNPACKED_ENTRY_SIZE) {
                     throw new AppError("File is too large (max 10 MB unpacked)", 400)
@@ -117,6 +136,7 @@ export function unzipLetterboxdExport(buffer: Buffer): LetterboxdExportFiles {
         else if (cleanName === "watchlist.csv") files.watchlist = text
         else if (cleanName === "diary.csv") files.diary = text
         else if (cleanName === "reviews.csv") files.reviews = text
+        else if (cleanName === "likes/films.csv") files.likes = text
     }
 
     if (Object.keys(files).length === 0) {
@@ -190,6 +210,7 @@ export function mergeLetterboxdFiles(files: LetterboxdExportFiles): LetterboxdMe
     const watchlistRows = parseCsvRows(files.watchlist)
     const diaryRows = parseCsvRows(files.diary)
     const reviewsRows = parseCsvRows(files.reviews)
+    const likesRows = parseCsvRows(files.likes)
 
     interface FilmAccumulator {
         name: string
@@ -200,6 +221,7 @@ export function mergeLetterboxdFiles(files: LetterboxdExportFiles): LetterboxdMe
         watchlist: ParsedRow[]
         diary: ParsedRow[]
         reviews: ParsedRow[]
+        likes: ParsedRow[]
     }
 
     const byKey = new Map<string, FilmAccumulator>()
@@ -217,6 +239,7 @@ export function mergeLetterboxdFiles(files: LetterboxdExportFiles): LetterboxdMe
                 watchlist: [],
                 diary: [],
                 reviews: [],
+                likes: [],
             }
             byKey.set(key, acc)
         }
@@ -251,6 +274,12 @@ export function mergeLetterboxdFiles(files: LetterboxdExportFiles): LetterboxdMe
         acc.reviews.push(r)
     }
 
+    for (const r of likesRows) {
+        const acc = getOrCreate(r.name, r.year)
+        acc.likes.push(r)
+        if (!acc.filmUri && r.uri) acc.filmUri = normalizeLetterboxdUri(r.uri)
+    }
+
     const merged: LetterboxdMergedFilm[] = []
 
     for (const acc of byKey.values()) {
@@ -258,7 +287,8 @@ export function mergeLetterboxdFiles(files: LetterboxdExportFiles): LetterboxdMe
             acc.watched.length > 0 ||
             acc.ratings.length > 0 ||
             acc.diary.length > 0 ||
-            acc.reviews.length > 0
+            acc.reviews.length > 0 ||
+            acc.likes.length > 0
 
         const status: "completed" | "wishlist" = isCompleted ? "completed" : "wishlist"
 
@@ -310,7 +340,7 @@ export function mergeLetterboxdFiles(files: LetterboxdExportFiles): LetterboxdMe
 
         // loggedAt: earliest date seen in any file
         let loggedAt: Date | null = null
-        const allRows = [...acc.watched, ...acc.ratings, ...acc.watchlist, ...acc.diary, ...acc.reviews]
+        const allRows = [...acc.watched, ...acc.ratings, ...acc.watchlist, ...acc.diary, ...acc.reviews, ...acc.likes]
         const validDates = allRows
             .map(r => parseImportDate(r.dateStr))
             .filter((d): d is Date => d !== null)
@@ -369,32 +399,25 @@ export function mergeLetterboxdFiles(files: LetterboxdExportFiles): LetterboxdMe
             notes,
             tags: cleanTags,
             progress,
+            liked: acc.likes.length > 0,
         })
     }
 
     return merged
 }
 
-export const defaultLetterboxdResolver: LetterboxdResolver = async (films, userId) => {
+export async function resolveLetterboxdFilmsWithKey(
+    films: { name: string; year: number | null }[],
+    apiKey: string
+): Promise<Map<string, SearchResult | null>> {
     const result = new Map<string, SearchResult | null>()
     if (films.length === 0) return result
-
-    let apiKey: string
-    try {
-        apiKey = await tmdbSearchService.getUserApiKey(userId)
-    } catch {
-        // Missing key is not an error: return null for all
-        for (const f of films) {
-            result.set(letterboxdFilmKey(f.name, f.year), null)
-        }
-        return result
-    }
 
     const throttle = pThrottle({ limit: 10, interval: 1000 })
     const searchThrottled = throttle(async (film: { name: string; year: number | null }) => {
         try {
             const auth = tmdbAuth(apiKey)
-            const url = buildTmdbSearchUrl({ q: film.name, year: film.year ?? undefined }, auth)
+            const url = buildTmdbSearchUrl({ q: film.name, year: film.year ?? undefined, anyReleaseYear: true }, auth)
             const res = await fetch(url, { headers: { ...createUserAgentHeader().headers, ...auth.headers } })
             if (!res.ok) return null
             const json = await res.json()
@@ -454,6 +477,58 @@ export const defaultLetterboxdResolver: LetterboxdResolver = async (films, userI
 
     await Promise.all(lookups)
     return result
+}
+
+export const defaultLetterboxdResolver: LetterboxdResolver = async (films, userId) => {
+    let apiKey: string
+    try {
+        apiKey = await tmdbSearchService.getUserApiKey(userId)
+    } catch {
+        // Missing key is not an error: return null for all
+        const result = new Map<string, SearchResult | null>()
+        for (const f of films) {
+            result.set(letterboxdFilmKey(f.name, f.year), null)
+        }
+        return result
+    }
+
+    return resolveLetterboxdFilmsWithKey(films, apiKey)
+}
+
+export function loadLetterboxdCache(customPath?: string): Record<string, SearchResult> {
+    const candidatePaths = [
+        customPath,
+        path.resolve(process.cwd(), "src/tests/fixtures/demo/letterboxd-tmdb-cache.json"),
+        path.resolve(process.cwd(), "server/src/tests/fixtures/demo/letterboxd-tmdb-cache.json"),
+        path.resolve(process.cwd(), "dist/tests/fixtures/demo/letterboxd-tmdb-cache.json"),
+        path.join(__dirname, "../tests/fixtures/demo/letterboxd-tmdb-cache.json"),
+        path.join(__dirname, "../../tests/fixtures/demo/letterboxd-tmdb-cache.json"),
+    ].filter((p): p is string => Boolean(p))
+
+    for (const p of candidatePaths) {
+        if (fs.existsSync(p)) {
+            const raw = fs.readFileSync(p, "utf-8")
+            return JSON.parse(raw)
+        }
+    }
+    return {}
+}
+
+export function createCacheLetterboxdResolver(cachePath?: string): LetterboxdResolver {
+    let cache: Record<string, SearchResult> | null = null
+
+    return async (films: { name: string; year: number | null }[], _userId: number) => {
+        if (!cache) {
+            cache = loadLetterboxdCache(cachePath)
+        }
+        const map = new Map<string, SearchResult | null>()
+        for (const film of films) {
+            const key = letterboxdFilmKey(film.name, film.year)
+            const hit = cache[key] ?? null
+            map.set(key, hit)
+        }
+        return map
+    }
 }
 
 export class LetterboxdImportService {
@@ -741,6 +816,98 @@ export class LetterboxdImportService {
                 `${unmatchedCount} films couldn't be matched to TMDB and were added by title.`,
                 `Unmatched: ${examples.join(", ")}${moreSuffix}`,
             ]
+        }
+
+        const likedFilms = mergedFilms.filter(f => f.liked)
+        if (likedFilms.length > 0) {
+            const key = collectionKey("Letterboxd likes")
+            let coll = await findCollectionByNameKey(userId, key, prisma)
+            if (!coll) {
+                coll = await createCollection(
+                    userId,
+                    {
+                        name: "Letterboxd likes",
+                        nameKey: key,
+                        description: null,
+                        ranked: false,
+                    },
+                    prisma
+                )
+            }
+
+            const likesRows = parseCsvRows(files.likes)
+            const orderedLikedKeys: string[] = []
+            const seenKeys = new Set<string>()
+            for (const r of likesRows) {
+                const k = letterboxdFilmKey(r.name, r.year)
+                if (!seenKeys.has(k)) {
+                    seenKeys.add(k)
+                    orderedLikedKeys.push(k)
+                }
+            }
+            for (const f of likedFilms) {
+                const k = letterboxdFilmKey(f.name, f.year)
+                if (!seenKeys.has(k)) {
+                    seenKeys.add(k)
+                    orderedLikedKeys.push(k)
+                }
+            }
+
+            const likedFilmByKey = new Map<string, LetterboxdMergedFilm>()
+            for (const f of likedFilms) {
+                likedFilmByKey.set(letterboxdFilmKey(f.name, f.year), f)
+            }
+
+            let newlyAddedLikedCount = 0
+            for (const k of orderedLikedKeys) {
+                const f = likedFilmByKey.get(k)
+                if (!f) continue
+
+                const userLog = await prisma.userLogs.findFirst({
+                    where: {
+                        userId,
+                        media: {
+                            mediaTypeId: movieType.id,
+                            OR: [
+                                ...(f.filmUri ? [{ externalIds: { some: { provider: "letterboxd", externalId: f.filmUri } } }] : []),
+                                {
+                                    title: { equals: f.name, mode: "insensitive" },
+                                    ...(f.year != null ? { year: f.year } : {}),
+                                },
+                            ],
+                        },
+                    },
+                    select: { id: true },
+                })
+
+                if (!userLog) continue
+
+                const existingItem = await findCollectionItem(coll.id, userLog.id, prisma)
+                if (!existingItem) {
+                    const currentItemCount = await countItemsInCollection(coll.id, prisma)
+                    if (currentItemCount >= MAX_ITEMS_PER_COLLECTION) {
+                        break
+                    }
+                    const lastItem = await prisma.collectionItem.findFirst({
+                        where: { collectionId: coll.id },
+                        orderBy: { position: "desc" },
+                        select: { position: true },
+                    })
+                    const position = lastItem != null ? lastItem.position + 1 : 0
+                    await addItem(coll.id, userLog.id, position, prisma)
+                    newlyAddedLikedCount++
+                }
+            }
+
+            if (newlyAddedLikedCount > 0) {
+                await touchCollection(coll.id, prisma)
+            }
+
+            results.liked = newlyAddedLikedCount
+            if (newlyAddedLikedCount > 0) {
+                const note = `Added ${newlyAddedLikedCount} liked films to the Letterboxd likes collection`
+                results.notes = results.notes ? [...results.notes, note] : [note]
+            }
         }
 
         if (results.failures.length > MAX_IMPORT_FAILURES) {

@@ -54,8 +54,10 @@ export function tmdbAuth(key: string): TmdbAuth {
     return { params: { api_key: k } }
 }
 
+// anyReleaseYear matches a release in any country (TMDB `year`), not only the primary one. Importers need it
+// because Letterboxd uses the premiere year (The Cabin in the Woods: 2011, while its US release is 2012).
 export function buildTmdbSearchUrl(
-    { q, page = 1, year }: { q: string, page?: number, year?: number },
+    { q, page = 1, year, anyReleaseYear = false }: { q: string, page?: number, year?: number, anyReleaseYear?: boolean },
     auth: TmdbAuth = {}
 ): URL {
     const url = new URL(`${BASE_URL}/search/movie`)
@@ -63,7 +65,7 @@ export function buildTmdbSearchUrl(
     url.searchParams.set("page", String(page))
     url.searchParams.set("include_adult", "false")
     url.searchParams.set("language", "en-US")
-    if (year != null) url.searchParams.set("primary_release_year", String(year))
+    if (year != null) url.searchParams.set(anyReleaseYear ? "year" : "primary_release_year", String(year))
     for (const [k, v] of Object.entries(auth.params ?? {})) url.searchParams.set(k, v)
     return url
 }
