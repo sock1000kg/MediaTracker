@@ -28,5 +28,7 @@ export function coverTokenFromKey(key: string): number {
 }
 
 export function capitalise(s: string): string {
-  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s
+  if (!s) return s
+  if (s.toLowerCase() === "tv") return "TV"
+  return s.charAt(0).toUpperCase() + s.slice(1)
 }

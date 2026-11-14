@@ -15,19 +15,24 @@ import BooksSearchSection from "@/pages/sections/BookSearchSection"
 import MusicSearchSection from "@/pages/sections/MusicSearchSection"
 import AnimeSearchSection from "@/pages/sections/AnimeSearchSection"
 import MovieSearchSection from "@/pages/sections/MovieSearchSection"
+import TvSearchSection from "@/pages/sections/TvSearchSection"
 import GameSearchSection from "@/pages/sections/GameSearchSection"
+import StatsSection from "@/pages/sections/StatsSection"
+import CollectionsSection from "@/pages/sections/CollectionsSection"
 import Settings from "@/pages/sections/Settings"
 
-import { BookOpen, Clapperboard, Film, Gamepad2, Layers, Library, Menu, Music, ScrollText, Settings as SettingsIcon, type LucideIcon } from "lucide-react"
+import { BarChart3, BookOpen, Clapperboard, Film, Gamepad2, Layers, Library, ListOrdered, Menu, Music, ScrollText, Settings as SettingsIcon, Tv, type LucideIcon } from "lucide-react"
 
-export type Tab = "logs" | "medias" | "mediaTypes" | "settings" | "bookSearch" | "musicSearch" | "animeSearch" | "movieSearch" | "gameSearch" | "defaultSearch" //Tabs in homepage
+export type Tab = "logs" | "medias" | "collections" | "mediaTypes" | "stats" | "settings" | "bookSearch" | "musicSearch" | "animeSearch" | "movieSearch" | "tvSearch" | "gameSearch" | "defaultSearch" //Tabs in homepage
 
 interface NavItem { tab: Tab; label: string; icon: LucideIcon }
 
 const NAV_ITEMS: NavItem[] = [
   { tab: "logs", label: "Logs", icon: ScrollText },
   { tab: "medias", label: "Your media", icon: Library },
+  { tab: "collections", label: "Collections", icon: ListOrdered },
   { tab: "mediaTypes", label: "Media types", icon: Layers },
+  { tab: "stats", label: "Stats", icon: BarChart3 },
 ]
 
 const FIND_ITEMS: NavItem[] = [
@@ -35,6 +40,7 @@ const FIND_ITEMS: NavItem[] = [
   { tab: "musicSearch", label: "Music", icon: Music },
   { tab: "animeSearch", label: "Anime & manga", icon: Clapperboard },
   { tab: "movieSearch", label: "Movies", icon: Film },
+  { tab: "tvSearch", label: "TV", icon: Tv },
   { tab: "gameSearch", label: "Games", icon: Gamepad2 },
 ]
 
@@ -137,11 +143,14 @@ export default function Homepage() {
       <main className="min-w-0 flex-1 overflow-hidden">
         {activeTab === "logs" && <LogsSection/>}
         {activeTab === "medias" && <MediasSection />}
+        {activeTab === "collections" && <CollectionsSection />}
         {activeTab === "mediaTypes" && <MediaTypesSection />}
+        {activeTab === "stats" && <StatsSection />}
         {activeTab === "bookSearch" && <BooksSearchSection />}
         {activeTab === "musicSearch" && <MusicSearchSection />}
         {activeTab === "animeSearch" && <AnimeSearchSection />}
         {activeTab === "movieSearch" && <MovieSearchSection />}
+        {activeTab === "tvSearch" && <TvSearchSection />}
         {activeTab === "gameSearch" && <GameSearchSection />}
         {activeTab === "settings" && <Settings/>}
       </main>

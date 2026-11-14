@@ -1,3 +1,4 @@
+import { ProviderAttribution } from "@/components/search/ProviderAttribution"
 import { PageBackdrop } from "@/components/media-view/PageBackdrop"
 import { effectiveHideLogged } from "@/lib/preferences"
 import { usePreferences } from "@/hooks/usePreferences"
@@ -13,7 +14,7 @@ import { findLogForResult, isResultLogged, readStoredBool, writeStoredBool } fro
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData  } from "@tanstack/react-query"
 
 import type { AnimeKind, AnimeResult, AnimeSort } from "@/types/search"
-import { ANIME_SORT_OPTIONS, ANIME_TYPE_OPTIONS } from "@/lib/animeFormat"
+import { ANILIST_ATTRIBUTION_TEXT, ANILIST_URL, ANIME_SORT_OPTIONS, ANIME_TYPE_OPTIONS } from "@/lib/animeFormat"
 import { type DialogName, type Log } from "@/types/mainTypes"
 
 import EntityDialog from "../../components/dialogs/EntityDialog"
@@ -106,12 +107,16 @@ export function AnimeSearchSection() {
         onSuccess: () => {
             queryClient.refetchQueries({ queryKey: fetchMediasQueryOptions().queryKey})
             queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey })
+            queryClient.invalidateQueries({ queryKey: ["tags"] })
         }
     })
 
     const editLogMutation = useMutation({
         mutationFn: editLog,
-        onSuccess: () => queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey}),
+        onSuccess: () => {
+            queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey})
+            queryClient.invalidateQueries({ queryKey: ["tags"] })
+        },
     })
 
     const handleSearch = () => {
@@ -179,6 +184,9 @@ export function AnimeSearchSection() {
             <div className="flex flex-col gap-4 px-6 pt-6 pb-4">
                 <div>
                 <h1 className="font-display text-4xl font-semibold">Anime &amp; manga search</h1>
+                <ProviderAttribution href={ANILIST_URL}>
+                    {ANILIST_ATTRIBUTION_TEXT}
+                </ProviderAttribution>
                 </div>
 
                 <div className="flex flex-wrap gap-2 items-center">

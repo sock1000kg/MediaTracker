@@ -74,12 +74,18 @@ export default function LogsSection() {
   // Mutations
   const deleteMutation = useMutation({
     mutationFn: deleteLog,
-    onSuccess: () => queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: fetchLogsQueryOptions().queryKey })
+      queryClient.invalidateQueries({ queryKey: ["tags"] })
+    },
   })
 
   const editMutation = useMutation({
     mutationFn: editLog,
-    onSuccess: () => queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: fetchLogsQueryOptions().queryKey })
+      queryClient.invalidateQueries({ queryKey: ["tags"] })
+    },
   })
 
   // Case-insensitive unique categories, first spelling seen wins
@@ -92,18 +98,43 @@ export default function LogsSection() {
     return Array.from(seen.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }))
   }, [logs])
 
-  // Filter config depends on the canonical category spellings, so memoize it
+  // Case-insensitive unique tags from loaded logs
+  const uniqueTags = useMemo(() => {
+    const seen = new Map<string, string>()
+    logs.forEach(l => (l.tags ?? []).forEach(t => {
+      const key = t.name.toLowerCase()
+      if (!seen.has(key)) seen.set(key, t.name)
+    }))
+    return Array.from(seen.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }))
+  }, [logs])
+
+  const hasUntagged = useMemo(() => logs.some(l => !l.tags || l.tags.length === 0), [logs])
+  const tagFilterValues = useMemo(() => {
+    if (uniqueTags.length === 0 && !hasUntagged) return []
+    return [...uniqueTags, ...(hasUntagged ? ["No tags"] : [])]
+  }, [uniqueTags, hasUntagged])
+
+  // Filter config depends on the canonical category and tag spellings, so memoize it
   // (the hook's useMemo would otherwise recompute on every render)
   const filterConfig = useMemo(() => {
-    const canonical = new Map(uniqueCategories.map(c => [c.toLowerCase(), c]))
+    const canonicalCat = new Map(uniqueCategories.map(c => [c.toLowerCase(), c]))
+    const canonicalTag = new Map(uniqueTags.map(t => [t.toLowerCase(), t]))
     return [
       { id: "type", field: (log: Log) => log.media.mediaType.name },
       { id: "status", field: (log: Log) => log.status },
-      { id: "category", field: (log: Log) => getCategories(log.media.metadata).map(c => canonical.get(c.toLowerCase()) ?? c) },
+      { id: "category", field: (log: Log) => getCategories(log.media.metadata).map(c => canonicalCat.get(c.toLowerCase()) ?? c) },
+      {
+        id: "tag",
+        field: (log: Log) => {
+          const userTags = log.tags ?? []
+          if (userTags.length === 0) return ["No tags"]
+          return userTags.map(t => canonicalTag.get(t.name.toLowerCase()) ?? t.name)
+        }
+      },
       { id: "source", field: (log: Log) => sourceLabel(log.media.source) },
       { id: "rating", field: (log: Log) => ratingBucket(log.rating) },
     ]
-  }, [uniqueCategories])
+  }, [uniqueCategories, uniqueTags])
 
   // Filters Hook
   // We pass the raw data ('logs') into the hook.
@@ -179,6 +210,12 @@ export default function LogsSection() {
     setOpenDialog("logForm")
   }
 
+  const handleTagClick = useCallback((tagName: string) => {
+    if (!activeFilters["tag"]?.includes(tagName)) {
+      toggleFilter("tag", tagName)
+    }
+  }, [activeFilters, toggleFilter])
+
   const logsThisYear = useMemo(() => {
     const year = new Date().getFullYear()
     return logs.filter((l) => new Date(l.logged_at).getFullYear() === year).length
@@ -230,6 +267,9 @@ export default function LogsSection() {
                         ...(uniqueCategories.length > 0
                           ? [{ id: "category", label: "Category", values: uniqueCategories, badgeColor: "amber" as const, searchable: true }]
                           : []),
+                        ...(tagFilterValues.length > 0
+                          ? [{ id: "tag", label: "Tag", values: tagFilterValues, badgeColor: "stone" as const, searchable: true }]
+                          : []),
                         { id: "source", label: "Source", values: uniqueSources, badgeColor: "blue" },
                         { id: "rating", label: "Rating", values: [...presentRatings], badgeColor: "stone" }
                     ]}
@@ -276,13 +316,13 @@ export default function LogsSection() {
                   {view === "list" ? (
                     <ul ref={reveal.listRef(group.key)} className="flex flex-col gap-3">
                       {visible.map((log) => (
-                        <LogRow key={log.id} log={log} onEdit={handleEditClick} onDelete={handleDeleteClick} />
+                        <LogRow key={log.id} log={log} onEdit={handleEditClick} onDelete={handleDeleteClick} onTagClick={handleTagClick} />
                       ))}
                     </ul>
                   ) : (
                     <ul ref={reveal.listRef(group.key)} className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-x-5 gap-y-7">
                       {visible.map((log) => (
-                        <LogTile key={log.id} log={log} onEdit={handleEditClick} onDelete={handleDeleteClick} />
+                        <LogTile key={log.id} log={log} onEdit={handleEditClick} onDelete={handleDeleteClick} onTagClick={handleTagClick} />
                       ))}
                     </ul>
                   )}

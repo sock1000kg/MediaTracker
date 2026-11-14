@@ -1,3 +1,5 @@
+import { ProviderAttribution } from "@/components/search/ProviderAttribution"
+import { OPEN_LIBRARY_URL, OPEN_LIBRARY_ATTRIBUTION_TEXT } from "@/lib/bookFormat"
 import { PageBackdrop } from "@/components/media-view/PageBackdrop"
 import { effectiveHideLogged } from "@/lib/preferences"
 import { usePreferences } from "@/hooks/usePreferences"
@@ -149,12 +151,16 @@ export default function BooksSearchSection() {
         onSuccess: () => {
             queryClient.refetchQueries({ queryKey: fetchMediasQueryOptions().queryKey})
             queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey })
+            queryClient.invalidateQueries({ queryKey: ["tags"] })
         }
     })
 
     const editLogMutation = useMutation({
         mutationFn: editLog,
-        onSuccess: () => queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey}),
+        onSuccess: () => {
+            queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey})
+            queryClient.invalidateQueries({ queryKey: ["tags"] })
+        },
     })
 
     // Applies the panel's filters together with the typed query
@@ -239,6 +245,9 @@ export default function BooksSearchSection() {
             <div className="flex flex-col gap-4 px-6 pt-6 pb-4">
                 <div>
                 <h1 className="font-display text-4xl font-semibold">Book search</h1>
+                <ProviderAttribution href={OPEN_LIBRARY_URL}>
+                    {OPEN_LIBRARY_ATTRIBUTION_TEXT}
+                </ProviderAttribution>
                 </div>
 
                 <div className="flex flex-wrap gap-2 items-center">

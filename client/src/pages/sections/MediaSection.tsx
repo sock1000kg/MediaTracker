@@ -202,12 +202,18 @@ export default function MediasSection() {
   // LOG
   const createLogMutation = useMutation({
     mutationFn: createLog,
-    onSuccess: () => queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey}),
+    onSuccess: () => {
+      queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey })
+      queryClient.invalidateQueries({ queryKey: ["tags"] })
+    },
   })
   
   const editLogMutation = useMutation({
     mutationFn: editLog,
-    onSuccess: () => queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey}),
+    onSuccess: () => {
+      queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey })
+      queryClient.invalidateQueries({ queryKey: ["tags"] })
+    },
   })
   
   //HANDLERS

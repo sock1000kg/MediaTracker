@@ -26,14 +26,69 @@ export interface Media {
   created_at: string
 }
 
+export interface TagItem {
+  id: number
+  name: string
+}
+
+export interface TagWithCount {
+  id: number
+  name: string
+  count: number
+}
+
+export type Tag = TagWithCount
+
 export type LogStatus = "completed" | "in progress" | "wishlist" | "dropped"
 export interface Log {
   id: number
   status: LogStatus
   rating: number
   notes: string
+  started_at?: string | null
+  finished_at?: string | null
   logged_at: string
   media: Media
+  tags?: TagItem[]
+  collectionIds?: number[]
+}
+
+export interface CollectionSummary {
+  id: number
+  name: string
+  description: string | null
+  ranked: boolean
+  count: number
+  updated_at: string
+  covers: string[]
+}
+
+export interface CollectionItem {
+  position: number
+  added_at: string
+  log: Log
+}
+
+export interface CollectionDetail {
+  id: number
+  name: string
+  description: string | null
+  ranked: boolean
+  created_at: string
+  updated_at: string
+  items: CollectionItem[]
+}
+
+export interface CreateCollectionInput {
+  name: string
+  description?: string | null
+  ranked?: boolean
+}
+
+export interface UpdateCollectionInput {
+  name?: string
+  description?: string | null
+  ranked?: boolean
 }
 
 //MEDIA TYPES

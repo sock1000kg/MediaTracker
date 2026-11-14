@@ -26,3 +26,20 @@ export async function startGoodreadsImport(file: File): Promise<{ jobId: string 
         throw e
     }
 }
+
+export async function startMalImport(file: File): Promise<{ jobId: string }> {
+    const formData = new FormData()
+    formData.append('file', file)
+    try {
+        return await apiFetch<{ jobId: string }>('/imports/mal', {
+            method: 'POST',
+            body: formData
+        })
+    } catch (e) {
+        if (e instanceof ApiError && e.status === 409) {
+            const jobId = (e.data as { jobId?: unknown } | undefined)?.jobId
+            if (typeof jobId === "string") throw new ImportAlreadyRunningError(e.message, jobId)
+        }
+        throw e
+    }
+}

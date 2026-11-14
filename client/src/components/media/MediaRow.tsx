@@ -38,10 +38,7 @@ export function MediaRow({ media, log, onEdit, onDelete, onLog }: MediaRowProps)
               {status && <p className="text-xs text-muted-foreground">{status}</p>}
             </>
           ) : (
-            <>
-              <p className="text-xs text-muted-foreground">Not logged</p>
               <Button size="sm" variant="amber" className="mt-1" onClick={() => onLog(media)}>+ Log</Button>
-            </>
           )}
           <div>
             <MediaActions media={media} logged={!!log} onEdit={onEdit} onDelete={onDelete} onLog={onLog} />

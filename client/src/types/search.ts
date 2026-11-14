@@ -8,6 +8,7 @@ export type MediaResult<T extends string = string> = {
   description?: string | null
   imageUrl?: string | null
   metadata?: Record<string, unknown>
+  inLibrary?: boolean
 }
 
 export type BookResult = MediaResult<"book"> & {
@@ -38,8 +39,14 @@ export type AnimeResult = MediaResult<AnimeKind> & {
     chapters?: number | null
     volumes?: number | null
     score?: number | null
+    scoreScale?: "mal" | "anilist"
     originalTitle?: string | null
     categories?: string[] | null
+    episodeMinutes?: number | null
+    idMal?: number | null
+    watchedEpisodes?: number | null
+    readChapters?: number | null
+    readVolumes?: number | null
   }
 }
 
@@ -81,6 +88,41 @@ export type GameResult = MediaResult<"game"> & {
     publishers?: string[] | null
     categories?: string[] | null
   }
+}
+
+export type TvShowMetadata = {
+  url?: string
+  kind: "show"
+  tmdbId: number
+  originalTitle?: string | null
+  firstAirDate?: string | null
+  genres?: string[] | null
+  originCountry?: string[] | string | null
+  seasonCount?: number | null
+  episodeCount?: number | null
+  status?: string | null
+  networks?: string[] | null
+  creator?: string | null
+}
+
+export type TvSeasonMetadata = {
+  url?: string
+  kind: "season"
+  tmdbId: number
+  showTitle: string
+  seasonNumber: number
+  episodeCount: number | null
+  airDate?: string | null
+  networks?: string[] | null
+  genres?: string[] | null
+}
+
+export type TvResult = MediaResult<"tv"> & {
+  metadata: TvShowMetadata | TvSeasonMetadata
+}
+
+export type TvSeasonResult = MediaResult<"tv"> & {
+  metadata: TvSeasonMetadata
 }
 
 export type BookSort = "relevance" | "new" | "old" | "rating"

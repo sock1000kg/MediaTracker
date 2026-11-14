@@ -13,6 +13,8 @@ export const SOURCE_LABELS: Record<string, string> = {
   goodreads: "Goodreads",
   google_books: "Google Books",
   jikan: "MyAnimeList",
+  mal: "MyAnimeList",
+  anilist: "AniList",
   tmdb: "TMDB",
   rawg: "RAWG",
 }
@@ -39,18 +41,30 @@ export function getCategories(metadata?: { categories?: unknown } | null): strin
 
 type LoggedLike = { media: { source?: string | null; sourceId: string | null } }
 
-// A search result counts as logged if a log has the same source + sourceId
+// A search result counts as logged if a log has the same source + sourceId,
+// or if an AniList result has idMal matching an existing Jikan media with "<kind>-<idMal>"
 export function findLogForResult<L extends LoggedLike>(
   logs: L[],
-  item: { source: string; sourceId: string | null }
+  item: { source: string; sourceId: string | null; metadata?: Record<string, unknown> | null }
 ): L | undefined {
   return logs.find(l => {
     if (!l.media.source && !l.media.sourceId) return false
-    return l.media.sourceId === item.sourceId && l.media.source === item.source
+    if (l.media.sourceId === item.sourceId && l.media.source === item.source) return true
+    if (item.source === "anilist" && l.media.source === "jikan") {
+      const meta = item.metadata as { kind?: string; idMal?: number | null } | null | undefined
+      const kind = meta?.kind ?? item.sourceId?.split("-")[0]
+      if (meta?.idMal != null && kind) {
+        if (l.media.sourceId === `${kind}-${meta.idMal}`) return true
+      }
+    }
+    return false
   })
 }
 
-export function isResultLogged(logs: LoggedLike[], item: { source: string; sourceId: string | null }): boolean {
+export function isResultLogged(
+  logs: LoggedLike[],
+  item: { source: string; sourceId: string | null; metadata?: Record<string, unknown> | null }
+): boolean {
   return findLogForResult(logs, item) !== undefined
 }
 

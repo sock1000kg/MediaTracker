@@ -1,7 +1,22 @@
 import type { AnimeResult } from "@/types/search"
 
-// Parts of the card's metadata line, e.g. ["TV", "12 eps", "MAL 8.61"]. Empty parts are skipped.
-export function animeMetaParts(m: AnimeResult["metadata"] | undefined): string[] {
+export const ANILIST_URL = "https://anilist.co"
+export const ANILIST_ATTRIBUTION_TEXT = "Data from AniList"
+
+export function formatAnimeScore(
+  score: number | null | undefined,
+  scale?: "mal" | "anilist" | null,
+  source?: string | null
+): string | null {
+  if (score == null) return null
+  if (scale === "anilist" || source === "anilist") {
+    return `AniList ${Math.round(score)}%`
+  }
+  return `MAL ${score.toFixed(2)}`
+}
+
+// Parts of the card's metadata line, e.g. ["TV", "12 eps", "AniList 86%"] or ["TV", "12 eps", "MAL 8.61"]. Empty parts are skipped.
+export function animeMetaParts(m: AnimeResult["metadata"] | undefined, source?: string): string[] {
   if (!m) return []
   const parts: string[] = []
   if (m.format) parts.push(m.format)
@@ -13,7 +28,8 @@ export function animeMetaParts(m: AnimeResult["metadata"] | undefined): string[]
     const both = [ch, vol].filter(Boolean).join(" · ")
     if (both) parts.push(both)
   }
-  if (m.score != null) parts.push(`MAL ${m.score.toFixed(2)}`)
+  const score = formatAnimeScore(m.score, m.scoreScale, source)
+  if (score != null) parts.push(score)
   return parts
 }
 

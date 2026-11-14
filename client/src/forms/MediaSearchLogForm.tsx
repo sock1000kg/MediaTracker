@@ -7,6 +7,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import type { MediaResult } from "@/types/search"
+import { useEffect, useRef, useState, useCallback } from "react"
+import { TagInput } from "@/components/tags/TagInput"
 
 interface MediaSearchLogFormProps {
   formData: Partial<Log>
@@ -14,11 +16,82 @@ interface MediaSearchLogFormProps {
   targetMedia: MediaResult // for create mode, in edit mode the target's info is passed from EntityDialog
 }
 
+function areTagListsEqual(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false
+  const sortedA = [...a].map((s) => s.toLowerCase()).sort()
+  const sortedB = [...b].map((s) => s.toLowerCase()).sort()
+  return sortedA.every((val, idx) => val === sortedB[idx])
+}
+
+function getTodayString(): string {
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, "0")
+  const day = String(d.getDate()).padStart(2, "0")
+  return `${y}-${m}-${day}`
+}
+
 export function MediaSearchLogForm({
   formData,
   setFormData,
   targetMedia,
 }: MediaSearchLogFormProps) {
+  // Track initial tags to send tags only when modified
+  const initialTagsRef = useRef<string[] | null>(null)
+  if (initialTagsRef.current === null) {
+    const raw = formData.tags ?? []
+    initialTagsRef.current = raw.map((t) => t.name)
+  }
+
+  const [currentTags, setCurrentTags] = useState<string[]>(() => initialTagsRef.current ?? [])
+
+  useEffect(() => {
+    // If formData was initialized from an existing log, it holds TagItem objects;
+    // clear it so untouched tags are omitted from the update payload.
+    setFormData((prev) => {
+      if (prev.tags !== undefined) {
+        return { ...prev, tags: undefined }
+      }
+      return prev
+    })
+  }, [setFormData])
+
+  const handleTagsChange = useCallback((newTags: string[]) => {
+    setCurrentTags(newTags)
+    const initial = initialTagsRef.current ?? []
+    if (formData.id) {
+      if (areTagListsEqual(newTags, initial)) {
+        setFormData((prev) => ({ ...prev, tags: undefined }))
+      } else {
+        setFormData((prev) => ({
+          ...prev,
+          tags: newTags.map((name, i) => ({ id: -1 - i, name })),
+        }))
+      }
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        tags: newTags.length > 0 ? newTags.map((name, i) => ({ id: -1 - i, name })) : undefined,
+      }))
+    }
+  }, [formData.id, setFormData])
+
+  const started = formData.started_at ? formData.started_at.slice(0, 10) : ""
+  const finished = formData.finished_at ? formData.finished_at.slice(0, 10) : ""
+  const today = getTodayString()
+
+  let startedError: string | null = null
+  let finishedError: string | null = null
+
+  if (started && started > today) {
+    startedError = "Start date cannot be in the future"
+  }
+  if (finished && finished > today) {
+    finishedError = "Finished date cannot be in the future"
+  } else if (started && finished && finished < started) {
+    finishedError = "Finished date can't be before the start date"
+  }
+
   return (
     <div className="space-y-4 max-h-[520px] overflow-y-auto pr-2 p-2">
       {targetMedia && (
@@ -66,6 +139,81 @@ export function MediaSearchLogForm({
           placeholder="0–100"
         />
       </label>
+
+      {/* Started Date */}
+      <div>
+        <label htmlFor="search-log-started-date" className="block text-sm">
+          Started
+        </label>
+        <input
+          id="search-log-started-date"
+          type="date"
+          value={started}
+          onChange={(e) =>
+            setFormData((prev) => ({
+              ...prev,
+              started_at: e.target.value || null,
+            }))
+          }
+          max={today}
+          aria-describedby={startedError ? "search-started-date-error" : undefined}
+          className="mt-1 block w-full rounded-md border border-input bg-card px-3 py-2 text-sm focus:ring-2 focus:outline-none"
+        />
+        {startedError && (
+          <p id="search-started-date-error" role="alert" className="text-xs text-destructive mt-1">
+            {startedError}
+          </p>
+        )}
+      </div>
+
+      {/* Finished Date */}
+      <div>
+        <div className="flex items-center justify-between">
+          <label htmlFor="search-log-finished-date" className="text-sm">
+            Finished
+          </label>
+          <button
+            type="button"
+            onClick={() =>
+              setFormData((prev) => ({ ...prev, finished_at: today }))
+            }
+            className="text-xs px-2 py-0.5 rounded border border-border bg-secondary hover:bg-secondary/80 text-secondary-foreground"
+          >
+            Today
+          </button>
+        </div>
+        <input
+          id="search-log-finished-date"
+          type="date"
+          value={finished}
+          onChange={(e) =>
+            setFormData((prev) => ({
+              ...prev,
+              finished_at: e.target.value || null,
+            }))
+          }
+          max={today}
+          aria-describedby={finishedError ? "search-finished-date-error" : undefined}
+          className="mt-1 block w-full rounded-md border border-input bg-card px-3 py-2 text-sm focus:ring-2 focus:outline-none"
+        />
+        {finishedError && (
+          <p id="search-finished-date-error" role="alert" className="text-xs text-destructive mt-1">
+            {finishedError}
+          </p>
+        )}
+      </div>
+
+      {/* Tags */}
+      <div>
+        <label htmlFor="search-log-tags-input" className="block text-sm mb-1">
+          Tags
+        </label>
+        <TagInput
+          id="search-log-tags-input"
+          value={currentTags}
+          onChange={handleTagsChange}
+        />
+      </div>
 
       {/* Notes */}
       <label className="block">

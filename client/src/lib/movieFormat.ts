@@ -1,5 +1,6 @@
 import type { MovieResult } from "@/types/search"
 
+export const TMDB_URL = "https://www.themoviedb.org"
 export const TMDB_ATTRIBUTION = "This product uses the TMDB API but is not endorsed or certified by TMDB."
 
 /** "TMDB 7.8": one decimal, null for missing or zero scores. */

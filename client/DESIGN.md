@@ -173,8 +173,16 @@ Under the dude: a small ghost button with lucide `Sun`/`Moon` and the label **"D
 ### 5.3 Date stamp (retired in task 15)
 The rotated `.stamp` pill is gone. The Logs page shows the logged date as plain muted text with the year ("Completed · 3 Nov 2026"), see §13.
 
-### 5.4 Paper tags
+### 5.4 Paper tags and personal user tags
 Category badges (`LogRow`, `LogTile`, `BookCard`, `MusicCard`, the "Logged" badge) get `--tag`/`--tag-foreground` as plain rounded pills with even padding (`0.125rem 8px`), no punched hole. Use a utility class `.tag` in `index.css` so every badge gets it from one place.
+
+Personal tags created by the user use an outlined pill style with utility class `.user-tag` in `index.css`: `border: 1px solid var(--border-strong)`, background transparent (hover `var(--muted)`), `color: var(--foreground)`, rendered with a leading `#`. On `LogRow` and `LogTile`, user tags appear before provider categories, and clicking a user tag button on `LogRow` applies the Logs Tag filter.
+
+The tag input component (`TagInput`) provides an accessible combobox (`role="combobox"` with listbox popup):
+- Shows chips for current tags, each with a remove button (`aria-label="Remove tag {name}"`).
+- Commits a tag on Enter, comma, or Tab (when input is non-empty); Backspace on empty input removes the last chip.
+- Autocomplete suggestions from `/tags` filtered case-insensitively, navigated with arrow keys, and offering "Create “x”" when there is no exact match.
+- Enforces limits: 1–40 chars, no commas, at most 20 tags per log, and sends tags only when modified.
 
 ### 5.5 Empty states (dude + bubble)
 | Where | Line |
@@ -354,3 +362,34 @@ Shared, in `components/media-view/`: `Cover` (id, title, imageUrl, aspect, size)
 - **Controls:** `ViewControls` without `groupOptions` shows only the List / Grid pill. It sits beside "Hide logged". The choice is stored per page as `search.view.books|music|anime|movies|games` (default List). Paging, Hide logged, empty / loading / error states and backdrops are unchanged.
 - **Load more…** (Logs and Your media, `hooks/useGroupReveal.ts`, `components/media-view/GroupFooter.tsx`, helpers in `lib/logView.ts`): each group shows its first 5 rows / 12 tiles (the unlabelled "None" group: 20 rows / 24 tiles). A pill under the group reads "Load more… (N more)", reveals the same number again, and disappears when everything is shown. Counts are kept per group key and reset when the search, filters, sorts, group mode or view change; editing or deleting an item keeps them. The button is a real `<button>` with `aria-label="Load more {group}, {N} more"`; after a reveal, focus moves to the first newly shown row or tile (`tabIndex={-1}` on `<li>` only for that).
 - **Load all and Collapse** (task 20): the footer is one `flex flex-wrap gap-2` row of pills. "Load all (N)" (N = the group's total) shows while items remain and more than one step remains (otherwise Load more already does it). "Collapse" (`ChevronsUp` + text) shows once the group is expanded (shown > initial) and resets only that group to its initial count. While expanded, the group's heading row is `sticky top-0 z-10` inside the page's `overflow-y-auto` scroll container (frosted `bg-background/70 backdrop-blur-sm`, full width) with a Collapse pill on the right; the group "None" gets a bar with only the pill. Collapsing scrolls the group's heading into view (`behavior: "auto"` under reduced motion, else `"smooth"`) and focuses it (`<h2 tabIndex={-1}>`; for "None", the first item). Rows, tiles and headings carry `scroll-mt-14` so focus and scrolling never hide them under the sticky row. Load more and Load all focus the first newly revealed item. `aria-label`s: "Load all {group}, {N} items", "Collapse {group}" (group name left out for None). Reset rules are unchanged.
+
+
+## 14. Stats page (task 22)
+
+- **Data:** all client-side from `GET /logs` (`lib/stats.ts`, pure and tested). Range select: All time / Last 12 months / each year; stored as `stats.range`. No page backdrop; one static `SpeechBubble` line from `pickStatsLine`.
+- **Charts** are hand-built SVG/CSS with tokens only: `--chart-1..5` for the top 5 types (assigned from overall counts, so colours don't move with the range), `--muted-foreground` for "Other". Never a literal colour.
+- **Every chart** sits in a `StatsFigure`: a `figure` with a one-sentence summary and a "Show as table" toggle that swaps in a real `<table>`.
+- **Colour is never the only signal:** a visible legend, tooltips and aria-labels carry the same facts.
+- **Tooltips are not hover-only:** bars are focusable (`tabIndex=0`, `aria-label`), and hover, focus and tap all fill a fixed line above the chart (never clipped by the scroller).
+- **Narrow screens:** wide month ranges scroll inside the chart box (`overflow-x-auto`), x labels thin to every 3rd month, and the page never scrolls sideways. No animation is used, so reduced motion needs nothing special.
+- **Date basis & type-specific detail (task 26):** Stats are dated by the finish date when set (`finished_at`), falling back to the logged date (`logged_at`) otherwise. Under the period select, a muted note explains the basis. Below the charts, a responsive "By type in detail" grid (1 column on mobile, 2 on tablets, 3 on desktop) displays cards for types with completed logs in range: pages read and longest book (books), hours watched and longest film (movies), episodes and estimated watch time (anime), chapters and volumes (manga), estimated playtime and top platforms (games), album and track counts (music), and average/median time to finish across every type. When metadata has gaps, each figure displays a muted "Based on N of M completed" coverage line, missing/non-positive values are ignored rather than counted as zero, and metrics without any data show "—" with an arrival hint. External metrics (e.g. RAWG playtime, anime episode durations) are explicitly labelled as estimates.
+
+## 15. Collections (task 28)
+
+Private, ordered lists of user logs (`pages/sections/CollectionsSection.tsx`, `components/collections/*`, `lib/collectionHelpers.ts`).
+- **Navigation:** "Collections" tab (`ListOrdered` icon) after "Your media" in sidebar and mobile sheet. Supported in user preferences `defaultTab: "collections"`.
+- **Index view:**
+  - Header with title ("Collections") and an amber pill button ("+ New collection").
+  - Responsive grid: 1 column at 375px (`grid-cols-1`), expanding to `sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4`.
+  - **Collection cards (`CollectionCard.tsx`):** a 2×2 cover mosaic (`coverMosaic`) from the first items' covers, falling back to lettered `Cover` square tiles; collection title in `font-display`; item count badge ("N items · Ranked" or "N items"); description clamped to 2 lines (`line-clamp-2`).
+  - Empty state: `EmptyState` with dude line `"no collections yet. make a shelf of favourites?"`.
+- **Detail view:**
+  - In-place view managed via local state `selectedId` with "Back to collections" button.
+  - Header: collection title in `font-display`, description, count badge, and actions: "Add logs", "Edit" (opens edit dialog: name, description, ranked flag), and "Delete" (confirm dialog noting logs are kept).
+  - Empty collection: dashed card with BlueDude, `"this collection is empty. add some logs to get started."`, and an "Add logs" call to action.
+  - Items rendered as rows using `RowShell` and `Cover`, with bold position numbers (`1.`, `2.`, …) when ranked.
+  - Per-row controls: Move to top (`ChevronsUp`), Move up (`ChevronUp`), Move down (`ChevronDown`), Move to bottom (`ChevronsDown`), and Remove from collection (`Trash2`). All icon buttons carry explicit `aria-label`s and wrap cleanly at 375px.
+  - **Reorder & Accessibility:** Optimistic list reordering with server sync (`PUT /collections/:id/order`) and rollback on failure. Focus is preserved on the moved item's active move button across re-renders. An always-mounted polite live region (`aria-live="polite"`) announces `"Moved {title} to position {n}"`.
+  - **Add logs dialog (`AddLogsDialog.tsx`):** search logs by title or creator, checkbox selection with existing items checked, applying computes `membershipDiff` to add/remove diffs.
+- **Log actions integration:** `LogActions` includes "Add to collection…", which opens `AddToCollectionDialog` with checkboxes for user collections and an inline "New collection" creation form.
+

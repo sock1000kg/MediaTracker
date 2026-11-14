@@ -59,11 +59,19 @@ export function editMedia(media: Partial<Media>): Promise<Media> {
 }
 
 export function createMediaAndLog(mediaData: MediaResult, logData: Partial<Log>): Promise<Log>{
+    const tags = logData.tags !== undefined ? logData.tags.map((t) => t.name) : undefined
     return apiFetch(`/media/media-log`, {
         method: "PUT",
         body: JSON.stringify({
             mediaData,
-            logData
+            logData: {
+                status: logData.status,
+                rating: logData.rating,
+                notes: logData.notes,
+                startedAt: logData.started_at ? logData.started_at.slice(0, 10) : null,
+                finishedAt: logData.finished_at ? logData.finished_at.slice(0, 10) : null,
+                ...(tags !== undefined ? { tags } : {}),
+            }
         })
     })
 }

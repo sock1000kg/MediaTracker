@@ -13,6 +13,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { fetchMediaTypesQueryOptions } from "@/queryOptions/fetchMediaTypesQueryOptions"
 import { fetchMediasQueryOptions } from "@/queryOptions/fetchMediasQueryOptions"
 import { fetchLogsQueryOptions } from "@/queryOptions/fetchLogsQueryOptions"
+import { capitalise } from "@/lib/mediaView"
 
 export default function MediaTypesSection() {
   const [loadingLine] = useState(() => pickLoadingLine())
@@ -120,11 +121,11 @@ export default function MediaTypesSection() {
               .slice() //copy so we dont mess with cache
               .sort((a,b) => a.name.localeCompare(b.name)) // alphabetical sort
               .map((mediaType) => (
-              <li key={mediaType.id} className="p-3 rounded-xl border border-border bg-card shadow-paper transition-colors hover:border-border-strong m-4 capitalize">
+              <li key={mediaType.id} className="p-3 rounded-xl border border-border bg-card shadow-paper transition-colors hover:border-border-strong m-4">
                 <div className="flex justify-between items-center">
                   {/* Left side info */}
                   <div className="flex-col items-center gap-1">
-                    <p className="font-bold text-foreground">{mediaType.name}</p>
+                    <p className="font-bold text-foreground">{capitalise(mediaType.name)}</p>
                     {mediaType.userId == 0 && <p className="text-xs">(system)</p>}
                   </div>
 
