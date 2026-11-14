@@ -4,6 +4,15 @@ export interface JobPayloads {
     "demo.reset": Record<string, never>
     "import.goodreads": { csv: string }
     "import.mal": { xml: string }
+    "import.letterboxd": {
+        files: {
+            watched?: string
+            ratings?: string
+            watchlist?: string
+            diary?: string
+            reviews?: string
+        }
+    }
 }
 
 export type JobName = keyof JobPayloads

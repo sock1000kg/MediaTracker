@@ -146,6 +146,23 @@ export async function executeBatchImport(options: {
         allFoundMedia.push(m)
     }
 
+    // Pre-load existing Media for items where sourceId is null
+    const nullSourceItems = items.filter(it => !it.mediaData.sourceId && it.mediaData.title)
+    if (nullSourceItems.length > 0) {
+        const foundNullSource = await prisma.media.findMany({
+            where: {
+                mediaTypeId,
+                source: { in: Array.from(new Set(nullSourceItems.map(it => it.mediaData.source))) },
+                title: { in: Array.from(new Set(nullSourceItems.map(it => it.mediaData.title))) },
+            },
+        })
+        for (const m of foundNullSource) {
+            const key = `null-source:${(m.source ?? "").toLowerCase()}:${m.title.toLowerCase()}:${m.year ?? ""}`
+            mediaBySourceKey.set(key, m)
+            allFoundMedia.push(m)
+        }
+    }
+
     const foundMediaIds = Array.from(new Set(allFoundMedia.map(m => m.id)))
     const existingLogs = await prisma.userLogs.findMany({
         where: {
@@ -190,6 +207,13 @@ export async function executeBatchImport(options: {
                     id: -1,
                     source: item.mediaData.source,
                     sourceId: item.mediaData.sourceId,
+                } as unknown as Media)
+            } else if (item.mediaData.source && !item.mediaData.sourceId) {
+                const key = `null-source:${item.mediaData.source}:${item.mediaData.title.toLowerCase()}:${item.mediaData.year ?? ""}`
+                mediaBySourceKey.set(key, {
+                    id: -1,
+                    source: item.mediaData.source,
+                    sourceId: null,
                 } as unknown as Media)
             }
             if (typeof item.idMal === "number") {
@@ -299,11 +323,11 @@ export async function executeBatchImport(options: {
                             sourceId: r.item.mediaData.sourceId!,
                         }))
 
-                    const reselected = await tx.media.findMany({
+                    const reselected = queryPairs.length > 0 ? await tx.media.findMany({
                         where: {
                             OR: queryPairs,
                         },
-                    })
+                    }) : []
 
                     const reselectedMap = new Map<string, Media>()
                     for (const m of reselected) {
@@ -314,13 +338,38 @@ export async function executeBatchImport(options: {
                     }
 
                     for (const r of chunkRowsNeedingMedia) {
-                        const m = reselectedMap.get(`${r.item.mediaData.source}:${r.item.mediaData.sourceId}`)
-                        if (m) {
-                            r.mediaId = m.id
+                        if (r.item.mediaData.source && r.item.mediaData.sourceId) {
+                            const m = reselectedMap.get(`${r.item.mediaData.source}:${r.item.mediaData.sourceId}`)
+                            if (m) {
+                                r.mediaId = m.id
+                            }
                         }
                     }
 
-                    // Insert into MediaExternalId
+                    // Reselect media for rows where sourceId is null
+                    const nullSourceIdRows = chunkRowsNeedingMedia.filter(r => !r.item.mediaData.sourceId)
+                    if (nullSourceIdRows.length > 0) {
+                        const reselectedNull = await tx.media.findMany({
+                            where: {
+                                userId: systemUserId,
+                                mediaTypeId,
+                                source: { in: Array.from(new Set(nullSourceIdRows.map(r => r.item.mediaData.source))) },
+                                title: { in: Array.from(new Set(nullSourceIdRows.map(r => r.item.mediaData.title))) },
+                            },
+                        })
+                        for (const r of nullSourceIdRows) {
+                            const m = reselectedNull.find(
+                                sm => sm.title === r.item.mediaData.title &&
+                                      sm.year === (r.item.mediaData.year ?? null) &&
+                                      sm.source === r.item.mediaData.source
+                            )
+                            if (m) {
+                                r.mediaId = m.id
+                            }
+                        }
+                    }
+
+                    // Insert into MediaExternalId for newly created media
                     const extIdData: { mediaId: number; provider: string; externalId: string }[] = []
                     for (const r of chunkRowsNeedingMedia) {
                         if (r.mediaId && r.mediaId > 0) {
@@ -500,6 +549,28 @@ export async function executeBatchImport(options: {
                             })
                         }
                     }
+                }
+
+                // Ensure external IDs are attached to existing media as well
+                const existingMediaExtIds: { mediaId: number; provider: string; externalId: string }[] = []
+                for (const r of chunk) {
+                    if (r.kind !== "new_media_and_log" && r.mediaId && r.mediaId > 0 && r.item.externalIds) {
+                        for (const x of r.item.externalIds) {
+                            if (x.provider && x.id) {
+                                existingMediaExtIds.push({
+                                    mediaId: r.mediaId,
+                                    provider: x.provider.toLowerCase(),
+                                    externalId: x.id,
+                                })
+                            }
+                        }
+                    }
+                }
+                if (existingMediaExtIds.length > 0) {
+                    await tx.mediaExternalId.createMany({
+                        data: existingMediaExtIds,
+                        skipDuplicates: true,
+                    })
                 }
 
                 // b. Insert new logs

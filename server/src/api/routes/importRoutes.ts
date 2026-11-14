@@ -1,6 +1,6 @@
 import express from 'express'
 import multer from 'multer'
-import { importGoodReads, importMal } from '../controllers/importController.js'
+import { importGoodReads, importMal, importLetterboxd } from '../controllers/importController.js'
 
 export const MAX_IMPORT_FILE_BYTES = 10 * 1024 * 1024
 
@@ -14,5 +14,8 @@ router.post('/goodreads', upload.single('file'), importGoodReads)
 
 //import anime and manga from MyAnimeList and log them
 router.post('/mal', upload.single('file'), importMal)
+
+//import movies from Letterboxd and log them
+router.post('/letterboxd', upload.single('file'), importLetterboxd)
 
 export default router
