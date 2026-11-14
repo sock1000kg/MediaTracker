@@ -11,7 +11,7 @@ import {
     addItem,
 } from "@/repositories/collectionRepository.js"
 import { collectionKey } from "@/utilities.js"
-import type { DEMO_COLLECTIONS } from "./picks.js"
+import { DEMO_COLLECTIONS, DEMO_COLLECTION_EXTRAS } from "./picks.js"
 import type { SearchResult } from "@/schemas/search/searchSchemas.js"
 
 const __filename = fileURLToPath(import.meta.url)
@@ -147,6 +147,54 @@ export async function seedDemoMedia(
     }
 }
 
+export async function seedDemoCollectionExtras(
+    demoUserId: number,
+    db: DbClient = prisma,
+    strict = false
+): Promise<void> {
+    for (const extra of DEMO_COLLECTION_EXTRAS) {
+        const key = collectionKey(extra.collection)
+        const coll = await findCollectionByNameKey(demoUserId, key, db)
+        if (!coll) {
+            const msg = `Collection "${extra.collection}" not found for demo collection extra`
+            if (strict) throw new Error(msg)
+            console.warn(msg)
+            continue
+        }
+
+        const userLog = await db.userLogs.findFirst({
+            where: {
+                userId: demoUserId,
+                media: {
+                    mediaType: { name: extra.mediaTypeName },
+                    year: extra.year,
+                    title: { equals: extra.title, mode: "insensitive" },
+                },
+            },
+            select: { id: true },
+        })
+
+        if (!userLog) {
+            const msg = `Film "${extra.title}" (${extra.year}) not found in demo user logs for collection "${extra.collection}"`
+            if (strict) throw new Error(msg)
+            console.warn(msg)
+            continue
+        }
+
+        const existing = await findCollectionItem(coll.id, userLog.id, db)
+        if (!existing) {
+            const lastItem = await db.collectionItem.findFirst({
+                where: { collectionId: coll.id },
+                orderBy: { position: "desc" },
+                select: { position: true },
+            })
+            const position = lastItem != null ? lastItem.position + 1 : 0
+            await addItem(coll.id, userLog.id, position, db)
+        }
+    }
+}
+
 export const demoMediaSeeder = {
     seedDemoMedia,
+    seedDemoCollectionExtras,
 }

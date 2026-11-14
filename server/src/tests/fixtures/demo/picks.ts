@@ -1,5 +1,5 @@
 export interface DemoPick {
-    mediaTypeName: "anime" | "manga" | "movie" | "game" | "music" | "tv"
+    mediaTypeName: "anime" | "manga" | "game" | "music" | "tv"
     provider: "anilist" | "tmdb" | "rawg" | "lastfm"
     lookup: {
         id?: number | string
@@ -57,176 +57,17 @@ export const DEMO_COLLECTIONS: DemoCollectionDefinition[] = [
     },
 ]
 
-export const DEMO_PICKS: DemoPick[] = [
-    // ==========================================
-    // MOVIES (TMDB) - 12 picks
-    // ==========================================
-    {
-        mediaTypeName: "movie",
-        provider: "tmdb",
-        lookup: { id: 666277, title: "Past Lives", year: 2023 },
-        log: {
-            status: "completed",
-            rating: 94,
-            notes: "That silent walk to the Uber in the early morning air. Crushed me.",
-            loggedAt: "2024-02-14T23:00:00.000Z",
-            startedAt: "2024-02-14T21:00:00.000Z",
-            finishedAt: "2024-02-14T23:00:00.000Z",
-            tags: ["cried", "slow burn"],
-        },
-    },
-    {
-        mediaTypeName: "movie",
-        provider: "tmdb",
-        lookup: { id: 976893, title: "Perfect Days", year: 2023 },
-        log: {
-            status: "completed",
-            rating: 92,
-            notes: "The simple dignity of cassette tapes, cassette cleaning, and morning sunlight through the leaves.",
-            loggedAt: "2024-05-02T22:30:00.000Z",
-            startedAt: "2024-05-02T20:15:00.000Z",
-            finishedAt: "2024-05-02T22:30:00.000Z",
-            tags: ["comfort", "cozy"],
-        },
-        collections: ["Comfort shelf"],
-    },
-    {
-        mediaTypeName: "movie",
-        provider: "tmdb",
-        lookup: { id: 843, title: "In the Mood for Love", year: 2000 },
-        log: {
-            status: "completed",
-            rating: 98,
-            notes: "Unmatched cinematography and longing. The slow-motion noodle vendor walks set to Yumeji's theme.",
-            loggedAt: "2024-07-06T22:00:00.000Z",
-            startedAt: "2024-07-06T20:15:00.000Z",
-            finishedAt: "2024-07-06T22:00:00.000Z",
-            tags: ["masterpiece", "rewatch"],
-        },
-        collections: ["All-time favourites"],
-    },
-    {
-        mediaTypeName: "movie",
-        provider: "tmdb",
-        lookup: { id: 965150, title: "Aftersun", year: 2022 },
-        log: {
-            status: "completed",
-            rating: 95,
-            notes: "Under Pressure playing in the strobe lights. A quiet ache that sneaks up on you long after the credits.",
-            loggedAt: "2024-09-21T21:45:00.000Z",
-            startedAt: "2024-09-21T19:50:00.000Z",
-            finishedAt: "2024-09-21T21:45:00.000Z",
-            tags: ["cried", "slow burn"],
-        },
-        collections: ["Rainy day"],
-    },
-    {
-        mediaTypeName: "movie",
-        provider: "tmdb",
-        lookup: { id: 655, title: "Paris, Texas", year: 1984 },
-        log: {
-            status: "completed",
-            rating: 91,
-            notes: "Ry Cooder slide guitar and wide West Texas horizons. The two-way mirror scene is acting perfection.",
-            loggedAt: "2024-11-18T23:30:00.000Z",
-            startedAt: "2024-11-18T21:00:00.000Z",
-            finishedAt: "2024-11-18T23:30:00.000Z",
-            tags: ["slow burn"],
-        },
-    },
-    {
-        mediaTypeName: "movie",
-        provider: "tmdb",
-        lookup: { id: 414453, title: "Columbus", year: 2017 },
-        log: {
-            status: "wishlist",
-            rating: null,
-            loggedAt: "2025-01-20T12:00:00.000Z",
-        },
-        collections: ["Up next"],
-    },
-    {
-        mediaTypeName: "movie",
-        provider: "tmdb",
-        lookup: { id: 129, title: "Spirited Away", year: 2001 },
-        log: {
-            status: "completed",
-            rating: 100,
-            notes: "The sixth station train ride across the flooded tracks remains the most peaceful sequence in all of cinema.",
-            loggedAt: "2025-03-30T17:00:00.000Z",
-            startedAt: "2025-03-30T14:45:00.000Z",
-            finishedAt: "2025-03-30T17:00:00.000Z",
-            tags: ["masterpiece", "rewatch", "comfort"],
-        },
-        collections: ["All-time favourites"],
-    },
-    {
-        mediaTypeName: "movie",
-        provider: "tmdb",
-        lookup: { id: 545611, title: "Everything Everywhere All at Once", year: 2022 },
-        log: {
-            status: "completed",
-            rating: 93,
-            notes: "Watched with friends in a packed room. The rock dialogue scene made the whole room quiet.",
-            loggedAt: "2025-06-08T22:30:00.000Z",
-            startedAt: "2025-06-08T20:00:00.000Z",
-            finishedAt: "2025-06-08T22:30:00.000Z",
-            tags: ["with friends", "cried"],
-        },
-    },
-    {
-        mediaTypeName: "movie",
-        provider: "tmdb",
-        lookup: { id: 1398, title: "Stalker", year: 1979 },
-        log: {
-            status: "completed",
-            rating: 89,
-            notes: "Hypnotic rhythm. The sepia cart journey into the Zone puts you in a trance.",
-            loggedAt: "2025-08-16T23:50:00.000Z",
-            startedAt: "2025-08-16T21:00:00.000Z",
-            finishedAt: "2025-08-16T23:50:00.000Z",
-            tags: ["slow burn", "2am"],
-        },
-        collections: ["Rainy day"],
-    },
-    {
-        mediaTypeName: "movie",
-        provider: "tmdb",
-        lookup: { id: 531428, title: "Portrait of a Lady on Fire", year: 2019 },
-        log: {
-            status: "completed",
-            rating: 96,
-            notes: "The choir around the bonfire and the final concert hall gaze. Astonishing craft.",
-            loggedAt: "2025-10-25T21:30:00.000Z",
-            startedAt: "2025-10-25T19:25:00.000Z",
-            finishedAt: "2025-10-25T21:30:00.000Z",
-            tags: ["masterpiece", "cried"],
-        },
-    },
-    {
-        mediaTypeName: "movie",
-        provider: "tmdb",
-        lookup: { id: 491584, title: "Burning", year: 2018 },
-        log: {
-            status: "dropped",
-            rating: 50,
-            notes: "Tense mood, but paced a little too slowly for the evening I put it on.",
-            loggedAt: "2025-12-06T00:30:00.000Z",
-            startedAt: "2025-12-05T22:00:00.000Z",
-        },
-    },
-    {
-        mediaTypeName: "movie",
-        provider: "tmdb",
-        lookup: { id: 14784, title: "The Fall", year: 2006 },
-        log: {
-            status: "wishlist",
-            rating: null,
-            loggedAt: "2026-02-14T11:00:00.000Z",
-        },
-        collections: ["Up next"],
-    },
+export const DEMO_COLLECTION_EXTRAS: { collection: string; mediaTypeName: "movie"; title: string; year: number }[] = [
+    { collection: "All-time favourites", mediaTypeName: "movie", title: "Inception", year: 2010 },
+    { collection: "All-time favourites", mediaTypeName: "movie", title: "WALL·E", year: 2008 },
+    { collection: "All-time favourites", mediaTypeName: "movie", title: "Whiplash", year: 2014 },
+    { collection: "Comfort shelf", mediaTypeName: "movie", title: "WALL·E", year: 2008 },
+    { collection: "Comfort shelf", mediaTypeName: "movie", title: "Groundhog Day", year: 1993 },
+    { collection: "Rainy day", mediaTypeName: "movie", title: "Ju-on: The Grudge", year: 2002 },
+    { collection: "Rainy day", mediaTypeName: "movie", title: "Incantation", year: 2022 },
+]
 
+export const DEMO_PICKS: DemoPick[] = [
     // ==========================================
     // GAMES (RAWG) - 10 picks
     // ==========================================

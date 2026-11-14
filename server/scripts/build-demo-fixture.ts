@@ -10,6 +10,12 @@ import { musicSearchService } from "../src/services/search/lastFmSearchService.j
 import { SearchResult } from "../src/schemas/search/searchSchemas.js"
 import { createUserAgentHeader } from "../src/utilities.js"
 import { parseMalExport, defaultAniListResolver } from "../src/services/imports/malImportService.js"
+import {
+    unzipLetterboxdExport,
+    mergeLetterboxdFiles,
+    letterboxdFilmKey,
+    resolveLetterboxdFilmsWithKey,
+} from "../src/services/imports/letterboxdImportService.js"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -22,19 +28,28 @@ if (fs.existsSync(serverEnvPath)) {
     dotenv.config()
 }
 
+const onlyFlag = process.argv.find(arg => arg.startsWith("--only="))?.split("=")[1]
+
 const tmdbKey = process.env.TMDB_API_KEY
 const rawgKey = process.env.RAWG_API_KEY
 const lastfmKey = process.env.LASTFM_API_KEY
 
-const missing: string[] = []
-if (!tmdbKey) missing.push("TMDB_API_KEY")
-if (!rawgKey) missing.push("RAWG_API_KEY")
-if (!lastfmKey) missing.push("LASTFM_API_KEY")
+if (onlyFlag === "letterboxd") {
+    if (!tmdbKey) {
+        console.error("BLOCKED: Missing required API key in environment: TMDB_API_KEY")
+        process.exit(1)
+    }
+} else {
+    const missing: string[] = []
+    if (!tmdbKey) missing.push("TMDB_API_KEY")
+    if (!rawgKey) missing.push("RAWG_API_KEY")
+    if (!lastfmKey) missing.push("LASTFM_API_KEY")
 
-if (missing.length > 0) {
-    console.error(`BLOCKED: Missing required API keys in environment: ${missing.join(", ")}`)
-    console.error(`Please set ${missing.join(", ")} in server/.env before building the demo fixture.`)
-    process.exit(1)
+    if (missing.length > 0) {
+        console.error(`BLOCKED: Missing required API keys in environment: ${missing.join(", ")}`)
+        console.error(`Please set ${missing.join(", ")} in server/.env before building the demo fixture.`)
+        process.exit(1)
+    }
 }
 
 // Wire keys to service singletons
@@ -295,8 +310,58 @@ async function buildMalCache() {
     console.log(`Successfully wrote MAL cache to ${cachePath}`)
 }
 
+async function buildLetterboxdCache(): Promise<string[]> {
+    console.log("Building Letterboxd TMDB cache from user exports...")
+    const letterboxdPath = path.resolve(__dirname, "../src/tests/fixtures/demo/exports/letterboxd.zip")
+    if (!fs.existsSync(letterboxdPath)) {
+        throw new Error(`Letterboxd export not found at ${letterboxdPath}`)
+    }
+
+    const zipBuf = fs.readFileSync(letterboxdPath)
+    const files = unzipLetterboxdExport(zipBuf)
+    const merged = mergeLetterboxdFiles(files)
+
+    console.log(`Resolving ${merged.length} Letterboxd films via TMDB...`)
+    const films = merged.map(f => ({ name: f.name, year: f.year }))
+    const resolvedMap = await resolveLetterboxdFilmsWithKey(films, tmdbKey!)
+
+    const cache: Record<string, SearchResult> = {}
+    const unmatched: string[] = []
+
+    for (const f of films) {
+        const key = letterboxdFilmKey(f.name, f.year)
+        const match = resolvedMap.get(key)
+        if (match) {
+            cache[key] = match
+        } else {
+            unmatched.push(`${f.name} (${f.year ?? "unknown"})`)
+        }
+    }
+
+    console.log(`Resolved ${Object.keys(cache).length}/${films.length} Letterboxd entries`)
+    if (unmatched.length > 0) {
+        console.log(`Unmatched films (${unmatched.length}):`, unmatched)
+    }
+
+    const cacheJson = JSON.stringify(cache, null, 2)
+    // Security check
+    if (/api_key=/i.test(cacheJson) || /[?&]key=/i.test(cacheJson)) {
+        throw new Error("SECURITY CHECK FAILED: Found api_key= or key= in the generated cache JSON!")
+    }
+    if (tmdbKey && cacheJson.includes(tmdbKey)) {
+        throw new Error("SECURITY CHECK FAILED: TMDB_API_KEY leaked into the cache JSON!")
+    }
+
+    const cachePath = path.resolve(__dirname, "../src/tests/fixtures/demo/letterboxd-tmdb-cache.json")
+    fs.writeFileSync(cachePath, cacheJson, "utf-8")
+    console.log(`Successfully wrote Letterboxd TMDB cache to ${cachePath}`)
+
+    return unmatched
+}
+
 async function buildFixture() {
     await buildMalCache()
+    await buildLetterboxdCache()
 
     console.log(`Building demo fixture for ${DEMO_PICKS.length} picks...`)
     const items: DemoFixtureItem[] = []
@@ -358,7 +423,15 @@ async function buildFixture() {
     console.log(`Successfully wrote demo fixture with ${items.length} items to ${outputPath}`)
 }
 
-buildFixture().catch(err => {
+async function main() {
+    if (onlyFlag === "letterboxd") {
+        await buildLetterboxdCache()
+        return
+    }
+    await buildFixture()
+}
+
+main().catch(err => {
     console.error("Fixture build failed:", err)
     process.exit(1)
 })

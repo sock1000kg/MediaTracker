@@ -512,7 +512,7 @@ describe("Collection Endpoints and Features", () => {
     describe("Demo user reset clears collections", () => {
         test("resetDemoUser removes demo collections", async () => {
             const fixture = loadDemoFixture()
-            const expectedCount = fixture.collections.length
+            const expectedCount = fixture.collections.length + 1 // +1 for "Letterboxd likes" created by Letterboxd export
             const demo = await prisma.user.findUnique({ where: { username: "demo" } })
             if (demo) {
                 await prisma.collection.create({

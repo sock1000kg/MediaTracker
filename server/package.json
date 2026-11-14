@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "cross-env CHOKIDAR_USEPOLLING=true CHOKIDAR_INTERVAL=1000 tsx watch src/server.ts",
     "prebuild": "prisma generate",
-    "build": "tsc && tsc-alias && copyfiles -u 2 \"src/tests/**/*csv\" \"src/tests/**/*json\" \"src/tests/**/*xml\" dist/tests/",
+    "build": "tsc && tsc-alias && copyfiles -u 2 \"src/tests/**/*csv\" \"src/tests/**/*json\" \"src/tests/**/*xml\" \"src/tests/**/*zip\" dist/tests/",
     "lint": "eslint .",
     "start": "node dist/server.js",
     "test": "npm run build && cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand --coverage",

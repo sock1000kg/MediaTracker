@@ -8,6 +8,7 @@ import { musicMetadataSchema } from "@/schemas/search/musicSchemas.js"
 import { tvShowMetadataSchema, tvSeasonMetadataSchema } from "@/schemas/search/tvSchemas.js"
 import { loadDemoFixture, DemoFixture } from "@/tests/fixtures/demo/seedDemoMedia.js"
 import { loadMalCache } from "@/services/imports/malImportService.js"
+import { loadLetterboxdCache } from "@/services/imports/letterboxdImportService.js"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -26,6 +27,16 @@ describe("Demo Media Fixture (Unit)", () => {
         it("contains no api_key= or key= parameter substrings in URLs", () => {
             expect(rawJson).not.toMatch(/api_key=/i)
             expect(rawJson).not.toMatch(/[?&]key=/i)
+        })
+
+        it("contains no api_key= or key= parameter substrings in letterboxd-tmdb-cache.json", () => {
+            const letterboxdCachePath = path.resolve(__dirname, "../fixtures/demo/letterboxd-tmdb-cache.json")
+            const rawLetterboxd = fs.readFileSync(letterboxdCachePath, "utf-8")
+            expect(rawLetterboxd).not.toMatch(/api_key=/i)
+            expect(rawLetterboxd).not.toMatch(/[?&]key=/i)
+            if (process.env.TMDB_API_KEY) {
+                expect(rawLetterboxd.includes(process.env.TMDB_API_KEY)).toBe(false)
+            }
         })
 
         it("contains no env keys if present in process.env", () => {
@@ -71,7 +82,6 @@ describe("Demo Media Fixture (Unit)", () => {
                 return acc
             }, {})
 
-            expect(byType.movie).toBeGreaterThan(0)
             expect(byType.game).toBeGreaterThan(0)
             expect(byType.music).toBeGreaterThan(0)
             expect(byType.tv).toBeGreaterThan(0)
@@ -118,14 +128,16 @@ describe("Demo Media Fixture (Unit)", () => {
         })
 
         it("validates movie metadata against movieMetadataSchema.strict()", () => {
-            const movies = fixture.items.filter(i => i.mediaTypeName === "movie")
+            const cache = loadLetterboxdCache()
+            const movies = Object.values(cache)
+            expect(movies.length).toBeGreaterThan(0)
             for (const m of movies) {
-                const parsed = movieMetadataSchema.safeParse(m.media.metadata)
+                const parsed = movieMetadataSchema.safeParse(m.metadata)
                 expect(parsed.success).toBe(true)
                 if (parsed.success) {
                     expect(parsed.data.kind).toBe("movie")
-                    expect(parsed.data.runtime).toBeGreaterThan(0)
                 }
+                expect(m.year).toBeDefined()
             }
         })
 
@@ -201,7 +213,7 @@ describe("Demo Media Fixture (Unit)", () => {
 
             expect(unratedCount).toBeGreaterThanOrEqual(5)
             expect(perfectCount).toBeGreaterThanOrEqual(2)
-            expect(midCount).toBeGreaterThanOrEqual(3)
+            expect(midCount).toBeGreaterThanOrEqual(2)
             expect(highCount).toBeGreaterThanOrEqual(20)
         })
 
@@ -239,7 +251,7 @@ describe("Demo Media Fixture (Unit)", () => {
                 tags.forEach(t => allTags.add(t))
             }
 
-            const expectedTags = ["comfort", "rewatch", "cried", "masterpiece", "with friends", "2am", "slow burn", "shoegaze", "cozy"]
+            const expectedTags = ["comfort", "rewatch", "cried", "masterpiece", "2am", "slow burn", "shoegaze", "cozy"]
             for (const tag of expectedTags) {
                 expect(allTags.has(tag)).toBe(true)
             }
@@ -268,7 +280,7 @@ describe("Demo Media Fixture (Unit)", () => {
             expect(favs.length).toBe(expectedFavsCount)
             expect(favs.length).toBeGreaterThan(0)
             const types = new Set(favs.map(i => i.mediaTypeName))
-            expect(types.size).toBeGreaterThanOrEqual(4)
+            expect(types.size).toBeGreaterThanOrEqual(3)
         })
 
         it("has only music in 'Shoegaze & dream pop'", () => {

@@ -11,7 +11,12 @@ import path from "path"
 import fs from "fs"
 import { goodreadsImportService } from "@/services/imports/goodreadsImportService.js"
 import { malImportService, createCacheMalResolver } from "@/services/imports/malImportService.js"
-import { seedDemoMedia, demoMediaSeeder } from "./fixtures/demo/seedDemoMedia.js"
+import {
+    letterboxdImportService,
+    createCacheLetterboxdResolver,
+    unzipLetterboxdExport,
+} from "@/services/imports/letterboxdImportService.js"
+import { seedDemoMedia, seedDemoCollectionExtras, demoMediaSeeder } from "./fixtures/demo/seedDemoMedia.js"
 import { pruneJunkGenres } from "@/services/genreService.js"
 
 export interface SeedOptions {
@@ -23,6 +28,8 @@ export interface SeedDeps {
     seedDemo?: typeof seedDemoMedia
     importGoodreads?: typeof goodreadsImportService.importFromGoodReads
     importMal?: typeof malImportService.importFromMal
+    importLetterboxd?: typeof letterboxdImportService.importFromLetterboxd
+    seedCollectionExtras?: typeof seedDemoCollectionExtras
 }
 
 async function createSystemUser(): Promise<{ id: number }> {
@@ -282,7 +289,28 @@ export async function seedDatabase(options?: SeedOptions, deps?: SeedDeps) {
             console.log("\nNo mal-manga.xml found. Skipping MAL manga import.")
         }
 
-        // 5. SEED Demo Media Fixture (remaining picks) & 6. Collections and tags
+        // 4b. SEED Letterboxd import with cache resolver
+        const letterboxdPath = findFixtureFile("fixtures/demo/exports/letterboxd.zip")
+        const cacheLetterboxdResolver = createCacheLetterboxdResolver()
+        const importLetterboxdFn = deps?.importLetterboxd ?? ((u, f, opts) => letterboxdImportService.importFromLetterboxd(u, f, opts))
+
+        if (letterboxdPath) {
+            console.log(`\x1b[1m\x1b[32m\nFound letterboxd.zip at ${letterboxdPath}\x1b[0m`)
+            console.log("Importing films for Demo user...")
+            try {
+                const fileBuffer = fs.readFileSync(letterboxdPath)
+                const files = unzipLetterboxdExport(fileBuffer)
+                const result = await importLetterboxdFn(demoUser.id, files, { resolver: cacheLetterboxdResolver })
+                console.log(`Letterboxd Import Results: imported ${result.imported}, skipped ${result.skipped}`)
+            } catch (error) {
+                if (options?.strict) throw error
+                console.error("\x1b[1m\x1b[31mFailed to seed Letterboxd ZIP:\x1b[0m", error)
+            }
+        } else {
+            console.log("\nNo letterboxd.zip found. Skipping Letterboxd import.")
+        }
+
+        // 5. SEED Demo Media Fixture (remaining picks) & collections
         console.log("\nSeeding demo media fixture...")
         try {
             await (deps?.seedDemo ?? demoMediaSeeder.seedDemoMedia)(demoUser.id)
@@ -291,6 +319,19 @@ export async function seedDatabase(options?: SeedOptions, deps?: SeedDeps) {
             if (options?.strict) throw error
             console.error(
                 "Demo fixture seeding failed (continuing startup):",
+                error instanceof Error ? error.message : error
+            )
+        }
+
+        // 6. Collections extras for imported films
+        console.log("\nSeeding demo collection extras...")
+        try {
+            await (deps?.seedCollectionExtras ?? demoMediaSeeder.seedDemoCollectionExtras)(demoUser.id, prisma, Boolean(options?.strict))
+            console.log("Demo collection extras seeded successfully.")
+        } catch (error) {
+            if (options?.strict) throw error
+            console.error(
+                "Demo collection extras failed (continuing startup):",
                 error instanceof Error ? error.message : error
             )
         }

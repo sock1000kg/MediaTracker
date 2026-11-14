@@ -6,6 +6,7 @@ import fs from "fs"
 import path from "path"
 import { parse } from "csv-parse/sync"
 import { parseMalExport } from "@/services/imports/malImportService.js"
+import { unzipLetterboxdExport, mergeLetterboxdFiles } from "@/services/imports/letterboxdImportService.js"
 
 describe("Demo Media Seeding (Integration)", () => {
     let demoUserId: number
@@ -207,13 +208,15 @@ describe("Demo Media Seeding (Integration)", () => {
         const goodreadsPath = path.resolve(process.cwd(), "src/tests/fixtures/demo/exports/goodreads.csv")
         const animePath = path.resolve(process.cwd(), "src/tests/fixtures/demo/exports/mal-anime.xml")
         const mangaPath = path.resolve(process.cwd(), "src/tests/fixtures/demo/exports/mal-manga.xml")
+        const letterboxdPath = path.resolve(process.cwd(), "src/tests/fixtures/demo/exports/letterboxd.zip")
 
         const goodreadsRows = parse(fs.readFileSync(goodreadsPath), { columns: true, skip_empty_lines: true, trim: true, cast: true, bom: true })
         const { entries: animeEntries } = parseMalExport(fs.readFileSync(animePath))
         const { entries: mangaEntries } = parseMalExport(fs.readFileSync(mangaPath))
+        const letterboxdFilms = mergeLetterboxdFiles(unzipLetterboxdExport(fs.readFileSync(letterboxdPath)))
 
-        // 1 default log + goodreads rows + anime entries + manga entries + fixture items
-        const expectedTotal = 1 + goodreadsRows.length + animeEntries.length + mangaEntries.length + fixture.items.length
+        // 1 default log + goodreads rows + anime entries + manga entries + letterboxd films + fixture items
+        const expectedTotal = 1 + goodreadsRows.length + animeEntries.length + mangaEntries.length + letterboxdFilms.length + fixture.items.length
         expect(logs.length).toBe(expectedTotal)
 
         const collections = await prisma.collection.findMany({
@@ -225,7 +228,8 @@ describe("Demo Media Seeding (Integration)", () => {
             },
         })
 
-        expect(collections.length).toBe(fixture.collections.length)
+        // fixture collections + "Letterboxd likes" created by Letterboxd export
+        expect(collections.length).toBe(fixture.collections.length + 1)
 
         for (const coll of collections) {
             for (let i = 0; i < coll.items.length; i++) {

@@ -7,6 +7,7 @@ import { tagKey, normalizeTagName } from "@/utilities.js"
 import fs from "fs"
 import path from "path"
 import { parseMalExport } from "@/services/imports/malImportService.js"
+import { unzipLetterboxdExport, mergeLetterboxdFiles } from "@/services/imports/letterboxdImportService.js"
 
 async function registerAndLogin(username: string) {
     await request(app)
@@ -347,7 +348,12 @@ describe("Tag Endpoints and Log Tags", () => {
             const animeEntries = fs.existsSync(animePath) ? parseMalExport(fs.readFileSync(animePath)).entries : []
             const mangaEntries = fs.existsSync(mangaPath) ? parseMalExport(fs.readFileSync(mangaPath)).entries : []
             const malTags = [...animeEntries.flatMap((e) => e.tags), ...mangaEntries.flatMap((e) => e.tags)]
-            const allRawTags = [...fixture.items.flatMap((i) => i.log.tags || []), ...malTags]
+            const letterboxdPath = path.resolve(process.cwd(), "src/tests/fixtures/demo/exports/letterboxd.zip")
+            const letterboxdFilms = fs.existsSync(letterboxdPath)
+                ? mergeLetterboxdFiles(unzipLetterboxdExport(fs.readFileSync(letterboxdPath)))
+                : []
+            const letterboxdTags = letterboxdFilms.flatMap((f) => f.tags)
+            const allRawTags = [...fixture.items.flatMap((i) => i.log.tags || []), ...malTags, ...letterboxdTags]
             const expectedTagCount = new Set(
                 allRawTags.map((t) => tagKey(normalizeTagName(t) ?? t))
             ).size
