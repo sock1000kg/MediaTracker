@@ -255,9 +255,6 @@ export function ApiKeyForm() {
                         </Button>
                     </div>
                     <span className="block text-muted-foreground text-xs mt-1">
-                        Get one at themoviedb.org → Settings → API. Either the API key or the read access token works (max 512 characters).
-                    </span>
-                    <span className="block text-muted-foreground text-xs">
                         {TMDB_ATTRIBUTION}
                     </span>
                 </label>
@@ -306,9 +303,6 @@ export function ApiKeyForm() {
                         </Button>
                     </div>
                     <span className="block text-muted-foreground text-xs mt-1">
-                        Get a free key at rawg.io/apidocs.
-                    </span>
-                    <span className="block text-muted-foreground text-xs">
                         <a href={RAWG_URL} target="_blank" rel="noopener noreferrer" className="text-link underline-offset-4 hover:underline">{RAWG_ATTRIBUTION_TEXT}</a>
                     </span>
                 </label>

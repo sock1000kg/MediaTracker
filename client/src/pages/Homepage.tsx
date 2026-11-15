@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import ThemeToggle from "@/components/ThemeToggle"
 import SidebarDude from "@/components/SidebarDude"
+import { signOut } from "@/api/clientWrapper"
 import { useNavGlance } from "@/hooks/useNavGlance"
 import { useIsDesktop } from "@/hooks/useIsDesktop"
 import LogsSection from "@/pages/sections/LogSection"
@@ -21,7 +22,7 @@ import StatsSection from "@/pages/sections/StatsSection"
 import CollectionsSection from "@/pages/sections/CollectionsSection"
 import Settings from "@/pages/sections/Settings"
 
-import { BarChart3, BookOpen, Clapperboard, Film, Gamepad2, Layers, Library, ListOrdered, Menu, Music, ScrollText, Settings as SettingsIcon, Tv, type LucideIcon } from "lucide-react"
+import { BarChart3, BookOpen, Clapperboard, Film, Gamepad2, Layers, Library, ListOrdered, LogOut, Menu, Music, ScrollText, Settings as SettingsIcon, Tv, type LucideIcon } from "lucide-react"
 
 export type Tab = "logs" | "medias" | "collections" | "mediaTypes" | "stats" | "settings" | "bookSearch" | "musicSearch" | "animeSearch" | "movieSearch" | "tvSearch" | "gameSearch" | "defaultSearch" //Tabs in homepage
 
@@ -101,6 +102,14 @@ export default function Homepage() {
       <div className="mt-auto flex flex-col gap-0.5 pt-3">
         {renderItem(SETTINGS_ITEM)}
         <ThemeToggle />
+        <Button
+          variant="ghost"
+          className="h-8 w-full justify-start gap-2.5 rounded-lg px-2.5 text-sm font-normal text-muted-foreground hover:bg-card/60 hover:text-foreground dark:hover:bg-card/60"
+          onClick={() => void signOut()}
+        >
+          <LogOut className="size-4 shrink-0" aria-hidden="true" />
+          Log out
+        </Button>
       </div>
     </nav>
   )

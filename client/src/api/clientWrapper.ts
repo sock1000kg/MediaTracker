@@ -42,6 +42,16 @@ const logout = () => {
   if (navigateFunction) navigateFunction("/login")
 }
 
+/** User-initiated sign-out: revokes the refresh token on the server (best effort), then clears the session locally. */
+export async function signOut(): Promise<void> {
+  try {
+    await fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" })
+  } catch {
+    // offline or server down: still sign out locally
+  }
+  logout()
+}
+
 /** Calls the refresh endpoint. Resolves to the new token, or null on failure (it does not log out). */
 async function callRefreshEndpoint(): Promise<string | null> {
   try {

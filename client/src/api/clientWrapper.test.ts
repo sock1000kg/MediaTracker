@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { apiFetchRaw, setNavigate, setOnLogout } from "./clientWrapper"
+import { apiFetchRaw, setNavigate, setOnLogout, signOut } from "./clientWrapper"
 
 const store = new Map<string, string>()
 let refreshCalls = 0
@@ -112,6 +112,36 @@ describe("apiFetchRaw single-flight refresh", () => {
 
   it("without a token it logs out and rejects", async () => {
     await expect(apiFetchRaw("/a")).rejects.toThrow("No token found")
+    expect(logouts).toBe(1)
+  })
+})
+
+describe("signOut", () => {
+  it("revokes the refresh token on the server, clears the token and runs the logout hook", async () => {
+    const calls: string[] = []
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      calls.push(`${init.method} ${url} ${init.credentials}`)
+      return new Response(null, { status: 204 })
+    })
+    const paths: string[] = []
+    setNavigate((p) => paths.push(p))
+    store.set("accessToken", "t")
+
+    await signOut()
+
+    expect(calls).toEqual([expect.stringMatching(/^POST .*\/auth\/logout include$/)])
+    expect(store.has("accessToken")).toBe(false)
+    expect(logouts).toBe(1)
+    expect(paths).toEqual(["/login"])
+  })
+
+  it("still signs out locally when the server can't be reached", async () => {
+    vi.stubGlobal("fetch", async () => { throw new TypeError("Failed to fetch") })
+    store.set("accessToken", "t")
+
+    await signOut()
+
+    expect(store.has("accessToken")).toBe(false)
     expect(logouts).toBe(1)
   })
 })
