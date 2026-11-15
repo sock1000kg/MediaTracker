@@ -13,7 +13,7 @@ import { demoService } from "./demoService.js"
 
 export class ApiKeyService {
 
-    async getAll(userId: number) {
+    async getAll(userId: string) {
         const apiKeys = await getAllApiKeys(userId)
         if (!apiKeys?.length) {
             throw new AppError("You have no API keys", 404)
@@ -21,7 +21,7 @@ export class ApiKeyService {
         return apiKeys
     }
 
-    async create(userId: number, payload: unknown) {
+    async create(userId: string, payload: unknown) {
         await demoService.ensureNotDemo(userId)
 
         const { key, service } = validateSchema(addApiKeySchema, payload)
@@ -35,7 +35,7 @@ export class ApiKeyService {
         }
     }
 
-    async update(userId: number, payload: unknown) {
+    async update(userId: string, payload: unknown) {
         await demoService.ensureNotDemo(userId)
 
         const { key, service } = validateSchema(addApiKeySchema, payload)
@@ -49,14 +49,14 @@ export class ApiKeyService {
         }
     }
 
-    async delete(userId: number, payload: unknown) {
+    async delete(userId: string, payload: unknown) {
         await demoService.ensureNotDemo(userId)
 
         const { service } = validateSchema(deleteApiKeySchema, payload)
 
         try {
             await deleteApiKeyForUser(userId, service)
-            return { message: `${service} API Key deleted` }
+            return { message: "API key deleted" }
         } catch (error: unknown) {
             handlePrismaError(error, { 
                 notFoundMessage: "API key for this service not found" 

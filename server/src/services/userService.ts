@@ -22,20 +22,20 @@ const mediaJson = (m: MediaLike) => ({
 })
 
 export class UserService {
-    async getMe(userId: number) {
+    async getMe(userId: string) {
         const user = await repo.getUserProfile(userId)
         if (!user) throw new AppError("User not found", 404)
         return { ...user, preferences: readPreferences(user.preferences) }
     }
 
-    async updateProfile(userId: number, body: unknown) {
+    async updateProfile(userId: string, body: unknown) {
         await demoService.ensureNotDemo(userId)
         const { displayName } = validateSchema(updateProfileSchema, body)
         const user = await repo.updateDisplayName(userId, displayName)
         return { ...user, preferences: readPreferences(user.preferences) }
     }
 
-    async changePassword(userId: number, body: unknown) {
+    async changePassword(userId: string, body: unknown) {
         await demoService.ensureNotDemo(userId)
         const { currentPassword, newPassword } = validateSchema(changePasswordSchema, body)
         const user = await repo.getUserWithPassword(userId)
@@ -52,12 +52,12 @@ export class UserService {
         })
     }
 
-    async getPreferences(userId: number) {
+    async getPreferences(userId: string) {
         return (await this.getMe(userId)).preferences
     }
 
     // Allowed on the demo account: harmless, and the demo reset wipes it anyway.
-    async updatePreferences(userId: number, body: unknown) {
+    async updatePreferences(userId: string, body: unknown) {
         if (Buffer.byteLength(JSON.stringify(body ?? null)) > MAX_PREFS_BYTES) {
             throw new AppError("Preferences payload too large (max 4 KB)", 413)
         }
@@ -72,7 +72,7 @@ export class UserService {
     }
 
     // Allowed on demo.
-    async exportData(userId: number, format: "json" | "csv") {
+    async exportData(userId: string, format: "json" | "csv") {
         const user = await repo.getUserProfile(userId)
         if (!user) throw new AppError("User not found", 404)
         const data = await repo.getExportData(userId)
@@ -143,7 +143,7 @@ export class UserService {
         return { body: JSON.stringify(out, null, 2), contentType: "application/json; charset=utf-8", filename: `${base}.json`, disposition: disposition("json") }
     }
 
-    async deleteAccount(userId: number, body: unknown) {
+    async deleteAccount(userId: string, body: unknown) {
         await demoService.ensureNotDemo(userId)
         const user = await repo.getUserWithPassword(userId)
         if (!user) throw new AppError("User not found", 404)

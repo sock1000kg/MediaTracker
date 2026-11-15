@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from "express"
 import { mediaService } from "@/services/mediaService.js"
+import { idParamSchema } from "@/schemas/common.js"
+import { validateSchema } from "@/utilities.js"
 
 // Get all medias
 export const getMedias = async (req: Request, res: Response, next: NextFunction) => {
@@ -37,14 +39,10 @@ export const updateExistingMedia = async (req: Request, res: Response, next: Nex
   if (!userId) {
     return res.status(401).json({ message: "Unauthorized: missing userId" })
   }
-  
-  const mediaId = Number(req.params.id)
-  if (Number.isNaN(mediaId)) {
-    return res.status(400).json({ message: "Invalid mediaId params" })
-  }
 
   try {
-    const updated = await mediaService.update(userId, mediaId, req.body)
+    const { id } = validateSchema(idParamSchema, req.params)
+    const updated = await mediaService.update(userId, id, req.body)
     res.status(200).json(updated)
   } catch (error) {
     next(error)
@@ -58,13 +56,9 @@ export const deleteExistingMedia = async (req: Request, res: Response, next: Nex
     return res.status(401).json({ message: "Unauthorized: missing userId" })
   }
 
-  const mediaId = parseInt(req.params.id)
-  if (!mediaId) {
-    return res.status(400).json({ message: "Invalid mediaId params" })
-  }
-
   try {
-    const result = await mediaService.delete(userId, mediaId, req.body)
+    const { id } = validateSchema(idParamSchema, req.params)
+    const result = await mediaService.delete(userId, id, req.body)
     res.status(200).json(result)
   } catch (error) {
     next(error)
@@ -91,13 +85,9 @@ export const getMediaChildren = async (req: Request, res: Response, next: NextFu
         return res.status(401).json({ message: "Unauthorized: missing userId" })
     }
 
-    const mediaId = parseInt(req.params.id)
-    if (!mediaId || Number.isNaN(mediaId)) {
-        return res.status(400).json({ message: "Invalid media id" })
-    }
-
     try {
-        const children = await mediaService.getChildren(mediaId, userId)
+        const { id } = validateSchema(idParamSchema, req.params)
+        const children = await mediaService.getChildren(id, userId)
         res.status(200).json(children)
     } catch (error) {
         next(error)

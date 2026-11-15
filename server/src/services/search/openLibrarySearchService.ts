@@ -19,7 +19,7 @@ export class OpenLibraryService implements ISearchService {
 
     // Open Library is an open API, no user key needed
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async getUserApiKey(userId: number): Promise<string | undefined> {
+    async getUserApiKey(userId: string): Promise<string | undefined> {
         return undefined 
     }
 
@@ -78,7 +78,7 @@ export class OpenLibraryService implements ISearchService {
         return url
     }
 
-    async searchBooksOpenLib(userId: number, q: string, page = 1, filters?: BookSearchFilters):
+    async searchBooksOpenLib(userId: string, q: string, page = 1, filters?: BookSearchFilters):
         Promise<{ results: SearchResult[], nextStartIndex: number | null}>
     {
         const url = this.buildSearchUrl(q, page, filters)

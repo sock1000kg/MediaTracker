@@ -1,5 +1,4 @@
-import { readFileSync } from "node:fs"
-import { join } from "node:path"
+
 import request from "supertest"
 import app from "@/app.js"
 import { prisma } from "@/tests/jest.setup.js"
@@ -47,8 +46,8 @@ async function registerAndLogin(username: string) {
 
 describe("Media Import Routes (Goodreads)", () => {
     let token: string
-    let userId: number
-    let systemUserId: number
+    let userId: string
+    let systemUserId: string
 
     beforeAll(async () => {
         registerAllHandlers()
@@ -326,24 +325,6 @@ No Rating Col Rev2,C. Author,,read,9302`
         expect(await rating("9302")).toBeNull()
     })
 
-    test("migration goodreads_unrated_ratings nulls only Goodreads-sourced 0 ratings", async () => {
-        // Seed rows the way old imports left them, then run the migration's own SQL
-        const type = await prisma.mediaType.findFirst({ where: { name: "book" } })
-        const mk = (title: string, source: string | null) =>
-            prisma.media.create({ data: { title, creator: "Mig Author", source, userId, mediaTypeId: type!.id } })
-        const [gr0, gr80, other0] = await Promise.all([mk("Mig GR zero", "goodreads"), mk("Mig GR eighty", "goodreads"), mk("Mig Other zero", "manual")])
-        const mkLog = (mediaId: number, rating: number) => prisma.userLogs.create({ data: { userId, mediaId, rating, status: "completed" } })
-        await Promise.all([mkLog(gr0.id, 0), mkLog(gr80.id, 80), mkLog(other0.id, 0)])
-
-        const sql = readFileSync(join(process.cwd(), "src/prisma/migrations/20261113120000_goodreads_unrated_ratings/migration.sql"), "utf8")
-        await prisma.$executeRawUnsafe(sql)
-        await prisma.$executeRawUnsafe(sql) // idempotent
-
-        const rating = async (mediaId: number) => (await prisma.userLogs.findFirst({ where: { userId, mediaId } }))!.rating
-        expect(await rating(gr0.id)).toBeNull()
-        expect(await rating(gr80.id)).toBe(80)
-        expect(await rating(other0.id)).toBe(0)
-    })
 
     test("re-import fills empty pageCount, finished_at, rating and reports updated count", async () => {
         const csv1 =

@@ -24,7 +24,7 @@ async function registerAndLogin(username: string) {
 
 describe("API Key Routes", () => {
     let token: string
-    let userId: number
+    let userId: string
 
     beforeAll(async () => {
         const result = await registerAndLogin("ApiKeyUser")

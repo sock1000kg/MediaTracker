@@ -427,7 +427,7 @@ export function createCacheMalResolver(cachePath?: string): MalResolver {
 }
 
 /** MAL ids that already have a Media row of this type: matched via MediaExternalId. */
-async function findCatalogueMalIds(ids: number[], _mediaTypeId: number): Promise<Set<number>> {
+async function findCatalogueMalIds(ids: number[], _mediaTypeId: string): Promise<Set<number>> {
     if (ids.length === 0) return new Set()
     const keys = ids.map((id) => ({ provider: "mal", externalId: String(id) }))
     const mediaMap = await findMediaByExternalIds(keys, prisma)
@@ -442,7 +442,7 @@ async function findCatalogueMalIds(ids: number[], _mediaTypeId: number): Promise
 
 export class MalImportService {
     async importFromMal(
-        userId: number,
+        userId: string,
         fileBuffer: Buffer,
         opts: MalImportOptions = {}
     ): Promise<ImportResult> {

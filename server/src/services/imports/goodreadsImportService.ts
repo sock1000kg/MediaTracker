@@ -57,7 +57,7 @@ export class GoodreadsImportService {
      * Returns a partial object to merge with mediaData.
      */
     private async fetchEnrichmentData(
-        userId: number,
+        userId: string,
         record: GoodReadsRow
     ): Promise<BookEnrichmentData | null> {
         try {
@@ -96,7 +96,7 @@ export class GoodreadsImportService {
     }
 
     async importFromGoodReads(
-        userId: number,
+        userId: string,
         fileBuffer: Buffer,
         opts: { onProgress?: ImportProgressCallback; enrich?: boolean } = {}
     ): Promise<ImportResult> {

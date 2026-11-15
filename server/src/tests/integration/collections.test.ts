@@ -25,17 +25,17 @@ const auth = (token: string) => ({ Authorization: `Bearer ${token}` })
 
 describe("Collection Endpoints and Features", () => {
     let tokenA: string
-    let userAId: number
+    let userAId: string
     let tokenB: string
-    let userBId: number
-    let mediaTypeA: { id: number; name: string }
-    let media1: { id: number; title: string }
-    let media2: { id: number; title: string }
-    let media3: { id: number; title: string }
-    let log1Id: number
-    let log2Id: number
-    let log3Id: number
-    let logBId: number
+    let userBId: string
+    let mediaTypeA: { id: string; name: string }
+    let media1: { id: string; title: string }
+    let media2: { id: string; title: string }
+    let media3: { id: string; title: string }
+    let log1Id: string
+    let log2Id: string
+    let log3Id: string
+    let logBId: string
 
     beforeAll(async () => {
         const uA = await registerAndLogin("ColUserA")
@@ -129,7 +129,7 @@ describe("Collection Endpoints and Features", () => {
     })
 
     describe("CRUD, validation, and name uniqueness", () => {
-        let createdColId: number
+        let createdColId: string
 
         test("POST /collections creates a new collection", async () => {
             const res = await request(app)
@@ -176,7 +176,7 @@ describe("Collection Endpoints and Features", () => {
 
             expect(res.statusCode).toBe(200)
             expect(Array.isArray(res.body)).toBe(true)
-            const found = res.body.find((c: { id: number }) => c.id === createdColId)
+            const found = res.body.find((c: { id: string }) => c.id === createdColId)
             expect(found).toBeDefined()
             expect(found.count).toBe(0)
             expect(found.covers).toEqual([])
@@ -294,7 +294,7 @@ describe("Collection Endpoints and Features", () => {
     })
 
     describe("User isolation", () => {
-        let colAId: number
+        let colAId: string
 
         beforeAll(async () => {
             const res = await request(app)
@@ -329,7 +329,7 @@ describe("Collection Endpoints and Features", () => {
     })
 
     describe("Collection items: add, remove, dense positions, and order permutation", () => {
-        let colId: number
+        let colId: string
 
         beforeAll(async () => {
             const res = await request(app)
@@ -377,7 +377,7 @@ describe("Collection Endpoints and Features", () => {
         test("GET /collections returns covers and count", async () => {
             const res = await request(app).get("/collections").set(auth(tokenA))
             expect(res.statusCode).toBe(200)
-            const found = res.body.find((c: { id: number }) => c.id === colId)
+            const found = res.body.find((c: { id: string }) => c.id === colId)
             expect(found.count).toBe(3)
             expect(found.covers).toEqual([
                 "https://example.com/cover1.jpg",
@@ -389,7 +389,7 @@ describe("Collection Endpoints and Features", () => {
         test("GET /logs includes collectionIds", async () => {
             const res = await request(app).get("/logs").set(auth(tokenA))
             expect(res.statusCode).toBe(200)
-            const log1 = res.body.find((l: { id: number }) => l.id === log1Id)
+            const log1 = res.body.find((l: { id: string }) => l.id === log1Id)
             expect(log1).toBeDefined()
             expect(Array.isArray(log1.collectionIds)).toBe(true)
             expect(log1.collectionIds).toContain(colId)
@@ -401,7 +401,7 @@ describe("Collection Endpoints and Features", () => {
             expect(missing.statusCode).toBe(400)
 
             // Extra id -> 400
-            const extra = await request(app).put(`/collections/${colId}/order`).set(auth(tokenA)).send({ logIds: [log1Id, log2Id, log3Id, 99999] })
+            const extra = await request(app).put(`/collections/${colId}/order`).set(auth(tokenA)).send({ logIds: [log1Id, log2Id, log3Id, '00000000-0000-7000-8000-000000000099'] })
             expect(extra.statusCode).toBe(400)
 
             // Duplicate id -> 400
@@ -486,7 +486,7 @@ describe("Collection Endpoints and Features", () => {
         test("enforces maximum 200 collections per user", async () => {
             const u = await registerAndLogin("ColLimitUser")
             // Insert 200 collections directly into DB
-            const data: { userId: number; name: string; nameKey: string }[] = []
+            const data: { userId: string; name: string; nameKey: string }[] = []
             for (let i = 0; i < 200; i++) {
                 data.push({
                     userId: u.userId,
@@ -567,7 +567,7 @@ describe("Collection Endpoints and Features", () => {
             const col = await request(app).post("/collections").set(auth(tokenA)).send({ name: "Parallel 10 Logs", ranked: true })
             expect(col.statusCode).toBe(201)
 
-            const logs: { id: number }[] = []
+            const logs: { id: string }[] = []
             for (let i = 0; i < 10; i++) {
                 const med = await prisma.media.create({
                     data: { title: `P-Log Media ${i}`, userId: userAId, mediaTypeId: mediaTypeA.id, source: "custom" }

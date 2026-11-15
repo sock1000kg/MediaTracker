@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { uuidSchema } from "@/schemas/common.js"
 import { searchMediaSchema } from "@schemas/mediaSchemas.js"
 import { searchLogSchema } from "@/schemas/logSchemas.js"
 import { normalizeTypeName } from "@/utilities.js"
@@ -76,7 +77,7 @@ export const searchResultSchema = z.object({
     sourceId: z.string(),
     inLibrary: z.boolean().optional(),
     myLog: z.object({
-        id: z.number(),
+        id: uuidSchema,
         rating: z.number().nullable(),
         status: z.string().nullable(),
     }).nullable().optional(),

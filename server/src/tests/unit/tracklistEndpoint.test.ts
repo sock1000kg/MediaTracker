@@ -55,7 +55,7 @@ describe('Tracklist Resolution and Fetching', () => {
         // Mock DB calls in attachLogInfo to empty array
         jest.spyOn(prisma.media, 'findMany').mockResolvedValue([])
 
-        const res = await musicSearchService.fetchAlbumTracks(1, 'my bloody valentine', 'Loveless')
+        const res = await musicSearchService.fetchAlbumTracks('1', 'my bloody valentine', 'Loveless')
 
         expect(res.provider).toBe('lastfm')
         expect(res.album.mediaType).toBe('music')
@@ -104,7 +104,7 @@ describe('Tracklist Resolution and Fetching', () => {
 
         jest.spyOn(prisma.media, 'findMany').mockResolvedValue([])
 
-        const res = await musicSearchService.fetchAlbumTracks(1, 'Solo Artist', 'Single Track EP')
+        const res = await musicSearchService.fetchAlbumTracks('1', 'Solo Artist', 'Single Track EP')
 
         expect(res.provider).toBe('lastfm')
         expect(res.tracks).toHaveLength(1)
@@ -161,7 +161,7 @@ describe('Tracklist Resolution and Fetching', () => {
         jest.spyOn(musicBrainzService, 'getRelease').mockResolvedValue(mbRelease)
         jest.spyOn(prisma.media, 'findMany').mockResolvedValue([])
 
-        const res = await musicSearchService.fetchAlbumTracks(1, 'Obscure Artist', 'Obscure Album', 'mbid-obscure')
+        const res = await musicSearchService.fetchAlbumTracks('1', 'Obscure Artist', 'Obscure Album', 'mbid-obscure')
 
         expect(res.provider).toBe('musicbrainz')
         expect(res.tracks).toHaveLength(2)
@@ -187,7 +187,7 @@ describe('Tracklist Resolution and Fetching', () => {
         jest.spyOn(musicBrainzService, 'searchRelease').mockResolvedValue(null)
         jest.spyOn(prisma.media, 'findMany').mockResolvedValue([])
 
-        const res = await musicSearchService.fetchAlbumTracks(1, 'Unknown', 'Empty Album')
+        const res = await musicSearchService.fetchAlbumTracks('1', 'Unknown', 'Empty Album')
 
         expect(res.provider).toBeNull()
         expect(res.tracks).toEqual([])
@@ -224,22 +224,22 @@ describe('Tracklist Resolution and Fetching', () => {
         } as Response)
 
         const fakeMedia = [
-            { id: 101, sourceId: 'lastfm:https://last.fm/music/slowdive/souvlaki#1' },
-            { id: 102, sourceId: 'lastfm:https://last.fm/music/slowdive/souvlaki#2' },
+            { id: '018f0000-0000-7000-8000-000000000101', sourceId: 'lastfm:https://last.fm/music/slowdive/souvlaki#1' },
+            { id: '018f0000-0000-7000-8000-000000000102', sourceId: 'lastfm:https://last.fm/music/slowdive/souvlaki#2' },
         ]
 
         jest.spyOn(prisma.media, 'findMany').mockResolvedValue(fakeMedia as never)
         jest.spyOn(prisma.userLogs, 'findMany').mockResolvedValue([
-            { id: 501, mediaId: 101, rating: 95, status: 'completed' },
+            { id: '018f0000-0000-7000-8000-000000000501', mediaId: '018f0000-0000-7000-8000-000000000101', rating: 95, status: 'completed' },
         ] as never)
 
-        const res = await musicSearchService.fetchAlbumTracks(42, 'Slowdive', 'Souvlaki')
+        const res = await musicSearchService.fetchAlbumTracks('018f0000-0000-7000-8000-000000000042', 'Slowdive', 'Souvlaki')
 
         expect(res.tracks).toHaveLength(2)
         // Alison has log
         expect(res.tracks[0].inLibrary).toBe(true)
         expect(res.tracks[0].myLog).toEqual({
-            id: 501,
+            id: '018f0000-0000-7000-8000-000000000501',
             rating: 95,
             status: 'completed',
         })

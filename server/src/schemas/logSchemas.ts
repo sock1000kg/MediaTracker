@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { uuidSchema } from "@/schemas/common.js"
 import {
     sanitizeStatus,
     sanitizeRating,
@@ -71,17 +72,7 @@ const updateNotesSchema = z.preprocess((val: unknown) => {
     return String(val).trim().slice(0, MAX_NOTES_LENGTH)
 }, z.string().nullable().optional())
 
-const mediaIdSchema = z
-    .preprocess((val) => {
-        // Convert to number if possible
-        if (val === undefined || val === null) return val
-        const n = Number(val)
-
-        return isNaN(n) ? null : n
-    }, z
-    .number()
-    .int()
-)
+const mediaIdSchema = uuidSchema
 
 // Day-precision date schema: noon UTC of calendar day, or null, or undefined
 const dateInputSchema = z.preprocess((val: unknown) => {

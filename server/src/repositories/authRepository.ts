@@ -28,7 +28,7 @@ export async function findUserByUsername(username: string, client: DbClient): Pr
     return user ?? null
 }
 
-export async function findUserById(id: number): Promise<User & { apiKeys: UserAPIKey[] } | null> {
+export async function findUserById(id: string): Promise<User & { apiKeys: UserAPIKey[] } | null> {
     return await prisma.user.findUnique({
         where: {
             id
@@ -39,7 +39,7 @@ export async function findUserById(id: number): Promise<User & { apiKeys: UserAP
     })
 }
 
-export const saveRefreshToken = async (userId: number, token: string, expiresAt: Date, client: DbClient) => {
+export const saveRefreshToken = async (userId: string, token: string, expiresAt: Date, client: DbClient) => {
     return await client.refreshToken.upsert({
         where: { token: token },
         update: { expiresAt },

@@ -32,7 +32,7 @@ async function registerAndLogin(username: string) {
 
     return {
         token: loginRes.body.accessToken as string,
-        userId: loginRes.body.user.id as number,
+        userId: loginRes.body.user.id as string,
     }
 }
 
@@ -55,9 +55,9 @@ async function importAndWait(token: string, content: Buffer | string, filename =
 
 describe("Media Import Routes (Letterboxd)", () => {
     let token: string
-    let userId: number
-    let systemUserId: number
-    let movieTypeId: number
+    let userId: string
+    let systemUserId: string
+    let movieTypeId: string
 
     const mockResolver: LetterboxdResolver = async (films) => {
         const map = new Map<string, SearchResult | null>()

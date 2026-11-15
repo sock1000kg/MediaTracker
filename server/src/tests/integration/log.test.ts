@@ -104,7 +104,7 @@ describe('Log routes', () => {
                 notes: 'Missing mediaId'
             })
         expect(res.statusCode).toBe(400)
-        expect(res.body.message).toMatch(/expected number/i)
+        expect(res.body.message).toMatch(/expected string|invalid/i)
     })
 
     test('Create duplicate log fails', async () => {
@@ -136,7 +136,7 @@ describe('Log routes', () => {
             .post('/logs')
             .set('Authorization', `Bearer ${token}`)
             .send({
-                mediaId: 999999,
+                mediaId: '00000000-0000-7000-8000-000000000099',
                 status: 'completed',
                 rating: 80
             })
@@ -167,7 +167,7 @@ describe('Log routes', () => {
             })
         expect(res.body).toEqual(
             expect.objectContaining({
-                id: expect.any(Number),
+                id: expect.any(String),
                 userId: user.id,
                 mediaId: media.id,
                 status: expect.any(String),
@@ -224,7 +224,7 @@ describe('Log routes', () => {
 
     test('Fails to update non-existent log', async () => {
         const res = await request(app)
-            .put('/logs/999999')
+            .put('/logs/00000000-0000-7000-8000-000000000099')
             .set('Authorization', `Bearer ${token}`)
             .send({ status: 'completed' })
 
@@ -326,7 +326,7 @@ describe('Log routes', () => {
 
         test('Fails to delete non-existent log', async () => {
             const res = await request(app)
-                .delete('/logs/999999')
+                .delete('/logs/00000000-0000-7000-8000-000000000099')
                 .set('Authorization', `Bearer ${token}`)
                 .send({ confirm: true })
 

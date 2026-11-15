@@ -189,12 +189,12 @@ describe('Media Routes', () => {
 
         expect(res.body).toEqual(
             expect.objectContaining({
-                id: expect.any(Number),
+                id: expect.any(String),
                 title: 'SchemaTest',
                 creator: 'Tester',
                 year: 2024,
                 metadata: expect.any(Object),
-                mediaTypeId: expect.any(Number)
+                mediaTypeId: expect.any(String)
             })
         )
     })
@@ -335,7 +335,7 @@ describe('Media Routes', () => {
 
     test('Delete non-existent media fails', async () => {
         const res = await request(app)
-            .delete('/media/999999')
+            .delete('/media/00000000-0000-7000-8000-000000000099')
             .set('Authorization', `Bearer ${token}`)
             .send({ confirm: true })
         expect(res.statusCode).toBe(404)

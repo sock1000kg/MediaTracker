@@ -19,11 +19,11 @@ import { AppError } from "@/api/domain/error.js"
 import { validateSchema, normalizeTypeName } from "@/utilities.js"
 
 export class MediaTypeService {
-    async getAll(userId: number) {
+    async getAll(userId: string) {
         return getAllMediaTypesForUser(userId)
     }
 
-    async create(userId: number, payload: unknown) {
+    async create(userId: string, payload: unknown) {
         const { name : normalizedName } = validateSchema(createMediaTypeSchema, payload)
 
         try {
@@ -33,7 +33,7 @@ export class MediaTypeService {
         }
     }
 
-    async delete(userId: number, name: string, payload: unknown) {
+    async delete(userId: string, name: string, payload: unknown) {
         const { confirm } = validateSchema(deleteMediaTypeSchema, payload)
         const normalizedName = normalizeTypeName(name);
 
@@ -60,7 +60,7 @@ export class MediaTypeService {
     }
 }
 
-    async update(userId: number, oldName: string, payload: unknown) {
+    async update(userId: string, oldName: string, payload: unknown) {
         const { newName } = validateSchema(updateMediaTypeSchema, payload)
         const normalizedOldName = normalizeTypeName(oldName)
 

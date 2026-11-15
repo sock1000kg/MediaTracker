@@ -12,12 +12,12 @@ async function registerAndLogin(username: string) {
         .send({ username, password: PW, displayName: "Tester", registerKey: process.env.REGISTER_KEY })
         .set("Content-Type", "application/json")
     const res = await request(app).post("/auth/login").send({ username, password: PW })
-    return { token: res.body.accessToken as string, userId: res.body.user.id as number }
+    return { token: res.body.accessToken as string, userId: res.body.user.id as string }
 }
 
 const queue = () => getQueue() as MemoryQueue
 const JOB = "test.echo" as unknown as JobName
-const enqueue = (userId: number | null) =>
+const enqueue = (userId: string | null) =>
     queue().enqueue(JOB, { hello: "world" } as never, userId === null ? {} : { userId })
 
 describe("GET /jobs/:id", () => {

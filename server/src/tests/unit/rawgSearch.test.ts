@@ -123,6 +123,7 @@ describe('parseRawgDetails', () => {
 })
 
 describe('RawgSearchService error mapping (key never leaks)', () => {
+    const uid = 'mock-user-1'
     let spy: SpiedFunction<typeof fetch>
     const svc = new RawgSearchService()
     beforeEach(() => { jest.spyOn(svc, 'getUserApiKey').mockResolvedValue(KEY) })
@@ -141,27 +142,27 @@ describe('RawgSearchService error mapping (key never leaks)', () => {
 
     it.each([401, 403])('%i -> 400 with key message (never 401)', async status => {
         spy = jest.spyOn(global, 'fetch').mockResolvedValue(new Response('{}', { status }))
-        await expectNoLeak(svc.searchGamesRawg(1, 'x'), 400, 'RAWG rejected your API key. Check it in Settings → API Keys.')
+        await expectNoLeak(svc.searchGamesRawg(uid, 'x'), 400, 'RAWG rejected your API key. Check it in Settings → API Keys.')
     })
     it('429 -> retry once -> 503', async () => {
         spy = jest.spyOn(global, 'fetch').mockImplementation(async () => new Response('{}', { status: 429, headers: { 'Retry-After': '0.01' } }))
         spy.mockClear()
-        await expectNoLeak(svc.searchGamesRawg(1, 'x'), 503)
+        await expectNoLeak(svc.searchGamesRawg(uid, 'x'), 503)
         expect(spy).toHaveBeenCalledTimes(2)
     })
     it('429 then 200 succeeds', async () => {
         spy = jest.spyOn(global, 'fetch')
             .mockResolvedValueOnce(new Response('{}', { status: 429, headers: { 'Retry-After': '0.01' } }))
             .mockResolvedValueOnce(new Response(JSON.stringify({ count: 0, next: null, results: [] }), { status: 200 }))
-        await expect(svc.searchGamesRawg(1, 'x')).resolves.toEqual({ results: [], nextStartIndex: null })
+        await expect(svc.searchGamesRawg(uid, 'x')).resolves.toEqual({ results: [], nextStartIndex: null })
     })
     it('500 -> 502', async () => {
         spy = jest.spyOn(global, 'fetch').mockResolvedValue(new Response('{}', { status: 500 }))
-        await expectNoLeak(svc.searchGamesRawg(1, 'x'), 502, 'RAWG search failed')
+        await expectNoLeak(svc.searchGamesRawg(uid, 'x'), 502, 'RAWG search failed')
     })
     it('timeout -> 504', async () => {
         spy = jest.spyOn(global, 'fetch').mockRejectedValue(new DOMException('timed out', 'TimeoutError'))
-        await expectNoLeak(svc.searchGamesRawg(1, 'x'), 504)
+        await expectNoLeak(svc.searchGamesRawg(uid, 'x'), 504)
     })
     it('hang is aborted by the per-attempt signal -> 504', async () => {
         const realTimeout = AbortSignal.timeout.bind(AbortSignal)
@@ -169,38 +170,38 @@ describe('RawgSearchService error mapping (key never leaks)', () => {
         spy = jest.spyOn(global, 'fetch').mockImplementation((_u, init) => new Promise((_res, rej) => {
             init!.signal!.addEventListener('abort', () => rej(init!.signal!.reason))
         }))
-        await expectNoLeak(svc.searchGamesRawg(1, 'x'), 504)
+        await expectNoLeak(svc.searchGamesRawg(uid, 'x'), 504)
         t.mockRestore()
     })
     it('network error whose message contains the URL does not leak -> 502', async () => {
         spy = jest.spyOn(global, 'fetch').mockRejectedValue(new TypeError(`fetch failed: https://api.rawg.io/api/games?key=${KEY}`))
-        await expectNoLeak(svc.searchGamesRawg(1, 'x'), 502, 'RAWG search failed')
+        await expectNoLeak(svc.searchGamesRawg(uid, 'x'), 502, 'RAWG search failed')
     })
     it('bad shape / invalid json -> 502', async () => {
         spy = jest.spyOn(global, 'fetch').mockResolvedValue(new Response(JSON.stringify({ results: 'nope' }), { status: 200 }))
-        await expectNoLeak(svc.searchGamesRawg(1, 'x'), 502)
+        await expectNoLeak(svc.searchGamesRawg(uid, 'x'), 502)
         spy.mockRestore()
         spy = jest.spyOn(global, 'fetch').mockResolvedValue(new Response('not json', { status: 200 }))
-        await expectNoLeak(svc.searchGamesRawg(1, 'x'), 502)
+        await expectNoLeak(svc.searchGamesRawg(uid, 'x'), 502)
     })
     it('details errors do not leak either', async () => {
         spy = jest.spyOn(global, 'fetch').mockResolvedValue(new Response('{}', { status: 403 }))
-        await expectNoLeak(svc.fetchGameDetails(1, 5), 400)
+        await expectNoLeak(svc.fetchGameDetails(uid, 5), 400)
         spy.mockRestore()
         spy = jest.spyOn(global, 'fetch').mockResolvedValue(new Response(JSON.stringify({ developers: 'x' }), { status: 200 }))
-        await expectNoLeak(svc.fetchGameDetails(1, 5), 502)
+        await expectNoLeak(svc.fetchGameDetails(uid, 5), 502)
     })
     it('drops items without id; pagination from next; sends User-Agent and key param', async () => {
         spy = jest.spyOn(global, 'fetch').mockImplementation(async () => new Response(JSON.stringify({
             count: 40, next: 'https://api.rawg.io/api/games?page=2', results: [{ name: 'no id' }, { id: 2, name: 'Two' }]
         }), { status: 200 }))
-        const r = await svc.searchGamesRawg(1, 'x', 1)
+        const r = await svc.searchGamesRawg(uid, 'x', 1)
         expect(r.results.map(x => x.sourceId)).toEqual(['game-2'])
         expect(r.nextStartIndex).toBe(2)
         const init = spy.mock.calls[0][1] as { headers: Record<string, string> }
         expect(init.headers['User-Agent']).toMatch(/^MediaTracker/)
         expect(new URL(String(spy.mock.calls[0][0])).searchParams.get('key')).toBe(KEY)
         spy.mockImplementation(async () => new Response(JSON.stringify({ next: null, results: [] }), { status: 200 }))
-        expect((await svc.searchGamesRawg(1, 'x', 2)).nextStartIndex).toBeNull()
+        expect((await svc.searchGamesRawg(uid, 'x', 2)).nextStartIndex).toBeNull()
     })
 })

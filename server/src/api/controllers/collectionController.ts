@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from "express"
 import { collectionService } from "@/services/collectionService.js"
+import { idParamSchema, idAndLogIdParamSchema } from "@/schemas/common.js"
+import { validateSchema } from "@/utilities.js"
 
 export const getCollections = async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId
@@ -21,12 +23,8 @@ export const getCollectionById = async (req: Request, res: Response, next: NextF
         return res.status(401).json({ message: "Unauthorized: missing userId" })
     }
 
-    const id = parseInt(req.params.id, 10)
-    if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid collection id" })
-    }
-
     try {
+        const { id } = validateSchema(idParamSchema, req.params)
         const collection = await collectionService.getById(userId, id)
         res.status(200).json(collection)
     } catch (error) {
@@ -54,12 +52,8 @@ export const updateCollection = async (req: Request, res: Response, next: NextFu
         return res.status(401).json({ message: "Unauthorized: missing userId" })
     }
 
-    const id = parseInt(req.params.id, 10)
-    if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid collection id" })
-    }
-
     try {
+        const { id } = validateSchema(idParamSchema, req.params)
         const updated = await collectionService.update(userId, id, req.body)
         res.status(200).json(updated)
     } catch (error) {
@@ -73,12 +67,8 @@ export const deleteCollection = async (req: Request, res: Response, next: NextFu
         return res.status(401).json({ message: "Unauthorized: missing userId" })
     }
 
-    const id = parseInt(req.params.id, 10)
-    if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid collection id" })
-    }
-
     try {
+        const { id } = validateSchema(idParamSchema, req.params)
         await collectionService.delete(userId, id)
         res.status(204).send()
     } catch (error) {
@@ -92,12 +82,8 @@ export const addItemToCollection = async (req: Request, res: Response, next: Nex
         return res.status(401).json({ message: "Unauthorized: missing userId" })
     }
 
-    const id = parseInt(req.params.id, 10)
-    if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid collection id" })
-    }
-
     try {
+        const { id } = validateSchema(idParamSchema, req.params)
         const item = await collectionService.addItem(userId, id, req.body)
         res.status(201).json(item)
     } catch (error) {
@@ -111,17 +97,8 @@ export const removeItemFromCollection = async (req: Request, res: Response, next
         return res.status(401).json({ message: "Unauthorized: missing userId" })
     }
 
-    const id = parseInt(req.params.id, 10)
-    if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid collection id" })
-    }
-
-    const logId = parseInt(req.params.logId, 10)
-    if (isNaN(logId)) {
-        return res.status(400).json({ message: "Invalid log id" })
-    }
-
     try {
+        const { id, logId } = validateSchema(idAndLogIdParamSchema, req.params)
         await collectionService.removeItem(userId, id, logId)
         res.status(204).send()
     } catch (error) {
@@ -135,12 +112,8 @@ export const reorderCollection = async (req: Request, res: Response, next: NextF
         return res.status(401).json({ message: "Unauthorized: missing userId" })
     }
 
-    const id = parseInt(req.params.id, 10)
-    if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid collection id" })
-    }
-
     try {
+        const { id } = validateSchema(idParamSchema, req.params)
         const result = await collectionService.reorder(userId, id, req.body)
         res.status(200).json(result)
     } catch (error) {

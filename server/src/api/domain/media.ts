@@ -18,7 +18,7 @@ export type BookMetadata = {
 }
 
 type CreateImportedMediaInput = {
-    userId: number
+    userId: string
     mediaTypeName: string
     mediaData: {
         title: string
@@ -68,7 +68,7 @@ export async function createImportedMedia(
 ) {
     const { userId, mediaTypeName, mediaData, logData, parent } = input
 
-    let parentMedia: { id: number } | null = null
+    let parentMedia: { id: string } | null = null
     if (parent && parent.source && parent.sourceId) {
         parentMedia = await findMediaBySource(parent.sourceId, parent.source, tx)
         if (!parentMedia) {
@@ -134,7 +134,7 @@ export async function createImportedMedia(
     }
 
     const externalKeyMap = await findMediaByExternalIds(lookupKeys, tx)
-    let mediaMatch: { id: number; parentId: number | null; position: number | null } | null = null
+    let mediaMatch: { id: string; parentId: string | null; position: number | null } | null = null
     for (const k of lookupKeys) {
         const found = externalKeyMap.get(`${k.provider.toLowerCase()}:${k.externalId}`)
         if (found) {

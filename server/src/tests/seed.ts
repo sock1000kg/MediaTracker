@@ -32,7 +32,7 @@ export interface SeedDeps {
     seedCollectionExtras?: typeof seedDemoCollectionExtras
 }
 
-async function createSystemUser(): Promise<{ id: number }> {
+async function createSystemUser(): Promise<{ id: string }> {
     let systemUser = await prisma.user.findUnique({
         where: { username: 'system' },
     })
@@ -90,7 +90,7 @@ async function createDemoUser(): Promise<User & { apiKeys: UserAPIKey[] }> {
     return demoUser
 }
 
-async function createMediaTypeSeed(name: string, userId: number): Promise<MediaType> {
+async function createMediaTypeSeed(name: string, userId: string): Promise<MediaType> {
     const existing = await prisma.mediaType.findFirst({ 
         where: { name } 
     })
@@ -140,7 +140,7 @@ export async function seedDatabase(options?: SeedOptions, deps?: SeedDeps) {
     await createMediaTypeSeed("manga", systemUser.id)
 
     // CREATE SEED MEDIA
-    let defaultMedia: { id: number } | null = await prisma.media.findFirst({
+    let defaultMedia: { id: string } | null = await prisma.media.findFirst({
         where: { title: "Default Media", userId: systemUser.id },
     })
     if (!defaultMedia && defaultType) {

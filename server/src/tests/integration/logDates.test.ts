@@ -7,8 +7,8 @@ describe('Log Dates API - startedAt and finishedAt', () => {
     const password = 'StrongPass1!'
     const registerKey = process.env.REGISTER_KEY
     let token: string
-    let userId: number
-    let mediaId: number
+    let userId: string
+    let mediaId: string
 
     beforeAll(async () => {
         await prisma.user.deleteMany({ where: { username } })
@@ -52,7 +52,7 @@ describe('Log Dates API - startedAt and finishedAt', () => {
         // GET /logs returns started_at and finished_at
         const getRes = await request(app).get('/logs').set('Authorization', `Bearer ${token}`)
         expect(getRes.statusCode).toBe(200)
-        const found = getRes.body.find((l: { id: number }) => l.id === res.body.id)
+        const found = getRes.body.find((l: { id: string }) => l.id === res.body.id)
         expect(found).toBeDefined()
         expect(found.started_at).toBe('2026-05-01T12:00:00.000Z')
         expect(found.finished_at).toBe('2026-05-10T12:00:00.000Z')

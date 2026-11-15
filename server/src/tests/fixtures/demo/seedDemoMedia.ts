@@ -57,14 +57,14 @@ export function loadDemoFixture(): DemoFixture {
 }
 
 export async function seedDemoMedia(
-    demoUserId: number,
+    demoUserId: string,
     db: DbClient = prisma,
     overrideFixture?: DemoFixture
 ): Promise<void> {
     const fixture = overrideFixture ?? loadDemoFixture()
 
     // 1. Ensure collections exist
-    const collectionMap = new Map<string, number>()
+    const collectionMap = new Map<string, string>()
     for (const c of fixture.collections) {
         const key = collectionKey(c.name)
         let coll = await findCollectionByNameKey(demoUserId, key, db)
@@ -148,7 +148,7 @@ export async function seedDemoMedia(
 }
 
 export async function seedDemoCollectionExtras(
-    demoUserId: number,
+    demoUserId: string,
     db: DbClient = prisma,
     strict = false
 ): Promise<void> {

@@ -12,7 +12,7 @@ import { AppError } from "@/api/domain/error.js"
 export class GoogleBooksService implements ISearchService {
     maxResults = 20
 
-    async getUserApiKey(userId: number): Promise<string | undefined> {
+    async getUserApiKey(userId: string): Promise<string | undefined> {
         const user = await findUserById(userId)
         if (!user) throw new AppError("Non-existent userId", 404)
 
@@ -42,7 +42,7 @@ export class GoogleBooksService implements ISearchService {
         })
     }
 
-    async searchBooksGGBooks(userId: number, q: string, startIndex = 0): 
+    async searchBooksGGBooks(userId: string, q: string, startIndex = 0): 
         Promise<{ results: SearchResult[], nextStartIndex: number | null}> 
     {
         const key = await this.getUserApiKey(userId)

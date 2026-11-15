@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { uuidSchema } from "@/schemas/common.js"
 import { 
     sanitizeTitle, 
     sanitizeCreator, 
@@ -20,7 +21,7 @@ const titleSchema = z
 )
 
 const mediaTypeSchema = z.object({
-    id: z.number(),
+    id: uuidSchema,
     created_at: z.any(),
     name: z
         .string()

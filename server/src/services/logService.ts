@@ -17,11 +17,11 @@ import { validateSchema } from "@/utilities.js"
 import { DbClient } from "@/db.js"
 
 export class LogService {
-    async getAll(userId: number) {
+    async getAll(userId: string) {
         return getAllLogs(userId)
     }
 
-    async create(userId: number, payload: unknown) {
+    async create(userId: string, payload: unknown) {
         // Use a transaction because we might create a MediaType AND a Log
         return await prisma.$transaction(async (tx: DbClient) => {
             const { mediaId, status, rating, notes, startedAt, finishedAt, progress, tags } = validateSchema(createLogSchema, payload)
@@ -59,7 +59,7 @@ export class LogService {
         })
     }
 
-    async update(userId: number, logId: number, payload: unknown) {
+    async update(userId: string, logId: string, payload: unknown) {
         const { status, rating, notes, startedAt, finishedAt, progress, tags } = validateSchema(updateLogSchema, payload)
 
         return await prisma.$transaction(async (tx: DbClient) => {
@@ -94,7 +94,7 @@ export class LogService {
         })
     }
 
-    async delete(userId: number, logId: number, payload: unknown) {
+    async delete(userId: string, logId: string, payload: unknown) {
         const { confirm } = validateSchema(deleteLogSchema, payload)
 
         const existingLog = await findLogById(logId)

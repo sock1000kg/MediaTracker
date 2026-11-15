@@ -27,14 +27,14 @@ export type JobInfo = {
     progress: number // 0-100
     result: unknown | null
     error: string | null
-    userId: number | null
+    userId: string | null
     createdAt: string // ISO
     finishedAt: string | null // ISO
 }
 
 export type JobContext<N extends JobName> = {
     payload: JobPayloads[N]
-    userId: number | null
+    userId: string | null
     jobId: string
     updateProgress(pct: number): Promise<void>
 }
@@ -43,7 +43,7 @@ export type JobContext<N extends JobName> = {
 export type JobHandler<N extends JobName> = (ctx: JobContext<N>) => Promise<unknown>
 
 export type EnqueueOptions = {
-    userId?: number | null
+    userId?: string | null
     attempts?: number
     backoffMs?: number
     /** Replace the stored payload with {} once the job completes or finally fails (payload may be sensitive). */
@@ -51,7 +51,7 @@ export type EnqueueOptions = {
 }
 
 export type ListJobsOptions = {
-    userId: number
+    userId: string
     name?: JobName
     limit?: number // default 10
 }

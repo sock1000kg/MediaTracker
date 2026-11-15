@@ -5,7 +5,7 @@ import { prisma } from '@/tests/jest.setup.js'
 describe('Track parent linking and duplicate track names', () => {
     const username = 'TrackParentUser'
     let token: string
-    let userId: number
+    let userId: string
 
     beforeAll(async () => {
         await prisma.user.deleteMany({ where: { username } })

@@ -15,51 +15,51 @@ datasource db {
 }
 
 model User {
-  id              Int       @id @default(autoincrement())
-  username        String    @unique
-  displayName     String    @default("")
-  created_at      DateTime  @default(now())
+  id              String        @id @default(uuid(7)) @db.Uuid
+  username        String        @unique
+  displayName     String        @default("")
+  created_at      DateTime      @default(now())
 
   password        String
-  preferences     Json      @default("{}")
+  preferences     Json          @default("{}")
 
-  logs            UserLogs[]@relation("UserLogsToUser")
-  mediaType       MediaType[]@relation("MediaTypesToUser")
-  media           Media[]@relation("MediaToUser")
-  refreshToken    RefreshToken[]@relation("RefreshTokenToUser")
+  logs            UserLogs[]    @relation("UserLogsToUser")
+  mediaType       MediaType[]   @relation("MediaTypesToUser")
+  media           Media[]       @relation("MediaToUser")
+  refreshToken    RefreshToken[] @relation("RefreshTokenToUser")
 
-  apiKeys         UserAPIKey[]@relation("APIToUser")
-  tags            Tag[]     @relation("TagsToUser")
-  collections     Collection[] @relation("CollectionsToUser")
+  apiKeys         UserAPIKey[]  @relation("APIToUser")
+  tags            Tag[]         @relation("TagsToUser")
+  collections     Collection[]  @relation("CollectionsToUser")
 }
 
 model Media {
-  id              Int       @id @default(autoincrement())
+  id              String        @id @default(uuid(7)) @db.Uuid
   title           String 
                             
                                                 //book    music
   creator         String?                      //author  artist
   year            Int?
   metadata        Json?
-  created_at      DateTime  @default(now())
+  created_at      DateTime      @default(now())
 
   source          String?
   sourceId        String?
   description     String?
   imageUrl        String?
 
-  userId          Int?
-  user            User?     @relation(fields: [userId], references: [id], name: "MediaToUser", onDelete: Cascade)
+  userId          String?       @db.Uuid
+  user            User?         @relation(fields: [userId], references: [id], name: "MediaToUser", onDelete: Cascade)
 
-  mediaTypeId     Int?
-  mediaType       MediaType? @relation(fields: [mediaTypeId], references: [id], name: "MediaToMediaTypes", onDelete: Cascade)
+  mediaTypeId     String?       @db.Uuid
+  mediaType       MediaType?    @relation(fields: [mediaTypeId], references: [id], name: "MediaToMediaTypes", onDelete: Cascade)
 
-  logs            UserLogs[]@relation("UserLogsToMedia")
+  logs            UserLogs[]    @relation("UserLogsToMedia")
 
-  parentId        Int?
-  parent          Media?    @relation("MediaChildren", fields: [parentId], references: [id], onDelete: SetNull)
-  children        Media[]   @relation("MediaChildren")
-  position        Int?      // track number / season number
+  parentId        String?       @db.Uuid
+  parent          Media?        @relation("MediaChildren", fields: [parentId], references: [id], onDelete: SetNull)
+  children        Media[]       @relation("MediaChildren")
+  position        Int?          // track number / season number
   externalIds     MediaExternalId[]
   kind            String?
   originalTitle   String?
@@ -73,45 +73,45 @@ model Media {
 }
 
 model Genre {
-  id       Int          @id @default(autoincrement())
-  name     String       // as the provider returned it (first spelling seen)
-  nameKey  String       @unique   // lower-case, trimmed, inner whitespace collapsed
+  id       String        @id @default(uuid(7)) @db.Uuid
+  name     String        // as the provider returned it (first spelling seen)
+  nameKey  String        @unique   // lower-case, trimmed, inner whitespace collapsed
   media    MediaGenre[]
 }
 
 model MediaGenre {
-  mediaId  Int
-  genreId  Int
-  position Int          // provider order, used for "top 3" displays
-  media    Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-  genre    Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+  mediaId  String        @db.Uuid
+  genreId  String        @db.Uuid
+  position Int           // provider order, used for "top 3" displays
+  media    Media         @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  genre    Genre         @relation(fields: [genreId], references: [id], onDelete: Cascade)
 
   @@id([mediaId, genreId])
   @@index([genreId])
 }
 
 model Creator {
-  id       Int            @id @default(autoincrement())
+  id       String         @id @default(uuid(7)) @db.Uuid
   name     String
   nameKey  String         @unique   // lower-case, trimmed, whitespace collapsed
   media    MediaCreator[]
 }
 
 model MediaCreator {
-  mediaId   Int
-  creatorId Int
+  mediaId   String        @db.Uuid
+  creatorId String        @db.Uuid
   role      String        // "author" | "artist" | "director" | "developer" | "studio" | "creator"
   position  Int
-  media     Media   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-  creator   Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  media     Media         @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  creator   Creator       @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 
   @@id([mediaId, creatorId, role])
   @@index([creatorId])
 }
 
 model MediaExternalId {
-  id         Int      @id @default(autoincrement())
-  mediaId    Int
+  id         String   @id @default(uuid(7)) @db.Uuid
+  mediaId    String   @db.Uuid
   media      Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
   provider   String   // lower-case provider key, e.g. "anilist", "mal", "tmdb", "goodreads", "isbn13", "letterboxd", "lastfm", "musicbrainz"
   externalId String
@@ -122,11 +122,11 @@ model MediaExternalId {
 }
 
 model MediaType {
-  id              Int       @id @default(autoincrement())
+  id              String    @id @default(uuid(7)) @db.Uuid
   name            String    
   created_at      DateTime  @default(now())
 
-  userId          Int?      
+  userId          String?   @db.Uuid
   user            User?     @relation(fields: [userId], references: [id], name: "MediaTypesToUser", onDelete: Cascade)
 
   media           Media[]   @relation("MediaToMediaTypes")
@@ -136,7 +136,7 @@ model MediaType {
 
 
 model UserLogs {
-  id              Int       @id @default(autoincrement())
+  id              String    @id @default(uuid(7)) @db.Uuid
 
 
   status          String?   //"Completed" "In progress" "Wishlist" "Dropped"
@@ -147,10 +147,10 @@ model UserLogs {
   logged_at       DateTime  @default(now())
   progress        Json?
 
-  userId          Int
+  userId          String    @db.Uuid
   user            User      @relation(fields: [userId], references: [id], name: "UserLogsToUser", onDelete: Cascade)
 
-  mediaId         Int
+  mediaId         String    @db.Uuid
   media           Media     @relation(fields: [mediaId], references: [id], name: "UserLogsToMedia", onDelete: Cascade)
 
   tags            LogTag[]  @relation("LogTagsToLog")
@@ -160,8 +160,8 @@ model UserLogs {
 }
 
 model Tag {
-  id              Int       @id @default(autoincrement())
-  userId          Int
+  id              String    @id @default(uuid(7)) @db.Uuid
+  userId          String    @db.Uuid
   user            User      @relation(fields: [userId], references: [id], name: "TagsToUser", onDelete: Cascade)
   name            String
   nameKey         String
@@ -173,8 +173,8 @@ model Tag {
 }
 
 model LogTag {
-  logId           Int
-  tagId           Int
+  logId           String    @db.Uuid
+  tagId           String    @db.Uuid
   log             UserLogs  @relation(fields: [logId], references: [id], name: "LogTagsToLog", onDelete: Cascade)
   tag             Tag       @relation(fields: [tagId], references: [id], name: "LogTagsToTag", onDelete: Cascade)
 
@@ -183,8 +183,8 @@ model LogTag {
 }
 
 model Collection {
-  id              Int              @id @default(autoincrement())
-  userId          Int
+  id              String           @id @default(uuid(7)) @db.Uuid
+  userId          String           @db.Uuid
   user            User             @relation(fields: [userId], references: [id], name: "CollectionsToUser", onDelete: Cascade)
   name            String
   nameKey         String
@@ -198,8 +198,8 @@ model Collection {
 }
 
 model CollectionItem {
-  collectionId    Int
-  logId           Int
+  collectionId    String     @db.Uuid
+  logId           String     @db.Uuid
   position        Int
   added_at        DateTime   @default(now())
   collection      Collection @relation(fields: [collectionId], references: [id], name: "CollectionItemsToCollection", onDelete: Cascade)
@@ -210,21 +210,21 @@ model CollectionItem {
 }
 
 model UserAPIKey {
-  id              Int       @id @default(autoincrement())
+  id              String    @id @default(uuid(7)) @db.Uuid
   key             String    // store encrypted or plain (if it's safe)
   service         String    //"google_books"
   created_at      DateTime  @default(now())
 
-  userId          Int
+  userId          String    @db.Uuid
   user            User      @relation(fields: [userId], references: [id], name: "APIToUser", onDelete: Cascade)
 
   @@unique([userId, service]) // one key per user per service
 }
 
 model RefreshToken {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid(7)) @db.Uuid
   token     String   @unique
-  userId    Int
+  userId    String   @db.Uuid
   user      User     @relation(fields: [userId], references: [id], name: "RefreshTokenToUser", onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())

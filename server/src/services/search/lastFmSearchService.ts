@@ -77,7 +77,7 @@ export class LastFmSearchService implements ISearchService {
     baseUrl = "https://ws.audioscrobbler.com/2.0/"
     maxResults = 30
 
-    async getUserApiKey(userId: number) {
+    async getUserApiKey(userId: string) {
         if (!userId && process.env.LASTFM_API_KEY) {
             return process.env.LASTFM_API_KEY
         }
@@ -125,7 +125,7 @@ export class LastFmSearchService implements ISearchService {
     }
 
     // Fetches the top tags of one album/track, cleaned. Throws on any failure (callers decide what to do)
-    async fetchTopTags(userId: number, kind: "album" | "track", artist: string, name: string): Promise<string[] | null> {
+    async fetchTopTags(userId: string, kind: "album" | "track", artist: string, name: string): Promise<string[] | null> {
         const key = await this.getUserApiKey(userId)
         const url = buildTopTagsUrl(kind, artist, name, key)
 
@@ -135,7 +135,7 @@ export class LastFmSearchService implements ISearchService {
         return cleanLastFmTags(parsed.toptags?.tag ?? [], artist)
     }
 
-    async searchTracksLastFm(userId: number, q: string, page = 1):
+    async searchTracksLastFm(userId: string, q: string, page = 1):
         Promise<{ results: SearchResult[], nextStartIndex: number | null}>
     {
         const key = await this.getUserApiKey(userId)
@@ -162,7 +162,7 @@ export class LastFmSearchService implements ISearchService {
         }
     }
 
-    async searchAlbumsLastFm(userId: number, q: string, page = 1):
+    async searchAlbumsLastFm(userId: string, q: string, page = 1):
         Promise<{ results: SearchResult[], nextStartIndex: number | null}>
     {
         const key = await this.getUserApiKey(userId)
@@ -191,7 +191,7 @@ export class LastFmSearchService implements ISearchService {
     }
 
     async fetchAlbumTracks(
-        userId: number,
+        userId: string,
         artist: string,
         albumName: string,
         mbid?: string
@@ -362,7 +362,7 @@ export class LastFmSearchService implements ISearchService {
                 select: { id: true, sourceId: true },
             })
 
-            const mediaIdBySourceId = new Map<string, number>()
+            const mediaIdBySourceId = new Map<string, string>()
             for (const m of trackMedias) {
                 if (m.sourceId) mediaIdBySourceId.set(m.sourceId, m.id)
             }
@@ -376,7 +376,7 @@ export class LastFmSearchService implements ISearchService {
                 select: { id: true, mediaId: true, rating: true, status: true },
             }) : []
 
-            const logByMediaId = new Map<number, { id: number; rating: number | null; status: string | null }>()
+            const logByMediaId = new Map<string, { id: string; rating: number | null; status: string | null }>()
             for (const l of userLogs) {
                 logByMediaId.set(l.mediaId, { id: l.id, rating: l.rating, status: l.status })
             }

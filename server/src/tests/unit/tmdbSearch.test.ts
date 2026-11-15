@@ -131,29 +131,29 @@ describe('TmdbSearchService error mapping', () => {
 
     it('401 -> 400 with key message (never 401)', async () => {
         spy = jest.spyOn(global, 'fetch').mockResolvedValue(new Response('{}', { status: 401 }))
-        await expect(svc.searchMoviesTmdb(1, 'x')).rejects.toMatchObject({
+        await expect(svc.searchMoviesTmdb('mock-user-1', 'x')).rejects.toMatchObject({
             status: 400, message: 'TMDB rejected your API key. Check it in Settings → API Keys.'
         })
     })
     it('429 -> retry once -> 503', async () => {
         spy = jest.spyOn(global, 'fetch').mockImplementation(async () => new Response('{}', { status: 429, headers: { 'Retry-After': '0.01' } }))
         spy.mockClear()
-        await expect(svc.searchMoviesTmdb(1, 'x')).rejects.toMatchObject({ status: 503 })
+        await expect(svc.searchMoviesTmdb('mock-user-1', 'x')).rejects.toMatchObject({ status: 503 })
         expect(spy).toHaveBeenCalledTimes(2)
     })
     it('429 then 200 succeeds', async () => {
         spy = jest.spyOn(global, 'fetch')
             .mockResolvedValueOnce(new Response('{}', { status: 429, headers: { 'Retry-After': '0.01' } }))
             .mockResolvedValueOnce(new Response(JSON.stringify({ page: 1, total_pages: 1, results: [] }), { status: 200 }))
-        await expect(svc.searchMoviesTmdb(1, 'x')).resolves.toEqual({ results: [], nextStartIndex: null })
+        await expect(svc.searchMoviesTmdb('mock-user-1', 'x')).resolves.toEqual({ results: [], nextStartIndex: null })
     })
     it('500 -> 502', async () => {
         spy = jest.spyOn(global, 'fetch').mockResolvedValue(new Response('{}', { status: 500 }))
-        await expect(svc.searchMoviesTmdb(1, 'x')).rejects.toMatchObject({ status: 502, message: 'TMDB search failed' })
+        await expect(svc.searchMoviesTmdb('mock-user-1', 'x')).rejects.toMatchObject({ status: 502, message: 'TMDB search failed' })
     })
     it('timeout -> 504', async () => {
         spy = jest.spyOn(global, 'fetch').mockRejectedValue(new DOMException('timed out', 'TimeoutError'))
-        await expect(svc.searchMoviesTmdb(1, 'x')).rejects.toMatchObject({ status: 504 })
+        await expect(svc.searchMoviesTmdb('mock-user-1', 'x')).rejects.toMatchObject({ status: 504 })
     })
     it('hang is aborted by the per-attempt signal -> 504', async () => {
         const realTimeout = AbortSignal.timeout.bind(AbortSignal)
@@ -161,29 +161,29 @@ describe('TmdbSearchService error mapping', () => {
         spy = jest.spyOn(global, 'fetch').mockImplementation((_u, init) => new Promise((_res, rej) => {
             init!.signal!.addEventListener('abort', () => rej(init!.signal!.reason))
         }))
-        await expect(svc.searchMoviesTmdb(1, 'x')).rejects.toMatchObject({ status: 504 })
+        await expect(svc.searchMoviesTmdb('mock-user-1', 'x')).rejects.toMatchObject({ status: 504 })
         t.mockRestore()
     })
     it('network error / bad shape -> 502', async () => {
         spy = jest.spyOn(global, 'fetch').mockRejectedValue(new TypeError('fetch failed'))
-        await expect(svc.searchMoviesTmdb(1, 'x')).rejects.toMatchObject({ status: 502 })
+        await expect(svc.searchMoviesTmdb('mock-user-1', 'x')).rejects.toMatchObject({ status: 502 })
         spy.mockRestore()
         spy = jest.spyOn(global, 'fetch').mockResolvedValue(new Response(JSON.stringify({ results: 'nope' }), { status: 200 }))
-        await expect(svc.searchMoviesTmdb(1, 'x')).rejects.toMatchObject({ status: 502 })
+        await expect(svc.searchMoviesTmdb('mock-user-1', 'x')).rejects.toMatchObject({ status: 502 })
     })
     it('drops items without id; pagination', async () => {
         spy = jest.spyOn(global, 'fetch').mockImplementation(async () => new Response(JSON.stringify({
             page: 1, total_pages: 3, results: [{ title: 'no id' }, { id: 2, title: 'Two' }]
         }), { status: 200 }))
-        const r = await svc.searchMoviesTmdb(1, 'x', 1)
+        const r = await svc.searchMoviesTmdb('mock-user-1', 'x', 1)
         expect(r.results.map(x => x.sourceId)).toEqual(['movie-2'])
         expect(r.nextStartIndex).toBe(2)
-        expect((await svc.searchMoviesTmdb(1, 'x', 3)).nextStartIndex).toBeNull()
+        expect((await svc.searchMoviesTmdb('mock-user-1', 'x', 3)).nextStartIndex).toBeNull()
     })
     it('sends Bearer header and User-Agent for JWT keys', async () => {
         jest.spyOn(svc, 'getUserApiKey').mockResolvedValue(JWT)
         spy = jest.spyOn(global, 'fetch').mockResolvedValue(new Response(JSON.stringify({ results: [] }), { status: 200 }))
-        await svc.searchMoviesTmdb(1, 'x')
+        await svc.searchMoviesTmdb('mock-user-1', 'x')
         const init = spy.mock.calls[0][1] as { headers: Record<string, string> }
         expect(init.headers.Authorization).toBe(`Bearer ${JWT}`)
         expect(init.headers['User-Agent']).toMatch(/^MediaTracker/)

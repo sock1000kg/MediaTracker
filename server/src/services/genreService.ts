@@ -92,7 +92,7 @@ export function creatorNameKey(name: string): string {
 }
 
 export async function setMediaGenres(
-    mediaId: number,
+    mediaId: string,
     names: (string | null | undefined)[] | null | undefined,
     mediaTypeName: string | null | undefined,
     tx: DbClient = prisma
@@ -118,7 +118,7 @@ export async function setMediaGenres(
         return []
     }
 
-    const genreRecords: { id: number; name: string }[] = []
+    const genreRecords: { id: string; name: string }[] = []
     for (const item of clean) {
         const g = await tx.genre.upsert({
             where: { nameKey: item.nameKey },
@@ -146,7 +146,7 @@ export interface CreatorInput {
 }
 
 export async function setMediaCreators(
-    mediaId: number,
+    mediaId: string,
     creators: CreatorInput[] | null | undefined,
     mediaTypeName: string | null | undefined,
     creatorDisplayString: string | null | undefined,
@@ -193,7 +193,7 @@ export async function setMediaCreators(
         return []
     }
 
-    const creatorIdMap = new Map<string, number>()
+    const creatorIdMap = new Map<string, string>()
     for (const item of clean) {
         if (!creatorIdMap.has(item.nameKey)) {
             const cr = await tx.creator.upsert({
@@ -229,7 +229,7 @@ export async function pruneJunkGenres(client: DbClient = prisma): Promise<number
             },
         })
 
-        const junkLinks: { mediaId: number; genreId: number }[] = []
+        const junkLinks: { mediaId: string; genreId: string }[] = []
         for (const link of links) {
             const mediaTypeName = link.media?.mediaType?.name
             if (isJunkGenre(link.genre.name, mediaTypeName)) {

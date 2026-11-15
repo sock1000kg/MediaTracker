@@ -69,15 +69,15 @@ export type GapFillComputer = (
 interface ClassifiedRow {
     item: BatchRowItem
     kind: "new_media_and_log" | "existing_media_new_log" | "gap_fill" | "skipped"
-    mediaId?: number
-    logId?: number
+    mediaId?: string
+    logId?: string
     gapFill?: GapFillResult
 }
 
 export async function executeBatchImport(options: {
-    userId: number
-    systemUserId: number
-    mediaTypeId: number
+    userId: string
+    systemUserId: string
+    mediaTypeId: string
     items: BatchRowItem[]
     findExistingMediaMatch: (
         item: BatchRowItem,
@@ -170,7 +170,7 @@ export async function executeBatchImport(options: {
             mediaId: { in: foundMediaIds },
         },
     })
-    const logByMediaId = new Map<number, UserLogs>()
+    const logByMediaId = new Map<string, UserLogs>()
     for (const l of existingLogs) {
         logByMediaId.set(l.mediaId, l)
     }
@@ -180,7 +180,7 @@ export async function executeBatchImport(options: {
         where: { logId: { in: existingLogs.map(l => l.id) } },
         include: { tag: true },
     })
-    const tagsByLogId = new Map<number, Set<string>>()
+    const tagsByLogId = new Map<string, Set<string>>()
     for (const lt of existingLogTags) {
         let set = tagsByLogId.get(lt.logId)
         if (!set) {
@@ -204,21 +204,21 @@ export async function executeBatchImport(options: {
             // Mark a dummy media in map to link any duplicate row later in this import
             if (item.mediaData.source && item.mediaData.sourceId) {
                 mediaBySourceKey.set(`${item.mediaData.source}:${item.mediaData.sourceId}`, {
-                    id: -1,
+                    id: "__pending__",
                     source: item.mediaData.source,
                     sourceId: item.mediaData.sourceId,
                 } as unknown as Media)
             } else if (item.mediaData.source && !item.mediaData.sourceId) {
                 const key = `null-source:${item.mediaData.source}:${item.mediaData.title.toLowerCase()}:${item.mediaData.year ?? ""}`
                 mediaBySourceKey.set(key, {
-                    id: -1,
+                    id: "__pending__",
                     source: item.mediaData.source,
                     sourceId: null,
                 } as unknown as Media)
             }
             if (typeof item.idMal === "number") {
                 mediaByIdMal.set(item.idMal, {
-                    id: -1,
+                    id: "__pending__",
                     source: item.mediaData.source,
                     sourceId: item.mediaData.sourceId,
                 } as unknown as Media)
@@ -227,7 +227,7 @@ export async function executeBatchImport(options: {
         }
 
         // Matches a row queued earlier in this same file: a duplicate row, nothing more to write
-        if (matchedMedia.id <= 0) {
+        if (matchedMedia.id === "__pending__") {
             classifiedRows.push({ item, kind: "skipped" })
             continue
         }
@@ -370,9 +370,9 @@ export async function executeBatchImport(options: {
                     }
 
                     // Insert into MediaExternalId for newly created media
-                    const extIdData: { mediaId: number; provider: string; externalId: string }[] = []
+                    const extIdData: { mediaId: string; provider: string; externalId: string }[] = []
                     for (const r of chunkRowsNeedingMedia) {
-                        if (r.mediaId && r.mediaId > 0) {
+                        if (r.mediaId) {
                             if (r.item.mediaData.source && r.item.mediaData.sourceId) {
                                 extIdData.push({
                                     mediaId: r.mediaId,
@@ -409,11 +409,11 @@ export async function executeBatchImport(options: {
 
                     // Insert Genres in bulk
                     const genreRowsToInsert: { name: string; nameKey: string }[] = []
-                    const mediaGenreLinks: { mediaId: number; nameKey: string; position: number }[] = []
+                    const mediaGenreLinks: { mediaId: string; nameKey: string; position: number }[] = []
                     const genreSeen = new Set<string>()
 
                     for (const r of chunkRowsNeedingMedia) {
-                        if (!r.mediaId || r.mediaId <= 0) continue
+                        if (!r.mediaId) continue
                         const rawCats = r.item.genres ?? ((r.item.mediaData.metadata as Record<string, unknown>)?.categories as string[] | undefined) ?? []
                         const cleanCats: { name: string; nameKey: string }[] = []
                         const rowSeen = new Set<string>()
@@ -472,12 +472,12 @@ export async function executeBatchImport(options: {
 
                     // Insert Creators in bulk
                     const creatorRowsToInsert: { name: string; nameKey: string }[] = []
-                    const mediaCreatorLinks: { mediaId: number; nameKey: string; role: string; position: number }[] = []
+                    const mediaCreatorLinks: { mediaId: string; nameKey: string; role: string; position: number }[] = []
                     const creatorSeen = new Set<string>()
                     const defaultRole = defaultRoleForType(mediaTypeName)
 
                     for (const r of chunkRowsNeedingMedia) {
-                        if (!r.mediaId || r.mediaId <= 0) continue
+                        if (!r.mediaId) continue
                         let candidateCreators: CreatorInput[] = []
                         if (r.item.creators && r.item.creators.length > 0) {
                             candidateCreators = r.item.creators
@@ -552,9 +552,9 @@ export async function executeBatchImport(options: {
                 }
 
                 // Ensure external IDs are attached to existing media as well
-                const existingMediaExtIds: { mediaId: number; provider: string; externalId: string }[] = []
+                const existingMediaExtIds: { mediaId: string; provider: string; externalId: string }[] = []
                 for (const r of chunk) {
-                    if (r.kind !== "new_media_and_log" && r.mediaId && r.mediaId > 0 && r.item.externalIds) {
+                    if (r.kind !== "new_media_and_log" && r.mediaId && r.item.externalIds) {
                         for (const x of r.item.externalIds) {
                             if (x.provider && x.id) {
                                 existingMediaExtIds.push({
@@ -574,7 +574,7 @@ export async function executeBatchImport(options: {
                 }
 
                 // b. Insert new logs
-                const validRowsNeedingLog = chunkRowsNeedingLog.filter(r => r.mediaId && r.mediaId > 0)
+                const validRowsNeedingLog = chunkRowsNeedingLog.filter(r => r.mediaId)
                 if (validRowsNeedingLog.length > 0) {
                     await tx.userLogs.createMany({
                         data: validRowsNeedingLog.map(r => ({
@@ -600,7 +600,7 @@ export async function executeBatchImport(options: {
                         select: { id: true, mediaId: true },
                     })
 
-                    const logMap = new Map<number, number>()
+                    const logMap = new Map<string, string>()
                     for (const l of reselectedLogs) {
                         logMap.set(l.mediaId, l.id)
                     }
@@ -633,7 +633,7 @@ export async function executeBatchImport(options: {
                 }
 
                 // d. Bulk tags for new logs and gap-filled logs
-                const chunkRowsWithTags: { logId: number; tags: string[] }[] = []
+                const chunkRowsWithTags: { logId: string; tags: string[] }[] = []
                 for (const r of validRowsNeedingLog) {
                     if (r.logId && r.item.logData.tags.length > 0) {
                         chunkRowsWithTags.push({ logId: r.logId, tags: r.item.logData.tags })
@@ -672,12 +672,12 @@ export async function executeBatchImport(options: {
                             },
                         })
 
-                        const tagIdByKey = new Map<string, number>()
+                        const tagIdByKey = new Map<string, string>()
                         for (const t of reselectedTags) {
                             tagIdByKey.set(t.nameKey, t.id)
                         }
 
-                        const logTagPairs: { logId: number; tagId: number }[] = []
+                        const logTagPairs: { logId: string; tagId: string }[] = []
                         for (const r of chunkRowsWithTags) {
                             for (const tName of r.tags) {
                                 const norm = normalizeTagName(tName) ?? tName.trim()

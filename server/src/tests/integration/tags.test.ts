@@ -28,11 +28,11 @@ async function registerAndLogin(username: string) {
 
 describe("Tag Endpoints and Log Tags", () => {
     let tokenA: string
-    let userAId: number
+    let userAId: string
     let tokenB: string
-    let userBId: number
-    let mediaTypeA: { id: number; name: string }
-    let mediaA: { id: number; title: string }
+    let userBId: string
+    let mediaTypeA: { id: string; name: string }
+    let mediaA: { id: string; title: string }
 
     beforeAll(async () => {
         const uA = await registerAndLogin("TagUserA")
@@ -133,7 +133,7 @@ describe("Tag Endpoints and Log Tags", () => {
             const listRes = await request(app)
                 .get("/tags")
                 .set("Authorization", `Bearer ${tokenA}`)
-            const tag = (listRes.body as { id: number; name: string }[]).find((t) => t.name === "Sci-Fi Favorites")!
+            const tag = (listRes.body as { id: string; name: string }[]).find((t) => t.name === "Sci-Fi Favorites")!
 
             // Changing case of same tag
             const res1 = await request(app)
@@ -168,7 +168,7 @@ describe("Tag Endpoints and Log Tags", () => {
             const listRes = await request(app)
                 .get("/tags")
                 .set("Authorization", `Bearer ${tokenA}`)
-            const cyberTag = (listRes.body as { id: number; name: string }[]).find((t) => t.name === "Cyberpunk")!
+            const cyberTag = (listRes.body as { id: string; name: string }[]).find((t) => t.name === "Cyberpunk")!
 
             // Other user delete gives 404
             const badDel = await request(app)
@@ -185,7 +185,7 @@ describe("Tag Endpoints and Log Tags", () => {
     })
 
     describe("Tags on logs (set semantics, auto-creation, limits)", () => {
-        let logId: number
+        let logId: string
 
         test("POST /logs with tags auto-creates unknown tags and links them", async () => {
             const res = await request(app)
@@ -207,7 +207,7 @@ describe("Tag Endpoints and Log Tags", () => {
             const getRes = await request(app)
                 .get("/logs")
                 .set("Authorization", `Bearer ${tokenA}`)
-            const found = (getRes.body as { id: number; tags: { name: string }[] }[]).find((l) => l.id === logId)!
+            const found = (getRes.body as { id: string; tags: { name: string }[] }[]).find((l) => l.id === logId)!
             expect(found.tags.map((t) => t.name)).toEqual(["Classic", "Dystopia", "sci-fi favorites"])
         })
 

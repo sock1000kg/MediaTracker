@@ -7,7 +7,7 @@ import { MEDIA_INCLUDE, formatMedia } from "./mediaFormat.js"
 export { MEDIA_INCLUDE, formatMedia }
 
 //MEDIA
-export async function getAllMediasUserCreated(userId: number) {
+export async function getAllMediasUserCreated(userId: string) {
     const rows = await prisma.media.findMany({
         where: { 
             userId 
@@ -19,7 +19,7 @@ export async function getAllMediasUserCreated(userId: number) {
     return rows.map(formatMedia)
 }
 
-export async function getAllMediasForUser(userId: number) {
+export async function getAllMediasForUser(userId: string) {
     const rows = await prisma.media.findMany({
         where: { 
             OR: [
@@ -36,7 +36,7 @@ export async function getAllMediasForUser(userId: number) {
 
 export async function findMediaForUser(
     title: string,
-    userId: number,
+    userId: string,
     type: MediaType,
     creator: string | null,
     year: number | null,
@@ -51,7 +51,7 @@ export async function findMediaForUser(
         where: {
             title,
             mediaType: { name: type.name },
-            OR: [{ userId: 0 }, { userId }],
+            OR: [{ user: { username: 'system' } }, { userId }],
             ...(creator ? { creator } : {}),
             ...(year ? { year } : {}),
             ...(metadata ? { metadata: { equals: metadata } } : {}),
@@ -68,8 +68,8 @@ export async function findMediaForUser(
 }
 
 export async function findMediaForUserById(
-    mediaId: number, 
-    userId: number, 
+    mediaId: string, 
+    userId: string, 
     client: DbClient
 ) {
     const m = await client.media.findFirst({
@@ -86,7 +86,7 @@ export async function findMediaForUserById(
     return formatMedia(m)
 }
 
-export async function findMediaById(id: number) {
+export async function findMediaById(id: string) {
     const m = await prisma.media.findUnique({
         where: { id },
         include: { 
@@ -220,7 +220,7 @@ export async function findMediaByExternalIds(
 }
 
 export async function attachExternalIdsToMedia(
-    mediaId: number,
+    mediaId: string,
     ids: ExternalIdKey[],
     client: DbClient = prisma
 ): Promise<void> {
@@ -267,7 +267,7 @@ export async function findMediaBySource(sourceId: string | null, source: string 
 }
 
 export async function mergeMediaMetadata(
-    mediaId: number,
+    mediaId: string,
     patch: Record<string, Prisma.InputJsonValue | null>,
     client: DbClient
 ): Promise<void> {
@@ -289,11 +289,11 @@ export async function mergeMediaMetadata(
     })
 }
 
-export async function setMediaCreatorIfNull(mediaId: number, creator: string, client: DbClient): Promise<void> {
+export async function setMediaCreatorIfNull(mediaId: string, creator: string, client: DbClient): Promise<void> {
     await client.media.updateMany({ where: { id: mediaId, creator: null }, data: { creator } })
 }
 
-export async function setMediaDescriptionIfNull(mediaId: number, description: string, client: DbClient): Promise<void> {
+export async function setMediaDescriptionIfNull(mediaId: string, description: string, client: DbClient): Promise<void> {
     await client.media.updateMany({ where: { id: mediaId, description: null }, data: { description } })
 }
 
@@ -323,9 +323,9 @@ export async function createMedia(
     description: string | null,
     metadata: Prisma.JsonValue | null,
     imageUrl: string | null,
-    userId: number,
+    userId: string,
     client: DbClient,
-    parentId?: number | null,
+    parentId?: string | null,
     position?: number | null,
     extraExternalIds?: ExternalIdKey[],
     extraGenres?: (string | null | undefined)[] | null,
@@ -426,8 +426,8 @@ export async function updateMediaForUser(
     description: string | null,
     metadata: Prisma.JsonValue | null,
     imageUrl: string | null,
-    userId: number,
-    mediaId: number
+    userId: string,
+    mediaId: string
 ) {
     let kind: string | null = null
     let originalTitle: string | null = null
@@ -494,19 +494,20 @@ export async function updateMediaForUser(
     return formatMedia(updated)!
 }
 
-export async function deleteMedia(id: number): Promise<void> {
+export async function deleteMedia(id: string): Promise<void> {
     await prisma.media.delete({ where: { id } })
 }
 
-export async function deleteAllMediasForUser(userId: number, client: DbClient): Promise<void> {
+export async function deleteAllMediasForUser(userId: string, client: DbClient): Promise<void> {
     await client.media.deleteMany({ where: { userId } })
 }
 
-export async function findMediaChildren(parentId: number, userId: number, client: DbClient = prisma) {
+export async function findMediaChildren(parentId: string, userId: string, client: DbClient = prisma) {
     const children = await client.media.findMany({
         where: { parentId },
         orderBy: [
             { position: "asc" },
+            { created_at: "asc" },
             { id: "asc" },
         ],
         include: {

@@ -2,7 +2,7 @@ import prisma from "@/prismaClient.js"
 import { DbClient, Prisma } from "@/db.js"
 import { MEDIA_INCLUDE, formatMedia } from "./mediaFormat.js"
 
-export type LogTagItem = { id: number; name: string }
+export type LogTagItem = { id: string; name: string }
 
 export type ChildSummary = {
     rated: number
@@ -11,15 +11,15 @@ export type ChildSummary = {
 
 export function mapLogWithTags<T extends {
     media?: Record<string, unknown> | null
-    tags?: { tag: { id: number; name: string } }[]
-    collectionItems?: { collectionId: number }[]
+    tags?: { tag: { id: string; name: string } }[]
+    collectionItems?: { collectionId: string }[]
 }>(log: T) {
     const rawTags = log.tags ?? []
     const tags: LogTagItem[] = rawTags
         .map(t => ({ id: t.tag.id, name: t.tag.name }))
         .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }))
     const rawCollections = log.collectionItems ?? []
-    const collectionIds: number[] = rawCollections.map(c => c.collectionId)
+    const collectionIds: string[] = rawCollections.map(c => c.collectionId)
     const formattedMedia = log.media ? formatMedia(log.media) : log.media
     const copy = { ...log }
     delete (copy as { collectionItems?: unknown }).collectionItems
@@ -34,21 +34,21 @@ export function mapLogWithTags<T extends {
 }
 
 export type MediaWithChildSummary = {
-    id: number
+    id: string
     childSummary?: ChildSummary
     [key: string]: unknown
 }
 
 export async function attachChildSummaries<T extends { media?: MediaWithChildSummary | null }>(
     logs: T[],
-    userId: number,
+    userId: string,
     client: DbClient = prisma
 ): Promise<T[]> {
     if (logs.length === 0) return logs
 
     const mediaIds = logs
         .map(l => l.media?.id)
-        .filter((id): id is number => typeof id === "number")
+        .filter((id): id is string => typeof id === "string")
 
     if (mediaIds.length === 0) return logs
 
@@ -76,7 +76,7 @@ export async function attachChildSummaries<T extends { media?: MediaWithChildSum
         },
     })
 
-    const tally = new Map<number, { count: number; sum: number }>()
+    const tally = new Map<string, { count: number; sum: number }>()
     for (const pId of parentIdSet) {
         tally.set(pId, { count: 0, sum: 0 })
     }
@@ -91,7 +91,7 @@ export async function attachChildSummaries<T extends { media?: MediaWithChildSum
         }
     }
 
-    const summaries = new Map<number, ChildSummary>()
+    const summaries = new Map<string, ChildSummary>()
     for (const [pId, { count, sum }] of tally.entries()) {
         summaries.set(pId, {
             rated: count,
@@ -112,8 +112,8 @@ export async function attachChildSummaries<T extends { media?: MediaWithChildSum
 
 //LOGS
 export async function createLog(
-    userId: number, 
-    mediaId: number, 
+    userId: string, 
+    mediaId: string, 
     status: string | null,
     rating: number | null, 
     notes: string | null,
@@ -144,9 +144,13 @@ export async function createLog(
     return mapLogWithTags(log)
 }
 
-export async function getAllLogs(userId: number, client: DbClient = prisma) {
+export async function getAllLogs(userId: string, client: DbClient = prisma) {
     const logs = await client.userLogs.findMany({
         where: { userId },
+        orderBy: [
+            { logged_at: "desc" },
+            { id: "asc" },
+        ],
         include: { 
             media: { include: MEDIA_INCLUDE },
             tags: { include: { tag: true } },
@@ -157,7 +161,7 @@ export async function getAllLogs(userId: number, client: DbClient = prisma) {
     return attachChildSummaries(mapped, userId, client)
 }
 
-export async function findLogOfUserByMediaId(userId: number, mediaId: number, client: DbClient) {
+export async function findLogOfUserByMediaId(userId: string, mediaId: string, client: DbClient) {
     const log = await client.userLogs.findUnique({
         where: { 
             userId_mediaId: { 
@@ -177,7 +181,7 @@ export async function findLogOfUserByMediaId(userId: number, mediaId: number, cl
     return withSummary
 }
 
-export async function findLogById(logId: number, client: DbClient = prisma) {
+export async function findLogById(logId: string, client: DbClient = prisma) {
     const log = await client.userLogs.findFirst({ 
         where: { id: logId }, 
         include: { 
@@ -193,7 +197,7 @@ export async function findLogById(logId: number, client: DbClient = prisma) {
 }
 
 export async function updateLog(
-    logId: number, 
+    logId: string, 
     newStatus: string | null | undefined, 
     newRating: number | null | undefined, 
     newNotes: string | null | undefined,
@@ -221,13 +225,13 @@ export async function updateLog(
     return mapLogWithTags(log)
 }
 
-export async function deleteLog(id: number, client: DbClient = prisma) {
+export async function deleteLog(id: string, client: DbClient = prisma) {
     await client.userLogs.delete({
         where: { id }
     })
 }
 
-export async function deleteAllLogsForUser(userId: number, client: DbClient) {
+export async function deleteAllLogsForUser(userId: string, client: DbClient) {
     await client.userLogs.deleteMany({
         where: { userId }
     })

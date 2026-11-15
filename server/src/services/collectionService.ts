@@ -33,11 +33,11 @@ import {
 } from "@/utilities.js"
 
 export class CollectionService {
-    async getAll(userId: number) {
+    async getAll(userId: string) {
         return findCollectionsForUser(userId)
     }
 
-    async getById(userId: number, collectionId: number) {
+    async getById(userId: string, collectionId: string) {
         const c = await findCollectionById(collectionId, userId)
         if (!c) {
             throw new AppError("Collection not found", 404)
@@ -45,7 +45,7 @@ export class CollectionService {
         return c
     }
 
-    async create(userId: number, payload: unknown) {
+    async create(userId: string, payload: unknown) {
         const { name, description, ranked } = validateSchema(createCollectionSchema, payload)
         const key = collectionKey(name)
 
@@ -81,7 +81,7 @@ export class CollectionService {
         }
     }
 
-    async update(userId: number, collectionId: number, payload: unknown) {
+    async update(userId: string, collectionId: string, payload: unknown) {
         const existing = await findCollectionRawById(collectionId, userId)
         if (!existing) {
             throw new AppError("Collection not found", 404)
@@ -123,7 +123,7 @@ export class CollectionService {
         }
     }
 
-    async delete(userId: number, collectionId: number) {
+    async delete(userId: string, collectionId: string) {
         const existing = await findCollectionRawById(collectionId, userId)
         if (!existing) {
             throw new AppError("Collection not found", 404)
@@ -132,14 +132,14 @@ export class CollectionService {
         await deleteCollection(collectionId)
     }
 
-    async addItem(userId: number, collectionId: number, payload: unknown) {
+    async addItem(userId: string, collectionId: string, payload: unknown) {
         const { logId } = validateSchema(addCollectionItemSchema, payload)
 
         return prisma.$transaction(async (tx: DbClient) => {
             // Lock the Collection row (FOR UPDATE) to serialize concurrent operations
             // on this collection, ensuring atomic position calculation and preventing duplicate positions
             // under READ COMMITTED transaction isolation.
-            await tx.$queryRaw`SELECT id FROM "Collection" WHERE id = ${collectionId} FOR UPDATE`
+            await tx.$queryRaw`SELECT id FROM "Collection" WHERE id = ${collectionId}::uuid FOR UPDATE`
 
             const collection = await findCollectionRawById(collectionId, userId, tx)
             if (!collection) {
@@ -181,11 +181,11 @@ export class CollectionService {
         })
     }
 
-    async removeItem(userId: number, collectionId: number, logId: number) {
+    async removeItem(userId: string, collectionId: string, logId: string) {
         return prisma.$transaction(async (tx: DbClient) => {
             // Lock the Collection row (FOR UPDATE) to serialize concurrent removals
             // and guarantee safe position re-densification.
-            await tx.$queryRaw`SELECT id FROM "Collection" WHERE id = ${collectionId} FOR UPDATE`
+            await tx.$queryRaw`SELECT id FROM "Collection" WHERE id = ${collectionId}::uuid FOR UPDATE`
 
             const collection = await findCollectionRawById(collectionId, userId, tx)
             if (!collection) {
@@ -209,13 +209,13 @@ export class CollectionService {
         })
     }
 
-    async reorder(userId: number, collectionId: number, payload: unknown) {
+    async reorder(userId: string, collectionId: string, payload: unknown) {
         const { logIds } = validateSchema(reorderCollectionSchema, payload)
 
         return prisma.$transaction(async (tx: DbClient) => {
             // Lock the Collection row (FOR UPDATE) to serialize concurrent reorders
             // on this collection.
-            await tx.$queryRaw`SELECT id FROM "Collection" WHERE id = ${collectionId} FOR UPDATE`
+            await tx.$queryRaw`SELECT id FROM "Collection" WHERE id = ${collectionId}::uuid FOR UPDATE`
 
             const collection = await findCollectionRawById(collectionId, userId, tx)
             if (!collection) {
@@ -228,7 +228,7 @@ export class CollectionService {
             }
 
             const currentSet = new Set(currentItems.map((it) => it.logId))
-            const seen = new Set<number>()
+            const seen = new Set<string>()
             for (const id of logIds) {
                 if (seen.has(id) || !currentSet.has(id)) {
                     throw new AppError("Order list must be a permutation of current items", 400)
