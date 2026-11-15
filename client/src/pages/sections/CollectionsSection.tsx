@@ -2,13 +2,12 @@ import { useState, useRef, useEffect, useCallback } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   ArrowLeft,
-  ChevronDown,
-  ChevronUp,
   Pencil,
   Plus,
   Trash2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { RankInput } from "@/components/collections/RankInput"
 import EmptyState from "@/components/EmptyState"
 import BlueDude from "@/components/BlueDude"
 import { PageShell } from "@/components/layout/PageShell"
@@ -217,7 +216,7 @@ export default function CollectionsSection() {
     [targetLog]
   )
 
-  const handleMove = (index: number, newIndex: number, action: string) => {
+  const handleMove = (index: number, newIndex: number, action = "rank") => {
     if (!selectedId || !optimisticItems) return
     if (newIndex < 0 || newIndex >= optimisticItems.length || index === newIndex) return
 
@@ -414,37 +413,20 @@ export default function CollectionsSection() {
               <LogTile
                 key={item.log.id}
                 log={item.log}
-                badge={String(index + 1)}
+                badge={
+                  activeCollection.ranked ? (
+                    <RankInput
+                      rank={index + 1}
+                      total={items.length}
+                      title={item.log.media.title}
+                      logId={item.log.id}
+                      onRank={(rank) => handleMove(index, rank - 1)}
+                      className="h-5 text-[11px]"
+                    />
+                  ) : undefined
+                }
                 onEdit={handleEditClick}
                 onDelete={handleDeleteClick}
-                extraActions={
-                  <div className="flex items-center gap-0.5">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-7 text-muted-foreground hover:text-foreground"
-                      disabled={index === 0}
-                      data-log-id={item.log.id}
-                      data-action="up"
-                      onClick={() => handleMove(index, index - 1, "up")}
-                      aria-label={`Move ${item.log.media.title} up`}
-                    >
-                      <ChevronUp className="size-3.5" aria-hidden="true" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-7 text-muted-foreground hover:text-foreground"
-                      disabled={index === items.length - 1}
-                      data-log-id={item.log.id}
-                      data-action="down"
-                      onClick={() => handleMove(index, index + 1, "down")}
-                      aria-label={`Move ${item.log.media.title} down`}
-                    >
-                      <ChevronDown className="size-3.5" aria-hidden="true" />
-                    </Button>
-                  </div>
-                }
                 extraMenuItems={
                   <DropdownMenuItem onSelect={() => handleRemoveItem(item.log.id)}>
                     Remove from collection
@@ -462,40 +444,16 @@ export default function CollectionsSection() {
                 onEdit={handleEditClick}
                 onDelete={handleDeleteClick}
                 leading={
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="font-display text-base font-semibold tabular-nums text-muted-foreground min-w-6 text-center"
-                      aria-label={`Position ${index + 1}`}
-                    >
-                      {index + 1}
-                    </span>
-                    <div className="flex flex-col gap-0.5">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-6 text-muted-foreground hover:text-foreground"
-                        disabled={index === 0}
-                        data-log-id={item.log.id}
-                        data-action="up"
-                        onClick={() => handleMove(index, index - 1, "up")}
-                        aria-label={`Move ${item.log.media.title} up`}
-                      >
-                        <ChevronUp className="size-3.5" aria-hidden="true" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-6 text-muted-foreground hover:text-foreground"
-                        disabled={index === items.length - 1}
-                        data-log-id={item.log.id}
-                        data-action="down"
-                        onClick={() => handleMove(index, index + 1, "down")}
-                        aria-label={`Move ${item.log.media.title} down`}
-                      >
-                        <ChevronDown className="size-3.5" aria-hidden="true" />
-                      </Button>
-                    </div>
-                  </div>
+                  activeCollection.ranked ? (
+                    <RankInput
+                      rank={index + 1}
+                      total={items.length}
+                      title={item.log.media.title}
+                      logId={item.log.id}
+                      onRank={(rank) => handleMove(index, rank - 1)}
+                      className="h-8 text-base"
+                    />
+                  ) : undefined
                 }
                 extraMenuItems={
                   <DropdownMenuItem onSelect={() => handleRemoveItem(item.log.id)}>

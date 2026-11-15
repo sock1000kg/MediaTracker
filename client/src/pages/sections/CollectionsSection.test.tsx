@@ -130,16 +130,14 @@ describe("CollectionsSection component", () => {
       expect(screen.getByText("Beta Book")).toBeInTheDocument()
     })
 
-    // 1. Up button is disabled on first item, down button disabled on last item
-    const moveAlphaUp = screen.getByRole("button", { name: "Move Alpha Movie up" })
-    const moveAlphaDown = screen.getByRole("button", { name: "Move Alpha Movie down" })
-    const moveBetaDown = screen.getByRole("button", { name: "Move Beta Book down" })
-    expect(moveAlphaUp).toBeDisabled()
-    expect(moveAlphaDown).not.toBeDisabled()
-    expect(moveBetaDown).toBeDisabled()
+    // 1. Ranked: each item has a rank box with its position
+    const alphaRank = screen.getByRole("textbox", { name: "Rank of Alpha Movie, 1 to 2" })
+    expect(alphaRank).toHaveValue("1")
+    expect(screen.getByRole("textbox", { name: "Rank of Beta Book, 1 to 2" })).toHaveValue("2")
 
-    // 2. Move down calls reorder mutation and announces new position in aria-live
-    await user.click(moveAlphaDown)
+    // 2. Typing a rank + Enter moves the item, calls reorder and announces the new position
+    await user.click(alphaRank)
+    await user.keyboard("2{Enter}")
 
     expect(collectionsApi.reorderCollection).toHaveBeenCalledWith(1, [102, 101])
     const liveRegion = screen.getByRole("status")
@@ -174,5 +172,36 @@ describe("CollectionsSection component", () => {
 
     expect(collectionsApi.removeCollectionItem).toHaveBeenCalledWith(1, 102)
     expect(logsApi.deleteLog).not.toHaveBeenCalled()
+  })
+
+  it("rank box clamps out-of-range numbers and Escape cancels without moving", async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<CollectionsSection />)
+    await user.click(await screen.findByRole("button", { name: /Top Picks/i }))
+
+    const betaRank = await screen.findByRole("textbox", { name: "Rank of Beta Book, 1 to 2" })
+    await user.click(betaRank)
+    await user.keyboard("9{Escape}")
+    expect(collectionsApi.reorderCollection).not.toHaveBeenCalled()
+    expect(betaRank).toHaveValue("2")
+
+    await user.click(betaRank)
+    await user.keyboard("0{Enter}")
+    expect(collectionsApi.reorderCollection).toHaveBeenCalledWith(1, [102, 101])
+  })
+
+  it("unranked collections show no rank numbers or reorder controls", async () => {
+    vi.mocked(collectionsApi.fetchCollections).mockResolvedValue([{ ...mockCollectionSummary, ranked: false }])
+    vi.mocked(collectionsApi.fetchCollection).mockResolvedValue({ ...mockCollectionDetail, ranked: false })
+    const user = userEvent.setup()
+    renderWithProviders(<CollectionsSection />)
+    await user.click(await screen.findByRole("button", { name: /Top Picks/i }))
+
+    await screen.findByText("Alpha Movie")
+    expect(screen.queryAllByRole("textbox", { name: /^Rank of/ })).toHaveLength(0)
+    expect(screen.queryByRole("button", { name: /^Move / })).toBeNull()
+
+    await user.click(screen.getByRole("button", { name: /grid/i }))
+    expect(screen.queryAllByRole("textbox", { name: /^Rank of/ })).toHaveLength(0)
   })
 })
