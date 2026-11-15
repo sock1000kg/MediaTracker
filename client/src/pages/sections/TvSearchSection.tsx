@@ -129,8 +129,8 @@ function TvShowItem({ show, view, logs, onLog }: TvShowItemProps) {
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <Button size="sm" variant="amber" onClick={() => onLog(season, show)}>
-                  {inMedia ? "Edit log" : "Log season"}
+                <Button size="sm" variant="amber" aria-label={inMedia ? undefined : "Log season"} onClick={() => onLog(season, show)}>
+                  {inMedia ? "Edit log" : "+ Log"}
                 </Button>
               </div>
             </div>
@@ -169,8 +169,8 @@ function TvShowItem({ show, view, logs, onLog }: TvShowItemProps) {
               {expanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
               Seasons
             </Button>
-            <Button size="sm" variant="amber" className="flex-1" onClick={() => onLog(show)}>
-              {isShowLogged ? "Edit log" : "Log show"}
+            <Button size="sm" variant="amber" className="flex-1" aria-label={isShowLogged ? undefined : "Log show"} onClick={() => onLog(show)}>
+              {isShowLogged ? "Edit log" : "+ Log"}
             </Button>
           </div>
         </div>
@@ -203,8 +203,8 @@ function TvShowItem({ show, view, logs, onLog }: TvShowItemProps) {
                 {expanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
                 Seasons
               </Button>
-              <Button size="sm" variant="amber" onClick={() => onLog(show)}>
-                {isShowLogged ? "Edit log" : "Log show"}
+              <Button size="sm" variant="amber" aria-label={isShowLogged ? undefined : "Log show"} onClick={() => onLog(show)}>
+                {isShowLogged ? "Edit log" : "+ Log"}
               </Button>
             </div>
           </div>
