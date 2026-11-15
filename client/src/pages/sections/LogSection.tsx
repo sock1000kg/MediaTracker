@@ -343,7 +343,7 @@ export default function LogsSection() {
                       ))}
                     </ul>
                   ) : (
-                    <ul ref={reveal.listRef(group.key)} className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-x-5 gap-y-7">
+                    <ul ref={reveal.listRef(group.key)} className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-x-5 gap-y-7">
                       {visible.map((log) => (
                         <LogTile key={log.id} log={log} onEdit={handleEditClick} onDelete={handleDeleteClick} onTagClick={handleTagClick} />
                       ))}

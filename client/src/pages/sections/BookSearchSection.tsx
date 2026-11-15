@@ -287,7 +287,7 @@ export default function BooksSearchSection() {
             </div>
 
             {showFilters && (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-4 bg-background border-b border-border">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 px-6 pb-4">
                     <div className="grid gap-1">
                         <Label htmlFor="book-filter-author">Author</Label>
                         <Input id="book-filter-author" maxLength={limits.search.queryMaxLength} value={draftFilters.author ?? ""}

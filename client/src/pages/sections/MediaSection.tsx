@@ -341,7 +341,7 @@ export default function MediasSection() {
                       ))}
                     </ul>
                   ) : (
-                    <ul ref={reveal.listRef(section.key)} className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-x-5 gap-y-7">
+                    <ul ref={reveal.listRef(section.key)} className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-x-5 gap-y-7">
                       {visible.map((media) => (
                         <MediaTile key={media.id} media={media} log={logByMediaId.get(media.id)} onEdit={handleEditClick} onDelete={handleDeleteClick} onLog={handleLogClick} />
                       ))}

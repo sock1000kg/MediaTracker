@@ -6,10 +6,10 @@ interface TileShellProps {
   children: ReactNode
 }
 
-/** Cover with an optional corner badge, then a frosted footer. */
+/** One card: cover with an optional corner badge, then the details under it. */
 export function TileShell({ cover, badge, children }: TileShellProps) {
   return (
-    <li tabIndex={-1} className="scroll-mt-14 min-w-0 outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl">
+    <li tabIndex={-1} className="shadow-paper scroll-mt-14 flex min-w-0 flex-col gap-2 rounded-xl border border-border bg-card/80 p-2 outline-none backdrop-blur-sm focus-visible:ring-2 focus-visible:ring-ring">
       <div className="relative">
         {cover}
         {badge && (
@@ -18,7 +18,7 @@ export function TileShell({ cover, badge, children }: TileShellProps) {
           </span>
         )}
       </div>
-      <div className="shadow-paper mt-2 rounded-xl bg-card/80 px-3 py-2 backdrop-blur-sm">
+      <div className="px-1 pb-0.5">
         {children}
       </div>
     </li>

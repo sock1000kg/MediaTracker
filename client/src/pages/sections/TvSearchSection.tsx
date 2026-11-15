@@ -129,7 +129,6 @@ function TvShowItem({ show, view, logs, onLog }: TvShowItemProps) {
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                {inMedia && <span className="tag">In your media</span>}
                 <Button size="sm" variant="amber" onClick={() => onLog(season, show)}>
                   {inMedia ? "Edit log" : "Log season"}
                 </Button>
@@ -193,7 +192,6 @@ function TvShowItem({ show, view, logs, onLog }: TvShowItemProps) {
         }
         aside={
           <div className="flex flex-col items-start gap-2 min-[481px]:items-end">
-            {isShowLogged && <span className="tag">Logged</span>}
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
@@ -486,7 +484,7 @@ export function TvSearchSection() {
         {results.length > 0 ? (
           <div className="grid gap-4">
             {view === "grid" ? (
-              <ul className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-5">
+              <ul className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-5">
                 {visibleResults.map((show) => (
                   <TvShowItem
                     key={show.sourceId}

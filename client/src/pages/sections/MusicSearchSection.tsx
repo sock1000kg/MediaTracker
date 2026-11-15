@@ -272,7 +272,7 @@ export function MusicSearchSection() {
                 <div className="grid gap-4">
                     {searchMode === "albums" ? (
                         view === "grid" ? (
-                            <ul className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-x-5 gap-y-7">
+                            <ul className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-x-5 gap-y-7">
                                 {visibleResults.map((album) => (
                                     <AlbumItem
                                         key={album.sourceId}
