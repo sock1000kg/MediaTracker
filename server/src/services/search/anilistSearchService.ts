@@ -5,6 +5,7 @@ import { searchResultsSchema, SearchResult } from "@/schemas/search/searchSchema
 import { createThrottle, createUserAgentHeader, validateSchema } from "@/utilities.js"
 import { ISearchService } from "./searchServiceInterface.js"
 import { AppError } from "@/api/domain/error.js"
+import { unexpectedShape } from "./providerErrors.js"
 
 const ANILIST_ENDPOINT = "https://graphql.anilist.co"
 const MIN_GAP_MS = 700 // AniList allows ~90 requests/min
@@ -342,23 +343,23 @@ export class AniListSearchService implements ISearchService {
                 }
             }
             if (!res.ok) {
-                throw new AppError("AniList search failed", 502)
+                throw new AppError("AniList search failed", 502, { cause: `upstream HTTP ${res.status}` })
             }
             const json = await res.json()
             if (json && typeof json === "object" && Array.isArray((json as { errors?: unknown[] }).errors) && (json as { errors: unknown[] }).errors.length > 0) {
-                throw new AppError("AniList search failed", 502)
+                throw new AppError("AniList search failed", 502, { cause: `GraphQL error: ${JSON.stringify((json as { errors: unknown[] }).errors[0])}` })
             }
             return json
         } catch (error) {
             if (error instanceof AppError) throw error
             if (isConnectionError(error)) {
-                throw new AppError("AniList can't be reached right now. It may be down; try again later.", 503)
+                throw new AppError("AniList can't be reached right now. It may be down; try again later.", 503, { cause: error })
             }
             const name = (error as { name?: string } | null)?.name
             if (name === "TimeoutError" || name === "AbortError") {
-                throw new AppError("AniList didn't answer in time. It may be down; try again later.", 504)
+                throw new AppError("AniList didn't answer in time. It may be down; try again later.", 504, { cause: error })
             }
-            throw new AppError("AniList search failed", 502)
+            throw new AppError("AniList search failed", 502, { cause: error })
         }
     }
 
@@ -369,7 +370,7 @@ export class AniListSearchService implements ISearchService {
         const raw = await this.fetchJson(variables)
         const checked = anilistResponseSchema.safeParse(raw)
         if (!checked.success || !checked.data?.data?.Page) {
-            throw new AppError("AniList search failed", 502)
+            throw new AppError("AniList search failed", 502, { cause: checked.success ? "response has no Page" : unexpectedShape(checked.error) })
         }
         const pageData = checked.data.data.Page
         const mediaList = pageData.media ?? []

@@ -24,6 +24,7 @@ export const RAWG_ORDERING: Record<NonNullable<GameSearchFilters["sort"]>, strin
 }
 
 import { isJunkGenre, JUNK_RAWG_TAGS } from "@/services/genreService.js"
+import { unexpectedShape } from "./providerErrors.js"
 
 export { JUNK_RAWG_TAGS }
 
@@ -165,15 +166,15 @@ export class RawgSearchService {
             if (res.status === 401 || res.status === 403) {
                 throw new AppError("RAWG rejected your API key. Check it in Settings → API Keys.", 400)
             }
-            if (!res.ok) throw new AppError("RAWG search failed", 502)
+            if (!res.ok) throw new AppError("RAWG search failed", 502, { cause: `upstream HTTP ${res.status}` })
             return await res.json()
         } catch (error) {
             if (error instanceof AppError) throw error
             const name = (error as { name?: string } | null)?.name
             if (name === "TimeoutError" || name === "AbortError") {
-                throw new AppError("RAWG search timed out", 504)
+                throw new AppError("RAWG search timed out", 504, { cause: error })
             }
-            throw new AppError("RAWG search failed", 502)
+            throw new AppError("RAWG search failed", 502, { cause: error })
         }
     }
 
@@ -183,7 +184,7 @@ export class RawgSearchService {
         const key = await this.getUserApiKey(userId)
         const raw = await this.fetchJson(buildRawgSearchUrl({ q, page, ...filters }, key))
         const checked = rawgSearchResponseSchema.safeParse(raw)
-        if (!checked.success) throw new AppError("RAWG search failed", 502)
+        if (!checked.success) throw new AppError("RAWG search failed", 502, { cause: unexpectedShape(checked.error) })
         const parsed = checked.data
 
         const mapped = parsed.results.filter(i => i.id != null).map(mapRawgGame)
@@ -198,7 +199,7 @@ export class RawgSearchService {
         const key = await this.getUserApiKey(userId)
         const raw = await this.fetchJson(buildRawgDetailsUrl(id, key))
         const checked = rawgGameDetailsSchema.safeParse(raw)
-        if (!checked.success) throw new AppError("RAWG search failed", 502)
+        if (!checked.success) throw new AppError("RAWG search failed", 502, { cause: unexpectedShape(checked.error) })
         return parseRawgDetails(checked.data)
     }
 }

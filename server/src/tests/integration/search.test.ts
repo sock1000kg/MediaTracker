@@ -242,11 +242,20 @@ describe('Search Routes - anime & manga (AniList)', () => {
         expect(fetchSpy).not.toHaveBeenCalled()
     })
 
-    it('upstream 500 -> 502 with message', async () => {
+    it('upstream 500 -> 502 with message, and the cause is logged without the search query', async () => {
         fetchSpy.mockImplementation(async () => new Response('{}', { status: 500 }))
-        const res = await get('anime', 'q=x')
-        expect(res.statusCode).toBe(502)
-        expect(res.body.message).toBe('AniList search failed')
+        const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+        try {
+            const res = await get('anime', 'q=secretquery')
+            expect(res.statusCode).toBe(502)
+            expect(res.body.message).toBe('AniList search failed')
+            expect(JSON.stringify(res.body)).not.toContain('upstream HTTP')
+            const logged = warnSpy.mock.calls.map(c => String(c[0])).join('\n')
+            expect(logged).toContain('502 AniList search failed | cause: upstream HTTP 500')
+            expect(logged).not.toContain('secretquery')
+        } finally {
+            warnSpy.mockRestore()
+        }
     })
 
     it('logging an AniList result as returned works', async () => {

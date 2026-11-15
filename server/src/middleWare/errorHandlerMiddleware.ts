@@ -4,7 +4,17 @@ import { NextFunction, Request, Response } from 'express'
 import multer from 'multer'
 import { ZodError } from 'zod'
 
-function errorHandler(error: unknown, _req: Request, res: Response, _next: NextFunction) {
+// "TypeError: fetch failed (ENOTFOUND)" rather than a whole stack: enough to tell why a provider failed
+export function describeCause(cause: unknown): string {
+    if (cause instanceof Error) {
+        const inner = (cause as { cause?: { code?: string } }).cause
+        const code = (cause as { code?: string }).code ?? inner?.code
+        return `${cause.name}: ${cause.message}${code ? ` (${code})` : ""}`
+    }
+    return typeof cause === "string" ? cause : JSON.stringify(cause)
+}
+
+function errorHandler(error: unknown, req: Request, res: Response, _next: NextFunction) {
     if (error instanceof multer.MulterError) {
         if (error.code === 'LIMIT_FILE_SIZE') {
             return res.status(400).json({ message: 'File is too large (max 10 MB)' })
@@ -14,6 +24,10 @@ function errorHandler(error: unknown, _req: Request, res: Response, _next: NextF
 
     // Recognize service errors with `status`
     if (error instanceof AppError) {
+        // Path only: the query string can hold what the user searched for
+        if (error.status >= 500) {
+            console.warn(`${req.method} ${req.path} -> ${error.status} ${error.message}${error.cause !== undefined ? ` | cause: ${describeCause(error.cause)}` : ""}`)
+        }
         const payload: Record<string, unknown> = { message: error.message }
         const tag = (error as unknown as { tag?: { id: number; name: string } }).tag
         if (tag) {

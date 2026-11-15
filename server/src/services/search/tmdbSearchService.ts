@@ -10,6 +10,7 @@ import { findUserById } from "@/repositories/authRepository.js"
 import { AppError } from "@/api/domain/error.js"
 import prisma from "@/prismaClient.js"
 import { findMediaBySource, attachExternalIdsToMedia } from "@/repositories/mediaRepository.js"
+import { unexpectedShape } from "./providerErrors.js"
 
 const BASE_URL = "https://api.themoviedb.org/3"
 const IMAGE_BASE = "https://image.tmdb.org/t/p/w342"
@@ -219,15 +220,15 @@ export class TmdbSearchService {
             if (res.status === 401) {
                 throw new AppError("TMDB rejected your API key. Check it in Settings → API Keys.", 400)
             }
-            if (!res.ok) throw new AppError("TMDB search failed", 502)
+            if (!res.ok) throw new AppError("TMDB search failed", 502, { cause: `upstream HTTP ${res.status}` })
             return await res.json()
         } catch (error) {
             if (error instanceof AppError) throw error
             const name = (error as { name?: string } | null)?.name
             if (name === "TimeoutError" || name === "AbortError") {
-                throw new AppError("TMDB search timed out", 504)
+                throw new AppError("TMDB search timed out", 504, { cause: error })
             }
-            throw new AppError("TMDB search failed", 502)
+            throw new AppError("TMDB search failed", 502, { cause: error })
         }
     }
 
@@ -237,7 +238,7 @@ export class TmdbSearchService {
         const auth = tmdbAuth(await this.getUserApiKey(userId))
         const raw = await this.fetchJson(buildTmdbSearchUrl({ q, page, year: filters.year }, auth), auth)
         const checked = tmdbSearchResponseSchema.safeParse(raw)
-        if (!checked.success) throw new AppError("TMDB search failed", 502)
+        if (!checked.success) throw new AppError("TMDB search failed", 502, { cause: unexpectedShape(checked.error) })
         const parsed = checked.data
 
         const mapped = parsed.results.filter(i => i.id != null).map(mapTmdbMovie)
@@ -252,7 +253,7 @@ export class TmdbSearchService {
         const auth = tmdbAuth(await this.getUserApiKey(userId))
         const raw = await this.fetchJson(buildTmdbDetailsUrl(tmdbId, auth), auth)
         const checked = tmdbMovieDetailsSchema.safeParse(raw)
-        if (!checked.success) throw new AppError("TMDB search failed", 502)
+        if (!checked.success) throw new AppError("TMDB search failed", 502, { cause: unexpectedShape(checked.error) })
         return parseTmdbDetails(checked.data)
     }
 
@@ -262,7 +263,7 @@ export class TmdbSearchService {
         const auth = tmdbAuth(await this.getUserApiKey(userId))
         const raw = await this.fetchJson(buildTmdbTvSearchUrl({ q, page, year: filters.year }, auth), auth)
         const checked = tmdbTvSearchResponseSchema.safeParse(raw)
-        if (!checked.success) throw new AppError("TMDB search failed", 502)
+        if (!checked.success) throw new AppError("TMDB search failed", 502, { cause: unexpectedShape(checked.error) })
         const parsed = checked.data
 
         const mapped = parsed.results.filter(i => i.id != null).map(mapTmdbShow)
@@ -297,7 +298,7 @@ export class TmdbSearchService {
         const auth = tmdbAuth(await this.getUserApiKey(userId))
         const raw = await this.fetchJson(buildTmdbTvDetailsUrl(tmdbId, auth), auth)
         const checked = tmdbTvShowDetailsSchema.safeParse(raw)
-        if (!checked.success) throw new AppError("TMDB search failed", 502)
+        if (!checked.success) throw new AppError("TMDB search failed", 502, { cause: unexpectedShape(checked.error) })
         const d = checked.data
 
         const showTitle = d.name?.trim() || d.original_name?.trim() || "Unknown title"
