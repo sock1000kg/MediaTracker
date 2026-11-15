@@ -29,6 +29,7 @@ import { fetchLogsQueryOptions } from "@/queryOptions/fetchLogsQueryOptions"
 import { fetchMediasQueryOptions } from "@/queryOptions/fetchMediasQueryOptions"
 import { MediaSearchLogForm } from "@/forms/MediaSearchLogForm"
 import { createMediaAndLog } from "@/api/media"
+import { SEARCH_QUERY_OPTIONS } from "@/lib/searchQuery"
 
 const LANGUAGES: { value: string, label: string }[] = [
     { value: "eng", label: "English" },
@@ -127,6 +128,7 @@ export default function BooksSearchSection() {
         number //PageParam
     >({
         queryKey: ["searchBooks", query, appliedFilters],
+        ...SEARCH_QUERY_OPTIONS,
         queryFn: async ({ pageParam = 0 }) => {
             return searchBooks(query, pageParam, appliedFilters)
         },

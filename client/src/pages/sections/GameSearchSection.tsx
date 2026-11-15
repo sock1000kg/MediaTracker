@@ -29,6 +29,7 @@ import { createMediaAndLog } from "@/api/media"
 import { ResultList } from "@/components/search/ResultList"
 import { ViewControls } from "@/components/media-view/ViewControls"
 import { useStoredView } from "@/hooks/useStoredView"
+import { SEARCH_QUERY_OPTIONS } from "@/lib/searchQuery"
 
 const PLATFORM_OPTIONS: { value: GamePlatform; label: string }[] = [
     { value: "pc", label: "PC" }, { value: "playstation", label: "PlayStation" }, { value: "xbox", label: "Xbox" },
@@ -88,6 +89,7 @@ export function GameSearchSection() {
         number //PageParam
     >({
         queryKey: ["searchGames", query, platform, sort],
+        ...SEARCH_QUERY_OPTIONS,
         queryFn: async ({ pageParam = 1 }) => {
             return searchGames(query, pageParam, { platform: platform || undefined, sort })
         },

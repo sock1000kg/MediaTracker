@@ -27,6 +27,7 @@ import { createMediaAndLog } from "@/api/media"
 import { ResultList } from "@/components/search/ResultList"
 import { ViewControls } from "@/components/media-view/ViewControls"
 import { useStoredView } from "@/hooks/useStoredView"
+import { SEARCH_QUERY_OPTIONS } from "@/lib/searchQuery"
 
 export function MovieSearchSection() {
   const [loadingLine] = useState(() => pickLoadingLine())
@@ -75,6 +76,7 @@ export function MovieSearchSection() {
         number //PageParam
     >({
         queryKey: ["searchMovies", query, year],
+        ...SEARCH_QUERY_OPTIONS,
         queryFn: async ({ pageParam = 1 }) => {
             return searchMovies(query, pageParam, { year: year ? Number(year) : undefined })
         },

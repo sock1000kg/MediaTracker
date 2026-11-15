@@ -37,6 +37,7 @@ import {
   resultProviderLabel,
   resultUrl,
 } from "@/lib/resultView"
+import { SEARCH_QUERY_OPTIONS } from "@/lib/searchQuery"
 
 interface TvShowItemProps {
   show: TvResult
@@ -62,6 +63,7 @@ function TvShowItem({ show, view, logs, onLog }: TvShowItemProps) {
     error: seasonsError,
   } = useQuery({
     queryKey: ["tvSeasons", tmdbId],
+    ...SEARCH_QUERY_OPTIONS,
     queryFn: () => getTvSeasons(tmdbId),
     enabled: expanded && !Number.isNaN(tmdbId),
   })
@@ -299,6 +301,7 @@ export function TvSearchSection() {
     number
   >({
     queryKey: ["searchTv", query, year],
+    ...SEARCH_QUERY_OPTIONS,
     queryFn: async ({ pageParam = 1 }) => {
       return searchTv(query, pageParam, { year: year ? Number(year) : undefined })
     },
@@ -333,8 +336,6 @@ export function TvSearchSection() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: fetchLogsQueryOptions().queryKey })
       queryClient.invalidateQueries({ queryKey: fetchMediasQueryOptions().queryKey })
-      queryClient.invalidateQueries({ queryKey: ["searchTv"] })
-      queryClient.invalidateQueries({ queryKey: ["tvSeasons"] })
       setOpenDialog(null)
     },
   })
@@ -347,8 +348,6 @@ export function TvSearchSection() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: fetchLogsQueryOptions().queryKey })
       queryClient.invalidateQueries({ queryKey: fetchMediasQueryOptions().queryKey })
-      queryClient.invalidateQueries({ queryKey: ["searchTv"] })
-      queryClient.invalidateQueries({ queryKey: ["tvSeasons"] })
       setOpenDialog(null)
     },
   })

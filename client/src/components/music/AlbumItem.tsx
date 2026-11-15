@@ -16,6 +16,7 @@ import { editLog } from "@/api/logs"
 import { findLogForResult, isResultLogged } from "@/lib/utils"
 import { fetchLogsQueryOptions } from "@/queryOptions/fetchLogsQueryOptions"
 import { fetchMediasQueryOptions } from "@/queryOptions/fetchMediasQueryOptions"
+import { SEARCH_QUERY_OPTIONS } from "@/lib/searchQuery"
 
 interface AlbumItemProps {
   album: MusicResult
@@ -47,6 +48,7 @@ export function AlbumItem({ album, view, logs, onLog, onMore, onErrorToast }: Al
     error: tracksError,
   } = useQuery({
     queryKey: ["albumTracks", album.sourceId, album.creator, album.title],
+    ...SEARCH_QUERY_OPTIONS,
     queryFn: () =>
       getAlbumTracks({
         artist: album.creator ?? undefined,

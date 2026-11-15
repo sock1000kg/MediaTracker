@@ -29,6 +29,7 @@ import { ResultList } from "@/components/search/ResultList"
 import { ViewControls } from "@/components/media-view/ViewControls"
 import { useStoredView } from "@/hooks/useStoredView"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { SEARCH_QUERY_OPTIONS } from "@/lib/searchQuery"
 
 export function MusicSearchSection() {
   const [loadingLine] = useState(() => pickLoadingLine())
@@ -84,6 +85,7 @@ export function MusicSearchSection() {
         number //PageParam
     >({
         queryKey: ["searchMusic", searchMode, query],
+        ...SEARCH_QUERY_OPTIONS,
         queryFn: async ({ pageParam = 1 }) => {
             return (searchMode === "tracks") ? searchTracks(query, pageParam) : searchAlbums(query, pageParam)
         },
