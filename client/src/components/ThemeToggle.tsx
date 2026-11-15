@@ -44,7 +44,7 @@ export default function ThemeToggle() {
     <Button
       variant="ghost"
       size="sm"
-      className="h-9 w-full justify-start gap-3 rounded-lg px-3 text-sm font-normal text-muted-foreground hover:bg-card/60 hover:text-foreground dark:hover:bg-card/60"
+      className="h-8 w-full justify-start gap-2.5 rounded-lg px-2.5 text-sm font-normal text-muted-foreground hover:bg-card/60 hover:text-foreground dark:hover:bg-card/60"
       aria-label={`Theme: ${LABELS[pref]}. Switch to ${LABELS[next]}.`}
       onClick={() => setPref(next)}
     >

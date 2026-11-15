@@ -79,7 +79,7 @@ export default function Homepage() {
         key={tab}
         variant="ghost"
         aria-current={active ? "page" : undefined}
-        className={`h-9 w-full justify-start gap-3 rounded-lg px-3 text-sm ${
+        className={`h-8 w-full justify-start gap-2.5 rounded-lg px-2.5 text-sm ${
           active
             ? "bg-card font-semibold text-foreground hover:bg-card hover:text-foreground dark:hover:bg-card"
             : "font-normal text-muted-foreground hover:bg-card/60 hover:text-foreground dark:hover:bg-card/60"
@@ -94,11 +94,11 @@ export default function Homepage() {
   }
 
   const navList = (
-    <nav aria-label="Main" className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+    <nav aria-label="Main" className="-mr-2 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto pr-2">
       {NAV_ITEMS.map(renderItem)}
-      <p className="mt-5 mb-1 px-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Find something</p>
+      <p className="mt-4 mb-1 px-2.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Find something</p>
       {FIND_ITEMS.map(renderItem)}
-      <div className="mt-auto flex flex-col gap-1 pt-4">
+      <div className="mt-auto flex flex-col gap-0.5 pt-3">
         {renderItem(SETTINGS_ITEM)}
         <ThemeToggle />
       </div>
@@ -108,7 +108,7 @@ export default function Homepage() {
   const logo = (
     <div className="flex items-center gap-2">
       <SidebarDude glance={glance} size={32} />
-      <span className="font-display text-lg font-semibold">MediaTracker</span>
+      <span className="font-display text-base font-semibold">MediaTracker</span>
     </div>
   )
 
@@ -116,7 +116,7 @@ export default function Homepage() {
     <div className={`flex h-screen ${isDesktop ? "flex-row" : "flex-col"}`}>
       {isDesktop ? (
         /* Left sidebar (≥ 1024px) */
-        <aside className="flex w-60 shrink-0 flex-col gap-4 border-r border-border bg-sidebar p-4">
+        <aside className="flex w-52 shrink-0 flex-col gap-3 border-r border-border bg-sidebar p-3">
           {logo}
           {navList}
         </aside>
