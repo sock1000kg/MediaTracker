@@ -58,6 +58,8 @@ describe('Tracklist Resolution and Fetching', () => {
         const res = await musicSearchService.fetchAlbumTracks(1, 'my bloody valentine', 'Loveless')
 
         expect(res.provider).toBe('lastfm')
+        expect(res.album.mediaType).toBe('music')
+        expect(res.tracks[0].mediaType).toBe('music')
         expect(res.album.title).toBe('Loveless')
         expect(res.album.creator).toBe('my bloody valentine')
         expect(res.album.imageUrl).toBe('https://cover.jpg')
@@ -165,6 +167,7 @@ describe('Tracklist Resolution and Fetching', () => {
         expect(res.tracks).toHaveLength(2)
         expect(res.tracks[0].title).toBe('Track A')
         expect(res.tracks[0].source).toBe('musicbrainz')
+        expect(res.tracks[0].mediaType).toBe('music')
         expect(res.tracks[0].sourceId).toBe('mb-trk-1')
         expect(res.tracks[0].metadata).toMatchObject({
             trackNumber: 1,

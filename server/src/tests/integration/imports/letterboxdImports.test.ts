@@ -67,6 +67,7 @@ describe("Media Import Routes (Letterboxd)", () => {
                 map.set(key, null)
             } else if (f.name.toLowerCase() === "inception") {
                 map.set(key, {
+                    mediaType: "movie",
                     title: "Inception",
                     creator: null,
                     year: "2010",
@@ -81,6 +82,7 @@ describe("Media Import Routes (Letterboxd)", () => {
                 })
             } else if (f.name.toLowerCase() === "dune: part two") {
                 map.set(key, {
+                    mediaType: "movie",
                     title: "Dune: Part Two",
                     creator: "Denis Villeneuve",
                     creators: [{ name: "Denis Villeneuve", role: "director" }],
@@ -96,6 +98,7 @@ describe("Media Import Routes (Letterboxd)", () => {
                 })
             } else if (f.name.toLowerCase() === "fight club") {
                 map.set(key, {
+                    mediaType: "movie",
                     title: "Fight Club",
                     creator: null,
                     year: "1999",
@@ -110,6 +113,7 @@ describe("Media Import Routes (Letterboxd)", () => {
                 })
             } else if (f.name.toLowerCase() === "interstellar") {
                 map.set(key, {
+                    mediaType: "movie",
                     title: "Interstellar",
                     creator: null,
                     year: "2014",

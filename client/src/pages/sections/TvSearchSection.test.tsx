@@ -121,18 +121,18 @@ describe("TvSearchSection component", () => {
     expect(searchApi.getTvSeasons).toHaveBeenCalledTimes(1)
   })
 
-  it("logs a show with mediaType tv even though search results carry none", async () => {
+  it("logs a show with the mediaType the server sent", async () => {
     const user = userEvent.setup()
-    // The real API sends results without a mediaType
-    const show = {
+    const show: TvResult = {
       source: "tmdb",
+      mediaType: "tv",
       sourceId: "tv:1",
       title: "Regular Show",
       year: "2010",
       imageUrl: null,
       metadata: { kind: "show", tmdbId: 1, seasonCount: 8, episodeCount: 261 },
       inLibrary: false,
-    } as unknown as TvResult
+    }
     vi.mocked(searchApi.searchTv).mockResolvedValue({ results: [show], nextStartIndex: null })
 
     renderWithProviders(<TvSearchSection />)

@@ -507,6 +507,7 @@ export class MalImportService {
             const resolved: SearchResult | undefined = rawResolved ? JSON.parse(JSON.stringify(rawResolved)) : undefined
 
             const bareMedia: SearchResult = {
+                mediaType: kind,
                 title: entry.title,
                 creator: null,
                 year: entry.startDate ? String(entry.startDate.getUTCFullYear()) : null,

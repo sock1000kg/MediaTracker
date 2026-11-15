@@ -115,6 +115,7 @@ export class MusicBrainzService {
                     : `https://musicbrainz.org/track/${t.id}`
 
                 results.push({
+                    mediaType: "music",
                     title: t.title || t.recording?.title || "Unknown track",
                     creator: trackArtist,
                     creators: trackArtist ? [{ name: trackArtist, role: "artist" }] : undefined,

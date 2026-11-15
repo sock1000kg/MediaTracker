@@ -57,6 +57,7 @@ describe("Media Import Routes (MyAnimeList)", () => {
         for (const id of ids) {
             if (id === 99999) continue // deliberate miss for testing unresolved
             map.set(id, {
+                mediaType: kind,
                 title: `Resolved Title ${id}`,
                 creator: "Studio Trigger",
                 year: "2024",

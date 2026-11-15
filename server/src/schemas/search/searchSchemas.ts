@@ -46,7 +46,11 @@ export const searchResultCreatorSchema = z.object({
 })
 
 //Schema for ONE result of a search (generic normaliztion for all types)
+// Search providers stamp the type so clients can log a result as-is
+export const SEARCH_MEDIA_TYPES = ["book", "music", "movie", "tv", "game", "anime", "manga"] as const
+
 export const searchResultSchema = z.object({
+    mediaType: z.enum(SEARCH_MEDIA_TYPES),
     title: z
         .string()
         .optional()

@@ -24,6 +24,7 @@ export class GoogleBooksService implements ISearchService {
         return items.map(item => {
             const v = item.volumeInfo
             return {
+                mediaType: "book",
                 title: v.title,
                 creator: v.authors ? v.authors.join(", ") : null,
                 year: v.publishedDate ? v.publishedDate.split("-")[0] : null,

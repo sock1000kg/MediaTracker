@@ -131,13 +131,7 @@ export function AnimeSearchSection() {
         //Check if log of this item exists already
         const existingLog = findLogForResult(logs, item)
 
-        //set the data of the clicked media item
-        const mediaData: AnimeResult = {
-            ...item,
-            mediaType: item.metadata.kind
-        }
-
-        setTargetMedia(mediaData)
+        setTargetMedia(item)
         setTargetLog(existingLog ?? null)
         setOpenDialog("logForm")
     }

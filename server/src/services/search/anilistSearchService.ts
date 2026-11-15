@@ -269,6 +269,7 @@ export function mapAniListMedia(mode: AniListMode, item: AniListMedia): SearchRe
     const categories = extractCategories(item.genres, item.tags)
 
     return {
+        mediaType: mode,
         title: title as string,
         creator,
         creators,

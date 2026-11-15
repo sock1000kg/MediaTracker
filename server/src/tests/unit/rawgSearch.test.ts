@@ -85,6 +85,7 @@ describe('mapRawgGame', () => {
     })
     it('maps fields', () => {
         expect(mapRawgGame(item)).toEqual({
+            mediaType: 'game',
             title: 'The Witcher 3', creator: null, year: '2015', description: null, source: 'rawg', sourceId: 'game-3328',
             imageUrl: 'https://media.rawg.io/a.jpg',
             metadata: {
@@ -104,7 +105,7 @@ describe('mapRawgGame', () => {
         const [v] = searchResultsSchema.parse([r])
         expect(v.title).toBe('Unknown title')
         expect(v.metadata).toMatchObject({ kind: 'game' })
-        const [g] = searchResultsSchema.parse([{ source: 'rawg', sourceId: 'game-1', metadata: { kind: 'game', platforms: ['PC'], metacritic: 80 } }])
+        const [g] = searchResultsSchema.parse([{ mediaType: 'game', source: 'rawg', sourceId: 'game-1', metadata: { kind: 'game', platforms: ['PC'], metacritic: 80 } }])
         expect(g.metadata).toMatchObject({ kind: 'game', platforms: ['PC'], metacritic: 80 })
     })
 })

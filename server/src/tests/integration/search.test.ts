@@ -54,6 +54,7 @@ describe('Search Routes - books', () => {
     it('works without filters and filters junk subjects', async () => {
         const res = await get('q=dune')
         expect(res.statusCode).toBe(200)
+        expect(res.body.results[0].mediaType).toBe('book')
         expect(res.body.results[0].metadata.categories).toEqual(['Science fiction', 'Space opera'])
         expect(res.body.results[1].metadata.categories).toBeNull()
         const url = new URL(fetchSpy.mock.calls[0][0] as string)
@@ -180,6 +181,7 @@ describe('Search Routes - anime & manga (AniList)', () => {
         expect(res.statusCode).toBe(200)
         expect(res.body.nextStartIndex).toBe(3)
         expect(res.body.results[0]).toMatchObject({
+            mediaType: 'anime',
             title: 'Frieren: Beyond Journey’s End',
             creator: 'MADHOUSE',
             year: '2023',
@@ -219,6 +221,7 @@ describe('Search Routes - anime & manga (AniList)', () => {
         expect(res.statusCode).toBe(200)
         expect(res.body.nextStartIndex).toBeNull()
         expect(res.body.results[0]).toMatchObject({
+            mediaType: 'manga',
             creator: 'Chugong',
             sourceId: 'manga-105398',
             metadata: { kind: 'manga', chapters: 200, volumes: 14, scoreScale: 'anilist' },
@@ -246,13 +249,13 @@ describe('Search Routes - anime & manga (AniList)', () => {
         expect(res.body.message).toBe('AniList search failed')
     })
 
-    it('logging an AniList result works', async () => {
+    it('logging an AniList result as returned works', async () => {
         const [a, m] = [await get('anime', 'q=test'), await get('manga', 'q=test')]
-        const log = (r: request.Response, mediaType: string) => request(app).put('/media/media-log')
+        const log = (r: request.Response) => request(app).put('/media/media-log')
             .set('Authorization', `Bearer ${token}`)
-            .send({ mediaData: { ...r.body.results[0], mediaType }, logData: { status: 'completed' } })
-        const ra = await log(a, 'anime')
-        const rm = await log(m, 'manga')
+            .send({ mediaData: r.body.results[0], logData: { status: 'completed' } })
+        const ra = await log(a)
+        const rm = await log(m)
         expect(ra.statusCode).toBeLessThan(300)
         expect(rm.statusCode).toBeLessThan(300)
         const rows = await prisma.media.findMany({ where: { source: 'anilist', sourceId: { in: ['anime-154587', 'manga-105398'] } }, include: { mediaType: true } })
@@ -360,9 +363,9 @@ describe('Search Routes - anime & manga (AniList)', () => {
 
     it('music results still keep kind through the metadata union', async () => {
         const { searchResultsSchema } = await import('@/schemas/search/searchSchemas.js')
-        const [r] = searchResultsSchema.parse([{ source: 'lastfm', sourceId: 'a', metadata: { url: 'u', kind: 'album' } }])
+        const [r] = searchResultsSchema.parse([{ mediaType: 'music', source: 'lastfm', sourceId: 'a', metadata: { url: 'u', kind: 'album' } }])
         expect(r.metadata).toMatchObject({ kind: 'album' })
-        const [b] = searchResultsSchema.parse([{ source: 'openlibrary', sourceId: 'b', metadata: { categories: ['x'] } }])
+        const [b] = searchResultsSchema.parse([{ mediaType: 'book', source: 'openlibrary', sourceId: 'b', metadata: { categories: ['x'] } }])
         expect(b.metadata).toMatchObject({ categories: ['x'] })
     })
 })
@@ -438,6 +441,7 @@ describe('Search Routes - movies (TMDB)', () => {
         expect(res.statusCode).toBe(200)
         expect(res.body.nextStartIndex).toBe(2)
         expect(res.body.results[0]).toMatchObject({
+            mediaType: 'movie',
             title: 'Test Movie', creator: null, year: '2001', description: 'Plot.', source: 'tmdb', sourceId: 'movie-90001',
             imageUrl: 'https://image.tmdb.org/t/p/w342/t.jpg',
             metadata: { kind: 'movie', originalTitle: 'Test Film', originalLanguage: 'fr', score: 7.8, categories: ['Drama'] },
@@ -590,7 +594,7 @@ describe('Search Routes - movies (TMDB)', () => {
 
     it('movie results keep kind through the metadata union', async () => {
         const { searchResultsSchema } = await import('@/schemas/search/searchSchemas.js')
-        const [r] = searchResultsSchema.parse([{ source: 'tmdb', sourceId: 'movie-1', metadata: { kind: 'movie', runtime: 90 } }])
+        const [r] = searchResultsSchema.parse([{ mediaType: 'movie', source: 'tmdb', sourceId: 'movie-1', metadata: { kind: 'movie', runtime: 90 } }])
         expect(r.metadata).toMatchObject({ kind: 'movie', runtime: 90 })
     })
 })
@@ -661,6 +665,7 @@ describe('Search Routes - games (RAWG)', () => {
         expect(res.statusCode).toBe(200)
         expect(res.body.nextStartIndex).toBe(2)
         expect(res.body.results[0]).toMatchObject({
+            mediaType: 'game',
             title: 'Test Game', creator: null, year: '2020', description: null, source: 'rawg', sourceId: 'game-91001',
             imageUrl: 'https://media.rawg.io/t.jpg',
             metadata: {
@@ -903,6 +908,7 @@ describe('Search Routes - TV (TMDB)', () => {
         const res = await getTv(0, 'q=rick&year=2013')
         expect(res.statusCode).toBe(200)
         expect(res.body.results[0]).toMatchObject({
+            mediaType: 'tv',
             title: 'Rick and Morty',
             source: 'tmdb',
             sourceId: 'tv:60625',
@@ -929,6 +935,7 @@ describe('Search Routes - TV (TMDB)', () => {
         })
         expect(before.body.seasons).toHaveLength(1)
         expect(before.body.seasons[0]).toMatchObject({
+            mediaType: 'tv',
             title: 'Rick and Morty: Season 1',
             source: 'tmdb',
             sourceId: 'tv:60625:s1',
@@ -937,7 +944,7 @@ describe('Search Routes - TV (TMDB)', () => {
 
         // Log the season
         const seasonData = before.body.seasons[0]
-        const logRes = await logItem(0, { ...seasonData, mediaType: 'tv' })
+        const logRes = await logItem(0, seasonData)
         expect(logRes.statusCode).toBeLessThan(300)
 
         // Fetch seasons again -> inLibrary should be true

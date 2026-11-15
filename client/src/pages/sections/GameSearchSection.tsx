@@ -142,13 +142,7 @@ export function GameSearchSection() {
         //Check if log of this item exists already
         const existingLog = findLogForResult(logs, item)
 
-        //set the data of the clicked media item
-        const mediaData: GameResult = {
-            ...item,
-            mediaType: "game"
-        }
-
-        setTargetMedia(mediaData)
+        setTargetMedia(item)
         setTargetLog(existingLog ?? null)
         setOpenDialog("logForm")
     }

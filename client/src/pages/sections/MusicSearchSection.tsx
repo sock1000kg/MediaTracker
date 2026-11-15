@@ -139,13 +139,7 @@ export function MusicSearchSection() {
         //Check if log of this item exists already
         const existingLog = findLogForResult(logs, item)
 
-        //set the data of the clicked media item
-        const mediaData: MusicResult = {
-            ...item,
-            mediaType: "music"
-        }
-
-        setTargetMedia(mediaData)
+        setTargetMedia(item)
         setTargetParent(undefined)
         setTargetLog(existingLog ?? null)
         setOpenDialog("logForm")
@@ -153,10 +147,7 @@ export function MusicSearchSection() {
 
     const handleTrackMoreClick = (track: MusicTrackResult, album: MusicResult) => {
         const existingLog = (track.myLog ? logs.find(l => l.id === track.myLog?.id) : null) ?? findLogForResult(logs, track) ?? null
-        setTargetMedia({
-            ...track,
-            mediaType: "music",
-        })
+        setTargetMedia(track)
         setTargetParent(album)
         setTargetLog(existingLog)
         setOpenDialog("logForm")

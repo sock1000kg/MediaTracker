@@ -104,6 +104,7 @@ export class LastFmSearchService implements ISearchService {
     // Shared mapper for both albums & tracks → SearchResult[]
     mapResults(items: LastFmMusicItem[], kind: "album" | "track" = "album"): SearchResult[] {
         return items.map(i => ({
+            mediaType: "music",
             title: i.name,
             creator: i.artist,
             creators: i.artist ? [{ name: i.artist, role: "artist" }] : undefined,
@@ -227,6 +228,7 @@ export class LastFmSearchService implements ISearchService {
                 const albumSourceId = album.mbid || album.url || `${artist}:${album.name}`
 
                 albumResult = {
+                    mediaType: "music",
                     title: album.name,
                     creator: album.artist,
                     creators: album.artist ? [{ name: album.artist, role: "artist" }] : undefined,
@@ -252,6 +254,7 @@ export class LastFmSearchService implements ISearchService {
                         const dur = t.duration != null && !Number.isNaN(Number(t.duration)) && Number(t.duration) > 0 ? Number(t.duration) : null
 
                         return {
+                            mediaType: "music",
                             title: t.name,
                             creator: trackArtist,
                             creators: trackArtist ? [{ name: trackArtist, role: "artist" }] : undefined,
@@ -308,6 +311,7 @@ export class LastFmSearchService implements ISearchService {
                             const albumArtist = release["artist-credit"]?.[0]?.name || artist
                             const albumYear = release.date && /^\d{4}/.test(release.date) ? release.date.slice(0, 4) : null
                             albumResult = {
+                                mediaType: "music",
                                 title: release.title,
                                 creator: albumArtist,
                                 creators: albumArtist ? [{ name: albumArtist, role: "artist" }] : undefined,
@@ -332,6 +336,7 @@ export class LastFmSearchService implements ISearchService {
         // Fallback albumResult if still null
         if (!albumResult) {
             albumResult = {
+                mediaType: "music",
                 title: albumName || "Unknown album",
                 creator: artist || null,
                 creators: artist ? [{ name: artist, role: "artist" }] : undefined,

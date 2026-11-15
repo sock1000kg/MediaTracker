@@ -191,13 +191,7 @@ export default function BooksSearchSection() {
         //Check if log of this item exists already
         const existingLog = findLogForResult(logs, item)
 
-        //set the data of the clicked media item
-        const mediaData: BookResult = {
-            ...item,
-            mediaType: "book"
-        }
-
-        setTargetMedia(mediaData)
+        setTargetMedia(item)
         setTargetLog(existingLog ?? null)
         setOpenDialog("logForm")
     }

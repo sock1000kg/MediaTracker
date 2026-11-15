@@ -84,6 +84,7 @@ export function mapRawgGame(item: RawgGameItem): SearchResult {
         (item.platforms ?? []).map(p => p.platform?.name?.trim() ?? "").filter(Boolean)
     )]
     return {
+        mediaType: "game",
         title: item.name?.trim() as string, // undefined falls back to "Unknown title" in searchResultSchema
         creator: null,
         year: yearStr && /^\d{4}$/.test(yearStr) ? yearStr : null,

@@ -109,6 +109,7 @@ export function mapTmdbShow(item: TmdbTvItem): SearchResult {
         .filter((g): g is string => !!g)
 
     return {
+        mediaType: "tv",
         title: title as string,
         creator: null,
         year: yearStr && /^\d{4}$/.test(yearStr) ? yearStr : null,
@@ -138,6 +139,7 @@ export function mapTmdbMovie(item: TmdbMovieItem): SearchResult {
         .filter((g): g is string => !!g)
 
     return {
+        mediaType: "movie",
         title: title as string, // undefined falls back to "Unknown title" in searchResultSchema
         creator: null,
         year: yearStr && /^\d{4}$/.test(yearStr) ? yearStr : null,
@@ -315,6 +317,7 @@ export class TmdbSearchService {
         const showImageUrl = d.poster_path ? `${IMAGE_BASE}${d.poster_path}` : null
 
         const showResult: SearchResult = {
+            mediaType: "tv",
             title: showTitle,
             creator,
             creators: showCreators,
@@ -362,6 +365,7 @@ export class TmdbSearchService {
             const imageUrl = s.poster_path ? `${IMAGE_BASE}${s.poster_path}` : showImageUrl
 
             return {
+                mediaType: "tv",
                 title,
                 creator,
                 year,

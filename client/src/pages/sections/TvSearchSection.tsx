@@ -331,13 +331,7 @@ export function TvSearchSection() {
       mediaData: TvResult | TvSeasonResult
       logData: Partial<Log>
       parent?: TvResult
-    }) =>
-      // Search results don't carry a mediaType; each section adds its own.
-      createMediaAndLog(
-        { ...mediaData, mediaType: "tv" },
-        logData,
-        parent ? { ...parent, mediaType: "tv" } : undefined
-      ),
+    }) => createMediaAndLog(mediaData, logData, parent),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: fetchLogsQueryOptions().queryKey })
       queryClient.invalidateQueries({ queryKey: fetchMediasQueryOptions().queryKey })

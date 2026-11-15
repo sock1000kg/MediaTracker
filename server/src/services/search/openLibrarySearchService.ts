@@ -37,6 +37,7 @@ export class OpenLibraryService implements ISearchService {
                 : undefined
 
             return {
+                mediaType: "book",
                 title: item.title,
                 creator: item.author_name ? item.author_name.join(", ") : null,
                 creators,

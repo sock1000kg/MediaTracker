@@ -71,8 +71,7 @@ export function AlbumItem({ album, view, logs, onLog, onMore, onErrorToast }: Al
       } else {
         if (rating == null) return null
         return createMediaAndLog(
-          // Search results don't carry a mediaType; the server needs one.
-          { ...track, mediaType: "music" },
+          track,
           { status: "completed", rating },
           album
         )

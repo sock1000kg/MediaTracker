@@ -25,6 +25,7 @@ describe("seedDatabase strict vs non-strict and error propagation (Fix 4)", () =
                 {
                     mediaTypeName: "non_existent_media_type_that_fails",
                     media: {
+                        mediaType: "game",
                         title: "Broken Title",
                         source: "rawg",
                         sourceId: "999999",

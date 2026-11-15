@@ -133,10 +133,9 @@ describe("MusicSearchSection component", () => {
       results: [mockAlbum],
       nextStartIndex: null,
     })
-    // The real API sends tracks without a mediaType
     vi.mocked(searchApi.getAlbumTracks).mockResolvedValue({
       album: mockAlbum,
-      tracks: mockTracks.map((t) => ({ ...t, mediaType: undefined })) as never,
+      tracks: mockTracks,
       provider: "lastfm",
     })
     vi.mocked(mediaApi.createMediaAndLog).mockResolvedValue({
