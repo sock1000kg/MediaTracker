@@ -1,6 +1,8 @@
-import { Prisma } from "@prisma/client"
+import '@/env.js'
+import { Prisma } from "@/db.js"
 import { ZodSchema, ZodError } from "zod"
 import crypto from "crypto"
+import { LIMITS } from "@/config/limits.js"
 
 // USERS
 // password strength check
@@ -54,10 +56,13 @@ export function sanitizeRating(rating: number | string | undefined | null): numb
     return num
 }
 
-// Sanitize notes: trim whitespace, limit length to 10000 chars
+// Long enough for imported reviews (Goodreads, Letterboxd) to survive whole. Keep in sync with client/src/lib/logView.ts.
+export const MAX_NOTES_LENGTH = LIMITS.notes.maxLength
+
+// Sanitize notes: trim whitespace, limit length to MAX_NOTES_LENGTH chars
 export function sanitizeNotes(notes: string | undefined | null): string | null{
     if (!notes) return null
-    return String(notes).trim().slice(0, 10000)
+    return String(notes).trim().slice(0, MAX_NOTES_LENGTH)
 }
 
 // Sanitize title: trim, limit length to 100 chars
@@ -77,7 +82,7 @@ export function sanitizeCreator(creator: string | undefined | null): string | nu
 }
 
 // Sanitize status: only allow known statuses
-const allowedStatuses = ["completed", "in progress", "wishlist", "dropped"] as const //declare as array to check if status belongs there
+export const allowedStatuses = ["completed", "in progress", "wishlist", "dropped"] as const //declare as array to check if status belongs there
 export type AllowedStatus = (typeof allowedStatuses)[number]
 export function sanitizeStatus(status: string | undefined | null): AllowedStatus | null {
   if (status === undefined || status === null) return null
@@ -129,7 +134,7 @@ export function sanitizeDescription(desc: string | undefined | null): string | n
 
 // Sanitize source: only allow known sources (e.g., "google_books")
 // Every search provider's `source` must be listed here, or logging its results fails with 400.
-const allowedSources = ["google_books", "lastfm", "goodreads", "open_library", "jikan", "tmdb", "rawg"] as const
+const allowedSources = ["google_books", "lastfm", "goodreads", "open_library", "jikan", "anilist", "tmdb", "rawg", "mal"] as const
 export type AllowedSource = (typeof allowedSources)[number]
 export function sanitizeSource(source: string | undefined | null): AllowedSource | null {
     if (!source) return null
@@ -169,7 +174,7 @@ export function sanitizeSourceId(id: string | undefined | null): string | null {
 }
 
 // Long enough for a TMDB v4 read access token (a ~240-270 char JWT)
-export const MAX_API_KEY_LENGTH = 512
+export const MAX_API_KEY_LENGTH = LIMITS.apiKeys.maxLength
 
 // Sanitize Api Key: trim; keys longer than MAX_API_KEY_LENGTH are rejected (null), never truncated
 export function sanitizeApiKey(key: string | undefined | null): string | null {
@@ -204,7 +209,7 @@ export async function fetchAndParse<T>(
 export function sanitizeQuery(query: string | undefined | null): string | null {
     if (!query) return null
 
-    query = String(query).trim().slice(0, 100)
+    query = String(query).trim().slice(0, LIMITS.search.queryMaxLength)
     if(query === "") return null
 
     return query
@@ -309,3 +314,99 @@ export function createThrottle(minGapMs: number, clock: ThrottleClock = realCloc
 
 // Lives in its own import-free module so test setup files can use it before dotenv has loaded
 export { redactUrl } from "./redactUrl.js"
+
+
+/**
+ * Parses an import date: "YYYY/MM/DD" (Goodreads) or ISO "YYYY-MM-DD[THH:mm...]".
+ * Returns null for anything missing, malformed or not a real calendar date.
+ */
+export function parseImportDate(value: unknown): Date | null {
+    if (typeof value !== "string") return null
+    const m = /^(\d{4})[/-](\d{2})[/-](\d{2})(?:[T ].*)?$/.exec(value.trim())
+    if (!m) return null
+    const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])]
+    const date = new Date(Date.UTC(y, mo - 1, d, 12))
+    if (date.getUTCFullYear() !== y || date.getUTCMonth() !== mo - 1 || date.getUTCDate() !== d) return null
+    if (value.trim().length > 10) {
+        const full = new Date(value.trim())
+        return Number.isNaN(full.getTime()) ? null : full
+    }
+    return date
+}
+
+/**
+ * Normalizes an ISO date or datetime string (or Date object) to day precision:
+ * noon UTC (12:00:00.000Z) of the given calendar date, so time zones never flip the day.
+ * Returns null if input is null, empty or not a valid date.
+ */
+export function toDayPrecision(val: unknown): Date | null {
+    if (val === null || val === undefined) return null
+    if (val instanceof Date) {
+        if (Number.isNaN(val.getTime())) return null
+        return new Date(Date.UTC(val.getUTCFullYear(), val.getUTCMonth(), val.getUTCDate(), 12))
+    }
+    if (typeof val !== "string") return null
+    const trimmed = val.trim()
+    if (!trimmed) return null
+    const m = /^(\d{4})[/-](\d{2})[/-](\d{2})(?:[T ].*)?$/.exec(trimmed)
+    if (!m) return null
+    const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])]
+    const date = new Date(Date.UTC(y, mo - 1, d, 12))
+    if (date.getUTCFullYear() !== y || date.getUTCMonth() !== mo - 1 || date.getUTCDate() !== d) return null
+    return date
+}
+
+// TAGS
+export const MAX_TAG_LENGTH = LIMITS.tags.maxLength
+export const MAX_TAGS_PER_LOG = LIMITS.tags.maxPerLog
+export const MAX_TAGS_PER_USER = LIMITS.tags.maxPerUser
+
+/**
+ * Normalizes a tag name:
+ * - strips leading '#'
+ * - collapses inner whitespace
+ * - trims
+ * Valid names are 1–40 characters and contain no commas.
+ * Returns null if invalid.
+ */
+export function normalizeTagName(raw: unknown): string | null {
+    if (typeof raw !== "string") return null
+    let s = raw.trim()
+    while (s.startsWith("#")) {
+        s = s.slice(1).trim()
+    }
+    s = s.replace(/\s+/g, " ")
+    if (s.length < 1 || s.length > MAX_TAG_LENGTH) return null
+    if (s.includes(",")) return null
+    return s
+}
+
+export function tagKey(name: string): string {
+    return name.toLowerCase()
+}
+
+// COLLECTIONS
+export const MAX_COLLECTION_NAME_LENGTH = LIMITS.collections.nameMaxLength
+export const MAX_COLLECTION_DESC_LENGTH = LIMITS.collections.descMaxLength
+export const MAX_COLLECTIONS_PER_USER = LIMITS.collections.maxPerUser
+export const MAX_ITEMS_PER_COLLECTION = LIMITS.collections.maxItemsPerCollection
+
+export function normalizeCollectionName(raw: unknown): string | null {
+    if (typeof raw !== "string") return null
+    const s = raw.trim().replace(/\s+/g, " ")
+    if (s.length < 1 || s.length > MAX_COLLECTION_NAME_LENGTH) return null
+    return s
+}
+
+export function collectionKey(name: string): string {
+    return name.toLowerCase()
+}
+
+export function sanitizeCollectionDescription(raw: unknown): string | null {
+    if (raw === null || raw === undefined) return null
+    if (typeof raw !== "string") return null
+    const s = raw.trim()
+    return s.length === 0 ? null : s
+}
+
+

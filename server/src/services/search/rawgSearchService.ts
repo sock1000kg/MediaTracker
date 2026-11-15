@@ -23,16 +23,9 @@ export const RAWG_ORDERING: Record<NonNullable<GameSearchFilters["sort"]>, strin
     relevance: null, rating: "-rating", newest: "-released", metacritic: "-metacritic",
 }
 
-// Store / platform features only. Niche genres and play modes (Co-op, Multiplayer, PvP, MMO...) are kept.
-export const JUNK_RAWG_TAGS: readonly string[] = [
-    "Singleplayer", "Steam Achievements", "Full controller support", "Partial Controller Support",
-    "Steam Cloud", "Steam Trading Cards", "Steam-Trading-Cards", "Steam Leaderboards", "Steam Workshop",
-    "Steam Turn Notifications", "Steam VR Collectibles", "controller support", "cloud saves", "achievements",
-    "Stats", "Includes level editor", "Includes Source SDK", "In-App Purchases", "Early Access",
-    "Captions available", "Commentary available", "Remote Play on TV", "Remote Play Together",
-    "Family Sharing", "Mouse only option",
-]
-const JUNK_SET = new Set(JUNK_RAWG_TAGS.map(t => t.toLowerCase()))
+import { isJunkGenre, JUNK_RAWG_TAGS } from "@/services/genreService.js"
+
+export { JUNK_RAWG_TAGS }
 
 // The key is a query parameter: never log or echo this URL
 export function buildRawgSearchUrl(
@@ -78,7 +71,7 @@ export function cleanRawgCategories(
     for (const t of tags ?? []) {
         if (t.language !== "eng") continue
         const name = t.name?.trim()
-        if (!name || JUNK_SET.has(name.toLowerCase())) continue
+        if (!name || isJunkGenre(name, "game")) continue
         add(name)
     }
     return out.length ? out.slice(0, MAX_CATEGORIES) : null
@@ -91,6 +84,7 @@ export function mapRawgGame(item: RawgGameItem): SearchResult {
         (item.platforms ?? []).map(p => p.platform?.name?.trim() ?? "").filter(Boolean)
     )]
     return {
+        mediaType: "game",
         title: item.name?.trim() as string, // undefined falls back to "Unknown title" in searchResultSchema
         creator: null,
         year: yearStr && /^\d{4}$/.test(yearStr) ? yearStr : null,
@@ -105,6 +99,7 @@ export function mapRawgGame(item: RawgGameItem): SearchResult {
             metacritic: item.metacritic ?? null,
             score: item.rating ? item.rating : null,
             categories: cleanRawgCategories(item.genres, item.tags),
+            playtimeHours: typeof item.playtime === "number" && item.playtime > 0 ? item.playtime : null,
         },
     } as SearchResult
 }
@@ -213,8 +208,10 @@ export const rawgSearchService = new RawgSearchService()
 export type RawgEnrichment = {
     existingId: number | null // set when the row already exists and must be updated after the transaction
     creator: string | null
+    creators: { name: string; role: string }[]
+    genres: string[] | null
     description: string | null
-    patch: { publishers: string[] | null, categories: string[] | null }
+    patch: { publishers: string[] | null }
 }
 
 // Log-time enrichment (publishers: undefined = never tried, null/array = tried).
@@ -236,22 +233,25 @@ export async function enrichRawgOnLog(
 
         const details = await rawgSearchService.fetchGameDetails(userId, gameId)
         const developers = details.developers.length ? details.developers.join(", ") : null
-        const currentMeta = (existing ? existingMeta : mediaData.metadata) as { categories?: string[] | null } | null | undefined
+        const developersStructured = details.developers.map(name => ({ name, role: "developer" }))
         const patch = {
             publishers: details.publishers.length ? details.publishers : null,
-            categories: details.categories ?? currentMeta?.categories ?? null,
         }
 
         if (existing) {
             return {
                 existingId: existing.id,
                 creator: existing.creator ? null : developers,
+                creators: developersStructured,
+                genres: details.categories,
                 description: existing.description ? null : details.description,
                 patch,
             }
         }
         mediaData.creator = mediaData.creator ?? developers
         mediaData.description = mediaData.description ?? details.description
+        ;(mediaData as Record<string, unknown>).creators = developersStructured
+        ;(mediaData as Record<string, unknown>).genres = details.categories
         mediaData.metadata = { ...(mediaData.metadata as object ?? {}), ...patch }
         return null
     } catch (error: unknown) {

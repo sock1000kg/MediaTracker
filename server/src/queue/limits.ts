@@ -1,6 +1,7 @@
 import { AppError } from "@/api/domain/error.js"
+import { LIMITS } from "@/config/limits.js"
 
-export const MAX_PAYLOAD_BYTES = 3 * 1024 * 1024
+export const MAX_PAYLOAD_BYTES = LIMITS.queue.maxPayloadBytes
 
 export function assertPayloadSize(payload: unknown): void {
     const json = JSON.stringify(payload) ?? ""

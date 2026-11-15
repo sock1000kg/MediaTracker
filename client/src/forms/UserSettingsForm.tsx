@@ -45,11 +45,14 @@ const THEME_LABELS: { value: ThemePref; label: string }[] = [
 const TAB_LABELS: { value: StartTab; label: string }[] = [
   { value: "logs", label: "Logs" },
   { value: "medias", label: "Medias" },
+  { value: "collections", label: "Collections" },
   { value: "mediaTypes", label: "Media Types" },
+  { value: "stats", label: "Stats" },
   { value: "bookSearch", label: "Book search" },
   { value: "musicSearch", label: "Music search" },
   { value: "animeSearch", label: "Anime & manga search" },
   { value: "movieSearch", label: "Movie search" },
+  { value: "tvSearch", label: "TV search" },
   { value: "gameSearch", label: "Game search" },
   { value: "settings", label: "Settings" },
 ]
@@ -346,10 +349,11 @@ function PreferencesSection() {
     music: readStoredBool("hideLogged.music"),
     anime: readStoredBool("hideLogged.anime"),
     movies: readStoredBool("hideLogged.movies"),
+    tv: readStoredBool("hideLogged.tv"),
     games: readStoredBool("hideLogged.games"),
   })
-  const hideValue = (k: "books" | "music" | "anime" | "movies" | "games") => effectiveHideLogged(prefs.hideLogged?.[k], localHide[k])
-  const setHide = (k: "books" | "music" | "anime" | "movies" | "games", next: boolean) => {
+  const hideValue = (k: "books" | "music" | "anime" | "movies" | "tv" | "games") => effectiveHideLogged(prefs.hideLogged?.[k], localHide[k])
+  const setHide = (k: "books" | "music" | "anime" | "movies" | "tv" | "games", next: boolean) => {
     writeStoredBool(`hideLogged.${k}`, next)
     setLocalHide((p) => ({ ...p, [k]: next }))
     updatePrefs({ hideLogged: { [k]: next } })
@@ -449,6 +453,16 @@ function PreferencesSection() {
               onChange={(e) => setHide("movies", e.target.checked)}
             />
             <Label htmlFor="pref-hide-movies">Movies</Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              id="pref-hide-tv"
+              type="checkbox"
+              className="size-4 accent-primary"
+              checked={hideValue("tv")}
+              onChange={(e) => setHide("tv", e.target.checked)}
+            />
+            <Label htmlFor="pref-hide-tv">TV</Label>
           </div>
           <div className="flex items-center gap-2">
             <input
@@ -630,7 +644,7 @@ export function UserSettingsForm() {
   const [loadingLine] = useState(() => pickLoadingLine())
   const { data: me, error, isPending, refetch, isFetching } = useQuery(fetchMeQueryOptions())
 
-  if (isPending) return <p className="text-muted-foreground animate-pulse">{loadingLine}</p>
+  if (isPending) return <p className="font-hand text-lg text-muted-foreground animate-pulse">{loadingLine}</p>
 
   if (error || !me) {
     return (

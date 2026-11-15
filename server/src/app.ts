@@ -1,13 +1,14 @@
+import '@/env.js'
 import express, { Application } from 'express'
 import cors from 'cors'
 import helmet from "helmet"
-import 'dotenv/config'
 
 // Middleware
 import {globalLimiter} from '@/middleWare/rateLimiter.js'
 import authMiddleWare from '@/middleWare/authMiddleware.js'
 
 import healthRoutes from '@/api/routes/healthRoutes.js'
+import configRoutes from '@/api/routes/configRoutes.js'
 import authRoutes from '@/api/routes/authRoutes.js'
 import logRoutes from '@/api/routes/logRoutes.js'
 import mediaRoutes from '@/api/routes/mediaRoutes.js'
@@ -17,6 +18,8 @@ import apiKeyRoutes from '@/api/routes/apiKeyRoutes.js'
 import userRoutes from '@/api/routes/userRoutes.js'
 import jobRoutes from '@/api/routes/jobRoutes.js'
 import importRoutes from '@/api/routes/importRoutes.js'
+import tagRoutes from '@/api/routes/tagRoutes.js'
+import collectionRoutes from '@/api/routes/collectionRoutes.js'
 import errorHandler from '@/middleWare/errorHandlerMiddleware.js'
 import logger from '@/middleWare/loggingMiddleware.js'
 import cookieParser from 'cookie-parser'
@@ -50,6 +53,7 @@ const apiRouter = express.Router()
 
 // Public
 apiRouter.use('/healthz', healthRoutes)
+apiRouter.use('/config', configRoutes)
 apiRouter.use('/auth', authRoutes)
 
 // Protected by login
@@ -63,6 +67,8 @@ protectedRouter.use('/api-key', apiKeyRoutes)
 protectedRouter.use('/imports', importRoutes)
 protectedRouter.use('/users', userRoutes)
 protectedRouter.use('/jobs', jobRoutes)
+protectedRouter.use('/tags', tagRoutes)
+protectedRouter.use('/collections', collectionRoutes)
 
 apiRouter.use('/', protectedRouter)
 app.use(apiRouter)

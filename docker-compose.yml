@@ -7,10 +7,11 @@ services:
       dockerfile: dockerfile
       target: production
     env_file:
-      - .env
+      - ./server/.env
     environment:
       # Internal service address (not a secret). Named REDIS_URL because that's the URL scheme BullMQ expects; Valkey is Redis-compatible.
       - REDIS_URL=redis://valkey:6379
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
     depends_on: # Wait for database and valkey to be healthy first
       database:
         condition: service_healthy
@@ -21,12 +22,12 @@ services:
     image: postgres:17
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 2s
       retries: 20
     env_file:
-      - .env
+      - ./server/.env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     logging:

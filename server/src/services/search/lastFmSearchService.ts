@@ -1,24 +1,25 @@
 // services/musicSearchService.js
 import {
+    lastFmAlbumInfoResponseSchema,
     lastFmAlbumSearchResponseSchema,
     lastFmTopTagsResponseSchema,
     LastFmMusicItem,
     lastFmTrackSearchResponseSchema
 } from "@/schemas/search/musicSchemas.js"
 
-import { searchResultsSchema, SearchResult } from "@/schemas/search/searchSchemas.js"
+import { searchResultsSchema, searchResultSchema, SearchResult } from "@/schemas/search/searchSchemas.js"
 import { createUserAgentHeader, decryptKey, fetchAndParse, validateSchema } from "@/utilities.js"
 import { findUserById } from "@/repositories/authRepository.js"
 import { ISearchService } from "./searchServiceInterface.js"
 import { AppError } from "@/api/domain/error.js"
+import { musicBrainzService, MusicBrainzRelease } from "./musicBrainzService.js"
+import prisma from "@/prismaClient.js"
 
-export const JUNK_LASTFM_TAGS = [
-    "seen live", "favorites", "favourites", "favorite", "favourite", "my favorite",
-    "albums i own", "albums i have", "love", "loved", "awesome", "beautiful", "amazing",
-    "cool", "check out", "spotify", "vinyl", "owned", "to listen", "under 2000 listeners"
-]
+import { isJunkGenre, JUNK_MUSIC_TAGS } from "@/services/genreService.js"
 
-const JUNK_LASTFM_PREFIXES = ["favorite ", "favourite "]
+export { JUNK_MUSIC_TAGS }
+export const JUNK_LASTFM_TAGS = JUNK_MUSIC_TAGS
+
 const MIN_TAG_COUNT = 5
 const MAX_TAGS = 5
 
@@ -27,6 +28,21 @@ export function buildTopTagsUrl(kind: "album" | "track", artist: string, name: s
     url.searchParams.set("method", `${kind}.gettoptags`)
     url.searchParams.set("artist", artist)
     url.searchParams.set(kind, name)
+    url.searchParams.set("autocorrect", "1")
+    url.searchParams.set("api_key", apiKey)
+    url.searchParams.set("format", "json")
+    return url
+}
+
+export function buildAlbumInfoUrl(apiKey: string, artist?: string, album?: string, mbid?: string): URL {
+    const url = new URL("https://ws.audioscrobbler.com/2.0/")
+    url.searchParams.set("method", "album.getinfo")
+    if (mbid) {
+        url.searchParams.set("mbid", mbid)
+    } else {
+        if (artist) url.searchParams.set("artist", artist)
+        if (album) url.searchParams.set("album", album)
+    }
     url.searchParams.set("autocorrect", "1")
     url.searchParams.set("api_key", apiKey)
     url.searchParams.set("format", "json")
@@ -44,9 +60,7 @@ export function cleanLastFmTags(tags: { name: string, count: number }[] | null |
         const lower = tag.toLowerCase()
 
         if (!tag) continue
-        if (JUNK_LASTFM_TAGS.includes(lower)) continue
-        if (JUNK_LASTFM_PREFIXES.some(p => lower.startsWith(p))) continue
-        if (/^\d{4}$/.test(tag)) continue
+        if (isJunkGenre(tag, "music")) continue
         if (artistLower && lower === artistLower) continue
         if (count < MIN_TAG_COUNT) continue
         if (seen.has(lower)) continue
@@ -64,8 +78,12 @@ export class LastFmSearchService implements ISearchService {
     maxResults = 30
 
     async getUserApiKey(userId: number) {
+        if (!userId && process.env.LASTFM_API_KEY) {
+            return process.env.LASTFM_API_KEY
+        }
         const user = await findUserById(userId)
         if (!user) {
+            if (process.env.LASTFM_API_KEY) return process.env.LASTFM_API_KEY
             throw new AppError("Non-existent userId", 404)
         }
 
@@ -74,7 +92,7 @@ export class LastFmSearchService implements ISearchService {
             key: decryptKey(k.key)
         }))
 
-        const lastfmKey = decrypted.find(k => k.service === "lastfm")?.key
+        const lastfmKey = decrypted.find(k => k.service === "lastfm")?.key || process.env.LASTFM_API_KEY
 
         if (!lastfmKey) {
             throw new AppError("Missing Music API Key", 404)
@@ -86,8 +104,10 @@ export class LastFmSearchService implements ISearchService {
     // Shared mapper for both albums & tracks → SearchResult[]
     mapResults(items: LastFmMusicItem[], kind: "album" | "track" = "album"): SearchResult[] {
         return items.map(i => ({
+            mediaType: "music",
             title: i.name,
             creator: i.artist,
+            creators: i.artist ? [{ name: i.artist, role: "artist" }] : undefined,
             year: null,
             description: null,
             source: "lastfm",
@@ -167,6 +187,226 @@ export class LastFmSearchService implements ISearchService {
         return {
             results: validateSchema(searchResultsSchema, results),
             nextStartIndex: nextPage
+        }
+    }
+
+    async fetchAlbumTracks(
+        userId: number,
+        artist: string,
+        albumName: string,
+        mbid?: string
+    ): Promise<{
+        album: SearchResult
+        tracks: SearchResult[]
+        provider: "lastfm" | "musicbrainz" | null
+    }> {
+        let albumResult: SearchResult | null = null
+        let tracks: SearchResult[] = []
+        let provider: "lastfm" | "musicbrainz" | null = null
+        let lastFmMbid: string | null = mbid || null
+
+        // 1. Try Last.fm first
+        try {
+            const key = await this.getUserApiKey(userId)
+            const url = buildAlbumInfoUrl(key, artist, albumName, mbid)
+            const init: RequestInit = { ...createUserAgentHeader(), signal: AbortSignal.timeout(10000) }
+            const raw = await fetchAndParse(
+                url,
+                lastFmAlbumInfoResponseSchema,
+                "Last.fm API error",
+                "Failed to fetch from Last.fm",
+                init
+            )
+
+            const album = raw.album
+            if (album) {
+                if (album.mbid) lastFmMbid = album.mbid
+                const imageUrl = album.image?.find(img => img.size === "large")?.["#text"]
+                    || album.image?.find(img => img.size === "extralarge")?.["#text"]
+                    || album.image?.find(img => img.size === "mega")?.["#text"]
+                    || null
+                const albumSourceId = album.mbid || album.url || `${artist}:${album.name}`
+
+                albumResult = {
+                    mediaType: "music",
+                    title: album.name,
+                    creator: album.artist,
+                    creators: album.artist ? [{ name: album.artist, role: "artist" }] : undefined,
+                    year: null,
+                    description: album.wiki?.summary || null,
+                    source: "lastfm",
+                    sourceId: albumSourceId,
+                    imageUrl: imageUrl || null,
+                    metadata: {
+                        url: album.url,
+                        kind: "album",
+                    },
+                }
+
+                const rawTracks = album.tracks?.track ?? []
+                if (rawTracks.length > 0) {
+                    provider = "lastfm"
+                    tracks = rawTracks.map((t, idx) => {
+                        const rankVal = t["@attr"]?.rank
+                        const trackNumber = rankVal != null && !Number.isNaN(Number(rankVal)) ? Number(rankVal) : idx + 1
+                        const trackArtist = (typeof t.artist === "object" ? t.artist?.name : t.artist) || album.artist
+                        const sourceId = `lastfm:${albumSourceId}#${trackNumber}`
+                        const dur = t.duration != null && !Number.isNaN(Number(t.duration)) && Number(t.duration) > 0 ? Number(t.duration) : null
+
+                        return {
+                            mediaType: "music",
+                            title: t.name,
+                            creator: trackArtist,
+                            creators: trackArtist ? [{ name: trackArtist, role: "artist" }] : undefined,
+                            year: null,
+                            description: null,
+                            source: "lastfm",
+                            sourceId,
+                            imageUrl: null,
+                            metadata: {
+                                kind: "track",
+                                album: album.name,
+                                albumSourceId,
+                                trackNumber,
+                                durationSec: dur,
+                                url: t.url,
+                            },
+                        }
+                    })
+                }
+            }
+        } catch (error) {
+            console.warn("Last.fm album.getInfo failed:", error)
+        }
+
+        // 2. MusicBrainz fallback if no tracks from Last.fm
+        if (tracks.length === 0) {
+            try {
+                let release: MusicBrainzRelease | null = null
+                if (lastFmMbid) {
+                    release = await musicBrainzService.getRelease(lastFmMbid)
+                }
+                if (!release && (albumName || artist)) {
+                    const searchArtist = artist || albumResult?.creator || ""
+                    const searchAlbum = albumName || albumResult?.title || ""
+                    if (searchAlbum) {
+                        const foundMbid = await musicBrainzService.searchRelease(searchArtist, searchAlbum)
+                        if (foundMbid) {
+                            release = await musicBrainzService.getRelease(foundMbid)
+                        }
+                    }
+                }
+
+                if (release) {
+                    const mbTracks = musicBrainzService.mapReleaseTracks(release, artist || albumResult?.creator || "")
+                    if (mbTracks.length > 0) {
+                        provider = "musicbrainz"
+                        tracks = mbTracks
+
+                        if (albumResult) {
+                            if (!albumResult.imageUrl) {
+                                albumResult.imageUrl = musicBrainzService.getCoverArtUrl(release.id)
+                            }
+                        } else {
+                            const albumArtist = release["artist-credit"]?.[0]?.name || artist
+                            const albumYear = release.date && /^\d{4}/.test(release.date) ? release.date.slice(0, 4) : null
+                            albumResult = {
+                                mediaType: "music",
+                                title: release.title,
+                                creator: albumArtist,
+                                creators: albumArtist ? [{ name: albumArtist, role: "artist" }] : undefined,
+                                year: albumYear,
+                                description: null,
+                                source: "musicbrainz",
+                                sourceId: release.id,
+                                imageUrl: musicBrainzService.getCoverArtUrl(release.id),
+                                metadata: {
+                                    url: `https://musicbrainz.org/release/${release.id}`,
+                                    kind: "album",
+                                },
+                            }
+                        }
+                    }
+                }
+            } catch (mbError) {
+                console.warn("MusicBrainz fallback failed:", mbError)
+            }
+        }
+
+        // Fallback albumResult if still null
+        if (!albumResult) {
+            albumResult = {
+                mediaType: "music",
+                title: albumName || "Unknown album",
+                creator: artist || null,
+                creators: artist ? [{ name: artist, role: "artist" }] : undefined,
+                year: null,
+                description: null,
+                source: provider || "lastfm",
+                sourceId: mbid || `${artist}:${albumName}`,
+                imageUrl: null,
+                metadata: {
+                    kind: "album",
+                },
+            }
+        }
+
+        // 3. Attach myLog and inLibrary for tracks and album
+        if (tracks.length > 0 && provider) {
+            const trackSourceIds = tracks.map(t => t.sourceId)
+            const trackMedias = await prisma.media.findMany({
+                where: {
+                    source: provider,
+                    sourceId: { in: trackSourceIds },
+                },
+                select: { id: true, sourceId: true },
+            })
+
+            const mediaIdBySourceId = new Map<string, number>()
+            for (const m of trackMedias) {
+                if (m.sourceId) mediaIdBySourceId.set(m.sourceId, m.id)
+            }
+
+            const mediaIds = Array.from(mediaIdBySourceId.values())
+            const userLogs = (userId && mediaIds.length > 0) ? await prisma.userLogs.findMany({
+                where: {
+                    userId,
+                    mediaId: { in: mediaIds },
+                },
+                select: { id: true, mediaId: true, rating: true, status: true },
+            }) : []
+
+            const logByMediaId = new Map<number, { id: number; rating: number | null; status: string | null }>()
+            for (const l of userLogs) {
+                logByMediaId.set(l.mediaId, { id: l.id, rating: l.rating, status: l.status })
+            }
+
+            for (const track of tracks) {
+                const mId = track.sourceId ? mediaIdBySourceId.get(track.sourceId) : undefined
+                const log = mId != null ? logByMediaId.get(mId) ?? null : null
+                track.myLog = log
+                track.inLibrary = Boolean(log)
+            }
+        }
+
+        if (userId && albumResult.sourceId) {
+            const albumLog = await prisma.userLogs.findFirst({
+                where: {
+                    userId,
+                    media: {
+                        source: albumResult.source,
+                        sourceId: albumResult.sourceId,
+                    },
+                },
+                select: { id: true },
+            })
+            albumResult.inLibrary = Boolean(albumLog)
+        }
+
+        return {
+            album: validateSchema(searchResultSchema, albumResult),
+            tracks: validateSchema(searchResultsSchema, tracks),
+            provider,
         }
     }
 }

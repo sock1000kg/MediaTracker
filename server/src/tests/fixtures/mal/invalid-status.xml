@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<myanimelist>
+    <myinfo>
+        <user_export_type>1</user_export_type>
+    </myinfo>
+    <anime>
+        <series_animedb_id>999</series_animedb_id>
+        <series_title><![CDATA[Weird Status Anime]]></series_title>
+        <my_status>UnknownStatusHere</my_status>
+    </anime>
+</myanimelist>

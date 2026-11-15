@@ -42,7 +42,7 @@ const getMediaSortValue = (media: Media, field: SortField) => {
       case "date": return new Date(media.created_at).getTime()
       case "pageCount": return Number((media.metadata as MediaMetadata)?.pageCount ?? 0)
       case "categories": {
-          const cats = (media.metadata as MediaMetadata)?.categories
+          const cats = media.genres ?? (media.metadata as MediaMetadata)?.categories
           return Array.isArray(cats) ? cats.join(", ") : String(cats || "")
       }
       default: return ""
@@ -202,12 +202,18 @@ export default function MediasSection() {
   // LOG
   const createLogMutation = useMutation({
     mutationFn: createLog,
-    onSuccess: () => queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey}),
+    onSuccess: () => {
+      queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey })
+      queryClient.invalidateQueries({ queryKey: ["tags"] })
+    },
   })
   
   const editLogMutation = useMutation({
     mutationFn: editLog,
-    onSuccess: () => queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey}),
+    onSuccess: () => {
+      queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey })
+      queryClient.invalidateQueries({ queryKey: ["tags"] })
+    },
   })
   
   //HANDLERS
@@ -297,7 +303,7 @@ export default function MediasSection() {
         </div>
       </div>
 
-      {pending && <p className="text-muted-foreground m-4 animate-pulse">{loadingLine}</p>}
+      {pending && <p className="font-hand text-lg text-muted-foreground m-4 animate-pulse">{loadingLine}</p>}
 
       {/* Error message */}
       {errorMessage && (
@@ -335,7 +341,7 @@ export default function MediasSection() {
                       ))}
                     </ul>
                   ) : (
-                    <ul ref={reveal.listRef(section.key)} className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-x-5 gap-y-7">
+                    <ul ref={reveal.listRef(section.key)} className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-x-5 gap-y-7">
                       {visible.map((media) => (
                         <MediaTile key={media.id} media={media} log={logByMediaId.get(media.id)} onEdit={handleEditClick} onDelete={handleDeleteClick} onLog={handleLogClick} />
                       ))}

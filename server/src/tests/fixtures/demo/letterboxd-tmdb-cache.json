@@ -1,0 +1,804 @@
+{
+  "whiplash:::2014": {
+    "title": "Whiplash",
+    "creator": null,
+    "year": "2014",
+    "description": "Under the direction of a ruthless instructor, a talented young drummer begins to pursue perfection at any cost, even his humanity.",
+    "source": "tmdb",
+    "sourceId": "movie-244786",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/7fn624j5lj3xTme2SgiLCeuedmO.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/244786",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 8.376,
+      "categories": [
+        "Drama",
+        "Music",
+        "Thriller"
+      ]
+    }
+  },
+  "oppenheimer:::2023": {
+    "title": "Oppenheimer",
+    "creator": null,
+    "year": "2023",
+    "description": "The story of J. Robert Oppenheimer's role in the development of the atomic bomb during World War II.",
+    "source": "tmdb",
+    "sourceId": "movie-872585",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/872585",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 8.023,
+      "categories": [
+        "Drama",
+        "History",
+        "War"
+      ]
+    }
+  },
+  "the truman show:::1998": {
+    "title": "The Truman Show",
+    "creator": null,
+    "year": "1998",
+    "description": "In a picture-perfect seaside town, an insurance salesman begins to realize that his entire existence may be staged and observed by a vast unseen audience as part of a long-running real-time reality TV show.",
+    "source": "tmdb",
+    "sourceId": "movie-37165",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/vuza0WqY239yBXOadKlGwJsZJFE.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/37165",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 8.161,
+      "categories": [
+        "Comedy",
+        "Drama"
+      ]
+    }
+  },
+  "midsommar:::2019": {
+    "title": "Midsommar",
+    "creator": null,
+    "year": "2019",
+    "description": "Several friends travel to Sweden to study as anthropologists a summer festival that is held every ninety years in the remote hometown of one of them. What begins as a dream vacation in a place where the sun never sets, gradually turns into a dark nightmare as the mysterious inhabitants invite them to participate in their disturbing festive activities.",
+    "source": "tmdb",
+    "sourceId": "movie-530385",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/7LEI8ulZzO5gy9Ww2NVCrKmHeDZ.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/530385",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 7.138,
+      "categories": [
+        "Horror",
+        "Drama",
+        "Mystery"
+      ]
+    }
+  },
+  "spider-man: across the spider-verse:::2023": {
+    "title": "Spider-Man: Across the Spider-Verse",
+    "creator": null,
+    "year": "2023",
+    "description": "After reuniting with Gwen Stacy, Brooklyn’s full-time, friendly neighborhood Spider-Man is catapulted across the Multiverse, where he encounters the Spider Society, a team of Spider-People charged with protecting the Multiverse's very existence. But when the heroes clash on how to handle a new threat, Miles finds himself pitted against the other Spiders and must set out on his own to save those he loves most.",
+    "source": "tmdb",
+    "sourceId": "movie-569094",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/569094",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 8.345,
+      "categories": [
+        "Animation",
+        "Action",
+        "Adventure",
+        "Science Fiction"
+      ]
+    }
+  },
+  "hereditary:::2018": {
+    "title": "Hereditary",
+    "creator": null,
+    "year": "2018",
+    "description": "When the matriarch of the Graham family passes away, her daughter begins to unravel cryptic and increasingly terrifying secrets about her ancestry.",
+    "source": "tmdb",
+    "sourceId": "movie-493922",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/4GFPuL14eXi66V96xBWY73Y9PfR.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/493922",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 7.296,
+      "categories": [
+        "Horror",
+        "Mystery",
+        "Thriller"
+      ]
+    }
+  },
+  "ju-on: the grudge:::2002": {
+    "title": "Ju-on: The Grudge",
+    "creator": null,
+    "year": "2002",
+    "description": "When a social worker is sent to check on a traumatized elderly woman whose family have moved in at the site of a notorious murder case, she unwittingly unleashes a cycle of terror that transmits via its victims.",
+    "source": "tmdb",
+    "sourceId": "movie-11838",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/6q1hlBC6rudc3mHwXsbMBR2xAT6.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/11838",
+      "kind": "movie",
+      "originalTitle": "呪怨",
+      "originalLanguage": "ja",
+      "score": 6.755,
+      "categories": [
+        "Horror"
+      ]
+    }
+  },
+  "salò, or the 120 days of sodom:::1975": {
+    "title": "Salò, or the 120 Days of Sodom",
+    "creator": null,
+    "year": "1976",
+    "description": "Four corrupted fascist libertines round up 9 teenage boys and girls and subject them to 120 days of sadistic physical, mental and sexual torture.",
+    "source": "tmdb",
+    "sourceId": "movie-5336",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/xnaDdiRfZlJaTf6JRc4in40eaeI.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/5336",
+      "kind": "movie",
+      "originalTitle": "Salò o le 120 giornate di Sodoma",
+      "originalLanguage": "it",
+      "score": 6.3,
+      "categories": [
+        "Horror",
+        "Drama"
+      ]
+    }
+  },
+  "creep:::2014": {
+    "title": "Creep",
+    "creator": null,
+    "year": "2014",
+    "description": "Looking for work, Aaron comes across a cryptic online ad: \"$1,000 for the day. Filming service. Discretion is appreciated.\" Low on cash and full of naiveté, he decides to go for it. He drives to a cabin in a remote mountain town where he meets Josef, his cinematic subject for the day. Josef is sincere and the project seems heartfelt, so Aaron begins to film. But as the day goes on, it becomes clear that Josef is not who he says, and his intentions are not at all pure.",
+    "source": "tmdb",
+    "sourceId": "movie-250574",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/qn53D574tT0YRyLgirEFHQwGUXw.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/250574",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 6.41,
+      "categories": [
+        "Horror",
+        "Thriller"
+      ]
+    }
+  },
+  "the ritual:::2017": {
+    "title": "The Ritual",
+    "creator": null,
+    "year": "2017",
+    "description": "A group of university friends reunite for a hiking trip in Sweden, but are stalked by a menacing presence when they're diverted through the woods.",
+    "source": "tmdb",
+    "sourceId": "movie-433808",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/9022CYEGqYETCeXN1oE3uwYJWub.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/433808",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 6.3,
+      "categories": [
+        "Horror",
+        "Mystery"
+      ]
+    }
+  },
+  "the substance:::2024": {
+    "title": "The Substance",
+    "creator": null,
+    "year": "2024",
+    "description": "A fading celebrity decides to use a black market drug, a cell-replicating substance that temporarily creates a younger, better version of herself.",
+    "source": "tmdb",
+    "sourceId": "movie-933260",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/lqoMzCcZYEFK729d6qzt349fB4o.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/933260",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 7.131,
+      "categories": [
+        "Horror",
+        "Science Fiction"
+      ]
+    }
+  },
+  "a minecraft movie:::2025": {
+    "title": "A Minecraft Movie",
+    "creator": null,
+    "year": "2025",
+    "description": "Four misfits find themselves struggling with ordinary problems when they are suddenly pulled through a mysterious portal into the Overworld: a bizarre, cubic wonderland that thrives on imagination. To get back home, they'll have to master this world while embarking on a magical quest with an unexpected, expert crafter, Steve.",
+    "source": "tmdb",
+    "sourceId": "movie-950387",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/yFHHfHcUgGAxziP1C3lLt0q2T4s.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/950387",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 6.189,
+      "categories": [
+        "Family",
+        "Fantasy",
+        "Comedy",
+        "Adventure"
+      ]
+    }
+  },
+  "everything everywhere all at once:::2022": {
+    "title": "Everything Everywhere All at Once",
+    "creator": null,
+    "year": "2022",
+    "description": "An aging Chinese immigrant is swept up in an insane adventure, where she alone can save what's important to her by connecting with the lives she could have led in other universes.",
+    "source": "tmdb",
+    "sourceId": "movie-545611",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/u68AjlvlutfEIcpmbYpKcdi09ut.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/545611",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 7.71,
+      "categories": [
+        "Action",
+        "Adventure",
+        "Science Fiction"
+      ]
+    }
+  },
+  "before sunset:::2004": {
+    "title": "Before Sunset",
+    "creator": null,
+    "year": "2004",
+    "description": "Nine years later, Jesse travels across Europe giving readings from a book he wrote about the night he spent in Vienna with Celine. After his reading in Paris, Celine finds him, and they spend part of the day together before Jesse has to again leave for a flight. They are both in relationships now, and Jesse has a son, but as their strong feelings for each other start to return, both confess a longing for more.",
+    "source": "tmdb",
+    "sourceId": "movie-80",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/gycdE1ARByGQcK4fYR2mgpU6OO.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/80",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 7.8,
+      "categories": [
+        "Drama",
+        "Romance"
+      ]
+    }
+  },
+  "before sunrise:::1995": {
+    "title": "Before Sunrise",
+    "creator": null,
+    "year": "1995",
+    "description": "An unexpected meeting on a train leads two travelers to spend an evening wandering through Vienna. As the night unfolds, they share stories and conversations about life and love, exploring new ideas while a quiet intimacy grows between them, knowing it may be their only night together.",
+    "source": "tmdb",
+    "sourceId": "movie-76",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/kf1Jb1c2JAOqjuzA3H4oDM263uB.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/76",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 7.968,
+      "categories": [
+        "Drama",
+        "Romance"
+      ]
+    }
+  },
+  "before midnight:::2013": {
+    "title": "Before Midnight",
+    "creator": null,
+    "year": "2013",
+    "description": "It has been nine years since we last met Jesse and Celine, the French-American couple who once met on a train in Vienna. They now live in Paris with twin daughters but have spent a summer in Greece at the invitation of an author colleague of Jesse's. When the vacation is over and Jesse must send his teenage son off to the States, he begins to question his life decisions, and his relationship with Celine is at risk.",
+    "source": "tmdb",
+    "sourceId": "movie-132344",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/qbGKJmNUroDz75kh5Oafoall89e.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/132344",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 7.5,
+      "categories": [
+        "Romance",
+        "Drama"
+      ]
+    }
+  },
+  "the maze runner:::2014": {
+    "title": "The Maze Runner",
+    "creator": null,
+    "year": "2014",
+    "description": "A teenager with no memory of his past finds himself among a group of boys living in a walled enclosure surrounded by a massive, ever-changing maze. As he struggles to adapt to their rules and society, he begins to uncover clues that may lead to escape and the truth behind their confinement.",
+    "source": "tmdb",
+    "sourceId": "movie-198663",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/ode14q7WtDugFDp78fo9lCsmay9.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/198663",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 7.188,
+      "categories": [
+        "Action",
+        "Mystery",
+        "Science Fiction",
+        "Thriller"
+      ]
+    }
+  },
+  "maze runner: the scorch trials:::2015": {
+    "title": "Maze Runner: The Scorch Trials",
+    "creator": null,
+    "year": "2015",
+    "description": "Thomas and his fellow Gladers face their greatest challenge yet: searching for clues about the mysterious and powerful organization known as WCKD. Their journey takes them to the Scorch, a desolate landscape filled with unimaginable obstacles. Teaming up with resistance fighters, the Gladers take on WCKD’s vastly superior forces and uncover its shocking plans for them all.",
+    "source": "tmdb",
+    "sourceId": "movie-294254",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/mYw7ZyejqSCPFlrT2jHZOESZDU3.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/294254",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 6.728,
+      "categories": [
+        "Science Fiction",
+        "Action",
+        "Thriller",
+        "Adventure"
+      ]
+    }
+  },
+  "maze runner: the death cure:::2018": {
+    "title": "Maze Runner: The Death Cure",
+    "creator": null,
+    "year": "2018",
+    "description": "Thomas leads his group of escaped Gladers on their final and most dangerous mission yet. To save their friends, they must break into the legendary Last City, a WCKD-controlled labyrinth that may turn out to be the deadliest maze of all. Anyone who makes it out alive will get answers to the questions the Gladers have been asking since they first arrived in the maze.",
+    "source": "tmdb",
+    "sourceId": "movie-336843",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/s8K0US4tUEoOrQ1LDh0eppuwGDx.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/336843",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 7.1,
+      "categories": [
+        "Science Fiction",
+        "Action",
+        "Adventure",
+        "Thriller"
+      ]
+    }
+  },
+  "zombieland:::2009": {
+    "title": "Zombieland",
+    "creator": null,
+    "year": "2009",
+    "description": "Columbus has made a habit of running from what scares him. Tallahassee doesn't have fears. If he did, he'd kick their ever-living ass. In a world overrun by zombies, these two are perfectly evolved survivors. But now, they're about to stare down the most terrifying prospect of all: each other.",
+    "source": "tmdb",
+    "sourceId": "movie-19908",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/dUkAmAyPVqubSBNRjRqCgHggZcK.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/19908",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 7.259,
+      "categories": [
+        "Comedy",
+        "Horror"
+      ]
+    }
+  },
+  "the cabin in the woods:::2011": {
+    "title": "The Cabin in the Woods",
+    "creator": null,
+    "year": "2012",
+    "description": "Five friends set out for a weekend at a remote cabin in the woods, expecting nothing more than fun and relaxation. As night falls, they discover that something far more unsettling is at work and that nothing about their getaway is what it seems.",
+    "source": "tmdb",
+    "sourceId": "movie-22970",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/zZZe5wn0udlhMtdlDjN4NB72R6e.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/22970",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 6.668,
+      "categories": [
+        "Horror",
+        "Mystery"
+      ]
+    }
+  },
+  "bo burnham: inside:::2021": {
+    "title": "Bo Burnham: Inside",
+    "creator": null,
+    "year": "2021",
+    "description": "Stuck in COVID-19 lockdown, US comedian and musician Bo Burnham attempts to stay sane and happy by writing, shooting and performing a one-man comedy special.",
+    "source": "tmdb",
+    "sourceId": "movie-823754",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/ku1UvTWYvhFQbSesOD6zteY7bXT.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/823754",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 7.965,
+      "categories": [
+        "Comedy"
+      ]
+    }
+  },
+  "as above, so below:::2014": {
+    "title": "As Above, So Below",
+    "creator": null,
+    "year": "2014",
+    "description": "When a team of explorers venture into the catacombs that lie beneath the streets of Paris, they uncover the dark secret that lies within this city of the dead.",
+    "source": "tmdb",
+    "sourceId": "movie-256274",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/oJZSajKLJkoTOzSZQN2ZwRnPwHZ.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/256274",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 6.758,
+      "categories": [
+        "Horror",
+        "Thriller"
+      ]
+    }
+  },
+  "the first omen:::2024": {
+    "title": "The First Omen",
+    "creator": null,
+    "year": "2024",
+    "description": "When a young American woman is sent to Rome to begin a life of service to the church, she encounters a darkness that causes her to question her own faith and uncovers a terrifying conspiracy that hopes to bring about the birth of evil incarnate.",
+    "source": "tmdb",
+    "sourceId": "movie-437342",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/tnsDyNNkOxYUyjD8CNJoAla6YvY.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/437342",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 6.789,
+      "categories": [
+        "Horror"
+      ]
+    }
+  },
+  "incantation:::2022": {
+    "title": "Incantation",
+    "creator": null,
+    "year": "2022",
+    "description": "Six years ago, Li Ronan was cursed after breaking a religious taboo. Now, she must protect her daughter from the consequences of her actions.",
+    "source": "tmdb",
+    "sourceId": "movie-864370",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/cWz28oGV3cSajWdziVQbqrYCmnX.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/864370",
+      "kind": "movie",
+      "originalTitle": "咒",
+      "originalLanguage": "zh",
+      "score": 6.9,
+      "categories": [
+        "Horror"
+      ]
+    }
+  },
+  "grave encounters:::2011": {
+    "title": "Grave Encounters",
+    "creator": null,
+    "year": "2011",
+    "description": "A crew from a paranormal reality television show lock themselves in a haunted psychiatric hospital. They search for evidence of paranormal activity as they shoot what ends up becoming their final episode.",
+    "source": "tmdb",
+    "sourceId": "movie-50698",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/nctQM0luxJV4MaZyupzmP4epFIF.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/50698",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 6.341,
+      "categories": [
+        "Thriller",
+        "Horror"
+      ]
+    }
+  },
+  "the medium:::2021": {
+    "title": "The Medium",
+    "creator": null,
+    "year": "2021",
+    "description": "A shaman's family learn that their goddess is supposedly controlling one of them. However, their lives take a frightening turn when they realise the goddess has nothing to do with the possession.",
+    "source": "tmdb",
+    "sourceId": "movie-745881",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/wOJbWVMqdKIerkvOegeHfORxWqV.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/745881",
+      "kind": "movie",
+      "originalTitle": "ร่างทรง",
+      "originalLanguage": "th",
+      "score": 6.998,
+      "categories": [
+        "Horror",
+        "Mystery"
+      ]
+    }
+  },
+  "wall·e:::2008": {
+    "title": "WALL·E",
+    "creator": null,
+    "year": "2008",
+    "description": "After hundreds of years doing what he was built for, WALL•E— a robot designed to clean up the earth—discovers a new purpose in life when he meets a sleek search robot named EVE. EVE comes to realize that WALL•E has inadvertently stumbled upon the key to the planet's future, and races back to space to report to the humans. Meanwhile, WALL•E chases EVE across the galaxy and sets into motion one of the most imaginative adventures ever brought to the big screen.",
+    "source": "tmdb",
+    "sourceId": "movie-10681",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/hbhFnRzzg6ZDmm8YAmxBnQpQIPh.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/10681",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 8.128,
+      "categories": [
+        "Animation",
+        "Family",
+        "Science Fiction"
+      ]
+    }
+  },
+  "groundhog day:::1993": {
+    "title": "Groundhog Day",
+    "creator": null,
+    "year": "1993",
+    "description": "A cynical TV weatherman, along with his idealistic producer and his sardonic cameraman, is sent to report on Groundhog Day in the small town of Punxsutawney, where he finds himself repeating the same day over and over.",
+    "source": "tmdb",
+    "sourceId": "movie-137",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/gCgt1WARPZaXnq523ySQEUKinCs.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/137",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 7.638,
+      "categories": [
+        "Romance",
+        "Fantasy",
+        "Comedy"
+      ]
+    }
+  },
+  "noise:::2024": {
+    "title": "Noise",
+    "creator": null,
+    "year": "2024",
+    "description": "How much does private life impact on art? Julen uses persons. The power and domination that a man exerts to make a film. Marian uses her friend June. Using friends to make a movie. Using people to make a movie. The money. Maybe a film has nothing to do with art or storytelling, maybe it's just another way of exercising power.",
+    "source": "tmdb",
+    "sourceId": "movie-1145674",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/8bOqhpPyTcL8DI9W6wQQBMuHHeU.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/1145674",
+      "kind": "movie",
+      "originalTitle": "Zarata",
+      "originalLanguage": "eu",
+      "score": 0,
+      "categories": [
+        "Drama"
+      ]
+    }
+  },
+  "insidious: chapter 2:::2013": {
+    "title": "Insidious: Chapter 2",
+    "creator": null,
+    "year": "2013",
+    "description": "The haunted Lambert family seeks to uncover the mysterious childhood secret that has left them dangerously connected to the spirit world.",
+    "source": "tmdb",
+    "sourceId": "movie-91586",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/w5JjiB3O1CLDXbTJe1QpU5RHmlU.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/91586",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 6.7,
+      "categories": [
+        "Horror",
+        "Thriller"
+      ]
+    }
+  },
+  "gerald's game:::2017": {
+    "title": "Gerald's Game",
+    "creator": null,
+    "year": "2017",
+    "description": "When her husband's sex game goes wrong, Jessie (who is handcuffed to a bed in a remote lake house) faces warped visions, dark secrets and a dire choice.",
+    "source": "tmdb",
+    "sourceId": "movie-343674",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/32dippiypDdaKv7XFEfUlQ7kPup.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/343674",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 6.397,
+      "categories": [
+        "Horror",
+        "Thriller",
+        "Drama"
+      ]
+    }
+  },
+  "game night:::2018": {
+    "title": "Game Night",
+    "creator": null,
+    "year": "2018",
+    "description": "Max and Annie's weekly game night gets kicked up a notch when Max's brother Brooks arranges a murder mystery party -- complete with fake thugs and federal agents. So when Brooks gets kidnapped, it's all supposed to be part of the game. As the competitors set out to solve the case, they start to learn that neither the game nor Brooks are what they seem to be. The friends soon find themselves in over their heads as each twist leads to another unexpected turn over the course of one chaotic night.",
+    "source": "tmdb",
+    "sourceId": "movie-445571",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/85R8LMyn9f2Lev2YPBF8Nughrkv.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/445571",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 6.849,
+      "categories": [
+        "Mystery",
+        "Comedy",
+        "Crime"
+      ]
+    }
+  },
+  "pelé: birth of a legend:::2016": {
+    "title": "Pelé: Birth of a Legend",
+    "creator": null,
+    "year": "2016",
+    "description": "The life story of Brazilian football legend, Pele.",
+    "source": "tmdb",
+    "sourceId": "movie-245913",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/aJoDgK9PUClJOlpA1xUixj8dvsN.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/245913",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 7.343,
+      "categories": [
+        "Drama"
+      ]
+    }
+  },
+  "locked:::2025": {
+    "title": "Locked",
+    "creator": null,
+    "year": "2025",
+    "description": "When Eddie breaks into a luxury SUV, he steps into a deadly trap set by William, a self-proclaimed vigilante delivering his own brand of twisted justice. With no means of escape, Eddie must fight to survive in a ride where escape is an illusion, survival is a nightmare, and justice shifts into high gear.",
+    "source": "tmdb",
+    "sourceId": "movie-1083968",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/hhkiqXpfpufwxVrdSftzeKIANl3.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/1083968",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 6.202,
+      "categories": [
+        "Horror",
+        "Thriller"
+      ]
+    }
+  },
+  "inception:::2010": {
+    "title": "Inception",
+    "creator": null,
+    "year": "2010",
+    "description": "Cobb, a skilled thief who commits corporate espionage by infiltrating the subconscious of his targets is offered a chance to regain his old life as payment for a task considered to be impossible: \"inception\", the implantation of another person's idea into a target's subconscious.",
+    "source": "tmdb",
+    "sourceId": "movie-27205",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/xlaY2zyzMfkhk0HSC5VUwzoZPU1.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/27205",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 8.373,
+      "categories": [
+        "Action",
+        "Science Fiction",
+        "Crime"
+      ]
+    }
+  },
+  "hardcore henry:::2015": {
+    "title": "Hardcore Henry",
+    "creator": null,
+    "year": "2015",
+    "description": "Henry, a newly resurrected cyborg who must save his wife/creator from the clutches of a psychotic tyrant with telekinetic powers, AKAN, and his army of mercenaries. Fighting alongside Henry is Jimmy, who is Henry's only hope to make it through the day. Hardcore Henry takes place over the course of one day, in Moscow, Russia.",
+    "source": "tmdb",
+    "sourceId": "movie-325348",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/ik1uZyiMSxF9HqrgRKUNfMCfr3z.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/325348",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 6.4,
+      "categories": [
+        "Action",
+        "Adventure",
+        "Science Fiction"
+      ]
+    }
+  },
+  "interstellar:::2014": {
+    "title": "Interstellar",
+    "creator": null,
+    "year": "2014",
+    "description": "The adventures of a group of explorers who make use of a newly discovered wormhole to surpass the limitations on human space travel and conquer the vast distances involved in an interstellar voyage.",
+    "source": "tmdb",
+    "sourceId": "movie-157336",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/yQvGrMoipbRoddT0ZR8tPoR7NfX.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/157336",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 8.493,
+      "categories": [
+        "Adventure",
+        "Drama",
+        "Science Fiction"
+      ]
+    }
+  },
+  "project hail mary:::2026": {
+    "title": "Project Hail Mary",
+    "creator": null,
+    "year": "2026",
+    "description": "Science teacher Ryland Grace wakes up on a spaceship light years from home with no recollection of who he is or how he got there. As his memory returns, he begins to uncover his mission: solve the riddle of the mysterious substance causing the sun to die out. He must call on his scientific knowledge and unorthodox ideas to save everything on Earth from extinction.",
+    "source": "tmdb",
+    "sourceId": "movie-687163",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/iOb2fjXLbpJgyQXe46n1WtGCnaa.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/687163",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 8.626,
+      "categories": [
+        "Science Fiction",
+        "Adventure"
+      ]
+    }
+  },
+  "backrooms:::2026": {
+    "title": "Backrooms",
+    "creator": null,
+    "year": "2026",
+    "description": "A strange doorway appears in the basement of a furniture showroom.",
+    "source": "tmdb",
+    "sourceId": "movie-1083381",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/rhGx6E3qRNMgj3i5su2oukNHwIQ.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/1083381",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 6.986,
+      "categories": [
+        "Horror",
+        "Mystery",
+        "Science Fiction"
+      ]
+    }
+  },
+  "the odyssey:::2026": {
+    "title": "The Odyssey",
+    "creator": null,
+    "year": "2026",
+    "description": "Odysseus, the legendary King of Ithaca, embarks on a long and perilous journey home following the Trojan War. Throughout his voyage, he is forced to confront the whims of gods, mythological monsters, and trials that stretch both his cunning and his humanity to the breaking point.",
+    "source": "tmdb",
+    "sourceId": "movie-1368337",
+    "imageUrl": "https://image.tmdb.org/t/p/w342/5rhTDKUhPYvpdQIijFIs5VoWsON.jpg",
+    "metadata": {
+      "url": "https://www.themoviedb.org/movie/1368337",
+      "kind": "movie",
+      "originalLanguage": "en",
+      "score": 8.023,
+      "categories": [
+        "Adventure",
+        "Action",
+        "Fantasy"
+      ]
+    }
+  }
+}

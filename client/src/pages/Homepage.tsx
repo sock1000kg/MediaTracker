@@ -15,19 +15,24 @@ import BooksSearchSection from "@/pages/sections/BookSearchSection"
 import MusicSearchSection from "@/pages/sections/MusicSearchSection"
 import AnimeSearchSection from "@/pages/sections/AnimeSearchSection"
 import MovieSearchSection from "@/pages/sections/MovieSearchSection"
+import TvSearchSection from "@/pages/sections/TvSearchSection"
 import GameSearchSection from "@/pages/sections/GameSearchSection"
+import StatsSection from "@/pages/sections/StatsSection"
+import CollectionsSection from "@/pages/sections/CollectionsSection"
 import Settings from "@/pages/sections/Settings"
 
-import { BookOpen, Clapperboard, Film, Gamepad2, Layers, Library, Menu, Music, ScrollText, Settings as SettingsIcon, type LucideIcon } from "lucide-react"
+import { BarChart3, BookOpen, Clapperboard, Film, Gamepad2, Layers, Library, ListOrdered, Menu, Music, ScrollText, Settings as SettingsIcon, Tv, type LucideIcon } from "lucide-react"
 
-export type Tab = "logs" | "medias" | "mediaTypes" | "settings" | "bookSearch" | "musicSearch" | "animeSearch" | "movieSearch" | "gameSearch" | "defaultSearch" //Tabs in homepage
+export type Tab = "logs" | "medias" | "collections" | "mediaTypes" | "stats" | "settings" | "bookSearch" | "musicSearch" | "animeSearch" | "movieSearch" | "tvSearch" | "gameSearch" | "defaultSearch" //Tabs in homepage
 
 interface NavItem { tab: Tab; label: string; icon: LucideIcon }
 
 const NAV_ITEMS: NavItem[] = [
   { tab: "logs", label: "Logs", icon: ScrollText },
   { tab: "medias", label: "Your media", icon: Library },
+  { tab: "collections", label: "Collections", icon: ListOrdered },
   { tab: "mediaTypes", label: "Media types", icon: Layers },
+  { tab: "stats", label: "Stats", icon: BarChart3 },
 ]
 
 const FIND_ITEMS: NavItem[] = [
@@ -35,6 +40,7 @@ const FIND_ITEMS: NavItem[] = [
   { tab: "musicSearch", label: "Music", icon: Music },
   { tab: "animeSearch", label: "Anime & manga", icon: Clapperboard },
   { tab: "movieSearch", label: "Movies", icon: Film },
+  { tab: "tvSearch", label: "TV", icon: Tv },
   { tab: "gameSearch", label: "Games", icon: Gamepad2 },
 ]
 
@@ -73,7 +79,7 @@ export default function Homepage() {
         key={tab}
         variant="ghost"
         aria-current={active ? "page" : undefined}
-        className={`h-9 w-full justify-start gap-3 rounded-lg px-3 text-sm ${
+        className={`h-8 w-full justify-start gap-2.5 rounded-lg px-2.5 text-sm ${
           active
             ? "bg-card font-semibold text-foreground hover:bg-card hover:text-foreground dark:hover:bg-card"
             : "font-normal text-muted-foreground hover:bg-card/60 hover:text-foreground dark:hover:bg-card/60"
@@ -88,11 +94,11 @@ export default function Homepage() {
   }
 
   const navList = (
-    <nav aria-label="Main" className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+    <nav aria-label="Main" className="-mr-2 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto pr-2">
       {NAV_ITEMS.map(renderItem)}
-      <p className="mt-5 mb-1 px-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Find something</p>
+      <p className="mt-4 mb-1 px-2.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Find something</p>
       {FIND_ITEMS.map(renderItem)}
-      <div className="mt-auto flex flex-col gap-1 pt-4">
+      <div className="mt-auto flex flex-col gap-0.5 pt-3">
         {renderItem(SETTINGS_ITEM)}
         <ThemeToggle />
       </div>
@@ -102,7 +108,7 @@ export default function Homepage() {
   const logo = (
     <div className="flex items-center gap-2">
       <SidebarDude glance={glance} size={32} />
-      <span className="font-display text-lg font-semibold">MediaTracker</span>
+      <span className="font-display text-base font-semibold">MediaTracker</span>
     </div>
   )
 
@@ -110,7 +116,7 @@ export default function Homepage() {
     <div className={`flex h-screen ${isDesktop ? "flex-row" : "flex-col"}`}>
       {isDesktop ? (
         /* Left sidebar (≥ 1024px) */
-        <aside className="flex w-60 shrink-0 flex-col gap-4 border-r border-border bg-sidebar p-4">
+        <aside className="flex w-52 shrink-0 flex-col gap-3 border-r border-border bg-sidebar p-3">
           {logo}
           {navList}
         </aside>
@@ -137,11 +143,14 @@ export default function Homepage() {
       <main className="min-w-0 flex-1 overflow-hidden">
         {activeTab === "logs" && <LogsSection/>}
         {activeTab === "medias" && <MediasSection />}
+        {activeTab === "collections" && <CollectionsSection />}
         {activeTab === "mediaTypes" && <MediaTypesSection />}
+        {activeTab === "stats" && <StatsSection />}
         {activeTab === "bookSearch" && <BooksSearchSection />}
         {activeTab === "musicSearch" && <MusicSearchSection />}
         {activeTab === "animeSearch" && <AnimeSearchSection />}
         {activeTab === "movieSearch" && <MovieSearchSection />}
+        {activeTab === "tvSearch" && <TvSearchSection />}
         {activeTab === "gameSearch" && <GameSearchSection />}
         {activeTab === "settings" && <Settings/>}
       </main>

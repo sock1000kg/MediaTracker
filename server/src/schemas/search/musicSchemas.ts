@@ -4,6 +4,10 @@ export const musicMetadataSchema = z.object({
     url: z.string().optional(),
     kind: z.enum(["album", "track"]).optional(),
     categories: z.array(z.string()).nullable().optional(),
+    album: z.string().optional(),
+    albumSourceId: z.string().optional(),
+    trackNumber: z.number().optional(),
+    durationSec: z.number().nullable().optional(),
 })
 
 export type MusicMetadata = z.infer<typeof musicMetadataSchema>
@@ -72,3 +76,46 @@ export const lastFmTopTagsResponseSchema = z.object({
             .transform(val => val === undefined ? [] : Array.isArray(val) ? val : [val])
     }).optional()
 })
+
+export const lastFmAlbumInfoTrackSchema = z.object({
+    name: z.string().default("Unknown track"),
+    url: z.string().optional().default(""),
+    duration: z.union([z.number(), z.string()]).nullable().optional(),
+    "@attr": z.object({
+        rank: z.union([z.number(), z.string()]).optional(),
+    }).optional(),
+    artist: z.union([
+        z.string(),
+        z.object({
+            name: z.string().optional(),
+            mbid: z.string().nullable().optional(),
+            url: z.string().optional(),
+        })
+    ]).optional(),
+    streamable: z.any().optional(),
+})
+
+export const lastFmAlbumInfoResponseSchema = z.object({
+    album: z.object({
+        name: z.string(),
+        artist: z.string(),
+        mbid: z.string().nullable().optional(),
+        url: z.string().optional().default(""),
+        image: z.array(z.object({
+            "#text": z.string(),
+            size: z.string()
+        })).optional(),
+        tracks: z.object({
+            track: z
+                .union([lastFmAlbumInfoTrackSchema, z.array(lastFmAlbumInfoTrackSchema)])
+                .optional()
+                .transform(val => val === undefined ? [] : Array.isArray(val) ? val : [val])
+        }).optional(),
+        wiki: z.object({
+            published: z.string().optional(),
+            summary: z.string().optional(),
+            content: z.string().optional(),
+        }).optional(),
+    }).optional()
+})
+

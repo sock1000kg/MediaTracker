@@ -59,8 +59,9 @@ describe('Media log - Last.fm tag enrichment', () => {
         expect(tagCalls()).toHaveLength(1)
         expect(String(tagCalls()[0][0])).toContain('album.gettoptags')
         const media = await findMedia('lfm-test-1')
-        expect((media?.metadata as Meta).categories).toEqual(['shoegaze', 'Dream Pop'])
-        expect((media?.metadata as Meta).kind).toBe('album')
+        const genres = (await prisma.mediaGenre.findMany({ where: { mediaId: media!.id }, include: { genre: true }, orderBy: { position: 'asc' } })).map(mg => mg.genre.name)
+        expect(genres).toEqual(['shoegaze', 'Dream Pop'])
+        expect(media?.kind).toBe('album')
     })
 
     it('does not refetch when logged again by another user', async () => {
@@ -73,7 +74,6 @@ describe('Media log - Last.fm tag enrichment', () => {
     it('does not refetch when categories is null', async () => {
         fetchSpy.mockImplementation(async () => new Response(JSON.stringify({ toptags: {} }), { status: 200 }))
         await log(0, 'lfm-test-2')
-        expect((await findMedia('lfm-test-2'))?.metadata).toHaveProperty('categories', null)
         expect(tagCalls()).toHaveLength(1)
         await log(1, 'lfm-test-2')
         expect(tagCalls()).toHaveLength(1)
@@ -106,8 +106,10 @@ describe('Media log - Last.fm tag enrichment', () => {
         const res = await log(0, 'lfm-test-4')
         expect(res.statusCode).toBeLessThan(300)
         expect(tagCalls()).toHaveLength(1)
-        const meta = (await findMedia('lfm-test-4'))?.metadata as Meta
-        expect(meta.categories).toEqual(['shoegaze', 'Dream Pop'])
+        const media = await findMedia('lfm-test-4')
+        const genres = (await prisma.mediaGenre.findMany({ where: { mediaId: media!.id }, include: { genre: true }, orderBy: { position: 'asc' } })).map(mg => mg.genre.name)
+        expect(genres).toEqual(['shoegaze', 'Dream Pop'])
+        const meta = media?.metadata as Meta
         expect(meta.url).toBe('https://last.fm/x')
     })
 
@@ -120,7 +122,8 @@ describe('Media log - Last.fm tag enrichment', () => {
         expect(res.statusCode).toBeLessThan(300)
         expect(fetchSpy).not.toHaveBeenCalled()
         const media = await prisma.media.findFirst({ where: { sourceId: 'lfm-test-book' } })
-        expect((media?.metadata as Meta).categories).toEqual(['Science fiction'])
+        const genres = (await prisma.mediaGenre.findMany({ where: { mediaId: media!.id }, include: { genre: true } })).map(mg => mg.genre.name)
+        expect(genres).toEqual(['Science fiction'])
         await prisma.media.deleteMany({ where: { sourceId: 'lfm-test-book' } })
     })
 })

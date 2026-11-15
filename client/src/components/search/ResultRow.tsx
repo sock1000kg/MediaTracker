@@ -26,7 +26,6 @@ export function ResultRow({ result, kind, isLogged, onLog }: ResultRowProps) {
       cover={<Cover id={resultCoverKey(result)} title={result.title} imageUrl={result.imageUrl} aspect={resultAspect(kind)} size="row" />}
       aside={
         <div className="flex flex-col items-start gap-2 min-[481px]:items-end">
-          {isLogged && <span className="tag">Logged</span>}
           <Button size="sm" variant="amber" onClick={onLog}>{isLogged ? "Edit log" : "+ Log"}</Button>
         </div>
       }

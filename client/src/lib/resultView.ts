@@ -1,12 +1,13 @@
 // Pure helpers for search result rows and tiles. No React.
-import type { AnimeResult, BookResult, GameResult, MediaResult, MovieResult, MusicResult } from "@/types/search"
+import type { AnimeResult, BookResult, GameResult, MediaResult, MovieResult, MusicResult, TvResult } from "@/types/search"
 import { animeMetaParts } from "@/lib/animeFormat"
 import { movieMetaParts } from "@/lib/movieFormat"
 import { gameMetaParts } from "@/lib/gameFormat"
+import { formatTvSeasonUrl, formatTvShowUrl, tvMetaParts } from "@/lib/tvFormat"
 import { capitalise, coverTokenFromKey, type CoverAspect } from "@/lib/mediaView"
 
-export type ResultKind = "book" | "music" | "anime" | "manga" | "movie" | "game"
-export type SearchResult = BookResult | MusicResult | AnimeResult | MovieResult | GameResult
+export type ResultKind = "book" | "music" | "anime" | "manga" | "movie" | "game" | "tv"
+export type SearchResult = BookResult | MusicResult | AnimeResult | MovieResult | GameResult | TvResult
 
 /** Detail parts after the kind label: book publisher/pages, music Album/Track, or the provider formatter's parts. */
 export function resultDetailParts(kind: ResultKind, result: SearchResult): string[] {
@@ -24,11 +25,13 @@ export function resultDetailParts(kind: ResultKind, result: SearchResult): strin
     }
     case "anime":
     case "manga":
-      return animeMetaParts((result as AnimeResult).metadata)
+      return animeMetaParts((result as AnimeResult).metadata, result.source)
     case "movie":
       return movieMetaParts((result as MovieResult).metadata)
     case "game":
       return gameMetaParts((result as GameResult).metadata)
+    case "tv":
+      return tvMetaParts((result as TvResult).metadata, result.year)
   }
 }
 
@@ -44,8 +47,12 @@ export function resultProviderLabel(kind: ResultKind, source?: string): string {
       return "View source"
     case "music": return "View on Last.fm"
     case "anime":
-    case "manga": return "View on MyAnimeList"
-    case "movie": return "View on TMDB"
+    case "manga":
+      if (source === "jikan") return "View on MyAnimeList"
+      return "View on AniList"
+    case "movie":
+    case "tv":
+      return "View on TMDB"
     case "game": return "View on RAWG"
   }
 }
@@ -76,5 +83,13 @@ export function resultOriginalTitle(r: SearchResult): string | null {
 
 export function resultUrl(r: SearchResult): string | null {
   const u = (r.metadata as { url?: string } | undefined)?.url
-  return u ? u : null
+  if (u) return u
+  const meta = r.metadata as { kind?: string; tmdbId?: number; seasonNumber?: number } | undefined
+  if (meta?.kind === "season" && meta.tmdbId != null && meta.seasonNumber != null) {
+    return formatTvSeasonUrl(meta.tmdbId, meta.seasonNumber)
+  }
+  if (meta?.kind === "show" && meta.tmdbId != null) {
+    return formatTvShowUrl(meta.tmdbId)
+  }
+  return null
 }

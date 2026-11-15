@@ -8,6 +8,8 @@ export type MediaResult<T extends string = string> = {
   description?: string | null
   imageUrl?: string | null
   metadata?: Record<string, unknown>
+  inLibrary?: boolean
+  myLog?: { id: number; rating: number | null; status: string | null } | null
 }
 
 export type BookResult = MediaResult<"book"> & {
@@ -19,12 +21,23 @@ export type BookResult = MediaResult<"book"> & {
   }
 }
 
+export type MusicMetadata = {
+  url?: string
+  kind?: "album" | "track"
+  categories?: string[] | null
+  album?: string
+  albumSourceId?: string
+  trackNumber?: number
+  durationSec?: number | null
+}
+
 export type MusicResult = MediaResult<"music"> & {
-  metadata: {
-    url?: string
-    kind?: "album" | "track"
-    categories?: string[] | null
-  }
+  metadata: MusicMetadata
+}
+
+export type MusicTrackResult = MediaResult<"music"> & {
+  metadata: MusicMetadata
+  myLog?: { id: number; rating: number | null; status: string | null } | null
 }
 
 export type AnimeKind = "anime" | "manga"
@@ -38,8 +51,14 @@ export type AnimeResult = MediaResult<AnimeKind> & {
     chapters?: number | null
     volumes?: number | null
     score?: number | null
+    scoreScale?: "mal" | "anilist"
     originalTitle?: string | null
     categories?: string[] | null
+    episodeMinutes?: number | null
+    idMal?: number | null
+    watchedEpisodes?: number | null
+    readChapters?: number | null
+    readVolumes?: number | null
   }
 }
 
@@ -81,6 +100,41 @@ export type GameResult = MediaResult<"game"> & {
     publishers?: string[] | null
     categories?: string[] | null
   }
+}
+
+export type TvShowMetadata = {
+  url?: string
+  kind: "show"
+  tmdbId: number
+  originalTitle?: string | null
+  firstAirDate?: string | null
+  categories?: string[] | null
+  originCountry?: string[] | string | null
+  seasonCount?: number | null
+  episodeCount?: number | null
+  status?: string | null
+  networks?: string[] | null
+  creator?: string | null
+}
+
+export type TvSeasonMetadata = {
+  url?: string
+  kind: "season"
+  tmdbId: number
+  showTitle: string
+  seasonNumber: number
+  episodeCount: number | null
+  airDate?: string | null
+  networks?: string[] | null
+  categories?: string[] | null
+}
+
+export type TvResult = MediaResult<"tv"> & {
+  metadata: TvShowMetadata | TvSeasonMetadata
+}
+
+export type TvSeasonResult = MediaResult<"tv"> & {
+  metadata: TvSeasonMetadata
 }
 
 export type BookSort = "relevance" | "new" | "old" | "rating"

@@ -11,6 +11,16 @@ type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue }
 export interface MediaMetadata {
   [key: string]: JsonValue | undefined
 }
+export interface ChildSummary {
+  rated: number
+  avgRating: number | null
+}
+
+export interface MediaCreatorItem {
+  name: string
+  role: string
+}
+
 export interface Media {
   id: number
   userId: number
@@ -24,16 +34,87 @@ export interface Media {
   metadata?: MediaMetadata
   imageUrl?: string | null
   created_at: string
+  parentId?: number | null
+  position?: number | null
+  kind?: string | null
+  originalTitle?: string | null
+  genres?: string[]
+  creators?: MediaCreatorItem[]
+  parent?: {
+    id: number
+    title: string
+    creator?: string | null
+  } | null
+  childSummary?: ChildSummary
 }
+
+export interface TagItem {
+  id: number
+  name: string
+}
+
+export interface TagWithCount {
+  id: number
+  name: string
+  count: number
+}
+
+export type Tag = TagWithCount
 
 export type LogStatus = "completed" | "in progress" | "wishlist" | "dropped"
 export interface Log {
   id: number
   status: LogStatus
-  rating: number
+  rating: number | null
   notes: string
+  started_at?: string | null
+  finished_at?: string | null
   logged_at: string
+  progress?: Record<string, unknown> | null
   media: Media
+  genres?: string[]
+  creators?: MediaCreatorItem[]
+  tags?: TagItem[]
+  collectionIds?: number[]
+  childSummary?: ChildSummary
+}
+
+export interface CollectionSummary {
+  id: number
+  name: string
+  description: string | null
+  ranked: boolean
+  count: number
+  updated_at: string
+  covers: string[]
+}
+
+export interface CollectionItem {
+  position: number
+  added_at: string
+  log: Log
+}
+
+export interface CollectionDetail {
+  id: number
+  name: string
+  description: string | null
+  ranked: boolean
+  created_at: string
+  updated_at: string
+  items: CollectionItem[]
+}
+
+export interface CreateCollectionInput {
+  name: string
+  description?: string | null
+  ranked?: boolean
+}
+
+export interface UpdateCollectionInput {
+  name?: string
+  description?: string | null
+  ranked?: boolean
 }
 
 //MEDIA TYPES

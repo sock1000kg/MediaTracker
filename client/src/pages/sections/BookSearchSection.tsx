@@ -1,6 +1,9 @@
+import { ProviderAttribution } from "@/components/search/ProviderAttribution"
+import { OPEN_LIBRARY_URL, OPEN_LIBRARY_ATTRIBUTION_TEXT } from "@/lib/bookFormat"
 import { PageBackdrop } from "@/components/media-view/PageBackdrop"
 import { effectiveHideLogged } from "@/lib/preferences"
 import { usePreferences } from "@/hooks/usePreferences"
+import { useLimits } from "@/hooks/useLimits"
 import EmptyState from "@/components/EmptyState"
 import { EMPTY_LINES, pickLoadingLine } from "@/lib/whimsy"
 import { Filter, Search, X } from "lucide-react"
@@ -106,6 +109,7 @@ export default function BooksSearchSection() {
     }
 
     const queryClient = useQueryClient()
+    const limits = useLimits()
 
     //Infinite search
     const {
@@ -149,12 +153,16 @@ export default function BooksSearchSection() {
         onSuccess: () => {
             queryClient.refetchQueries({ queryKey: fetchMediasQueryOptions().queryKey})
             queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey })
+            queryClient.invalidateQueries({ queryKey: ["tags"] })
         }
     })
 
     const editLogMutation = useMutation({
         mutationFn: editLog,
-        onSuccess: () => queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey}),
+        onSuccess: () => {
+            queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey})
+            queryClient.invalidateQueries({ queryKey: ["tags"] })
+        },
     })
 
     // Applies the panel's filters together with the typed query
@@ -183,13 +191,7 @@ export default function BooksSearchSection() {
         //Check if log of this item exists already
         const existingLog = findLogForResult(logs, item)
 
-        //set the data of the clicked media item
-        const mediaData: BookResult = {
-            ...item,
-            mediaType: "book"
-        }
-
-        setTargetMedia(mediaData)
+        setTargetMedia(item)
         setTargetLog(existingLog ?? null)
         setOpenDialog("logForm")
     }
@@ -239,13 +241,16 @@ export default function BooksSearchSection() {
             <div className="flex flex-col gap-4 px-6 pt-6 pb-4">
                 <div>
                 <h1 className="font-display text-4xl font-semibold">Book search</h1>
+                <ProviderAttribution href={OPEN_LIBRARY_URL}>
+                    {OPEN_LIBRARY_ATTRIBUTION_TEXT}
+                </ProviderAttribution>
                 </div>
 
                 <div className="flex flex-wrap gap-2 items-center">
                     <Input
                         placeholder="Type book name..."
                         value={inputValue}
-                        maxLength={100}
+                        maxLength={limits.search.queryMaxLength}
                         onChange={(e) => setInputValue(e.target.value)}
                         onKeyDown={(e) => { 
                             if(e.key === "Enter") {
@@ -282,15 +287,15 @@ export default function BooksSearchSection() {
             </div>
 
             {showFilters && (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-4 bg-background border-b border-border">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 px-6 pb-4">
                     <div className="grid gap-1">
                         <Label htmlFor="book-filter-author">Author</Label>
-                        <Input id="book-filter-author" maxLength={100} value={draftFilters.author ?? ""}
+                        <Input id="book-filter-author" maxLength={limits.search.queryMaxLength} value={draftFilters.author ?? ""}
                             onChange={(e) => setDraftFilters(f => ({ ...f, author: e.target.value }))} />
                     </div>
                     <div className="grid gap-1">
                         <Label htmlFor="book-filter-subject">Subject</Label>
-                        <Input id="book-filter-subject" maxLength={100} value={draftFilters.subject ?? ""}
+                        <Input id="book-filter-subject" maxLength={limits.search.queryMaxLength} value={draftFilters.subject ?? ""}
                             onChange={(e) => setDraftFilters(f => ({ ...f, subject: e.target.value }))} />
                     </div>
                     <div className="grid gap-1">
@@ -332,7 +337,7 @@ export default function BooksSearchSection() {
 
             {/* Results */}
             <div className="p-4 flex-1 overflow-y-auto min-h-0 scrollbar-hide border-t border-border">
-                {isLoading && <p className="animate-pulse">{loadingLine}</p>}
+                {isLoading && <p className="font-hand text-lg animate-pulse">{loadingLine}</p>}
                 {error && 
                     <p className="text-destructive">
                         {error.message}

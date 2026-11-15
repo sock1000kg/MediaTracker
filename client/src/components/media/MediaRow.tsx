@@ -17,7 +17,7 @@ interface MediaRowProps {
 }
 
 export function MediaRow({ media, log, onEdit, onDelete, onLog }: MediaRowProps) {
-  const categories = Array.isArray(media.metadata?.categories) ? (media.metadata.categories as string[]) : []
+  const categories = media.genres ?? (Array.isArray(media.metadata?.categories) ? (media.metadata.categories as string[]) : [])
   const metaParts = formatLogMetadata(media)
   const url = typeof media.metadata?.url === "string" ? media.metadata.url : null
   const byline = [media.creator, media.year].filter(Boolean).join(" · ")
@@ -38,10 +38,7 @@ export function MediaRow({ media, log, onEdit, onDelete, onLog }: MediaRowProps)
               {status && <p className="text-xs text-muted-foreground">{status}</p>}
             </>
           ) : (
-            <>
-              <p className="text-xs text-muted-foreground">Not logged</p>
               <Button size="sm" variant="amber" className="mt-1" onClick={() => onLog(media)}>+ Log</Button>
-            </>
           )}
           <div>
             <MediaActions media={media} logged={!!log} onEdit={onEdit} onDelete={onDelete} onLog={onLog} />

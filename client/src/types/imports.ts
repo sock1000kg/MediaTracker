@@ -6,7 +6,11 @@ export type ImportFailure = {
 
 export type ImportResult = {
   imported: number
+  updated: number
   skipped: number
   failures: ImportFailure[] // Return a list of specific errors (capped by the server)
   failuresTruncated?: number // failures dropped from the list
+  notes?: string[]
+  unmatched?: number
+  liked?: number
 }

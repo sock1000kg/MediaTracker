@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs"
 import prisma from "@/prismaClient.js"
-import { Prisma } from "@prisma/client"
+import { Prisma } from "@/db.js"
 import { AppError } from "@/api/domain/error.js"
 import { validateSchema, toCsv, safeFilenamePart, attachmentHeader } from "@/utilities.js"
 import { demoService } from "@/services/demoService.js"
@@ -82,15 +82,26 @@ export class UserService {
         const disposition = (ext: string) => attachmentHeader(`${base}.${ext}`, `${realBase}.${ext}`)
 
         if (format === "csv") {
-            const header = ["title", "creator", "year", "type", "source", "source_id", "status", "rating", "notes", "logged_at", "categories", "url"]
+            const header = ["title", "creator", "year", "type", "source", "source_id", "status", "rating", "notes", "logged_at", "started_at", "finished_at", "categories", "tags", "collections", "url"]
             const rows = data.logs.map((l) => {
                 const meta = (l.media.metadata && typeof l.media.metadata === "object" ? l.media.metadata : {}) as Record<string, unknown>
-                const cats = Array.isArray(meta.categories) ? meta.categories.filter((c) => typeof c === "string").join("; ") : ""
+                const mediaGenres = (l.media as { genres?: string[] }).genres
+                const cats = Array.isArray(mediaGenres) && mediaGenres.length > 0
+                    ? mediaGenres.join("; ")
+                    : (Array.isArray(meta.categories) ? meta.categories.filter((c) => typeof c === "string").join("; ") : "")
+                const logObj = l as { tags?: { tag?: { name: string }; name?: string }[]; collectionItems?: { collection?: { name: string } }[] }
+                const rawTags = logObj.tags ?? []
+                const tagsStr = rawTags.map((t) => t.tag?.name ?? t.name ?? "").filter(Boolean).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })).join("; ")
+                const rawCols = logObj.collectionItems ?? []
+                const colsStr = rawCols.map((c) => c.collection?.name ?? "").filter(Boolean).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })).join("; ")
                 const url = typeof meta.url === "string" ? meta.url : ""
                 return [
                     l.media.title, l.media.creator, l.media.year, l.media.mediaType?.name ?? null,
                     l.media.source, l.media.sourceId, l.status, l.rating, l.notes,
-                    l.logged_at.toISOString(), cats, url,
+                    l.logged_at.toISOString(),
+                    l.started_at ? l.started_at.toISOString() : null,
+                    l.finished_at ? l.finished_at.toISOString() : null,
+                    cats, tagsStr, colsStr, url,
                 ]
             })
             return { body: toCsv([header, ...rows]), contentType: "text/csv; charset=utf-8", filename: `${base}.csv`, disposition: disposition("csv") }
@@ -103,9 +114,31 @@ export class UserService {
             preferences: readPreferences(user.preferences),
             mediaTypes: data.mediaTypes.map((t) => ({ name: t.name, created_at: t.created_at })),
             media: data.media.map((m) => ({ ...mediaJson(m), created_at: m.created_at })),
-            logs: data.logs.map((l) => ({
-                status: l.status, rating: l.rating, notes: l.notes, logged_at: l.logged_at, media: mediaJson(l.media),
+            collections: data.collections.map((c) => ({
+                name: c.name,
+                description: c.description,
+                ranked: c.ranked,
+                items: c.items.map((it) => ({
+                    position: it.position,
+                    title: it.log.media.title,
+                    type: it.log.media.mediaType?.name ?? null,
+                })),
             })),
+            logs: data.logs.map((l) => {
+                const logObj = l as { tags?: { tag?: { name: string }; name?: string }[] }
+                const rawTags = logObj.tags ?? []
+                const tagNames = rawTags.map((t) => t.tag?.name ?? t.name ?? "").filter(Boolean).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }))
+                return {
+                    status: l.status,
+                    rating: l.rating,
+                    notes: l.notes,
+                    started_at: l.started_at,
+                    finished_at: l.finished_at,
+                    logged_at: l.logged_at,
+                    tags: tagNames,
+                    media: mediaJson(l.media),
+                }
+            }),
         }
         return { body: JSON.stringify(out, null, 2), contentType: "application/json; charset=utf-8", filename: `${base}.json`, disposition: disposition("json") }
     }

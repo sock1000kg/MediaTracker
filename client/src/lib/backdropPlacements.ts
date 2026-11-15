@@ -3,7 +3,7 @@
 // transform, so the "eyes are visible" check tests what is really drawn.
 import { EYE_COLS, EYE_ROW } from "@/lib/dude"
 
-export type BackdropPage = "logs" | "books" | "music" | "anime" | "movies" | "games"
+export type BackdropPage = "logs" | "books" | "music" | "anime" | "movies" | "tv" | "games"
 
 /** An offset: a share of the content area plus viewport-height / viewport-width units. */
 export interface Len { pct?: number; vh?: number; vw?: number }
@@ -28,11 +28,13 @@ export const PLACEMENTS: Record<BackdropPage, Placement> = {
   anime: { anchor: { right: { vh: -30 }, top: { vh: -53 } }, sizeVh: 120, rotateDeg: 180 },
   // Rising from the bottom edge, centred, only the top half showing.
   movies: { anchor: { left: { pct: 50, vh: -60 }, bottom: { vh: -60 } }, sizeVh: 120, rotateDeg: 0 },
+  // Peeking in from the right edge, like books mirrored, but higher, deeper in and tilted the other way.
+  tv: { anchor: { right: { vh: -40 }, top: { pct: 50, vh: -44 } }, sizeVh: 120, rotateDeg: -6, flipX: true },
   // Lying on his side at the right edge, facing into the page.
   games: { anchor: { right: { vh: -47 }, top: { pct: 50, vh: -60 } }, sizeVh: 120, rotateDeg: -90, flipX: true },
 }
 
-export const SEARCH_PAGES: BackdropPage[] = ["books", "music", "anime", "movies", "games"]
+export const SEARCH_PAGES: BackdropPage[] = ["books", "music", "anime", "movies", "tv", "games"]
 
 export interface Viewport { width: number; height: number }
 

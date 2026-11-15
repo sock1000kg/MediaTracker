@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { LIMITS } from "@/config/limits.js"
 
 export const gameMetadataSchema = z.object({
     url: z.string().optional(),
@@ -8,6 +9,7 @@ export const gameMetadataSchema = z.object({
     score: z.number().nullable().optional(), // RAWG rating, 0-5
     publishers: z.array(z.string()).nullable().optional(),
     categories: z.array(z.string()).nullable().optional(),
+    playtimeHours: z.number().nullable().optional(),
 }).strict()
 
 const nl = <T extends z.ZodTypeAny>(s: T) => s.nullable().optional()
@@ -19,6 +21,7 @@ export const rawgGameItemSchema = z.object({
     name: nl(z.string()),
     released: nl(z.string()),
     background_image: nl(z.string()),
+    playtime: nl(z.number()),
     rating: nl(z.number()),
     metacritic: nl(z.number()),
     platforms: nl(z.array(z.object({ platform: nl(z.object({ name: nl(z.string()) })) }))),
@@ -58,7 +61,7 @@ export const gameSearchQuerySchema = z.object({
     q: z.string("Missing query")
         .trim()
         .min(1, "Missing query")
-        .max(100, "Search query must be at most 100 characters"),
+        .max(LIMITS.search.queryMaxLength, `Search query must be at most ${LIMITS.search.queryMaxLength} characters`),
     page: z.preprocess(emptyToUndefined, z.coerce.number().int().positive().default(1)),
     platform: z.preprocess(emptyToUndefined, z.enum(GAME_PLATFORMS, "Invalid platform").optional()),
     sort: z.preprocess(emptyToUndefined, z.enum(GAME_SORTS, "Invalid sort").optional()),

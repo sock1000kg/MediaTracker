@@ -3,8 +3,13 @@ import { getQueue } from "@/queue/index.js"
 import { parse } from "csv-parse/sync"
 import { NextFunction } from "express"
 import type { Request, Response } from "express"
+import { decompressMalExport, parseMalExport } from "@/services/imports/malImportService.js"
+import { unzipLetterboxdExport } from "@/services/imports/letterboxdImportService.js"
+import { AppError } from "@/api/domain/error.js"
 
 const IMPORT_JOB = "import.goodreads" as const
+const MAL_IMPORT_JOB = "import.mal" as const
+const LETTERBOXD_IMPORT_JOB = "import.letterboxd" as const
 
 type CsvCheck = { ok: true } | { ok: false; message: string }
 
@@ -41,11 +46,6 @@ export const importGoodReads = async (req: Request, res: Response, next: NextFun
         return res.status(400).json({ message: "No CSV file uploaded" })
     }
 
-    const MAX_FILE_SIZE = 2*1024*1024
-    if (req.file.size > MAX_FILE_SIZE) {
-        return res.status(400).json({ message: "Max file size is 2MB" })
-    }
-
     try {
         await demoService.ensureNotDemo(userId)
 
@@ -66,6 +66,90 @@ export const importGoodReads = async (req: Request, res: Response, next: NextFun
         const { id } = await queue.enqueue(
             IMPORT_JOB,
             { csv: req.file.buffer.toString("utf8") },
+            { userId, attempts: 1, clearPayloadOnFinish: true },
+        )
+        res.status(202).json({ jobId: id })
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const importMal = async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.userId
+    if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" })
+    }
+
+    if (!req.file) {
+        return res.status(400).json({ message: "No XML file uploaded" })
+    }
+
+    try {
+        await demoService.ensureNotDemo(userId)
+
+        try {
+            parseMalExport(req.file.buffer)
+        } catch (err) {
+            if (err instanceof AppError) {
+                return res.status(err.status).json({ message: err.message })
+            }
+            return res.status(400).json({ message: "This doesn't look like a MyAnimeList export" })
+        }
+
+        const queue = getQueue()
+        const recent = await queue.listJobs({ userId, name: MAL_IMPORT_JOB, limit: 5 })
+        const running = recent.find((j) => j.status === "queued" || j.status === "active")
+        if (running) {
+            return res.status(409).json({ message: "An import is already running", jobId: running.id })
+        }
+
+        const decompressed = decompressMalExport(req.file.buffer)
+        const { id } = await queue.enqueue(
+            MAL_IMPORT_JOB,
+            { xml: decompressed.toString("utf8") },
+            { userId, attempts: 1, clearPayloadOnFinish: true },
+        )
+        res.status(202).json({ jobId: id })
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const importLetterboxd = async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.userId
+    if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" })
+    }
+
+    if (!req.file) {
+        return res.status(400).json({ message: "No ZIP file uploaded" })
+    }
+
+    try {
+        await demoService.ensureNotDemo(userId)
+
+        let files: ReturnType<typeof unzipLetterboxdExport>
+        try {
+            files = unzipLetterboxdExport(req.file.buffer)
+        } catch (err) {
+            if (err instanceof AppError) {
+                return res.status(err.status).json({ message: err.message })
+            }
+            return res.status(400).json({
+                message: "This doesn't look like a Letterboxd export (no watched/ratings/diary/watchlist CSV found)",
+            })
+        }
+
+        const queue = getQueue()
+        const recent = await queue.listJobs({ userId, name: LETTERBOXD_IMPORT_JOB, limit: 5 })
+        const running = recent.find((j) => j.status === "queued" || j.status === "active")
+        if (running) {
+            return res.status(409).json({ message: "An import is already running", jobId: running.id })
+        }
+
+        const { id } = await queue.enqueue(
+            LETTERBOXD_IMPORT_JOB,
+            { files },
             { userId, attempts: 1, clearPayloadOnFinish: true },
         )
         res.status(202).json({ jobId: id })

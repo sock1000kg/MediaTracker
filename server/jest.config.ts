@@ -4,6 +4,7 @@ import type { Config } from '@jest/types'
 const config: Config.InitialOptions = {
     testEnvironment: 'node',
     moduleFileExtensions: ['js', 'mjs'],
+    globalSetup: './dist/tests/globalSetup.js',
     // Run only compiled integration tests; keep setup file out of testMatch
     setupFilesAfterEnv: ['./dist/tests/jest.setup.js'],
     testMatch: [

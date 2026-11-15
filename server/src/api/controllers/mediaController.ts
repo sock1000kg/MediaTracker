@@ -84,3 +84,22 @@ export const createMediaAndLog = async (req: Request, res: Response, next: NextF
         next(error)
     }
 }
+
+export const getMediaChildren = async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.userId
+    if (!userId) {
+        return res.status(401).json({ message: "Unauthorized: missing userId" })
+    }
+
+    const mediaId = parseInt(req.params.id)
+    if (!mediaId || Number.isNaN(mediaId)) {
+        return res.status(400).json({ message: "Invalid media id" })
+    }
+
+    try {
+        const children = await mediaService.getChildren(mediaId, userId)
+        res.status(200).json(children)
+    } catch (error) {
+        next(error)
+    }
+}

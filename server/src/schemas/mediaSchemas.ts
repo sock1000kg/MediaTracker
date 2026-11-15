@@ -134,6 +134,8 @@ export const searchMediaSchema = z.object({
         .transform((val) => normalizeTypeName(val))
         .refine(val => val.trim().length > 0, { message: "Media Type name is required" }),
     creator: creatorSchema,
+    creators: z.array(z.object({ name: z.string(), role: z.string() })).optional(),
+    genres: z.array(z.string()).optional(),
     year: yearSchema,
     description: descriptionSchema,
     source: searchSourceSchema,

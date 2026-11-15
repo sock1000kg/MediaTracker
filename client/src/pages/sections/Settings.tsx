@@ -3,8 +3,9 @@ import { Button } from "../../components/ui/button"
 import { useState } from "react"
 import { ImportsForm } from "@/forms/ImportsForm"
 import { UserSettingsForm } from "@/forms/UserSettingsForm"
+import { TagsManagementForm } from "@/forms/TagsManagementForm"
 
-export type Tab = "apiKeys" | "user" | "imports" // Tabs in settings
+export type Tab = "user" | "tags" | "apiKeys" | "imports" // Tabs in settings
 
 export default function Settings() {
     const [activeTab, setActiveTab] = useState<Tab>("user")
@@ -20,7 +21,7 @@ export default function Settings() {
 
             {/* Tab chips below header */}
             <div className="flex flex-wrap gap-2 px-6 pb-2" role="tablist">
-                {([["user", "User"], ["apiKeys", "API Keys"], ["imports", "Data Imports"]] as const).map(([tab, label]) => (
+                {([["user", "User"], ["tags", "Tags"], ["apiKeys", "API Keys"], ["imports", "Data Imports"]] as const).map(([tab, label]) => (
                     <Button
                         key={tab}
                         role="tab"
@@ -38,9 +39,10 @@ export default function Settings() {
 
             {/* Main content */}
             <div className="flex-1 p-4 overflow-y-auto min-h-0 scrollbar-hide">
-                {activeTab === "apiKeys" && <ApiKeyForm />}
                 {activeTab === "user" && <UserSettingsForm />}
-                {activeTab === "imports" && <ImportsForm />}
+                {activeTab === "tags" && <TagsManagementForm />}
+                {activeTab === "apiKeys" && <ApiKeyForm />}
+                {activeTab === "imports" && <ImportsForm onNavigateToApiKeys={() => setActiveTab("apiKeys")} />}
             </div>
         </div>
     )

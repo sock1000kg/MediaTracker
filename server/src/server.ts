@@ -1,4 +1,6 @@
+import '@/env.js'
 import app from '@/app.js'
+import prisma from '@/prismaClient.js'
 import { redactUrl } from '@/redactUrl.js'
 import { getQueue, registerAllHandlers } from '@/queue/index.js'
 
@@ -27,9 +29,10 @@ if (process.env.NODE_ENV !== 'test') {
         server.close(async () => {
             try {
                 await getQueue().close()
+                await prisma.$disconnect()
                 process.exit(0)
             } catch (e) {
-                console.error("Error closing queue", e)
+                console.error("Error during graceful shutdown", e)
                 process.exit(1)
             }
         })

@@ -14,6 +14,54 @@ export function formatLogDate(iso: string): string {
   return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
 }
 
+/**
+ * Calculates the difference in calendar days between `started_at` and `finished_at`.
+ * Uses day precision (UTC calendar date) so time zones never affect the count.
+ * Returns 0 when started and finished on the same day ("same day").
+ * Returns null if either date is missing or invalid, or if finished_at < started_at.
+ */
+export function daysToFinish(log: { started_at?: string | null; finished_at?: string | null }): number | null {
+  if (!log.started_at || !log.finished_at) return null
+  const s = new Date(log.started_at)
+  const f = new Date(log.finished_at)
+  if (Number.isNaN(s.getTime()) || Number.isNaN(f.getTime())) return null
+  const sUtc = Date.UTC(s.getUTCFullYear(), s.getUTCMonth(), s.getUTCDate())
+  const fUtc = Date.UTC(f.getUTCFullYear(), f.getUTCMonth(), f.getUTCDate())
+  const diffDays = Math.round((fUtc - sUtc) / 86400000)
+  if (diffDays < 0) return null
+  return diffDays
+}
+
+/**
+ * Returns the status + date line for a log card/row aside.
+ * If `finished_at` is set: "{status} · Finished {date}" (and if `started_at` is also set, "· took {N} days", or "· same day" if equal).
+ * Otherwise: "{status} · {logged date}".
+ */
+export function logDateLine(log: {
+  status?: string | null
+  logged_at?: string | null
+  started_at?: string | null
+  finished_at?: string | null
+}): string {
+  const status = statusLabel(log.status)
+  if (log.finished_at) {
+    const finishedStr = formatLogDate(log.finished_at)
+    if (finishedStr) {
+      let line = [status, `Finished ${finishedStr}`].filter(Boolean).join(" · ")
+      if (log.started_at) {
+        const days = daysToFinish(log)
+        if (days !== null) {
+          const tookPart = days === 0 ? "same day" : `took ${days} day${days === 1 ? "" : "s"}`
+          line = `${line} · ${tookPart}`
+        }
+      }
+      return line
+    }
+  }
+  const loggedDateStr = log.logged_at ? formatLogDate(log.logged_at) : ""
+  return [status, loggedDateStr].filter(Boolean).join(" · ")
+}
+
 const STATUS_LABELS: Record<string, string> = {
   "completed": "Completed",
   "in progress": "In progress",

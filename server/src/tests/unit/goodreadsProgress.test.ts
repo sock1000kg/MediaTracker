@@ -49,7 +49,7 @@ describe("import.goodreads handler", () => {
     test("0 rows: onProgress(0, 0) gives updateProgress(100), never NaN", async () => {
         jest.spyOn(goodreadsImportService, "importFromGoodReads").mockImplementation(async (_u, _b, opts) => {
             await opts?.onProgress?.(0, 0)
-            return { imported: 0, skipped: 0, failures: [], failuresTruncated: 0 }
+            return { imported: 0, updated: 0, skipped: 0, failures: [], failuresTruncated: 0 }
         })
         const progress: number[] = []
         await goodreadsImportHandler({ payload: { csv: "x" }, userId: 5, jobId: "1", updateProgress: async (p) => { progress.push(p) } })
@@ -60,12 +60,12 @@ describe("import.goodreads handler", () => {
         const spy = jest.spyOn(goodreadsImportService, "importFromGoodReads").mockImplementation(async (_u, buf, opts) => {
             expect(buf.toString("utf8")).toBe("héllo")
             await opts?.onProgress?.(1, 3)
-            return { imported: 1, skipped: 0, failures: [], failuresTruncated: 0 }
+            return { imported: 1, updated: 0, skipped: 0, failures: [], failuresTruncated: 0 }
         })
         const progress: number[] = []
         const result = await goodreadsImportHandler({ payload: { csv: "héllo" }, userId: 5, jobId: "1", updateProgress: async (p) => { progress.push(p) } })
         expect(spy).toHaveBeenCalledWith(5, expect.any(Buffer), expect.any(Object))
         expect(progress).toEqual([33])
-        expect(result).toEqual({ imported: 1, skipped: 0, failures: [], failuresTruncated: 0 })
+        expect(result).toEqual({ imported: 1, updated: 0, skipped: 0, failures: [], failuresTruncated: 0 })
     })
 })

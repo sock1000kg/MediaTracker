@@ -24,4 +24,21 @@ export const EMPTY_LINES = {
   noResults: "couldn't find that one. too niche?",
   allHidden: "you've logged all of these. impressive, honestly.",
   noTypes: "no types yet. books? records? rocks?",
+  noStats: "no stats yet. log a few things and i'll start counting.",
+  noCollections: "no collections yet. make a shelf of favourites?",
+  emptyCollection: "this collection is empty. add some logs to get started.",
 } as const
+
+export const STATS_LINES = {
+  finisher: "that's a lot of finishing. respect.",
+  generous: "you rate generously. or you have great taste.",
+  default: "keep going. i'm counting.",
+} as const
+
+/** One data-driven line for the Stats page; null when there is nothing logged. */
+export function pickStatsLine(s: { total: number; completed: number; avgRating: number | null }): string | null {
+  if (s.total <= 0) return null
+  if (s.completed >= 50) return STATS_LINES.finisher
+  if (s.avgRating !== null && s.avgRating >= 80) return STATS_LINES.generous
+  return STATS_LINES.default
+}

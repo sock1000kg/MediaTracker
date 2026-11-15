@@ -1,8 +1,8 @@
 # Configuration
 
 All configuration is done with environment variables. Templates:
-- [`.env.example`](../.env.example): the app and Docker Compose
-- [`.env.test.example`](../.env.test.example): the test suite
+- [`server/.env.example`](../server/.env.example): the app and Docker Compose
+- [`server/.env.test.example`](../server/.env.test.example): the test suite
 
 Never commit real `.env` files; they're git-ignored.
 
@@ -12,7 +12,7 @@ Never commit real `.env` files; they're git-ignored.
 | --- | --- | --- |
 | `NODE_ENV` | yes | `development`, `production` or `test`. Production enables secure cookies and refuses the in-memory job queue. |
 | `PORT` | no | API port (default `5000`). |
-| `DATABASE_URL` | yes | PostgreSQL connection string, e.g. `postgresql://user:pass@database:5432/mydb`. Use the host `database` inside Compose and `localhost` outside it. |
+| `DATABASE_URL` | yes | PostgreSQL connection string, e.g. `postgresql://user:pass@localhost:5432/mydb`. Compose overrides the host to `database` inside containers; use `localhost` on the host. |
 | `ALLOWED_CORS` | yes | Comma-separated list of browser origins allowed to call the API with credentials, e.g. `https://tracker.example.com`. The dev Compose file sets `http://localhost:5173`. |
 | `RATE_LIMIT_ENABLED` | no | `true` enables the global, login, sign-up and sensitive-action rate limiters. |
 | `REGISTER_KEY` | yes | A shared secret required to register an account (keeps public instances invite-only). |

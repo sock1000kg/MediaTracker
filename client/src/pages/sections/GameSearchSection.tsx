@@ -1,6 +1,8 @@
+import { ProviderAttribution } from "@/components/search/ProviderAttribution"
 import { PageBackdrop } from "@/components/media-view/PageBackdrop"
 import { effectiveHideLogged } from "@/lib/preferences"
 import { usePreferences } from "@/hooks/usePreferences"
+import { useLimits } from "@/hooks/useLimits"
 import EmptyState from "@/components/EmptyState"
 import { EMPTY_LINES, pickLoadingLine } from "@/lib/whimsy"
 import { Search } from "lucide-react"
@@ -68,6 +70,7 @@ export function GameSearchSection() {
     }
 
     const queryClient = useQueryClient()
+    const limits = useLimits()
 
     //Infinite search
     const {
@@ -117,12 +120,16 @@ export function GameSearchSection() {
         onSuccess: () => {
             queryClient.refetchQueries({ queryKey: fetchMediasQueryOptions().queryKey})
             queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey })
+            queryClient.invalidateQueries({ queryKey: ["tags"] })
         }
     })
 
     const editLogMutation = useMutation({
         mutationFn: editLog,
-        onSuccess: () => queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey}),
+        onSuccess: () => {
+            queryClient.refetchQueries({ queryKey: fetchMediasQueryOptions().queryKey})
+            queryClient.invalidateQueries({ queryKey: ["tags"] })
+        },
     })
 
     const handleSearch = () => {
@@ -135,13 +142,7 @@ export function GameSearchSection() {
         //Check if log of this item exists already
         const existingLog = findLogForResult(logs, item)
 
-        //set the data of the clicked media item
-        const mediaData: GameResult = {
-            ...item,
-            mediaType: "game"
-        }
-
-        setTargetMedia(mediaData)
+        setTargetMedia(item)
         setTargetLog(existingLog ?? null)
         setOpenDialog("logForm")
     }
@@ -190,16 +191,16 @@ export function GameSearchSection() {
             <div className="flex flex-col gap-4 px-6 pt-6 pb-4">
                 <div>
                 <h1 className="font-display text-4xl font-semibold">Game search</h1>
-                <p className="text-xs text-muted-foreground">
-                    <a href={RAWG_URL} target="_blank" rel="noopener noreferrer" className="text-link underline-offset-4 hover:underline">{RAWG_ATTRIBUTION_TEXT}</a>
-                </p>
+                <ProviderAttribution href={RAWG_URL}>
+                    {RAWG_ATTRIBUTION_TEXT}
+                </ProviderAttribution>
                 </div>
 
                 <div className="flex flex-wrap gap-2 items-center">
                     <Input
                         placeholder="Type a game title..."
                         value={inputValue}
-                        maxLength={100}
+                        maxLength={limits.search.queryMaxLength}
                         onChange={(e) => setInputValue(e.target.value)}
                         onKeyDown={(e) => { 
                             if(e.key === "Enter") {
@@ -242,7 +243,7 @@ export function GameSearchSection() {
 
             {/* Results */}
             <div className="p-4 flex-1 overflow-y-auto min-h-0 scrollbar-hide border-t border-border">
-                {isLoading && <p className="animate-pulse">{loadingLine}</p>}
+                {isLoading && <p className="font-hand text-lg animate-pulse">{loadingLine}</p>}
                 {error && error.message === "Missing Game API Key" && (
                     <EmptyState line="You'll need a RAWG key first.">
                         <p>Add one under Settings → API Keys, then search again.</p>

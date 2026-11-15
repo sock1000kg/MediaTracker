@@ -1,4 +1,4 @@
-import type { GameResult, GameSearchFilters, MovieResult, AnimeKind, AnimeResult, AnimeSearchFilters, BookResult, BookSearchFilters, MusicResult } from "@/types/search";
+import type { GameResult, GameSearchFilters, MovieResult, AnimeKind, AnimeResult, AnimeSearchFilters, BookResult, BookSearchFilters, MusicResult, MusicTrackResult, TvResult, TvSeasonResult } from "@/types/search";
 import { apiFetch } from "./clientWrapper";
 
 export function searchBooks(params: string, page: number = 1, filters: BookSearchFilters = {}): 
@@ -66,6 +66,36 @@ export function searchGames(params: string, page: number = 1, filters: GameSearc
     if (filters.platform) qs.set("platform", filters.platform)
     if (filters.sort && filters.sort !== "relevance") qs.set("sort", filters.sort)
     return apiFetch(`/search/games?${qs.toString()}`, {
+        method: "GET"
+    })
+}
+
+export function searchTv(params: string, page: number = 1, filters: { year?: number } = {}):
+    Promise<{ results: TvResult[], nextStartIndex: number | null }>
+{
+    const qs = new URLSearchParams({ q: params, page: String(page) })
+    if (filters.year !== undefined) qs.set("year", String(filters.year))
+    return apiFetch(`/search/tv?${qs.toString()}`, {
+        method: "GET"
+    })
+}
+
+export function getTvSeasons(tmdbId: number):
+    Promise<{ show: TvResult, seasons: TvSeasonResult[] }>
+{
+    return apiFetch(`/search/tv/${tmdbId}/seasons`, {
+        method: "GET"
+    })
+}
+
+export function getAlbumTracks(params: { artist?: string; album?: string; mbid?: string }):
+    Promise<{ album: MusicResult; tracks: MusicTrackResult[]; provider: "lastfm" | "musicbrainz" | null }>
+{
+    const qs = new URLSearchParams()
+    if (params.artist) qs.set("artist", params.artist)
+    if (params.album) qs.set("album", params.album)
+    if (params.mbid) qs.set("mbid", params.mbid)
+    return apiFetch(`/search/music/albums/tracks?${qs.toString()}`, {
         method: "GET"
     })
 }

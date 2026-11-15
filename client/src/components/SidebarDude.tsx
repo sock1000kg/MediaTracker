@@ -4,6 +4,8 @@ import BlueDude from "@/components/BlueDude"
 import SpeechBubble from "@/components/SpeechBubble"
 import { useReducedMotion } from "@/hooks/useReducedMotion"
 import {
+  BUBBLE_MS,
+  DUDE_SAY_EVENT,
   HOP_MS,
   LATE_NIGHT_LINE,
   LATE_NIGHT_MS,
@@ -36,6 +38,18 @@ export default function SidebarDude({ glance, size = 32 }: SidebarDudeProps) {
     const t = setTimeout(() => dispatch({ type: "hide" }), bubble.ms)
     return () => clearTimeout(t)
   }, [bubble])
+
+  // External announcements (e.g. StatsSection quip)
+  useEffect(() => {
+    const onSay = (e: Event) => {
+      if (state.asleep) return
+      const custom = e as CustomEvent<{ text: string; ms?: number }>
+      if (!custom.detail?.text) return
+      dispatch({ type: "say", text: custom.detail.text, ms: custom.detail.ms ?? BUBBLE_MS })
+    }
+    window.addEventListener(DUDE_SAY_EVENT, onSay)
+    return () => window.removeEventListener(DUDE_SAY_EVENT, onSay)
+  }, [state.asleep])
 
   // Asleep for a minute, then wake and reset the counter.
   useEffect(() => {

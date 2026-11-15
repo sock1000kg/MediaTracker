@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<myanimelist>
+    <myinfo>
+        <user_id>1001</user_id>
+        <user_name>testuser</user_name>
+        <user_export_type>1</user_export_type>
+        <user_total_anime>2</user_total_anime>
+    </myinfo>
+    <anime>
+        <series_animedb_id>100</series_animedb_id>
+        <series_title><![CDATA[Frieren & Friends <Beyond> 葬送]]></series_title>
+        <series_type>TV</series_type>
+        <series_episodes>28</series_episodes>
+        <my_watched_episodes>28</my_watched_episodes>
+        <my_start_date>2024-01-00</my_start_date>
+        <my_finish_date>2024-03-23</my_finish_date>
+        <my_score>7</my_score>
+        <my_status>Completed</my_status>
+        <my_comments><![CDATA[Beautiful adventure]]></my_comments>
+        <my_tags><![CDATA[fantasy, adventure, masterpiece]]></my_tags>
+    </anime>
+    <anime>
+        <series_animedb_id>101</series_animedb_id>
+        <series_title><![CDATA[Bocchi the Rock!]]></series_title>
+        <series_type>TV</series_type>
+        <series_episodes>12</series_episodes>
+        <my_watched_episodes>6</my_watched_episodes>
+        <my_start_date>2024-00-00</my_start_date>
+        <my_finish_date>0000-00-00</my_finish_date>
+        <my_score>0</my_score>
+        <my_status>On-Hold</my_status>
+        <my_comments><![CDATA[]]></my_comments>
+        <my_tags><![CDATA[]]></my_tags>
+    </anime>
+</myanimelist>

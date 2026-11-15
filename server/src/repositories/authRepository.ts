@@ -1,13 +1,12 @@
 import prisma from "@/prismaClient.js"
-import { User, MediaType, UserAPIKey } from "@prisma/client"
-import { PrismaClient } from "@prisma/client/extension"
+import { User, MediaType, UserAPIKey, DbClient } from "@/db.js"
 
 //USERS
 export async function createUser(
     username: string,
     displayName: string,
     hashedPassword: string,
-    client: PrismaClient
+    client: DbClient
 ): Promise<User> {
     return client.user.create({
         data: { 
@@ -17,7 +16,7 @@ export async function createUser(
     })
 }
 
-export async function findUserByUsername(username: string, client: PrismaClient): Promise<User & { mediaType: MediaType[] } | null> {
+export async function findUserByUsername(username: string, client: DbClient): Promise<User & { mediaType: MediaType[] } | null> {
     const user = await client.user.findUnique({
         where: {
             username 
@@ -40,7 +39,7 @@ export async function findUserById(id: number): Promise<User & { apiKeys: UserAP
     })
 }
 
-export const saveRefreshToken = async (userId: number, token: string, expiresAt: Date, client: PrismaClient) => {
+export const saveRefreshToken = async (userId: number, token: string, expiresAt: Date, client: DbClient) => {
     return await client.refreshToken.upsert({
         where: { token: token },
         update: { expiresAt },

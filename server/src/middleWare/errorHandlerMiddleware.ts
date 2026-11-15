@@ -1,12 +1,33 @@
 import { AppError } from '@/api/domain/error.js'
-import { Prisma } from '@prisma/client'
+import { Prisma } from '@/db.js'
 import { NextFunction, Request, Response } from 'express'
+import multer from 'multer'
 import { ZodError } from 'zod'
 
 function errorHandler(error: unknown, _req: Request, res: Response, _next: NextFunction) {
+    if (error instanceof multer.MulterError) {
+        if (error.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({ message: 'File is too large (max 10 MB)' })
+        }
+        return res.status(400).json({ message: error.message })
+    }
+
     // Recognize service errors with `status`
     if (error instanceof AppError) {
-        return res.status(error.status).json({ message: error.message })
+        const payload: Record<string, unknown> = { message: error.message }
+        const tag = (error as unknown as { tag?: { id: number; name: string } }).tag
+        if (tag) {
+            payload.id = tag.id
+            payload.name = tag.name
+            payload.tag = tag
+        }
+        const collection = (error as unknown as { collection?: { id: number; name: string } }).collection
+        if (collection) {
+            payload.id = collection.id
+            payload.name = collection.name
+            payload.collection = collection
+        }
+        return res.status(error.status).json(payload)
     }
 
     if (error instanceof ZodError) {

@@ -139,6 +139,14 @@ export const SLEEP_MS = 60_000
 export const HOP_MS = 240
 export const GLANCE_HOLD_MS = 1000
 
+export const DUDE_SAY_EVENT = "dude:say"
+
+export function dudeSay(text: string, ms?: number) {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent(DUDE_SAY_EVENT, { detail: { text, ms } }))
+  }
+}
+
 export interface DudeState {
   /** Pokes since load (or since the last wake-up). */
   clicks: number

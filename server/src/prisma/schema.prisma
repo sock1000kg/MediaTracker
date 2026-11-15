@@ -5,13 +5,13 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
-  // output   = "../src/generated/prisma"
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -29,6 +29,8 @@ model User {
   refreshToken    RefreshToken[]@relation("RefreshTokenToUser")
 
   apiKeys         UserAPIKey[]@relation("APIToUser")
+  tags            Tag[]     @relation("TagsToUser")
+  collections     Collection[] @relation("CollectionsToUser")
 }
 
 model Media {
@@ -54,7 +56,69 @@ model Media {
 
   logs            UserLogs[]@relation("UserLogsToMedia")
 
-  @@unique([userId, creator, title, year, mediaTypeId, source]) //user only have 1 entry of one media
+  parentId        Int?
+  parent          Media?    @relation("MediaChildren", fields: [parentId], references: [id], onDelete: SetNull)
+  children        Media[]   @relation("MediaChildren")
+  position        Int?      // track number / season number
+  externalIds     MediaExternalId[]
+  kind            String?
+  originalTitle   String?
+  genres          MediaGenre[]
+  creators        MediaCreator[]
+
+  @@index([parentId])
+  @@index([kind])
+  @@unique([source, sourceId], where: { sourceId: { not: null } })
+  @@unique([userId, creator, title, year, mediaTypeId, source], where: { sourceId: null })
+}
+
+model Genre {
+  id       Int          @id @default(autoincrement())
+  name     String       // as the provider returned it (first spelling seen)
+  nameKey  String       @unique   // lower-case, trimmed, inner whitespace collapsed
+  media    MediaGenre[]
+}
+
+model MediaGenre {
+  mediaId  Int
+  genreId  Int
+  position Int          // provider order, used for "top 3" displays
+  media    Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  genre    Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([mediaId, genreId])
+  @@index([genreId])
+}
+
+model Creator {
+  id       Int            @id @default(autoincrement())
+  name     String
+  nameKey  String         @unique   // lower-case, trimmed, whitespace collapsed
+  media    MediaCreator[]
+}
+
+model MediaCreator {
+  mediaId   Int
+  creatorId Int
+  role      String        // "author" | "artist" | "director" | "developer" | "studio" | "creator"
+  position  Int
+  media     Media   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  creator   Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@id([mediaId, creatorId, role])
+  @@index([creatorId])
+}
+
+model MediaExternalId {
+  id         Int      @id @default(autoincrement())
+  mediaId    Int
+  media      Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  provider   String   // lower-case provider key, e.g. "anilist", "mal", "tmdb", "goodreads", "isbn13", "letterboxd", "lastfm", "musicbrainz"
+  externalId String
+  created_at DateTime @default(now())
+
+  @@unique([provider, externalId])
+  @@index([mediaId])
 }
 
 model MediaType {
@@ -78,7 +142,10 @@ model UserLogs {
   status          String?   //"Completed" "In progress" "Wishlist" "Dropped"
   rating          Float?    //scale 100
   notes           String?
+  started_at      DateTime?
+  finished_at     DateTime?
   logged_at       DateTime  @default(now())
+  progress        Json?
 
   userId          Int
   user            User      @relation(fields: [userId], references: [id], name: "UserLogsToUser", onDelete: Cascade)
@@ -86,7 +153,60 @@ model UserLogs {
   mediaId         Int
   media           Media     @relation(fields: [mediaId], references: [id], name: "UserLogsToMedia", onDelete: Cascade)
 
+  tags            LogTag[]  @relation("LogTagsToLog")
+  collectionItems CollectionItem[] @relation("CollectionItemsToLog")
+
   @@unique([userId, mediaId]) //avoid duplicate logs of the same media for the same user
+}
+
+model Tag {
+  id              Int       @id @default(autoincrement())
+  userId          Int
+  user            User      @relation(fields: [userId], references: [id], name: "TagsToUser", onDelete: Cascade)
+  name            String
+  nameKey         String
+  created_at      DateTime  @default(now())
+
+  logs            LogTag[]  @relation("LogTagsToTag")
+
+  @@unique([userId, nameKey])
+}
+
+model LogTag {
+  logId           Int
+  tagId           Int
+  log             UserLogs  @relation(fields: [logId], references: [id], name: "LogTagsToLog", onDelete: Cascade)
+  tag             Tag       @relation(fields: [tagId], references: [id], name: "LogTagsToTag", onDelete: Cascade)
+
+  @@id([logId, tagId])
+  @@index([tagId])
+}
+
+model Collection {
+  id              Int              @id @default(autoincrement())
+  userId          Int
+  user            User             @relation(fields: [userId], references: [id], name: "CollectionsToUser", onDelete: Cascade)
+  name            String
+  nameKey         String
+  description     String?
+  ranked          Boolean          @default(false)
+  created_at      DateTime         @default(now())
+  updated_at      DateTime         @updatedAt
+  items           CollectionItem[] @relation("CollectionItemsToCollection")
+
+  @@unique([userId, nameKey])
+}
+
+model CollectionItem {
+  collectionId    Int
+  logId           Int
+  position        Int
+  added_at        DateTime   @default(now())
+  collection      Collection @relation(fields: [collectionId], references: [id], name: "CollectionItemsToCollection", onDelete: Cascade)
+  log             UserLogs   @relation(fields: [logId], references: [id], name: "CollectionItemsToLog", onDelete: Cascade)
+
+  @@id([collectionId, logId])
+  @@index([logId])
 }
 
 model UserAPIKey {

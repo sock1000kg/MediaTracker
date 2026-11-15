@@ -35,6 +35,8 @@ html {
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-type-tv: var(--type-tv);
+  --color-overlay: var(--overlay);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -93,6 +95,8 @@ html {
   --chart-3: #b8862b;
   --chart-4: #6b7d4a;
   --chart-5: #7d4f5a;
+  --type-tv: #5c6ac4;
+  --overlay: rgb(0 0 0 / 0.5);
   --sidebar: #ebe3d5;
   --sidebar-foreground: #2b2520;
   --sidebar-primary: #a8481f;
@@ -149,6 +153,8 @@ html {
   --chart-3: #b8862b;
   --chart-4: #6b7d4a;
   --chart-5: #7d4f5a;
+  --type-tv: #7986cb;
+  --overlay: rgb(0 0 0 / 0.5);
   --sidebar: #171411;
   --sidebar-foreground: #ece3d6;
   --sidebar-primary: #e08a5a;
@@ -191,6 +197,35 @@ html {
   font-variation-settings: "SOFT" 50, "WONK" 1;
 }
 
+/* Thin, theme-coloured scrollbars everywhere (.scrollbar-hide below still wins: it's unlayered) */
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--border-strong) 55%, transparent) transparent;
+  }
+}
+
+/* Older WebKit without scrollbar-color */
+@supports not (scrollbar-color: auto) {
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: color-mix(in oklab, var(--border-strong) 55%, transparent);
+    background-clip: content-box;
+    border: 3px solid transparent;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--border-strong);
+  }
+}
+
 /* Hide scrollbar but keep scrolling */
 .scrollbar-hide {
   -ms-overflow-style: none;     /* IE & Edge */
@@ -210,6 +245,25 @@ html {
   line-height: 1.3333;
   border-radius: 1rem;
   padding: 0.125rem 8px;
+}
+
+/* User personal tag: an outlined pill using border-strong and text-foreground (DESIGN §5.4) */
+.user-tag {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--foreground);
+  font-size: 0.75rem;
+  line-height: 1.3333;
+  border-radius: 1rem;
+  padding: 0.125rem 8px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--dur-fast, 150ms) ease, color var(--dur-fast, 150ms) ease;
+}
+button.user-tag:hover {
+  background: var(--muted);
 }
 
 /* Speech bubble: 2px pixel border with notched corners, no border-radius */

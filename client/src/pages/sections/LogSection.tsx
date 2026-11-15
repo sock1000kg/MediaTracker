@@ -42,7 +42,7 @@ const getLogSortValue = (log: Log, field: SortField) => {
       case "date": return new Date(log.logged_at).getTime()
       case "pageCount": return Number((log.media.metadata as MediaMetadata)?.pageCount ?? 0)
       case "categories": {
-          const cats = (log.media.metadata as MediaMetadata)?.categories
+          const cats = log.media.genres ?? (log.media.metadata as MediaMetadata)?.categories
           return Array.isArray(cats) ? cats.join(", ") : String(cats || "")
       }
       default: return ""
@@ -74,36 +74,67 @@ export default function LogsSection() {
   // Mutations
   const deleteMutation = useMutation({
     mutationFn: deleteLog,
-    onSuccess: () => queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: fetchLogsQueryOptions().queryKey })
+      queryClient.invalidateQueries({ queryKey: ["tags"] })
+    },
   })
 
   const editMutation = useMutation({
     mutationFn: editLog,
-    onSuccess: () => queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: fetchLogsQueryOptions().queryKey })
+      queryClient.invalidateQueries({ queryKey: ["tags"] })
+    },
   })
 
   // Case-insensitive unique categories, first spelling seen wins
   const uniqueCategories = useMemo(() => {
     const seen = new Map<string, string>()
-    logs.forEach(l => getCategories(l.media.metadata).forEach(c => {
+    logs.forEach(l => (l.media.genres ?? getCategories(l.media.metadata)).forEach(c => {
       const key = c.toLowerCase()
       if (!seen.has(key)) seen.set(key, c)
     }))
     return Array.from(seen.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }))
   }, [logs])
 
-  // Filter config depends on the canonical category spellings, so memoize it
+  // Case-insensitive unique tags from loaded logs
+  const uniqueTags = useMemo(() => {
+    const seen = new Map<string, string>()
+    logs.forEach(l => (l.tags ?? []).forEach(t => {
+      const key = t.name.toLowerCase()
+      if (!seen.has(key)) seen.set(key, t.name)
+    }))
+    return Array.from(seen.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }))
+  }, [logs])
+
+  const hasUntagged = useMemo(() => logs.some(l => !l.tags || l.tags.length === 0), [logs])
+  const tagFilterValues = useMemo(() => {
+    if (uniqueTags.length === 0 && !hasUntagged) return []
+    return [...uniqueTags, ...(hasUntagged ? ["No tags"] : [])]
+  }, [uniqueTags, hasUntagged])
+
+  // Filter config depends on the canonical category and tag spellings, so memoize it
   // (the hook's useMemo would otherwise recompute on every render)
   const filterConfig = useMemo(() => {
-    const canonical = new Map(uniqueCategories.map(c => [c.toLowerCase(), c]))
+    const canonicalCat = new Map(uniqueCategories.map(c => [c.toLowerCase(), c]))
+    const canonicalTag = new Map(uniqueTags.map(t => [t.toLowerCase(), t]))
     return [
       { id: "type", field: (log: Log) => log.media.mediaType.name },
       { id: "status", field: (log: Log) => log.status },
-      { id: "category", field: (log: Log) => getCategories(log.media.metadata).map(c => canonical.get(c.toLowerCase()) ?? c) },
+      { id: "category", field: (log: Log) => (log.media.genres ?? getCategories(log.media.metadata)).map(c => canonicalCat.get(c.toLowerCase()) ?? c) },
+      {
+        id: "tag",
+        field: (log: Log) => {
+          const userTags = log.tags ?? []
+          if (userTags.length === 0) return ["No tags"]
+          return userTags.map(t => canonicalTag.get(t.name.toLowerCase()) ?? t.name)
+        }
+      },
       { id: "source", field: (log: Log) => sourceLabel(log.media.source) },
       { id: "rating", field: (log: Log) => ratingBucket(log.rating) },
     ]
-  }, [uniqueCategories])
+  }, [uniqueCategories, uniqueTags])
 
   // Filters Hook
   // We pass the raw data ('logs') into the hook.
@@ -159,8 +190,31 @@ export default function LogsSection() {
     return RATING_BUCKETS.filter(b => present.has(b))
   }, [logs])
 
+  // Set of media IDs of parents that the user has logged
+  const loggedParentMediaIds = useMemo(() => {
+    const set = new Set<number>()
+    const allParentIds = new Set(logs.map(l => l.media.parentId).filter((id): id is number => id != null))
+    for (const l of logs) {
+      if (l.media.id && (l.media.childSummary !== undefined || allParentIds.has(l.media.id))) {
+        set.add(l.media.id)
+      }
+    }
+    return set
+  }, [logs])
+
+  // A child log whose parent the user has also logged is listed under that parent, not as its own top-level row
+  const displayLogs = useMemo(() => {
+    return processedLogs.filter((l) => {
+      const parentId = l.media.parentId
+      if (parentId && loggedParentMediaIds.has(parentId)) {
+        return false
+      }
+      return true
+    })
+  }, [processedLogs, loggedParentMediaIds])
+
   // Grouping happens AFTER filters/sorts, so group order follows the sorted list
-  const groups = useMemo(() => groupLogs(processedLogs, groupBy), [processedLogs, groupBy])
+  const groups = useMemo(() => groupLogs(displayLogs, groupBy), [displayLogs, groupBy])
 
   // Per-group "Load more…": resets when filters, search or sorts change (and on view / group changes)
   const reveal = useGroupReveal(
@@ -178,6 +232,12 @@ export default function LogsSection() {
     setTargetLog(log)
     setOpenDialog("logForm")
   }
+
+  const handleTagClick = useCallback((tagName: string) => {
+    if (!activeFilters["tag"]?.includes(tagName)) {
+      toggleFilter("tag", tagName)
+    }
+  }, [activeFilters, toggleFilter])
 
   const logsThisYear = useMemo(() => {
     const year = new Date().getFullYear()
@@ -230,6 +290,9 @@ export default function LogsSection() {
                         ...(uniqueCategories.length > 0
                           ? [{ id: "category", label: "Category", values: uniqueCategories, badgeColor: "amber" as const, searchable: true }]
                           : []),
+                        ...(tagFilterValues.length > 0
+                          ? [{ id: "tag", label: "Tag", values: tagFilterValues, badgeColor: "stone" as const, searchable: true }]
+                          : []),
                         { id: "source", label: "Source", values: uniqueSources, badgeColor: "blue" },
                         { id: "rating", label: "Rating", values: [...presentRatings], badgeColor: "stone" }
                     ]}
@@ -251,7 +314,7 @@ export default function LogsSection() {
 
       {/* List Content */}
       <div className="relative flex-1 overflow-y-auto min-h-0 scrollbar-hide">
-        {isPending && <p className="text-muted-foreground m-4 animate-pulse">{loadingLine}</p>}
+        {isPending && <p className="font-hand text-lg text-muted-foreground m-4 animate-pulse">{loadingLine}</p>}
         {error && <p className="mt-2 text-center text-sm m-4 text-destructive">{error.message}</p>}
 
         {!isPending && !(logs.length > 0) && (
@@ -276,13 +339,13 @@ export default function LogsSection() {
                   {view === "list" ? (
                     <ul ref={reveal.listRef(group.key)} className="flex flex-col gap-3">
                       {visible.map((log) => (
-                        <LogRow key={log.id} log={log} onEdit={handleEditClick} onDelete={handleDeleteClick} />
+                        <LogRow key={log.id} log={log} onEdit={handleEditClick} onDelete={handleDeleteClick} onTagClick={handleTagClick} />
                       ))}
                     </ul>
                   ) : (
-                    <ul ref={reveal.listRef(group.key)} className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-x-5 gap-y-7">
+                    <ul ref={reveal.listRef(group.key)} className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-x-5 gap-y-7">
                       {visible.map((log) => (
-                        <LogTile key={log.id} log={log} onEdit={handleEditClick} onDelete={handleDeleteClick} />
+                        <LogTile key={log.id} log={log} onEdit={handleEditClick} onDelete={handleDeleteClick} onTagClick={handleTagClick} />
                       ))}
                     </ul>
                   )}

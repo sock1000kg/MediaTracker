@@ -3,24 +3,14 @@ import { SearchResult, searchResultsSchema } from "@/schemas/search/searchSchema
 import { BookSearchFilters, OpenLibraryBook, openLibraryResponseSchema } from "@/schemas/search/bookSchemas.js"
 import { createUserAgentHeader, fetchAndParse, validateSchema } from "@/utilities.js"
 import { AppError } from "@/api/domain/error.js"
+import { isJunkGenre, JUNK_BOOK_SUBJECTS } from "@/services/genreService.js"
 
-// Subjects that are machine-generated or Open Library bookkeeping flags, not real genres
-export const JUNK_SUBJECTS = [
-    "accessible book",
-    "protected daisy",
-    "in library",
-    "lending library",
-    "large type books",
-    "overdrive",
-    "internet archive wishlist",
-    "open library staff picks",
-]
+// Re-export for compatibility
+export { JUNK_BOOK_SUBJECTS }
+export const JUNK_SUBJECTS = JUNK_BOOK_SUBJECTS
 
 export function isJunkSubject(subject: string): boolean {
-    const s = subject.trim().toLowerCase()
-    // machine tags like "nyt:combined-print-and-e-book-fiction=2022-07-24"
-    if (s.includes("=") || /:\S/.test(s)) return true
-    return JUNK_SUBJECTS.includes(s)
+    return isJunkGenre(subject, "book")
 }
 
 export class OpenLibraryService implements ISearchService {
@@ -42,10 +32,15 @@ export class OpenLibraryService implements ISearchService {
                 : null
 
             const categories = (item.subject ?? []).filter(s => !isJunkSubject(s)).slice(0, 3)
+            const creators = item.author_name?.length
+                ? item.author_name.map(name => ({ name, role: "author" }))
+                : undefined
 
             return {
+                mediaType: "book",
                 title: item.title,
                 creator: item.author_name ? item.author_name.join(", ") : null,
+                creators,
                 year: item.first_publish_year ? item.first_publish_year.toString() : null,
                 description: null, // Open Library Search API rarely returns descriptions in the list view
                 imageUrl: imageUrl,

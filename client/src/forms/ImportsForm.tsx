@@ -1,5 +1,6 @@
-import { startGoodreadsImport, ImportAlreadyRunningError } from "@/api/imports"
+import { startGoodreadsImport, startMalImport, startLetterboxdImport, ImportAlreadyRunningError } from "@/api/imports"
 import { fetchJob, fetchJobs } from "@/api/jobs"
+import { fetchApiKeysQueryOptions } from "@/queryOptions/fetchApiKeysQueryOptions"
 import { ApiError } from "@/api/clientWrapper"
 import { Button } from "@/components/ui/button"
 import { importAnnouncement, importStatusLabel, INITIAL_ANNOUNCED, type AnnouncedState, isRunning, isTerminal } from "@/lib/jobs"
@@ -10,9 +11,25 @@ import { Label } from "@radix-ui/react-label"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useRef, useState } from "react"
 
-const IMPORT_JOB = "import.goodreads"
+interface ImportCardProps {
+    title: string
+    inputLabel: string
+    helpText?: string
+    accept: string
+    jobName: "import.goodreads" | "import.mal" | "import.letterboxd"
+    startImport: (file: File) => Promise<{ jobId: string }>
+    extraHint?: React.ReactNode
+}
 
-export function ImportsForm() {
+function ImportCard({
+    title,
+    inputLabel,
+    helpText,
+    accept,
+    jobName,
+    startImport,
+    extraHint,
+}: ImportCardProps) {
     const queryClient = useQueryClient()
 
     // state to manage file selection and result display
@@ -27,8 +44,8 @@ export function ImportsForm() {
 
     // Resume: if the newest import job is still running, attach to it. Old finished summaries aren't shown.
     const latestQuery = useQuery({
-        queryKey: ["jobs", IMPORT_JOB, "latest"],
-        queryFn: () => fetchJobs(IMPORT_JOB, 1),
+        queryKey: ["jobs", jobName, "latest"],
+        queryFn: () => fetchJobs(jobName, 1),
         staleTime: 0,
         gcTime: 0,
     })
@@ -74,7 +91,7 @@ export function ImportsForm() {
     }, [job])
 
     const startMutation = useMutation({
-        mutationFn: startGoodreadsImport,
+        mutationFn: startImport,
         onSuccess: ({ jobId: id }) => {
             setJobId(id)
             setLostTrack(false)
@@ -114,14 +131,14 @@ export function ImportsForm() {
     }
 
     return (
-        <div className="px-4">
-            {/* Info Text */}
-            <p className="text-muted-foreground text-sm">
-                Import your library from an export.
-            </p>
-            <p className="text-muted-foreground text-xs mb-4">
-                The imported medias will not be in the 'Your Medias' tab
-            </p>
+        <div className="bg-card rounded-lg p-5 border border-border">
+            <h3 className="font-semibold text-foreground text-base mb-1">{title}</h3>
+            {helpText && (
+                <p className="text-muted-foreground text-xs mb-4">
+                    {helpText}
+                </p>
+            )}
+            {extraHint}
 
             {/* Always-mounted live region so announcements are picked up */}
             <p role="status" aria-live="polite" className="sr-only">{announcement}</p>
@@ -175,13 +192,13 @@ export function ImportsForm() {
             )}
 
             {/* FORM AREA */}
-            <form onSubmit={handleSubmit} className="mb-6">
-                <Label className="block mb-4">
-                    <span className="text-foreground font-medium">Goodreads Export (.csv)</span>
-                    <div className="flex gap-4 mt-1 items-center">
+            <form onSubmit={handleSubmit} className="mb-4">
+                <Label className="block mb-2">
+                    <span className="text-foreground text-sm font-medium">{inputLabel}</span>
+                    <div className="flex gap-4 mt-2 items-center">
                         <input
                             type="file"
-                            accept=".csv"
+                            accept={accept}
                             onChange={handleFileChange}
                             className="block w-full text-sm text-muted-foreground
                                 file:mr-4 file:py-2 file:px-4
@@ -205,9 +222,9 @@ export function ImportsForm() {
 
             {/* RESULT REPORT CARD */}
             {importResult && (
-                <div className="bg-card rounded-lg p-4 border border-border text-sm">
-                    <h3 className="font-semibold text-foreground mb-2">Import Summary</h3>
-                    <div className="grid grid-cols-3 gap-4 mb-4 text-center">
+                <div className="bg-card rounded-lg p-4 border border-border text-sm mt-4">
+                    <h4 className="font-semibold text-foreground mb-2">Import Summary</h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-4 text-center">
                         <div className="p-2 bg-tag rounded text-tag-foreground">
                             <span className="block text-xl font-bold">{importResult.imported}</span>
                             Imported
@@ -216,11 +233,33 @@ export function ImportsForm() {
                             <span className="block text-xl font-bold">{importResult.skipped}</span>
                             Skipped
                         </div>
+                        <div className="p-2 bg-accent rounded text-accent-foreground">
+                            <span className="block text-xl font-bold">{importResult.updated}</span>
+                            Updated
+                        </div>
                         <div className={`p-2 rounded ${importResult.failures.length > 0 ? 'bg-destructive/10 text-destructive' : 'bg-muted text-muted-foreground'}`}>
                             <span className="block text-xl font-bold">{importResult.failures.length}</span>
                             Failed
                         </div>
                     </div>
+
+                    {/* Unmatched note when unmatched > 0 and not already in notes */}
+                    {importResult.unmatched !== undefined &&
+                        importResult.unmatched > 0 &&
+                        (!importResult.notes || !importResult.notes.some(n => n.includes("couldn't be matched to TMDB"))) && (
+                            <p className="text-xs text-muted-foreground mb-3">
+                                {importResult.unmatched} films couldn't be matched to TMDB and were added by title.
+                            </p>
+                        )}
+
+                    {/* Notes (e.g. entries without covers) */}
+                    {importResult.notes && importResult.notes.length > 0 && (
+                        <div className="mb-3 space-y-1 text-xs text-muted-foreground">
+                            {importResult.notes.map((note, idx) => (
+                                <p key={idx}>{note}</p>
+                            ))}
+                        </div>
+                    )}
 
                     {/* DETAILED FAILURE LIST */}
                     {importResult.failures.length > 0 && (
@@ -261,3 +300,67 @@ export function ImportsForm() {
     )
 }
 
+interface ImportsFormProps {
+    onNavigateToApiKeys?: () => void
+}
+
+export function ImportsForm({ onNavigateToApiKeys }: ImportsFormProps = {}) {
+    const { data: apiKeys } = useQuery(fetchApiKeysQueryOptions())
+    const hasTmdbKey = apiKeys?.some(k => k.service === "tmdb")
+    const hasNoTmdbKey = apiKeys !== undefined && !hasTmdbKey
+
+    const tmdbHint = hasNoTmdbKey ? (
+        <p className="text-xs text-muted-foreground mb-4">
+            No TMDB key found. Unmatched films won&apos;t have posters or metadata. Add one under{" "}
+            <button
+                type="button"
+                onClick={onNavigateToApiKeys}
+                className="text-primary underline hover:text-primary/80 focus:outline-none"
+            >
+                Settings → API Keys
+            </button>
+            .
+        </p>
+    ) : null
+
+    return (
+        <div className="px-4">
+            {/* Info Text */}
+            <p className="text-muted-foreground text-sm">
+                Import your library from an export.
+            </p>
+            <p className="text-muted-foreground text-xs mb-6">
+                The imported medias will not be in the &apos;Your Medias&apos; tab
+            </p>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <ImportCard
+                    title="Goodreads"
+                    inputLabel="Goodreads Export (.csv)"
+                    accept=".csv"
+                    jobName="import.goodreads"
+                    startImport={startGoodreadsImport}
+                />
+
+                <ImportCard
+                    title="MyAnimeList"
+                    inputLabel="MyAnimeList Export (.xml, .xml.gz)"
+                    helpText="Export from myanimelist.net/panel.php?go=export, once for anime and once for manga. Upload either file (.xml or .xml.gz)."
+                    accept=".xml,.gz,application/xml,application/gzip"
+                    jobName="import.mal"
+                    startImport={startMalImport}
+                />
+
+                <ImportCard
+                    title="Letterboxd"
+                    inputLabel="Letterboxd Export (.zip)"
+                    helpText="Export from letterboxd.com → Settings → Data → Export your data, then upload the ZIP."
+                    accept=".zip,application/zip"
+                    jobName="import.letterboxd"
+                    startImport={startLetterboxdImport}
+                    extraHint={tmdbHint}
+                />
+            </div>
+        </div>
+    )
+}

@@ -1,11 +1,12 @@
 import { z } from "zod"
 import { displayNameSchema, passwordSchema } from "@/schemas/authSchemas.js"
+import { LIMITS } from "@/config/limits.js"
 
 // Mirrors SortField in client/src/types/sort.ts
 export const SORT_FIELDS = ["title", "creator", "rating", "status", "date", "pageCount", "categories"] as const
-const TABS = ["logs", "medias", "mediaTypes", "settings", "bookSearch", "musicSearch", "animeSearch", "movieSearch", "gameSearch"] as const
+const TABS = ["logs", "medias", "collections", "mediaTypes", "stats", "settings", "bookSearch", "musicSearch", "animeSearch", "movieSearch", "tvSearch", "gameSearch"] as const
 const THEMES = ["light", "dark", "system"] as const
-export const MAX_PREFS_BYTES = 4096
+export const MAX_PREFS_BYTES = LIMITS.prefs.maxBytes
 
 export const updateProfileSchema = z.object({ displayName: displayNameSchema }).strict()
 
@@ -26,7 +27,7 @@ const sortPref = z.object({ field: z.enum(SORT_FIELDS), direction: z.enum(["asc"
 export const preferencesSchema = z.object({
     theme: z.enum(THEMES),
     defaultTab: z.enum(TABS),
-    hideLogged: z.object({ books: z.boolean(), music: z.boolean(), anime: z.boolean(), movies: z.boolean(), games: z.boolean() }).partial().strict(),
+    hideLogged: z.object({ books: z.boolean(), music: z.boolean(), anime: z.boolean(), movies: z.boolean(), tv: z.boolean(), games: z.boolean() }).partial().strict(),
     defaultSort: z.object({ logs: z.array(sortPref).max(3), medias: z.array(sortPref).max(3) }).partial().strict(),
 }).partial().strict()
 
@@ -34,7 +35,7 @@ export const preferencesSchema = z.object({
 export const preferencesPatchSchema = z.object({
     theme: z.enum(THEMES).nullable(),
     defaultTab: z.enum(TABS).nullable(),
-    hideLogged: z.object({ books: z.boolean(), music: z.boolean(), anime: z.boolean(), movies: z.boolean(), games: z.boolean() }).partial().strict().nullable(),
+    hideLogged: z.object({ books: z.boolean(), music: z.boolean(), anime: z.boolean(), movies: z.boolean(), tv: z.boolean(), games: z.boolean() }).partial().strict().nullable(),
     defaultSort: z.object({ logs: z.array(sortPref).max(3), medias: z.array(sortPref).max(3) }).partial().strict().nullable(),
 }).partial().strict()
 
@@ -48,6 +49,7 @@ export const preferencesReadSchema = z.object({
         music: z.boolean().optional().catch(undefined),
         anime: z.boolean().optional().catch(undefined),
         movies: z.boolean().optional().catch(undefined),
+        tv: z.boolean().optional().catch(undefined),
         games: z.boolean().optional().catch(undefined),
     }).optional().catch(undefined),
     defaultSort: z.object({

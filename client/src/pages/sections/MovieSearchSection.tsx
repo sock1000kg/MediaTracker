@@ -1,6 +1,7 @@
 import { PageBackdrop } from "@/components/media-view/PageBackdrop"
 import { effectiveHideLogged } from "@/lib/preferences"
 import { usePreferences } from "@/hooks/usePreferences"
+import { useLimits } from "@/hooks/useLimits"
 import EmptyState from "@/components/EmptyState"
 import { EMPTY_LINES, pickLoadingLine } from "@/lib/whimsy"
 import { Search } from "lucide-react"
@@ -13,7 +14,8 @@ import { findLogForResult, isResultLogged, readStoredBool, writeStoredBool } fro
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData  } from "@tanstack/react-query"
 
 import type { MovieResult } from "@/types/search"
-import { TMDB_ATTRIBUTION } from "@/lib/movieFormat"
+import { ProviderAttribution } from "@/components/search/ProviderAttribution"
+import { TMDB_ATTRIBUTION, TMDB_URL } from "@/lib/movieFormat"
 import { type DialogName, type Log } from "@/types/mainTypes"
 
 import EntityDialog from "../../components/dialogs/EntityDialog"
@@ -55,6 +57,7 @@ export function MovieSearchSection() {
     }
 
     const queryClient = useQueryClient()
+    const limits = useLimits()
 
     //Infinite search
     const {
@@ -104,12 +107,16 @@ export function MovieSearchSection() {
         onSuccess: () => {
             queryClient.refetchQueries({ queryKey: fetchMediasQueryOptions().queryKey})
             queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey })
+            queryClient.invalidateQueries({ queryKey: ["tags"] })
         }
     })
 
     const editLogMutation = useMutation({
         mutationFn: editLog,
-        onSuccess: () => queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey}),
+        onSuccess: () => {
+            queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey})
+            queryClient.invalidateQueries({ queryKey: ["tags"] })
+        },
     })
 
     const handleSearch = () => {
@@ -124,13 +131,7 @@ export function MovieSearchSection() {
         //Check if log of this item exists already
         const existingLog = findLogForResult(logs, item)
 
-        //set the data of the clicked media item
-        const mediaData: MovieResult = {
-            ...item,
-            mediaType: "movie"
-        }
-
-        setTargetMedia(mediaData)
+        setTargetMedia(item)
         setTargetLog(existingLog ?? null)
         setOpenDialog("logForm")
     }
@@ -179,14 +180,16 @@ export function MovieSearchSection() {
             <div className="flex flex-col gap-4 px-6 pt-6 pb-4">
                 <div>
                 <h1 className="font-display text-4xl font-semibold">Movie search</h1>
-                <p className="text-xs text-muted-foreground">{TMDB_ATTRIBUTION}</p>
+                <ProviderAttribution href={TMDB_URL}>
+                    {TMDB_ATTRIBUTION}
+                </ProviderAttribution>
                 </div>
 
                 <div className="flex flex-wrap gap-2 items-center">
                     <Input
                         placeholder="Type a movie title..."
                         value={inputValue}
-                        maxLength={100}
+                        maxLength={limits.search.queryMaxLength}
                         onChange={(e) => setInputValue(e.target.value)}
                         onKeyDown={(e) => { 
                             if(e.key === "Enter") {
@@ -223,7 +226,7 @@ export function MovieSearchSection() {
 
             {/* Results */}
             <div className="p-4 flex-1 overflow-y-auto min-h-0 scrollbar-hide border-t border-border">
-                {isLoading && <p className="animate-pulse">{loadingLine}</p>}
+                {isLoading && <p className="font-hand text-lg animate-pulse">{loadingLine}</p>}
                 {error && error.message === "Missing Movie API Key" && (
                     <EmptyState line="You'll need a TMDB key first.">
                         <p>Add one under Settings → API Keys, then search again.</p>

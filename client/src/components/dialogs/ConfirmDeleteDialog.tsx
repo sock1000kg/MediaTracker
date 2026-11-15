@@ -101,7 +101,7 @@ export function ConfirmDeleteDialog<T = MediaType>({
               <AlertDialogDescription>
                 {warning ?? description ?? "Are you sure you want to delete this item?"}
               </AlertDialogDescription>
-              <p className="font-hand text-muted-foreground">it'll be like it never happened.</p>
+              <p className="font-hand text-muted-foreground">don't be ashamed of your taste, i'm sure it's very nice :)</p>
             </>
           )}
         </AlertDialogHeader>

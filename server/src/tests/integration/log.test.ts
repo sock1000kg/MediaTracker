@@ -285,14 +285,14 @@ describe('Log routes', () => {
     })
 
     test('Sanitization trims notes and limits length', async () => {
-        const longNotes = 'a'.repeat(11000)
+        const longNotes = 'a'.repeat(50_001)
         const res = await request(app)
             .put(`/logs/${log.id}`)
             .set('Authorization', `Bearer ${token}`)
             .send({ notes: longNotes })
 
         expect(res.statusCode).toBe(200)
-        expect(res.body.notes.length).toBe(10000)
+        expect(res.body.notes.length).toBe(50_000)
     })
 })
 

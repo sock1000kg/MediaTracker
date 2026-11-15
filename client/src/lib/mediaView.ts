@@ -3,12 +3,13 @@ export type CoverAspect = "square" | "wide" | "portrait"
 
 interface AspectInput {
   mediaType?: { name?: string | null } | null
+  kind?: unknown
   metadata?: { kind?: unknown } | null
 }
 
 export function aspectForMedia(media: AspectInput): CoverAspect {
   const type = (media.mediaType?.name ?? "").toLowerCase()
-  const kind = media.metadata?.kind
+  const kind = (media as { kind?: unknown }).kind ?? media.metadata?.kind
   if (type === "music" || kind === "album" || kind === "track") return "square"
   if (type === "game") return "wide"
   return "portrait"
@@ -28,5 +29,7 @@ export function coverTokenFromKey(key: string): number {
 }
 
 export function capitalise(s: string): string {
-  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s
+  if (!s) return s
+  if (s.toLowerCase() === "tv") return "TV"
+  return s.charAt(0).toUpperCase() + s.slice(1)
 }
