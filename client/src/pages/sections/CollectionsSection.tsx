@@ -53,7 +53,7 @@ import type {
 
 export default function CollectionsSection() {
   const queryClient = useQueryClient()
-  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [newDialogOpen, setNewDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -69,7 +69,7 @@ export default function CollectionsSection() {
   const [view, setView] = useStoredView("collections.view")
 
   // Focus retention ref
-  const focusPendingRef = useRef<{ logId: number; action: string } | null>(null)
+  const focusPendingRef = useRef<{ logId: string; action: string } | null>(null)
 
   // Local optimistic items for the active collection detail view
   const [optimisticItems, setOptimisticItems] = useState<CollectionItem[] | null>(null)
@@ -155,7 +155,7 @@ export default function CollectionsSection() {
       collectionId,
       items,
     }: {
-      collectionId: number
+      collectionId: string
       items: CollectionItem[]
     }) => {
       const payload = buildOrderPayload(items)
@@ -241,7 +241,7 @@ export default function CollectionsSection() {
     )
   }
 
-  const handleRemoveItem = async (logId: number) => {
+  const handleRemoveItem = async (logId: string) => {
     if (!selectedId) return
     try {
       await removeCollectionItem(selectedId, logId)
@@ -253,7 +253,7 @@ export default function CollectionsSection() {
     }
   }
 
-  const handleApplyLogsDiff = async (diff: { added: number[]; removed: number[] }) => {
+  const handleApplyLogsDiff = async (diff: { added: string[]; removed: string[] }) => {
     if (!selectedId) return
     for (const id of diff.added) {
       await addCollectionItem(selectedId, id)

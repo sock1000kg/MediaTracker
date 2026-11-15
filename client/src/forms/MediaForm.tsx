@@ -115,9 +115,9 @@ export function MediaForm({
             {/* Media Type (dropdown) */}
             <label className="block">
                 <span className="text-sm">Media Type*</span>
-                <Select value={formData.mediaType?.id?.toString() ?? ""} onValueChange={(val) => {
+                <Select value={formData.mediaType?.id ?? ""} onValueChange={(val) => {
                         const selectedType = mediaTypes.find(
-                            mediaType => mediaType.id === Number(val)
+                            mediaType => mediaType.id === val
                         )
                         setFormData(prev => ({ ...prev, mediaType: selectedType }))
                     }}>

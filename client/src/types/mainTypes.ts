@@ -22,8 +22,8 @@ export interface MediaCreatorItem {
 }
 
 export interface Media {
-  id: number
-  userId: number
+  id: string
+  userId: string
   title: string
   mediaType: MediaType
   creator?: string | null
@@ -34,14 +34,14 @@ export interface Media {
   metadata?: MediaMetadata
   imageUrl?: string | null
   created_at: string
-  parentId?: number | null
+  parentId?: string | null
   position?: number | null
   kind?: string | null
   originalTitle?: string | null
   genres?: string[]
   creators?: MediaCreatorItem[]
   parent?: {
-    id: number
+    id: string
     title: string
     creator?: string | null
   } | null
@@ -49,12 +49,12 @@ export interface Media {
 }
 
 export interface TagItem {
-  id: number
+  id: string
   name: string
 }
 
 export interface TagWithCount {
-  id: number
+  id: string
   name: string
   count: number
 }
@@ -63,7 +63,7 @@ export type Tag = TagWithCount
 
 export type LogStatus = "completed" | "in progress" | "wishlist" | "dropped"
 export interface Log {
-  id: number
+  id: string
   status: LogStatus
   rating: number | null
   notes: string
@@ -75,12 +75,12 @@ export interface Log {
   genres?: string[]
   creators?: MediaCreatorItem[]
   tags?: TagItem[]
-  collectionIds?: number[]
+  collectionIds?: string[]
   childSummary?: ChildSummary
 }
 
 export interface CollectionSummary {
-  id: number
+  id: string
   name: string
   description: string | null
   ranked: boolean
@@ -96,7 +96,7 @@ export interface CollectionItem {
 }
 
 export interface CollectionDetail {
-  id: number
+  id: string
   name: string
   description: string | null
   ranked: boolean
@@ -119,10 +119,10 @@ export interface UpdateCollectionInput {
 
 //MEDIA TYPES
 export interface MediaType {
-  id: number
+  id: string
   name: string
   created_at: string
-  userId: number
+  userId: string | null
 }
 
 //API KEY

@@ -20,7 +20,7 @@ vi.mock("@/api/tags", () => ({
 }))
 
 const mockLog1: Log = {
-  id: 101,
+  id: "018f0000-0000-7000-8000-000000000101",
   rating: 80,
   status: "completed",
   logged_at: "2026-11-01T12:00:00Z",
@@ -29,8 +29,8 @@ const mockLog1: Log = {
   notes: "",
   tags: [],
   media: {
-    id: 1,
-    userId: 1,
+    id: "018f0000-0000-7000-8000-000000000001",
+    userId: "018f0000-0000-7000-8000-000000000999",
     title: "Alpha Movie",
     creator: "Director A",
     year: 2020,
@@ -40,12 +40,12 @@ const mockLog1: Log = {
     source: "tmdb",
     sourceId: "movie:1",
     metadata: undefined,
-    mediaType: { id: 1, name: "movie", created_at: "2026-01-01T00:00:00Z", userId: 1 },
+    mediaType: { id: "018f0000-0000-7000-8000-000000000011", name: "movie", created_at: "2026-01-01T00:00:00Z", userId: "018f0000-0000-7000-8000-000000000999" },
   },
 }
 
 const mockLog2: Log = {
-  id: 102,
+  id: "018f0000-0000-7000-8000-000000000102",
   rating: 90,
   status: "completed",
   logged_at: "2026-11-03T12:00:00Z",
@@ -54,8 +54,8 @@ const mockLog2: Log = {
   notes: "",
   tags: [],
   media: {
-    id: 2,
-    userId: 1,
+    id: "018f0000-0000-7000-8000-000000000002",
+    userId: "018f0000-0000-7000-8000-000000000999",
     title: "Beta Book",
     creator: "Author B",
     year: 2021,
@@ -65,12 +65,12 @@ const mockLog2: Log = {
     source: "openlibrary",
     sourceId: "book:2",
     metadata: undefined,
-    mediaType: { id: 2, name: "book", created_at: "2026-01-01T00:00:00Z", userId: 1 },
+    mediaType: { id: "018f0000-0000-7000-8000-000000000012", name: "book", created_at: "2026-01-01T00:00:00Z", userId: "018f0000-0000-7000-8000-000000000999" },
   },
 }
 
 const mockCollectionSummary: CollectionSummary = {
-  id: 1,
+  id: "018f0000-0000-7000-8000-000000000201",
   name: "Top Picks",
   description: "My favorites",
   ranked: true,
@@ -80,7 +80,7 @@ const mockCollectionSummary: CollectionSummary = {
 }
 
 const mockCollectionDetail: CollectionDetail = {
-  id: 1,
+  id: "018f0000-0000-7000-8000-000000000201",
   name: "Top Picks",
   description: "My favorites",
   ranked: true,
@@ -139,7 +139,7 @@ describe("CollectionsSection component", () => {
     await user.click(alphaRank)
     await user.keyboard("2{Enter}")
 
-    expect(collectionsApi.reorderCollection).toHaveBeenCalledWith(1, [102, 101])
+    expect(collectionsApi.reorderCollection).toHaveBeenCalledWith(mockCollectionDetail.id, [mockLog2.id, mockLog1.id])
     const liveRegion = screen.getByRole("status")
     expect(liveRegion).toHaveTextContent("Moved Alpha Movie to position 2")
 
@@ -170,7 +170,7 @@ describe("CollectionsSection component", () => {
     const removeMenuItem = await screen.findByRole("menuitem", { name: "Remove from collection" })
     await user.click(removeMenuItem)
 
-    expect(collectionsApi.removeCollectionItem).toHaveBeenCalledWith(1, 102)
+    expect(collectionsApi.removeCollectionItem).toHaveBeenCalledWith(mockCollectionDetail.id, mockLog2.id)
     expect(logsApi.deleteLog).not.toHaveBeenCalled()
   })
 
@@ -187,7 +187,7 @@ describe("CollectionsSection component", () => {
 
     await user.click(betaRank)
     await user.keyboard("0{Enter}")
-    expect(collectionsApi.reorderCollection).toHaveBeenCalledWith(1, [102, 101])
+    expect(collectionsApi.reorderCollection).toHaveBeenCalledWith(mockCollectionDetail.id, [mockLog2.id, mockLog1.id])
   })
 
   it("unranked collections show no rank numbers or reorder controls", async () => {

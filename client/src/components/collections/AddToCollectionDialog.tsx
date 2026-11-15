@@ -35,7 +35,7 @@ export function AddToCollectionDialog({ log, open, onOpenChange }: AddToCollecti
   const currentIds = new Set(log.collectionIds ?? [])
 
   const toggleMutation = useMutation({
-    mutationFn: async ({ collectionId, isMember }: { collectionId: number; isMember: boolean }) => {
+    mutationFn: async ({ collectionId, isMember }: { collectionId: string; isMember: boolean }) => {
       if (isMember) {
         await removeCollectionItem(collectionId, log.id)
       } else {
@@ -70,7 +70,7 @@ export function AddToCollectionDialog({ log, open, onOpenChange }: AddToCollecti
     },
   })
 
-  const handleToggle = (collectionId: number, isMember: boolean) => {
+  const handleToggle = (collectionId: string, isMember: boolean) => {
     setError(null)
     toggleMutation.mutate({ collectionId, isMember })
   }

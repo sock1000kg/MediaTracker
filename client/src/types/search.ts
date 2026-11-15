@@ -9,7 +9,7 @@ export type MediaResult<T extends string = string> = {
   imageUrl?: string | null
   metadata?: Record<string, unknown>
   inLibrary?: boolean
-  myLog?: { id: number; rating: number | null; status: string | null } | null
+  myLog?: { id: string; rating: number | null; status: string | null } | null
 }
 
 export type BookResult = MediaResult<"book"> & {
@@ -37,7 +37,7 @@ export type MusicResult = MediaResult<"music"> & {
 
 export type MusicTrackResult = MediaResult<"music"> & {
   metadata: MusicMetadata
-  myLog?: { id: number; rating: number | null; status: string | null } | null
+  myLog?: { id: string; rating: number | null; status: string | null } | null
 }
 
 export type AnimeKind = "anime" | "manga"

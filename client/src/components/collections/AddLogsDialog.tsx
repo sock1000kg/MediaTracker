@@ -18,10 +18,10 @@ import type { Log } from "@/types/mainTypes"
 interface AddLogsDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  collectionId: number
+  collectionId: string
   collectionTitle: string
-  initialLogIds: number[]
-  onApply: (diff: { added: number[]; removed: number[] }) => Promise<void>
+  initialLogIds: string[]
+  onApply: (diff: { added: string[]; removed: string[] }) => Promise<void>
 }
 
 export function AddLogsDialog({
@@ -33,7 +33,7 @@ export function AddLogsDialog({
 }: AddLogsDialogProps) {
   const { data: allLogs = [], isLoading } = useQuery(fetchLogsQueryOptions())
   const [search, setSearch] = useState("")
-  const [selected, setSelected] = useState<Set<number>>(new Set(initialLogIds))
+  const [selected, setSelected] = useState<Set<string>>(new Set(initialLogIds))
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -55,7 +55,7 @@ export function AddLogsDialog({
     })
   }, [allLogs, search])
 
-  const toggleLog = (id: number) => {
+  const toggleLog = (id: string) => {
     setSelected((prev) => {
       const next = new Set(prev)
       if (next.has(id)) {

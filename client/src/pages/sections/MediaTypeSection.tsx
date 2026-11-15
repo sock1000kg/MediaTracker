@@ -126,7 +126,7 @@ export default function MediaTypesSection() {
                   {/* Left side info */}
                   <div className="flex-col items-center gap-1">
                     <p className="font-bold text-foreground">{capitalise(mediaType.name)}</p>
-                    {mediaType.userId == 0 && <p className="text-xs">(system)</p>}
+                    {(mediaType.userId == null || mediaType.userId === "0") && <p className="text-xs">(system)</p>}
                   </div>
 
                   {/* Right side info */}

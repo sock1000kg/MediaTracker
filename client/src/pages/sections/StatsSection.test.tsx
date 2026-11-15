@@ -22,7 +22,7 @@ vi.mock("@/api/logs", () => ({
 
 const mockLogs: Log[] = [
   {
-    id: 1,
+    id: "1",
     rating: 90,
     status: "completed",
     logged_at: "2026-10-15T12:00:00Z",
@@ -31,8 +31,8 @@ const mockLogs: Log[] = [
     notes: "Great watch",
     tags: [],
     media: {
-      id: 1,
-      userId: 1,
+      id: "1",
+      userId: "1",
       title: "Inception",
       creator: "Christopher Nolan",
       year: 2010,
@@ -42,11 +42,11 @@ const mockLogs: Log[] = [
       source: "tmdb",
       sourceId: "movie:1",
       metadata: { runtime: 148 },
-      mediaType: { id: 1, name: "movie", created_at: "2026-01-01T00:00:00Z", userId: 1 },
+      mediaType: { id: "1", name: "movie", created_at: "2026-01-01T00:00:00Z", userId: "1" },
     },
   },
   {
-    id: 2,
+    id: "2",
     rating: 50,
     status: "completed",
     logged_at: "2026-10-20T12:00:00Z",
@@ -55,8 +55,8 @@ const mockLogs: Log[] = [
     notes: "Average book",
     tags: [],
     media: {
-      id: 2,
-      userId: 1,
+      id: "2",
+      userId: "1",
       title: "Dune",
       creator: "Frank Herbert",
       year: 1965,
@@ -66,7 +66,7 @@ const mockLogs: Log[] = [
       source: "openlibrary",
       sourceId: "book:2",
       metadata: { pageCount: 412 },
-      mediaType: { id: 2, name: "book", created_at: "2026-01-01T00:00:00Z", userId: 1 },
+      mediaType: { id: "2", name: "book", created_at: "2026-01-01T00:00:00Z", userId: "1" },
     },
   },
 ]

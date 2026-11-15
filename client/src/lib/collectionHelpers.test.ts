@@ -37,18 +37,18 @@ describe("collectionHelpers", () => {
   })
 
   describe("buildOrderPayload", () => {
-    it("handles number array", () => {
-      expect(buildOrderPayload([10, 20, 30])).toEqual({ logIds: [10, 20, 30] })
+    it("handles string array", () => {
+      expect(buildOrderPayload(["10", "20", "30"])).toEqual({ logIds: ["10", "20", "30"] })
     })
 
-    it("handles { logId: number } items", () => {
-      expect(buildOrderPayload([{ logId: 5 }, { logId: 15 }])).toEqual({ logIds: [5, 15] })
+    it("handles { logId: string } items", () => {
+      expect(buildOrderPayload([{ logId: "5" }, { logId: "15" }])).toEqual({ logIds: ["5", "15"] })
     })
 
-    it("handles { log: { id: number } } items", () => {
+    it("handles { log: { id: string } } items", () => {
       expect(
-        buildOrderPayload([{ log: { id: 101 } }, { log: { id: 102 } }])
-      ).toEqual({ logIds: [101, 102] })
+        buildOrderPayload([{ log: { id: "101" } }, { log: { id: "102" } }])
+      ).toEqual({ logIds: ["101", "102"] })
     })
   })
 
@@ -76,24 +76,24 @@ describe("collectionHelpers", () => {
 
   describe("membershipDiff", () => {
     it("computes added and removed ids", () => {
-      const initial = [1, 2, 3]
-      const selected = [2, 3, 4, 5]
+      const initial = ["1", "2", "3"]
+      const selected = ["2", "3", "4", "5"]
       const diff = membershipDiff(initial, selected)
-      expect(diff.added).toEqual([4, 5])
-      expect(diff.removed).toEqual([1])
+      expect(diff.added).toEqual(["4", "5"])
+      expect(diff.removed).toEqual(["1"])
     })
 
     it("works with Sets", () => {
-      const initial = new Set([10, 20])
-      const selected = new Set([20, 30])
+      const initial = new Set(["10", "20"])
+      const selected = new Set(["20", "30"])
       const diff = membershipDiff(initial, selected)
-      expect(diff.added).toEqual([30])
-      expect(diff.removed).toEqual([10])
+      expect(diff.added).toEqual(["30"])
+      expect(diff.removed).toEqual(["10"])
     })
 
     it("returns empty arrays when unchanged", () => {
-      const initial = [1, 2]
-      const selected = [1, 2]
+      const initial = ["1", "2"]
+      const selected = ["1", "2"]
       const diff = membershipDiff(initial, selected)
       expect(diff.added).toEqual([])
       expect(diff.removed).toEqual([])

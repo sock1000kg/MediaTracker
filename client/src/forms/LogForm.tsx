@@ -75,13 +75,13 @@ export function LogForm({
       } else {
         setFormData((prev) => ({
           ...prev,
-          tags: newTags.map((name, i) => ({ id: -1 - i, name })),
+          tags: newTags.map((name, i) => ({ id: `new-${i}`, name })),
         }))
       }
     } else {
       setFormData((prev) => ({
         ...prev,
-        tags: newTags.length > 0 ? newTags.map((name, i) => ({ id: -1 - i, name })) : undefined,
+        tags: newTags.length > 0 ? newTags.map((name, i) => ({ id: `new-${i}`, name })) : undefined,
       }))
     }
   }, [formData.id, setFormData])

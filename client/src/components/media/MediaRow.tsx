@@ -49,7 +49,7 @@ export function MediaRow({ media, log, onEdit, onDelete, onLog }: MediaRowProps)
       <div className="flex flex-wrap items-baseline gap-x-2">
         <h3 className="font-display text-lg font-semibold break-words">{media.title}</h3>
         {byline && <span className="text-sm text-muted-foreground">{byline}</span>}
-        {media.userId === 0 && <span className="text-xs text-muted-foreground">(System)</span>}
+        {media.userId === "0" && <span className="text-xs text-muted-foreground">(System)</span>}
       </div>
 
       <p className="mt-1 text-xs text-muted-foreground tabular-nums">

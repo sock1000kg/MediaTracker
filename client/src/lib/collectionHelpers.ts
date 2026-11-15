@@ -19,16 +19,16 @@ export function moveItem<T>(list: readonly T[], fromIndex: number, toIndex: numb
 }
 
 /**
- * Builds the payload for `PUT /collections/:id/order { logIds: number[] }`.
- * Accepts an array of items (which can be numbers or objects with `logId` / `log.id`).
+ * Builds the payload for `PUT /collections/:id/order { logIds: string[] }`.
+ * Accepts an array of items (which can be strings or objects with `logId` / `log.id`).
  */
 export function buildOrderPayload<
-  T extends number | { logId: number } | { log: { id: number } }
->(items: readonly T[]): { logIds: number[] } {
+  T extends string | { logId: string } | { log: { id: string } }
+>(items: readonly T[]): { logIds: string[] } {
   const logIds = items.map((it) => {
-    if (typeof it === "number") return it
+    if (typeof it === "string") return it
     if (typeof it === "object" && it !== null && "logId" in it) return it.logId
-    return (it as { log: { id: number } }).log.id
+    return (it as { log: { id: string } }).log.id
   })
   return { logIds }
 }
@@ -55,14 +55,14 @@ export function collectionKey(name: string, maxLength: number): string {
 /**
  * Computes which logs were added or removed between `initialIds` and `selectedIds`.
  */
-export function membershipDiff(
-  initialIds: readonly number[] | Set<number>,
-  selectedIds: readonly number[] | Set<number>
-): { added: number[]; removed: number[] } {
+export function membershipDiff<T = string>(
+  initialIds: readonly T[] | Set<T>,
+  selectedIds: readonly T[] | Set<T>
+): { added: T[]; removed: T[] } {
   const initSet = new Set(initialIds)
   const selSet = new Set(selectedIds)
-  const added: number[] = []
-  const removed: number[] = []
+  const added: T[] = []
+  const removed: T[] = []
 
   for (const id of selSet) {
     if (!initSet.has(id)) added.push(id)
