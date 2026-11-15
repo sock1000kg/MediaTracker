@@ -40,14 +40,15 @@ describe("ImportsForm component", () => {
         vi.clearAllMocks()
     })
 
-    it("renders Goodreads, MyAnimeList, and Letterboxd cards with correct help text and accept attributes", async () => {
+    it("renders Goodreads, MyAnimeList, and Letterboxd rows with labelled file inputs and accept attributes", async () => {
         renderWithProviders(<ImportsForm />)
 
         expect(screen.getByText("Goodreads")).toBeInTheDocument()
         expect(screen.getByText("MyAnimeList")).toBeInTheDocument()
         expect(screen.getByText("Letterboxd")).toBeInTheDocument()
-        expect(screen.getByText(/Export from myanimelist\.net\/panel\.php\?go=export/)).toBeInTheDocument()
-        expect(screen.getByText(/Export from letterboxd\.com → Settings → Data → Export your data, then upload the ZIP\./)).toBeInTheDocument()
+        expect(screen.getByLabelText("Goodreads export file")).toBeInTheDocument()
+        expect(screen.getByLabelText("MyAnimeList export file")).toBeInTheDocument()
+        expect(screen.getByLabelText("Letterboxd export file")).toBeInTheDocument()
 
         const fileInputs = Array.from(document.querySelectorAll<HTMLInputElement>('input[type="file"]'))
         expect(fileInputs).toHaveLength(3)

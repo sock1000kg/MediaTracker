@@ -7,14 +7,12 @@ import { importAnnouncement, importStatusLabel, INITIAL_ANNOUNCED, type Announce
 import { fetchLogsQueryOptions } from "@/queryOptions/fetchLogsQueryOptions"
 import type { ImportResult } from "@/types/imports"
 import type { JobInfo } from "@/types/jobs"
-import { Label } from "@radix-ui/react-label"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useRef, useState } from "react"
 
 interface ImportCardProps {
     title: string
-    inputLabel: string
-    helpText?: string
+    formats: string
     accept: string
     jobName: "import.goodreads" | "import.mal" | "import.letterboxd"
     startImport: (file: File) => Promise<{ jobId: string }>
@@ -23,8 +21,7 @@ interface ImportCardProps {
 
 function ImportCard({
     title,
-    inputLabel,
-    helpText,
+    formats,
     accept,
     jobName,
     startImport,
@@ -131,21 +128,45 @@ function ImportCard({
     }
 
     return (
-        <div className="bg-card rounded-lg p-5 border border-border">
-            <h3 className="font-semibold text-foreground text-base mb-1">{title}</h3>
-            {helpText && (
-                <p className="text-muted-foreground text-xs mb-4">
-                    {helpText}
-                </p>
-            )}
-            {extraHint}
+        <div className="bg-card rounded-lg p-4 border border-border">
+            {/* One row: name and formats on the left, file picker and upload on the right */}
+            <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                    <h3 className="font-semibold text-foreground text-base">{title}</h3>
+                    <p className="text-muted-foreground text-xs">{formats}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                    <input
+                        type="file"
+                        accept={accept}
+                        aria-label={`${title} export file`}
+                        onChange={handleFileChange}
+                        className="block w-full sm:w-72 text-sm text-muted-foreground
+                            file:mr-4 file:py-2 file:px-4
+                            file:rounded-md file:border-0
+                            file:text-sm file:font-semibold
+                            file:bg-tag file:text-tag-foreground
+                            hover:file:bg-tag/70
+                            border border-input rounded-md cursor-pointer"
+                    />
+                    <Button
+                        type="submit"
+                        variant="amber"
+                        disabled={!selectedFile || busy}
+                    >
+                        {busy ? "Importing..." : "Upload"}
+                    </Button>
+                </div>
+            </form>
+
+            {extraHint && <div className="mt-3">{extraHint}</div>}
 
             {/* Always-mounted live region so announcements are picked up */}
             <p role="status" aria-live="polite" className="sr-only">{announcement}</p>
 
             {/* Running state */}
             {busy && (
-                <div className="mb-4">
+                <div className="mt-4">
                     <p className="text-muted-foreground text-sm">
                         {job ? importStatusLabel(job) : "Starting import…"}
                     </p>
@@ -172,53 +193,24 @@ function ImportCard({
 
             {/* General Error Message */}
             {serverMessage && (
-                <p className="text-center text-sm text-destructive mb-4">
+                <p className="mt-3 text-sm text-destructive">
                     {serverMessage}
                 </p>
             )}
 
             {/* Job failed */}
             {job?.status === "failed" && (
-                <p className="text-center text-sm text-destructive mb-4">
+                <p className="mt-3 text-sm text-destructive">
                     {job.error || "Import failed"}
                 </p>
             )}
 
             {/* Polling lost the job (expired / unknown) */}
             {lostTrack && (
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="mt-3 text-sm text-muted-foreground">
                     Lost track of that import. Check your logs.
                 </p>
             )}
-
-            {/* FORM AREA */}
-            <form onSubmit={handleSubmit} className="mb-4">
-                <Label className="block mb-2">
-                    <span className="text-foreground text-sm font-medium">{inputLabel}</span>
-                    <div className="flex gap-4 mt-2 items-center">
-                        <input
-                            type="file"
-                            accept={accept}
-                            onChange={handleFileChange}
-                            className="block w-full text-sm text-muted-foreground
-                                file:mr-4 file:py-2 file:px-4
-                                file:rounded-md file:border-0
-                                file:text-sm file:font-semibold
-                                file:bg-tag file:text-tag-foreground
-                                hover:file:bg-tag/70
-                                border border-input rounded-md cursor-pointer"
-                        />
-
-                        <Button
-                            type="submit"
-                            variant="amber"
-                            disabled={!selectedFile || busy}
-                        >
-                            {busy ? "Importing..." : "Upload"}
-                        </Button>
-                    </div>
-                </Label>
-            </form>
 
             {/* RESULT REPORT CARD */}
             {importResult && (
@@ -310,7 +302,7 @@ export function ImportsForm({ onNavigateToApiKeys }: ImportsFormProps = {}) {
     const hasNoTmdbKey = apiKeys !== undefined && !hasTmdbKey
 
     const tmdbHint = hasNoTmdbKey ? (
-        <p className="text-xs text-muted-foreground mb-4">
+        <p className="text-xs text-muted-foreground">
             No TMDB key found. Unmatched films won&apos;t have posters or metadata. Add one under{" "}
             <button
                 type="button"
@@ -333,10 +325,10 @@ export function ImportsForm({ onNavigateToApiKeys }: ImportsFormProps = {}) {
                 The imported medias will not be in the &apos;Your Medias&apos; tab
             </p>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="flex flex-col gap-3">
                 <ImportCard
                     title="Goodreads"
-                    inputLabel="Goodreads Export (.csv)"
+                    formats=".csv"
                     accept=".csv"
                     jobName="import.goodreads"
                     startImport={startGoodreadsImport}
@@ -344,8 +336,7 @@ export function ImportsForm({ onNavigateToApiKeys }: ImportsFormProps = {}) {
 
                 <ImportCard
                     title="MyAnimeList"
-                    inputLabel="MyAnimeList Export (.xml, .xml.gz)"
-                    helpText="Export from myanimelist.net/panel.php?go=export, once for anime and once for manga. Upload either file (.xml or .xml.gz)."
+                    formats=".xml or .xml.gz, anime or manga list"
                     accept=".xml,.gz,application/xml,application/gzip"
                     jobName="import.mal"
                     startImport={startMalImport}
@@ -353,8 +344,7 @@ export function ImportsForm({ onNavigateToApiKeys }: ImportsFormProps = {}) {
 
                 <ImportCard
                     title="Letterboxd"
-                    inputLabel="Letterboxd Export (.zip)"
-                    helpText="Export from letterboxd.com → Settings → Data → Export your data, then upload the ZIP."
+                    formats=".zip"
                     accept=".zip,application/zip"
                     jobName="import.letterboxd"
                     startImport={startLetterboxdImport}
