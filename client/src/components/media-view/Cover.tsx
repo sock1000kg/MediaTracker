@@ -2,9 +2,9 @@ import { coverToken, type CoverAspect } from "@/lib/mediaView"
 import { cn } from "@/lib/utils"
 
 const ROW_SIZE = {
-  portrait: "w-14 h-20",
-  square: "w-16 h-16",
-  wide: "w-20 h-[50px]",
+  portrait: "w-16 h-24 sm:w-20 sm:h-30",
+  square: "w-20 h-20 sm:w-24 sm:h-24",
+  wide: "w-28 h-[70px] sm:w-32 sm:h-20",
 } as const
 
 const TILE_ASPECT = {
