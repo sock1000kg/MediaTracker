@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event"
 import { renderWithProviders } from "@/test/render"
 import TvSearchSection from "./TvSearchSection"
 import * as searchApi from "@/api/search"
+import * as mediaApi from "@/api/media"
 import type { TvResult, TvSeasonResult } from "@/types/search"
 
 vi.mock("@/api/search")
@@ -118,5 +119,33 @@ describe("TvSearchSection component", () => {
     expect(seasonsBtn).toHaveAttribute("aria-expanded", "false")
     // Should not call getTvSeasons again
     expect(searchApi.getTvSeasons).toHaveBeenCalledTimes(1)
+  })
+
+  it("logs a show with mediaType tv even though search results carry none", async () => {
+    const user = userEvent.setup()
+    // The real API sends results without a mediaType
+    const show = {
+      source: "tmdb",
+      sourceId: "tv:1",
+      title: "Regular Show",
+      year: "2010",
+      imageUrl: null,
+      metadata: { kind: "show", tmdbId: 1, seasonCount: 8, episodeCount: 261 },
+      inLibrary: false,
+    } as unknown as TvResult
+    vi.mocked(searchApi.searchTv).mockResolvedValue({ results: [show], nextStartIndex: null })
+
+    renderWithProviders(<TvSearchSection />)
+    await user.type(screen.getByPlaceholderText("Type a TV show title..."), "Regular{enter}")
+    await user.click((await screen.findAllByRole("button", { name: "Log show" }))[0])
+    await user.click(await screen.findByRole("button", { name: "Create" }))
+
+    await waitFor(() => {
+      expect(mediaApi.createMediaAndLog).toHaveBeenCalledWith(
+        expect.objectContaining({ title: "Regular Show", mediaType: "tv" }),
+        expect.anything(),
+        undefined
+      )
+    })
   })
 })
