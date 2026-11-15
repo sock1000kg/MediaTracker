@@ -3,7 +3,7 @@ import { Queue, Worker, type ConnectionOptions, type Job } from "bullmq"
 import { assertPayloadSize, clampProgress } from "@/queue/limits.js"
 import type { EnqueueOptions, JobContext, JobHandler, JobInfo, JobName, JobPayloads, JobQueue, JobStatus, ListJobsOptions } from "@/queue/types.js"
 
-type JobData = { payload: unknown; userId: number | null; clearPayloadOnFinish?: boolean }
+type JobData = { payload: unknown; userId: string | null; clearPayloadOnFinish?: boolean }
 
 export type BullmqQueueOptions = {
     redisUrl: string

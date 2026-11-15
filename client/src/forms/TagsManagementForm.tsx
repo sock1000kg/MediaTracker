@@ -29,7 +29,7 @@ export function TagsManagementForm() {
   const [createError, setCreateError] = useState<string | null>(null)
 
   // Inline rename state
-  const [editingTagId, setEditingTagId] = useState<number | null>(null)
+  const [editingTagId, setEditingTagId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState("")
   const [renameError, setRenameError] = useState<string | null>(null)
 
@@ -58,7 +58,7 @@ export function TagsManagementForm() {
   })
 
   const renameMutation = useMutation({
-    mutationFn: ({ id, name }: { id: number; name: string }) => renameTag(id, name),
+    mutationFn: ({ id, name }: { id: string; name: string }) => renameTag(id, name),
     onSuccess: () => {
       setEditingTagId(null)
       setEditingName("")
@@ -75,7 +75,7 @@ export function TagsManagementForm() {
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => deleteTag(id),
+    mutationFn: (id: string) => deleteTag(id),
     onSuccess: () => {
       setTagToDelete(null)
       invalidate()
@@ -105,7 +105,7 @@ export function TagsManagementForm() {
     setRenameError(null)
   }
 
-  const handleSaveRename = (tagId: number) => {
+  const handleSaveRename = (tagId: string) => {
     const norm = normalizeTagName(editingName, limits.tags.maxLength)
     if (!norm) {
       setRenameError(`Tag must be 1–${limits.tags.maxLength} characters without commas`)

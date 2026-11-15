@@ -16,11 +16,11 @@ import { tagInputSchema } from "@/schemas/tagSchemas.js"
 import { MAX_TAGS_PER_USER, tagKey, validateSchema } from "@/utilities.js"
 
 export class TagService {
-    async getAll(userId: number) {
+    async getAll(userId: string) {
         return findTagsForUser(userId)
     }
 
-    async create(userId: number, payload: unknown) {
+    async create(userId: string, payload: unknown) {
         const { name } = validateSchema(tagInputSchema, payload)
         const key = tagKey(name)
 
@@ -52,7 +52,7 @@ export class TagService {
         }
     }
 
-    async rename(userId: number, tagId: number, payload: unknown) {
+    async rename(userId: string, tagId: string, payload: unknown) {
         const tag = await findTagById(tagId, userId)
         if (!tag) {
             throw new AppError("Tag not found", 404)
@@ -86,7 +86,7 @@ export class TagService {
         }
     }
 
-    async delete(userId: number, tagId: number) {
+    async delete(userId: string, tagId: string) {
         const tag = await findTagById(tagId, userId)
         if (!tag) {
             throw new AppError("Tag not found", 404)
@@ -100,8 +100,8 @@ export class TagService {
      * (respecting user limit of 500 tags), and syncs the log's LogTag entries.
      */
     async resolveAndSyncTags(
-        userId: number,
-        logId: number,
+        userId: string,
+        logId: string,
         tagNames: string[],
         tx: DbClient = prisma
     ) {

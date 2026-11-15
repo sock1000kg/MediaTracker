@@ -24,7 +24,7 @@ export interface PreferencesPatch {
 }
 
 export interface UserProfile {
-  id: number | string
+  id: string
   username: string
   displayName: string
   created_at: string

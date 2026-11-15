@@ -183,7 +183,7 @@ describe('fetchTvSeasons mapping logic', () => {
             json: async () => mockShowDetails,
         } as Response)
 
-        const result = await service.fetchTvSeasons(0, 60625)
+        const result = await service.fetchTvSeasons('018f0000-0000-7000-8000-000000000001', 60625)
 
         // Show details
         expect(result.show).toMatchObject({

@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from "express"
 import { logService } from "@/services/logService.js"
+import { idParamSchema } from "@/schemas/common.js"
+import { validateSchema } from "@/utilities.js"
 
 // Get all logs
 export const getLogs = async (req: Request, res: Response, next: NextFunction) => {
@@ -38,34 +40,25 @@ export const updateExistingLog = async (req: Request, res: Response, next: NextF
         return res.status(401).json({ message: "Unauthorized: missing userId" })
     }
 
-    const logId = parseInt(req.params.id)
-    if(!logId) {
-        return res.status(400).json({ message: "Invalid params" })
-    }
-        
     try {
-        const updated = await logService.update(userId, logId, req.body)
+        const { id } = validateSchema(idParamSchema, req.params)
+        const updated = await logService.update(userId, id, req.body)
         res.status(200).json(updated)
     } catch (error) {
         next(error)
     }
 }
 
-
 // Delete a log for userId
 export const deleteExistingLog = async (req: Request, res: Response, next: NextFunction) => {
-    const userId = Number(req.userId)
+    const userId = req.userId
     if (!userId) {
         return res.status(401).json({ message: "Unauthorized: missing userId" })
     }
-        
-    const logId = parseInt(req.params.id)
-    if(!logId) {
-        return res.status(400).json({ message: "Invalid params" })
-    }
-        
+
     try {
-        const result = await logService.delete(userId, logId, req.body)
+        const { id } = validateSchema(idParamSchema, req.params)
+        const result = await logService.delete(userId, id, req.body)
         res.status(200).json(result)
     } catch (error) {
         next(error)

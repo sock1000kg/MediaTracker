@@ -32,16 +32,16 @@ import { validateSchema } from "@/utilities.js"
 import { DbClient } from "@/db.js"
 
 export class MediaService {
-    async getAll(userId: number) {
+    async getAll(userId: string) {
         return getAllMediasUserCreated(userId) 
     }
 
-    async getChildren(mediaId: number, userId: number) {
+    async getChildren(mediaId: string, userId: string) {
         return findMediaChildren(mediaId, userId, prisma)
     }
 
     // Create new media for an userId
-    async create(userId: number, payload: unknown) {
+    async create(userId: string, payload: unknown) {
         const {
             title,
             mediaType,
@@ -81,7 +81,7 @@ export class MediaService {
     }
 
     // Upadte media for userId using mediaId
-    async update(userId: number, mediaId: number, payload: unknown) {
+    async update(userId: string, mediaId: string, payload: unknown) {
         const {
             title,
             mediaType,
@@ -130,7 +130,7 @@ export class MediaService {
         } 
     }
 
-    async delete(userId: number, mediaId: number, payload: unknown) {
+    async delete(userId: string, mediaId: string, payload: unknown) {
         const { confirm } = validateSchema(deleteMediaSchema, payload) 
 
         const media = await findMediaById(mediaId) 
@@ -159,12 +159,12 @@ export class MediaService {
         }
     }
 
-    async createMediaAndLog(userId: number, payload: unknown) {
+    async createMediaAndLog(userId: string, payload: unknown) {
         const { mediaData, logData, parent } = validateSchema(createMediaAndLogSchema, payload)
 
         // Last.fm search results carry no tags, so fetch them once when the media is first logged.
         // categories: undefined = never tried, null = tried and found nothing (don't fetch again)
-        let enrichExistingId: number | null = null
+        let enrichExistingId: string | null = null
         let fetchedCategories: string[] | null | undefined
         if (mediaData.source === "lastfm") {
             const existing = await findMediaBySource(mediaData.sourceId, mediaData.source, prisma)

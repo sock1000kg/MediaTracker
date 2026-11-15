@@ -19,9 +19,9 @@ function log(o: Partial<{
   genres?: string[] | null
   cats: unknown
   title: string
-  tags?: { id?: number; name: string }[]
+  tags?: { id?: string; name: string }[]
 }> = {}): StatLog {
-  const id = nextId++
+  const id = String(nextId++)
   return {
     id,
     status: o.status === undefined ? "completed" : o.status,
@@ -29,7 +29,7 @@ function log(o: Partial<{
     logged_at: o.date ?? at(2026, 11),
     started_at: o.started_at,
     finished_at: o.finished_at,
-    tags: o.tags?.map((t, idx) => ({ id: t.id ?? idx + 1, name: t.name })),
+    tags: o.tags?.map((t, idx) => ({ id: t.id ?? String(idx + 1), name: t.name })),
     media: {
       id, title: o.title ?? `t${id}`, creator: o.creator ?? null,
       creators: o.creators ?? null,
@@ -348,11 +348,11 @@ describe("filterByType", () => {
   test("handles Unknown or missing mediaType", () => {
     const l1 = log({ type: "custom" })
     const l2: StatLog = {
-      id: 999,
+      id: "999",
       status: "completed",
       rating: null,
       logged_at: at(2026, 11),
-      media: { id: 999, title: "No Type", mediaType: null },
+      media: { id: "999", title: "No Type", mediaType: null },
     }
     expect(filterByType([l1, l2], "Unknown")).toEqual([l2])
   })

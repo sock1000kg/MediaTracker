@@ -5,7 +5,7 @@ interface RankInputProps {
   rank: number
   total: number
   title: string
-  logId: number
+  logId: string
   /** Called with the new 1-based rank (already clamped to 1..total) when it changed */
   onRank: (rank: number) => void
   className?: string

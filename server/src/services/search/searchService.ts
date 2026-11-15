@@ -8,44 +8,44 @@ import { GameSearchFilters } from "@/schemas/search/gameSchemas.js"
 import { openLibraryService } from "./openLibrarySearchService.js"
 
 export class SearchService {
-    async searchBooks(userId: number, q: string, page: number = 1, filters?: BookSearchFilters) {
+    async searchBooks(userId: string, q: string, page: number = 1, filters?: BookSearchFilters) {
         // return googleBooksService.searchBooksGGBooks(userId, q, startIndex)
         return openLibraryService.searchBooksOpenLib(userId, q, page, filters)
     }
 
-    async searchTracks(userId: number, q: string, page: number = 1) {
+    async searchTracks(userId: string, q: string, page: number = 1) {
         return musicSearchService.searchTracksLastFm(userId, q, page)
     }
 
-    async searchAblums(userId: number, q: string, page: number = 1) {
+    async searchAblums(userId: string, q: string, page: number = 1) {
         return musicSearchService.searchAlbumsLastFm(userId, q, page)
     }
 
-    async getAlbumTracks(userId: number, artist: string, album: string, mbid?: string) {
+    async getAlbumTracks(userId: string, artist: string, album: string, mbid?: string) {
         return musicSearchService.fetchAlbumTracks(userId, artist, album, mbid)
     }
 
-    async searchAnime(_userId: number, q: string, page: number = 1, filters?: AnimeSearchFilters) {
+    async searchAnime(_userId: string, q: string, page: number = 1, filters?: AnimeSearchFilters) {
         return anilistSearchService.search("anime", q, page, filters)
     }
 
-    async searchManga(_userId: number, q: string, page: number = 1, filters?: AnimeSearchFilters) {
+    async searchManga(_userId: string, q: string, page: number = 1, filters?: AnimeSearchFilters) {
         return anilistSearchService.search("manga", q, page, filters)
     }
 
-    async searchMovies(userId: number, q: string, page: number = 1, filters?: { year?: number }) {
+    async searchMovies(userId: string, q: string, page: number = 1, filters?: { year?: number }) {
         return tmdbSearchService.searchMoviesTmdb(userId, q, page, filters)
     }
 
-    async searchTv(userId: number, q: string, page: number = 1, filters?: { year?: number }) {
+    async searchTv(userId: string, q: string, page: number = 1, filters?: { year?: number }) {
         return tmdbSearchService.searchTvTmdb(userId, q, page, filters)
     }
 
-    async getTvSeasons(userId: number, tmdbId: number) {
+    async getTvSeasons(userId: string, tmdbId: number) {
         return tmdbSearchService.fetchTvSeasons(userId, tmdbId)
     }
 
-    async searchGames(userId: number, q: string, page: number = 1, filters?: GameSearchFilters) {
+    async searchGames(userId: string, q: string, page: number = 1, filters?: GameSearchFilters) {
         return rawgSearchService.searchGamesRawg(userId, q, page, filters)
     }
 }

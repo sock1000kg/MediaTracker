@@ -8,7 +8,7 @@ describe('Task 35 Acceptance Tests (G1-G3, C1-C3, K1, J1-J2, T1)', () => {
     const testUsername = 'task35_tester'
     const testPassword = 'StrongPass1!'
     let testToken: string
-    let testUser: { id: number }
+    let testUser: { id: string }
     let bookType: Awaited<ReturnType<typeof prisma.mediaType.create>>
     let musicType: Awaited<ReturnType<typeof prisma.mediaType.create>>
     let movieType: Awaited<ReturnType<typeof prisma.mediaType.create>>
@@ -317,7 +317,7 @@ describe('Task 35 Acceptance Tests (G1-G3, C1-C3, K1, J1-J2, T1)', () => {
                 .expect(200)
 
             expect(Array.isArray(listRes.body)).toBe(true)
-            const foundLog = listRes.body.find((l: { mediaId: number }) => l.mediaId === media.id)
+            const foundLog = listRes.body.find((l: { mediaId: string }) => l.mediaId === media.id)
             expect(foundLog).toBeDefined()
             expect(foundLog.genres).toEqual(['Mystery', 'Classics'])
             expect(foundLog.creators).toEqual([
@@ -348,7 +348,7 @@ describe('Task 35 Acceptance Tests (G1-G3, C1-C3, K1, J1-J2, T1)', () => {
                 [{ name: 'Christopher Nolan', role: 'director' }]
             )
         }
-        function put(id: number, body: Record<string, unknown>) {
+        function put(id: string, body: Record<string, unknown>) {
             return request(app)
                 .put(`/media/${id}`)
                 .set('Authorization', `Bearer ${testToken}`)

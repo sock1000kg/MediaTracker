@@ -5,7 +5,7 @@
 import { getCategories } from "./utils"
 
 export interface StatLog {
-  id: number
+  id: string
   status: string | null
   rating: number | null
   logged_at: string
@@ -13,7 +13,7 @@ export interface StatLog {
   finished_at?: string | null
   progress?: Record<string, unknown> | null
   media: {
-    id: number
+    id: string
     title: string
     creator?: string | null
     creators?: { name: string; role: string }[] | null
@@ -22,7 +22,7 @@ export interface StatLog {
     metadata?: Record<string, unknown> | null
     mediaType?: { name: string } | null
   }
-  tags?: { id: number; name: string }[]
+  tags?: { id: string; name: string }[]
 }
 
 export type StatsRange =

@@ -11,7 +11,7 @@ async function registerAndLogin(username: string) {
         .send({ username, password: PW, displayName: "Tester", registerKey: process.env.REGISTER_KEY })
         .set("Content-Type", "application/json")
     const res = await request(app).post("/auth/login").send({ username, password: PW })
-    return { token: res.body.accessToken as string, userId: res.body.user.id as number, cookie: res.headers["set-cookie"] as unknown as string[] }
+    return { token: res.body.accessToken as string, userId: res.body.user.id as string, cookie: res.headers["set-cookie"] as unknown as string[] }
 }
 
 async function demoLogin() {

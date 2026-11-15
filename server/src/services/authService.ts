@@ -11,14 +11,14 @@ import prisma from "@/prismaClient.js"
 import { handlePrismaError } from "@/middleWare/errorHandlerMiddleware.js"
 
 export class AuthService {
-    generateTokens(userId: number) {
+    generateTokens(userId: string) {
         const accessToken = jwt.sign({ id: userId }, process.env.JWT_KEY_SECRET!, { expiresIn: "15m" })
         const refreshToken = jwt.sign({ id: userId }, process.env.JWT_REFRESH_SECRET!, { expiresIn: "7d", jwtid: randomUUID() })
         return { accessToken, refreshToken }
     }
 
     // Issue a fresh token pair and persist the refresh token (7 day expiry)
-    async issueSession(userId: number, client: Parameters<typeof saveRefreshToken>[3]) {
+    async issueSession(userId: string, client: Parameters<typeof saveRefreshToken>[3]) {
         const { accessToken, refreshToken } = this.generateTokens(userId)
         const expiresAt = new Date()
         expiresAt.setDate(expiresAt.getDate() + 7)
@@ -120,11 +120,11 @@ export class AuthService {
         }
 
         // Verify JWT signature
-        let userId: number
+        let userId: string
         try {
             const decoded = jwt.verify(oldRefreshToken, process.env.JWT_REFRESH_SECRET as string)
             if (typeof decoded === "string" || !decoded.id) throw new Error("Invalid token payload")
-            userId = decoded.id
+            userId = String(decoded.id)
         } catch {
             await deleteRefreshToken(oldRefreshToken) // delete suspicious token
             throw new AppError("Invalid refresh token", 401)

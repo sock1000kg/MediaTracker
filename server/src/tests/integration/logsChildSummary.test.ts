@@ -7,11 +7,11 @@ describe('Logs API childSummary and multi-user isolation', () => {
     const userB = 'ChildSumUserB'
     let tokenA: string
     let _tokenB: string
-    let userIdA: number
-    let userIdB: number
-    let albumId: number
-    let track1Id: number
-    let track2Id: number
+    let userIdA: string
+    let userIdB: string
+    let albumId: string
+    let track1Id: string
+    let track2Id: string
 
     beforeAll(async () => {
         await prisma.user.deleteMany({ where: { username: { in: [userA, userB] } } })
@@ -147,7 +147,7 @@ describe('Logs API childSummary and multi-user isolation', () => {
 
         expect(res.statusCode).toBe(200)
 
-        const albumLog = res.body.find((l: { mediaId: number }) => l.mediaId === albumId)
+        const albumLog = res.body.find((l: { mediaId: string }) => l.mediaId === albumId)
         expect(albumLog).toBeDefined()
         expect(albumLog.media.childSummary).toEqual({
             rated: 2,
@@ -162,7 +162,7 @@ describe('Logs API childSummary and multi-user isolation', () => {
 
         expect(res.statusCode).toBe(200)
 
-        const trackLogs = res.body.filter((l: { mediaId: number }) =>
+        const trackLogs = res.body.filter((l: { mediaId: string }) =>
             l.mediaId === track1Id || l.mediaId === track2Id
         )
         expect(trackLogs).toHaveLength(2)

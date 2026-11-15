@@ -134,7 +134,7 @@ function retryDelayMs(res: Response): number {
 }
 
 export class RawgSearchService {
-    async getUserApiKey(userId: number): Promise<string> {
+    async getUserApiKey(userId: string): Promise<string> {
         const user = await findUserById(userId)
         if (!user) throw new AppError("Non-existent userId", 404)
 
@@ -178,7 +178,7 @@ export class RawgSearchService {
         }
     }
 
-    async searchGamesRawg(userId: number, q: string, page = 1, filters: GameSearchFilters = {}):
+    async searchGamesRawg(userId: string, q: string, page = 1, filters: GameSearchFilters = {}):
         Promise<{ results: SearchResult[], nextStartIndex: number | null }>
     {
         const key = await this.getUserApiKey(userId)
@@ -195,7 +195,7 @@ export class RawgSearchService {
     }
 
     // Throws on any failure (callers decide what to do)
-    async fetchGameDetails(userId: number, id: number): Promise<GameDetails> {
+    async fetchGameDetails(userId: string, id: number): Promise<GameDetails> {
         const key = await this.getUserApiKey(userId)
         const raw = await this.fetchJson(buildRawgDetailsUrl(id, key))
         const checked = rawgGameDetailsSchema.safeParse(raw)
@@ -207,7 +207,7 @@ export class RawgSearchService {
 export const rawgSearchService = new RawgSearchService()
 
 export type RawgEnrichment = {
-    existingId: number | null // set when the row already exists and must be updated after the transaction
+    existingId: string | null // set when the row already exists and must be updated after the transaction
     creator: string | null
     creators: { name: string; role: string }[]
     genres: string[] | null
@@ -219,7 +219,7 @@ export type RawgEnrichment = {
 // For a new media, mutates mediaData; for an existing un-enriched row, returns what to merge afterwards.
 // Never throws: failures (incl. missing/invalid key) are warned about (message only) and the log still succeeds.
 export async function enrichRawgOnLog(
-    userId: number,
+    userId: string,
     mediaData: { source: string, sourceId: string | null, creator?: string | null, description?: string | null, metadata?: unknown }
 ): Promise<RawgEnrichment | null> {
     try {

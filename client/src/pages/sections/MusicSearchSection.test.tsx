@@ -139,7 +139,7 @@ describe("MusicSearchSection component", () => {
       provider: "lastfm",
     })
     vi.mocked(mediaApi.createMediaAndLog).mockResolvedValue({
-      id: 101,
+      id: "018f0000-0000-7000-8000-000000000101",
       rating: 100,
       status: "completed",
     } as never)

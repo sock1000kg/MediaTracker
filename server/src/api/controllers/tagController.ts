@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from "express"
 import { tagService } from "@/services/tagService.js"
+import { idParamSchema } from "@/schemas/common.js"
+import { validateSchema } from "@/utilities.js"
 
 export const getTags = async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId
@@ -35,13 +37,9 @@ export const renameTag = async (req: Request, res: Response, next: NextFunction)
         return res.status(401).json({ message: "Unauthorized: missing userId" })
     }
 
-    const tagId = parseInt(req.params.id, 10)
-    if (isNaN(tagId)) {
-        return res.status(400).json({ message: "Invalid tag id" })
-    }
-
     try {
-        const updated = await tagService.rename(userId, tagId, req.body)
+        const { id } = validateSchema(idParamSchema, req.params)
+        const updated = await tagService.rename(userId, id, req.body)
         res.status(200).json(updated)
     } catch (error) {
         next(error)
@@ -54,13 +52,9 @@ export const deleteTag = async (req: Request, res: Response, next: NextFunction)
         return res.status(401).json({ message: "Unauthorized: missing userId" })
     }
 
-    const tagId = parseInt(req.params.id, 10)
-    if (isNaN(tagId)) {
-        return res.status(400).json({ message: "Invalid tag id" })
-    }
-
     try {
-        await tagService.delete(userId, tagId)
+        const { id } = validateSchema(idParamSchema, req.params)
+        await tagService.delete(userId, id)
         res.status(204).send()
     } catch (error) {
         next(error)

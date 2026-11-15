@@ -68,7 +68,7 @@ export interface LetterboxdMergedFilm {
 
 export type LetterboxdResolver = (
     films: { name: string; year: number | null }[],
-    userId: number
+    userId: string
 ) => Promise<Map<string, SearchResult | null>>
 
 export interface LetterboxdImportOptions {
@@ -518,7 +518,7 @@ export function loadLetterboxdCache(customPath?: string): Record<string, SearchR
 export function createCacheLetterboxdResolver(cachePath?: string): LetterboxdResolver {
     let cache: Record<string, SearchResult> | null = null
 
-    return async (films: { name: string; year: number | null }[], _userId: number) => {
+    return async (films: { name: string; year: number | null }[], _userId: string) => {
         if (!cache) {
             cache = loadLetterboxdCache(cachePath)
         }
@@ -534,7 +534,7 @@ export function createCacheLetterboxdResolver(cachePath?: string): LetterboxdRes
 
 export class LetterboxdImportService {
     async importFromLetterboxd(
-        userId: number,
+        userId: string,
         files: LetterboxdExportFiles,
         opts: LetterboxdImportOptions = {}
     ): Promise<ImportResult> {

@@ -9,7 +9,7 @@ import { parseMalExport } from "@/services/imports/malImportService.js"
 import { unzipLetterboxdExport, mergeLetterboxdFiles } from "@/services/imports/letterboxdImportService.js"
 
 describe("Demo Media Seeding (Integration)", () => {
-    let demoUserId: number
+    let demoUserId: string
 
     beforeAll(async () => {
         const demoUser = await findUserByUsername("demo", prisma)

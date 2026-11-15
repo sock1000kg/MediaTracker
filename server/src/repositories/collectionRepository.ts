@@ -4,7 +4,7 @@ import { DbClient } from "@/db.js"
 import { mapLogWithTags } from "@/repositories/logsRepository.js"
 
 export interface CollectionSummary {
-    id: number
+    id: string
     name: string
     description: string | null
     ranked: boolean
@@ -13,7 +13,7 @@ export interface CollectionSummary {
     covers: string[]
 }
 
-export async function findCollectionsForUser(userId: number, client: DbClient = prisma): Promise<CollectionSummary[]> {
+export async function findCollectionsForUser(userId: string, client: DbClient = prisma): Promise<CollectionSummary[]> {
     const collections = await client.collection.findMany({
         where: { userId },
         include: {
@@ -55,7 +55,7 @@ export async function findCollectionsForUser(userId: number, client: DbClient = 
     })
 }
 
-export async function findCollectionById(id: number, userId: number, client: DbClient = prisma) {
+export async function findCollectionById(id: string, userId: string, client: DbClient = prisma) {
     const c = await client.collection.findFirst({
         where: { id, userId },
         include: {
@@ -90,13 +90,13 @@ export async function findCollectionById(id: number, userId: number, client: DbC
     }
 }
 
-export async function findCollectionRawById(id: number, userId: number, client: DbClient = prisma) {
+export async function findCollectionRawById(id: string, userId: string, client: DbClient = prisma) {
     return client.collection.findFirst({
         where: { id, userId },
     })
 }
 
-export async function findCollectionByNameKey(userId: number, nameKey: string, client: DbClient = prisma) {
+export async function findCollectionByNameKey(userId: string, nameKey: string, client: DbClient = prisma) {
     return client.collection.findUnique({
         where: {
             userId_nameKey: { userId, nameKey },
@@ -104,20 +104,20 @@ export async function findCollectionByNameKey(userId: number, nameKey: string, c
     })
 }
 
-export async function countCollectionsForUser(userId: number, client: DbClient = prisma) {
+export async function countCollectionsForUser(userId: string, client: DbClient = prisma) {
     return client.collection.count({
         where: { userId },
     })
 }
 
-export async function countItemsInCollection(collectionId: number, client: DbClient = prisma) {
+export async function countItemsInCollection(collectionId: string, client: DbClient = prisma) {
     return client.collectionItem.count({
         where: { collectionId },
     })
 }
 
 export async function createCollection(
-    userId: number,
+    userId: string,
     data: { name: string; nameKey: string; description: string | null; ranked: boolean },
     client: DbClient = prisma
 ) {
@@ -133,7 +133,7 @@ export async function createCollection(
 }
 
 export async function updateCollection(
-    id: number,
+    id: string,
     data: { name?: string; nameKey?: string; description?: string | null; ranked?: boolean },
     client: DbClient = prisma
 ) {
@@ -146,19 +146,19 @@ export async function updateCollection(
     })
 }
 
-export async function deleteCollection(id: number, client: DbClient = prisma) {
+export async function deleteCollection(id: string, client: DbClient = prisma) {
     return client.collection.delete({
         where: { id },
     })
 }
 
-export async function deleteAllCollectionsForUser(userId: number, client: DbClient = prisma) {
+export async function deleteAllCollectionsForUser(userId: string, client: DbClient = prisma) {
     return client.collection.deleteMany({
         where: { userId },
     })
 }
 
-export async function findCollectionItem(collectionId: number, logId: number, client: DbClient = prisma) {
+export async function findCollectionItem(collectionId: string, logId: string, client: DbClient = prisma) {
     return client.collectionItem.findUnique({
         where: {
             collectionId_logId: { collectionId, logId },
@@ -166,7 +166,7 @@ export async function findCollectionItem(collectionId: number, logId: number, cl
     })
 }
 
-export async function getCollectionItems(collectionId: number, client: DbClient = prisma) {
+export async function getCollectionItems(collectionId: string, client: DbClient = prisma) {
     return client.collectionItem.findMany({
         where: { collectionId },
         orderBy: { position: "asc" },
@@ -174,8 +174,8 @@ export async function getCollectionItems(collectionId: number, client: DbClient 
 }
 
 export async function addItem(
-    collectionId: number,
-    logId: number,
+    collectionId: string,
+    logId: string,
     position: number,
     client: DbClient = prisma
 ) {
@@ -188,7 +188,7 @@ export async function addItem(
     })
 }
 
-export async function removeItem(collectionId: number, logId: number, client: DbClient = prisma) {
+export async function removeItem(collectionId: string, logId: string, client: DbClient = prisma) {
     return client.collectionItem.delete({
         where: {
             collectionId_logId: { collectionId, logId },
@@ -197,8 +197,8 @@ export async function removeItem(collectionId: number, logId: number, client: Db
 }
 
 export async function updateItemPosition(
-    collectionId: number,
-    logId: number,
+    collectionId: string,
+    logId: string,
     position: number,
     client: DbClient = prisma
 ) {
@@ -210,7 +210,7 @@ export async function updateItemPosition(
     })
 }
 
-export async function touchCollection(id: number, client: DbClient = prisma) {
+export async function touchCollection(id: string, client: DbClient = prisma) {
     return client.collection.update({
         where: { id },
         data: { updated_at: new Date() },

@@ -2,12 +2,14 @@
 
 Base URL: the API origin (e.g. `http://localhost:5000`). Bodies are JSON unless noted otherwise.
 
+**Identifiers:** Every database surrogate ID and foreign key (`id`, `userId`, `mediaId`, `logId`, `parentId`, `mediaTypeId`, `collectionId`, `tagId`) is a canonical UUID string (UUIDv7 for new records). Path parameters representing IDs (`/logs/:id`, `/collections/:id`, `/tags/:id`, `/media/:id`, `/media/:id/children`, `/collections/:id/items/:logId`) validate as UUIDs and return `400` with an error payload when malformed.
+
 **Authentication:** every endpoint except `/auth/*`, `/healthz`, and `/config` needs `Authorization: Bearer <access token>`.
 - Access tokens last 15 minutes.
 - The refresh token is a rotating, HttpOnly `refreshToken` cookie (7 days). Call `POST /auth/refresh` with credentials included to get a new access token.
 
 **Errors** are `{ "message": string }` with a matching status:
-- `400`: validation, or "not available on the demo account"
+- `400`: validation, malformed UUID, or "not available on the demo account"
 - `401`: missing or expired access token
 - `403`: forbidden, or a wrong current password
 - `404`
@@ -83,19 +85,19 @@ The preferences shape (every key is optional):
 
 | Method | Path | Description |
 | --- | --- | --- |
-| GET | `/logs` | Your logs, each with its media and media type, including `started_at`, `finished_at`, `collectionIds: number[]`, and `tags: [{ id, name }]` sorted by name. |
-| POST | `/logs` | `{ mediaId, status, rating, notes, startedAt, finishedAt, tags }`. `rating` is 0–100 (or `null`), and `status` is one of `completed`, `in progress`, `wishlist` or `dropped` (or `null`). `startedAt` and `finishedAt` are optional dates stored at day precision (noon UTC). When both are set, `finishedAt ≥ startedAt` (otherwise `400 "Finished date can't be before the start date"`), and neither may be more than 1 day in the future (`400`). `tags` is an optional list of tag names (0–20; unknown tags auto-created). |
-| PUT | `/logs/:id` | `{ status, rating, notes, startedAt, finishedAt, tags }`. Omitting dates leaves them unchanged, and `null` clears them. `tags` has set semantics: when present, replaces the log's tags; omitting leaves them unchanged; `[]` clears them. |
-| DELETE | `/logs/:id` | Delete a log. |
+| GET | `/logs` | Your logs, each with its media and media type, including `started_at`, `finished_at`, `collectionIds: string[] (UUIDs)`, and `tags: [{ id: string (UUID), name }]` sorted by name. |
+| POST | `/logs` | `{ mediaId: string (UUID), status, rating, notes, startedAt, finishedAt, tags }`. `rating` is 0–100 (or `null`), and `status` is one of `completed`, `in progress`, `wishlist` or `dropped` (or `null`). `startedAt` and `finishedAt` are optional dates stored at day precision (noon UTC). When both are set, `finishedAt ≥ startedAt` (otherwise `400 "Finished date can't be before the start date"`), and neither may be more than 1 day in the future (`400`). `tags` is an optional list of tag names (0–20; unknown tags auto-created). |
+| PUT | `/logs/:id` | `{ status, rating, notes, startedAt, finishedAt, tags }`. Omitting dates leaves them unchanged, and `null` clears them. `tags` has set semantics: when present, replaces the log's tags; omitting leaves them unchanged; `[]` clears them. Malformed `:id` returns 400. |
+| DELETE | `/logs/:id` | Delete a log. Malformed `:id` returns 400. |
 
 ## Tags
 
 | Method | Path | Description |
 | --- | --- | --- |
-| GET | `/tags` | Your personal tags, each with its log usage count (`[{ id, name, count }]`), sorted by name case-insensitively. |
-| POST | `/tags` | `{ name }`. Create a new tag (1–40 chars, no commas, leading `#` stripped). Returns `201` with `{ id, name }`. If a tag with the same normalised name already exists, returns `409` with the existing tag. |
-| PATCH | `/tags/:id` | `{ name }`. Rename a tag. Changing case of the same tag is allowed; colliding with another of your tags returns `409`. Non-existent or other user's tag returns `404`. |
-| DELETE | `/tags/:id` | Delete a tag (`204`). Cascades to remove the tag from all of your logs. |
+| GET | `/tags` | Your personal tags, each with its log usage count (`[{ id: string (UUID), name, count }]`), sorted by name case-insensitively. |
+| POST | `/tags` | `{ name }`. Create a new tag (1–40 chars, no commas, leading `#` stripped). Returns `201` with `{ id: string (UUID), name }`. If a tag with the same normalised name already exists, returns `409` with the existing tag. |
+| PATCH | `/tags/:id` | `{ name }`. Rename a tag. Changing case of the same tag is allowed; colliding with another of your tags returns `409`. Non-existent or other user's tag returns `404`. Malformed `:id` returns 400. |
+| DELETE | `/tags/:id` | Delete a tag (`204`). Cascades to remove the tag from all of your logs. Malformed `:id` returns 400. |
 
 ## Collections
 
@@ -103,14 +105,14 @@ Collections are private, ordered lists of your logs. Up to 200 collections per u
 
 | Method | Path | Description |
 | --- | --- | --- |
-| GET | `/collections` | Your collections (`[{ id, name, description, ranked, count, updated_at, covers: string[] }]`), sorted by `updated_at` descending. `covers` has up to 4 image URLs from the first items. |
+| GET | `/collections` | Your collections (`[{ id: string (UUID), name, description, ranked, count, updated_at, covers: string[] }]`), sorted by `updated_at` descending. `covers` has up to 4 image URLs from the first items. |
 | POST | `/collections` | `{ name, description?, ranked? }`. Create a collection. Name is 1–80 characters, unique per user case-insensitively (collision gives `409` with existing collection id). `ranked` defaults to `false`. Returns `201`. |
-| GET | `/collections/:id` | The collection plus `items: [{ position, added_at, log }]`, ordered by dense position starting from 0. `log` has the full log shape including media, tags, and `collectionIds`. Other users' collections return `404`. |
-| PATCH | `/collections/:id` | `{ name?, description?, ranked? }`. Update a collection. Name collision gives `409`. Returns `200`. |
-| DELETE | `/collections/:id` | Delete a collection (`204`). The logs themselves are untouched. |
-| POST | `/collections/:id/items` | `{ logId }`. Append a log at the end (`position = count`). Already in collection gives `409`. Adding another user's log gives `404`. Bumps collection `updated_at`. Returns `201`. |
-| DELETE | `/collections/:id/items/:logId` | Remove a log from the collection (`204`). Remaining items have positions re-densified (0, 1, 2, …). Bumps collection `updated_at`. |
-| PUT | `/collections/:id/order` | `{ logIds: number[] }`. Reorder items. `logIds` must be an exact permutation of current items (otherwise `400`). Rewrites positions and bumps collection `updated_at`. Returns `200`. |
+| GET | `/collections/:id` | The collection plus `items: [{ position, added_at, log }]`, ordered by dense position starting from 0. `log` has the full log shape including media, tags, and `collectionIds`. Other users' collections return `404`. Malformed `:id` returns 400. |
+| PATCH | `/collections/:id` | `{ name?, description?, ranked? }`. Update a collection. Name collision gives `409`. Returns `200`. Malformed `:id` returns 400. |
+| DELETE | `/collections/:id` | Delete a collection (`204`). The logs themselves are untouched. Malformed `:id` returns 400. |
+| POST | `/collections/:id/items` | `{ logId: string (UUID) }`. Append a log at the end (`position = count`). Already in collection gives `409`. Adding another user's log gives `404`. Bumps collection `updated_at`. Returns `201`. Malformed `:id` returns 400. |
+| DELETE | `/collections/:id/items/:logId` | Remove a log from the collection (`204`). Remaining items have positions re-densified (0, 1, 2, …). Bumps collection `updated_at`. Malformed `:id` or `:logId` returns 400. |
+| PUT | `/collections/:id/order` | `{ logIds: string[] (UUIDs) }`. Reorder items. `logIds` must be an exact permutation of current items (otherwise `400`). Rewrites positions and bumps collection `updated_at`. Returns `200`. Malformed `:id` returns 400. |
 
 ## API keys (for search providers)
 

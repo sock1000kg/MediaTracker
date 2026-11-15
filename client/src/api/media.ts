@@ -77,7 +77,7 @@ export function createMediaAndLog(mediaData: MediaResult, logData: Partial<Log>,
     })
 }
 
-export function getMediaChildren(mediaId: number): Promise<Array<Media & { log: Log | null }>> {
+export function getMediaChildren(mediaId: string): Promise<Array<Media & { log: Log | null }>> {
     return apiFetch(`/media/${mediaId}/children`, {
         method: "GET"
     })

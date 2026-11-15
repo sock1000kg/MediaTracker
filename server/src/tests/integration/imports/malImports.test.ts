@@ -49,8 +49,8 @@ async function importAndWait(token: string, content: Buffer | string, filename =
 
 describe("Media Import Routes (MyAnimeList)", () => {
     let token: string
-    let userId: number
-    let systemUserId: number
+    let userId: string
+    let systemUserId: string
 
     const mockResolver: MalResolver = async (ids: number[], kind) => {
         const map = new Map<number, SearchResult>()

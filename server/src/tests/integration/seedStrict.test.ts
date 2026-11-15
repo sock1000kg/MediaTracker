@@ -6,7 +6,7 @@ import prisma from "@/prismaClient.js"
 import { findUserByUsername } from "@/repositories/authRepository.js"
 
 describe("seedDatabase strict vs non-strict and error propagation (Fix 4)", () => {
-    let demoUserId: number
+    let demoUserId: string
 
     beforeAll(async () => {
         const demo = await findUserByUsername("demo", prisma)

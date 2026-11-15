@@ -7,9 +7,9 @@ describe('P7: Per-user progress belongs on UserLogs, not shared Media', () => {
     const userB = 'ProgressUserB'
     let tokenA: string
     let tokenB: string
-    let userIdA: number
-    let userIdB: number
-    let mediaId: number
+    let userIdA: string
+    let userIdB: string
+    let mediaId: string
 
     beforeAll(async () => {
         await prisma.user.deleteMany({ where: { username: { in: [userA, userB] } } })
@@ -90,12 +90,12 @@ describe('P7: Per-user progress belongs on UserLogs, not shared Media', () => {
 
         // Fetch User A logs
         const logsA = await request(app).get('/logs').set('Authorization', `Bearer ${tokenA}`)
-        const logA = logsA.body.find((l: { mediaId: number }) => l.mediaId === mediaId)
+        const logA = logsA.body.find((l: { mediaId: string }) => l.mediaId === mediaId)
         expect(logA.progress).toEqual({ watchedEpisodes: 14 })
 
         // Fetch User B logs
         const logsB = await request(app).get('/logs').set('Authorization', `Bearer ${tokenB}`)
-        const logB = logsB.body.find((l: { mediaId: number }) => l.mediaId === mediaId)
+        const logB = logsB.body.find((l: { mediaId: string }) => l.mediaId === mediaId)
         expect(logB.progress).toEqual({ watchedEpisodes: 28 })
 
         // Verify shared Media.metadata was not polluted
@@ -146,7 +146,7 @@ describe('P7: Per-user progress belongs on UserLogs, not shared Media', () => {
                     SELECT l.id AS log_id, m.id AS media_id, m.metadata
                     FROM "UserLogs" l
                     JOIN "Media" m ON l."mediaId" = m.id
-                    WHERE m.id = ${legacyMedia.id}
+                    WHERE m.id = '${legacyMedia.id}'::uuid
                       AND (m.metadata ? 'watchedEpisodes' OR m.metadata ? 'readChapters' OR m.metadata ? 'readVolumes')
                 LOOP
                     prog := jsonb_strip_nulls(jsonb_build_object(
@@ -164,7 +164,7 @@ describe('P7: Per-user progress belongs on UserLogs, not shared Media', () => {
 
                 UPDATE "Media"
                 SET metadata = (metadata - 'watchedEpisodes' - 'readChapters' - 'readVolumes')
-                WHERE id = ${legacyMedia.id};
+                WHERE id = '${legacyMedia.id}'::uuid;
             END $$;
         `)
 

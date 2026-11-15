@@ -30,7 +30,7 @@ export class DemoService {
             console.log("\x1b[1m\x1b[32mDemo Account Successful Reset Yay\x1b[0m")
     }
 
-    async ensureNotDemo(userId: number) {
+    async ensureNotDemo(userId: string) {
         const demoUser = await findUserByUsername("demo", prisma)
         if (!demoUser) {
             throw new AppError("Demo user missing", 404)

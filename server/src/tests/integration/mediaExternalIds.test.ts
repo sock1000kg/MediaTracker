@@ -10,10 +10,10 @@ import { openLibraryService } from '@/services/search/openLibrarySearchService.j
 describe('X4: MediaExternalId identity, lookups, and importer matching', () => {
     const username = 'ExternalIdTestUser'
     let token: string
-    let userId: number
-    let animeTypeId: number
-    let bookTypeId: number
-    let systemUserId: number
+    let userId: string
+    let animeTypeId: string
+    let bookTypeId: string
+    let systemUserId: string
 
     beforeAll(async () => {
         await prisma.user.deleteMany({ where: { username } })
@@ -79,18 +79,18 @@ describe('X4: MediaExternalId identity, lookups, and importer matching', () => {
 
         // Execute the exact backfill queries from the migration
         await prisma.$executeRawUnsafe(`
-            INSERT INTO "MediaExternalId" ("mediaId", "provider", "externalId", "created_at")
-            SELECT id, LOWER(source), "sourceId", created_at
+            INSERT INTO "MediaExternalId" ("id", "mediaId", "provider", "externalId", "created_at")
+            SELECT gen_random_uuid(), id, LOWER(source), "sourceId", created_at
             FROM "Media"
-            WHERE id = ${testMedia.id} AND "sourceId" IS NOT NULL AND source IS NOT NULL
+            WHERE id = '${testMedia.id}'::uuid AND "sourceId" IS NOT NULL AND source IS NOT NULL
             ON CONFLICT ("provider", "externalId") DO NOTHING;
         `)
 
         await prisma.$executeRawUnsafe(`
-            INSERT INTO "MediaExternalId" ("mediaId", "provider", "externalId", "created_at")
-            SELECT id, 'mal', (metadata->>'idMal'), created_at
+            INSERT INTO "MediaExternalId" ("id", "mediaId", "provider", "externalId", "created_at")
+            SELECT gen_random_uuid(), id, 'mal', (metadata->>'idMal'), created_at
             FROM "Media"
-            WHERE id = ${testMedia.id}
+            WHERE id = '${testMedia.id}'::uuid
               AND metadata IS NOT NULL
               AND metadata ? 'idMal'
               AND (metadata->>'idMal') ~ '^[0-9]+$'

@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { uuidSchema } from "@/schemas/common.js"
 import {
     MAX_COLLECTION_DESC_LENGTH,
     normalizeCollectionName,
@@ -42,9 +43,9 @@ export const updateCollectionSchema = z.object({
 })
 
 export const addCollectionItemSchema = z.object({
-    logId: z.number().int().positive("Invalid logId"),
+    logId: uuidSchema,
 })
 
 export const reorderCollectionSchema = z.object({
-    logIds: z.array(z.number().int().positive("Invalid logId")),
+    logIds: z.array(uuidSchema),
 })

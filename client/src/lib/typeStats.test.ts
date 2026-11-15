@@ -23,7 +23,7 @@ function makeLog(opts: {
   logged_at?: string
   metadata?: Record<string, unknown> | null
 } = {}): StatLog {
-  const id = nextId++
+  const id = String(nextId++)
   return {
     id,
     status: opts.status === undefined ? "completed" : opts.status,

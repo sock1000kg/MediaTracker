@@ -192,8 +192,8 @@ export default function LogsSection() {
 
   // Set of media IDs of parents that the user has logged
   const loggedParentMediaIds = useMemo(() => {
-    const set = new Set<number>()
-    const allParentIds = new Set(logs.map(l => l.media.parentId).filter((id): id is number => id != null))
+    const set = new Set<string>()
+    const allParentIds = new Set(logs.map(l => l.media.parentId).filter((id): id is string => id != null))
     for (const l of logs) {
       if (l.media.id && (l.media.childSummary !== undefined || allParentIds.has(l.media.id))) {
         set.add(l.media.id)

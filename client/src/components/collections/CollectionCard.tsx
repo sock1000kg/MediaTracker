@@ -4,7 +4,7 @@ import type { CollectionSummary } from "@/types/mainTypes"
 
 interface CollectionCardProps {
   collection: CollectionSummary
-  onSelect: (id: number) => void
+  onSelect: (id: string) => void
 }
 
 export function CollectionCard({ collection, onSelect }: CollectionCardProps) {

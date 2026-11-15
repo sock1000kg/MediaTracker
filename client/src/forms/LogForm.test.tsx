@@ -12,16 +12,16 @@ vi.mock("@/api/tags", () => ({
 }))
 
 const dummyMedia: Media = {
-  id: 1,
-  userId: 1,
+  id: "018f0000-0000-7000-8000-000000000001",
+  userId: "018f0000-0000-7000-8000-000000000002",
   title: "Test Movie",
   creator: "Director",
   sourceId: null,
   description: null,
   created_at: "2024-01-01T00:00:00.000Z",
   mediaType: {
-    id: 1,
-    userId: 1,
+    id: "018f0000-0000-7000-8000-000000000003",
+    userId: "018f0000-0000-7000-8000-000000000002",
     name: "movie",
     created_at: "2024-01-01T00:00:00.000Z",
   },

@@ -10,7 +10,9 @@ function authMiddleWare(req: Request, res: Response, next: NextFunction) {
 
     jwt.verify(token, process.env.JWT_KEY_SECRET!, (error, decoded) => {
         if (error || !decoded) return res.status(401).json({ message: 'Invalid token' })
-        req.userId = Number(( decoded as JwtPayload).id) // now req.userId is a number
+        const payload = decoded as JwtPayload
+        if (!payload.id) return res.status(401).json({ message: 'Invalid token' })
+        req.userId = String(payload.id)
         next()
     })
 } 

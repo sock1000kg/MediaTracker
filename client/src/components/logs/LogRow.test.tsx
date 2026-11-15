@@ -11,14 +11,14 @@ describe("LogRow component with children logs", () => {
   const onDelete = vi.fn()
 
   const dummyMediaType = {
-    id: 1,
-    userId: 1,
+    id: "018f0000-0000-7000-8000-000000000001",
+    userId: "018f0000-0000-7000-8000-000000000001",
     name: "music",
     created_at: "2024-01-01T00:00:00.000Z",
   }
 
   const parentAlbumLog: Log = {
-    id: 1,
+    id: "018f0000-0000-7000-8000-000000000010",
     rating: 98,
     status: "completed",
     notes: "Masterpiece",
@@ -27,8 +27,8 @@ describe("LogRow component with children logs", () => {
     finished_at: null,
     tags: [],
     media: {
-      id: 10,
-      userId: 1,
+      id: "018f0000-0000-7000-8000-000000000100",
+      userId: "018f0000-0000-7000-8000-000000000001",
       title: "Loveless",
       creator: "my bloody valentine",
       year: 1991,
@@ -49,7 +49,7 @@ describe("LogRow component with children logs", () => {
   }
 
   const childTrack1Log: Log = {
-    id: 2,
+    id: "018f0000-0000-7000-8000-000000000020",
     rating: 100,
     status: "completed",
     notes: "",
@@ -58,8 +58,8 @@ describe("LogRow component with children logs", () => {
     finished_at: null,
     tags: [],
     media: {
-      id: 11,
-      userId: 1,
+      id: "018f0000-0000-7000-8000-000000000101",
+      userId: "018f0000-0000-7000-8000-000000000001",
       title: "Only Shallow",
       creator: "my bloody valentine",
       year: 1991,
@@ -68,7 +68,7 @@ describe("LogRow component with children logs", () => {
       imageUrl: null,
       description: null,
       created_at: "2024-01-01T00:00:00.000Z",
-      parentId: 10,
+      parentId: "018f0000-0000-7000-8000-000000000100",
       position: 1,
       mediaType: dummyMediaType,
       metadata: { kind: "track", trackNumber: 1, durationSec: 257 },
@@ -76,7 +76,7 @@ describe("LogRow component with children logs", () => {
   }
 
   const childTrack2Log: Log = {
-    id: 3,
+    id: "018f0000-0000-7000-8000-000000000030",
     rating: 92,
     status: "completed",
     notes: "",
@@ -85,8 +85,8 @@ describe("LogRow component with children logs", () => {
     finished_at: null,
     tags: [],
     media: {
-      id: 12,
-      userId: 1,
+      id: "018f0000-0000-7000-8000-000000000102",
+      userId: "018f0000-0000-7000-8000-000000000001",
       title: "Loomer",
       creator: "my bloody valentine",
       year: 1991,
@@ -95,7 +95,7 @@ describe("LogRow component with children logs", () => {
       imageUrl: null,
       description: null,
       created_at: "2024-01-01T00:00:00.000Z",
-      parentId: 10,
+      parentId: "018f0000-0000-7000-8000-000000000100",
       position: 2,
       mediaType: dummyMediaType,
       metadata: { kind: "track", trackNumber: 2, durationSec: 158 },
@@ -147,7 +147,7 @@ describe("LogRow component with children logs", () => {
           media: {
             ...childTrack1Log.media,
             parent: {
-              id: 10,
+              id: "10",
               title: "Loveless",
               creator: "my bloody valentine",
             },
