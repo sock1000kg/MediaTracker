@@ -262,9 +262,9 @@ export default function MediasSection() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex flex-col gap-4 px-6 pt-6 pb-4">
+      <div className="flex flex-col gap-4 px-4 sm:px-6 pt-4 sm:pt-6 pb-4">
         <div>
-          <h1 className="font-display text-4xl font-semibold">Your media</h1>
+          <h1 className="font-display text-3xl sm:text-4xl font-semibold">Your media</h1>
         </div>
 
         <div className="flex flex-col items-start gap-3 w-full">
@@ -328,7 +328,7 @@ export default function MediasSection() {
 
 
         {!pending && (processedMedias.length > 0) && (
-          <div className="px-6 pb-10 pt-2">
+          <div className="px-4 sm:px-6 pb-10 pt-2">
             {sections.map((section) => {
               const { visible, remaining } = reveal.slice(section.key, section.items)
               return (

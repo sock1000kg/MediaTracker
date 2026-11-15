@@ -81,12 +81,17 @@ export function LogRow({ log, onEdit, onDelete, onTagClick, leading, extraAction
       }
       aside={
         <>
-          <p className="font-display text-2xl tabular-nums" aria-label={rating.label}>
+          <p className="font-display text-xl tabular-nums sm:text-2xl" aria-label={rating.label}>
             {rating.text}
             {rating.text !== "–" && <span className="text-xs text-muted-foreground">/100</span>}
           </p>
           {status && <p className="text-xs text-muted-foreground">{status}</p>}
-          <div className="flex items-center justify-end gap-1">
+          <div className="flex items-center justify-end gap-1 max-sm:ml-auto">
+            {url && (
+              <a href={url} target="_blank" rel="noopener noreferrer" className="px-1 text-xs text-link underline-offset-4 hover:underline">
+                More info
+              </a>
+            )}
             {extraActions}
             <LogActions log={log} onEdit={onEdit} onDelete={onDelete} extraMenuItems={extraMenuItems} />
           </div>
@@ -179,11 +184,6 @@ export function LogRow({ log, onEdit, onDelete, onTagClick, leading, extraAction
         </div>
       )}
 
-      {url && (
-        <a href={url} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block text-xs text-link underline-offset-4 hover:underline">
-          More info
-        </a>
-      )}
     </RowShell>
   )
 }

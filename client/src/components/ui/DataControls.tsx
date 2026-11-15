@@ -63,9 +63,9 @@ function FilterDropdown({ opt, selected, toggleFilter }: {
     return (
         <DropdownMenu onOpenChange={(o) => { setOpen(o); if (!o) setSearch("") }}>
             <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-fit h-9 gap-2 rounded-full border-border-strong bg-card font-normal px-3">
-                    <Filter className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">{opt.label}</span>
+                <Button variant="outline" className="w-fit h-8 gap-1.5 rounded-full border-border-strong bg-card font-normal px-3 text-xs sm:text-sm">
+                    <Filter className="h-3.5 w-3.5" aria-hidden="true" />
+                    <span>{opt.label}</span>
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -147,21 +147,21 @@ export function DataControls({
         <div className="flex flex-wrap gap-2 items-center justify-start">
              {leadingControls}
              <div className="relative w-full sm:w-64 lg:w-72">
-                <Search className="absolute left-3.5 top-3 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
                 <Input 
                     value={searchQuery} 
                     onChange={e => setSearchQuery(e.target.value)} 
                     placeholder="Search..." 
-                    className="pl-10 h-10 rounded-full border-border-strong bg-card" 
+                    className="pl-9 h-9 rounded-full border-border-strong bg-card" 
                 />
              </div>
              
              {/* SORTS */}
              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="w-fit h-9 gap-2 rounded-full border-border-strong bg-card px-3 font-normal">
-                        <Plus className="h-3.5 w-3.5"/> 
-                        <span className="hidden sm:inline">Add Sort</span>
+                    <Button variant="outline" className="w-fit h-8 gap-1.5 rounded-full border-border-strong bg-card px-3 font-normal text-xs sm:text-sm">
+                        <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                        <span>Sort</span>
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>

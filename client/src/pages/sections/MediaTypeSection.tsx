@@ -94,9 +94,9 @@ export default function MediaTypesSection() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex justify-between px-6 pt-6 pb-4 items-end gap-4">
+      <div className="flex justify-between px-4 sm:px-6 pt-4 sm:pt-6 pb-4 items-end gap-4">
         <div>
-          <h1 className="font-display text-4xl font-semibold">Media types</h1>
+          <h1 className="font-display text-3xl sm:text-4xl font-semibold">Media types</h1>
         </div>
         <Button size="default" variant="amber" onClick={() => handleCreateClick()}>
           + Add Media Type

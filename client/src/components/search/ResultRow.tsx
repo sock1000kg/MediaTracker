@@ -25,7 +25,7 @@ export function ResultRow({ result, kind, isLogged, onLog }: ResultRowProps) {
     <RowShell
       cover={<Cover id={resultCoverKey(result)} title={result.title} imageUrl={result.imageUrl} aspect={resultAspect(kind)} size="row" />}
       aside={
-        <div className="flex flex-col items-start gap-2 min-[481px]:items-end">
+        <div className="ml-auto flex flex-col items-end gap-2">
           <Button size="sm" variant="amber" onClick={onLog}>{isLogged ? "Edit log" : "+ Log"}</Button>
         </div>
       }

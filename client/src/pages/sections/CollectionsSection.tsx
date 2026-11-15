@@ -342,7 +342,7 @@ export default function CollectionsSection() {
         }
         title={
           <div>
-            <h1 className="font-display text-4xl font-semibold break-words">
+            <h1 className="font-display text-3xl sm:text-4xl font-semibold break-words">
               {activeCollection.name}
             </h1>
             <p className="text-xs text-muted-foreground mt-1 tabular-nums">{countLabel}</p>

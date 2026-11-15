@@ -257,12 +257,12 @@ export default function LogsSection() {
     <div className="relative isolate flex flex-col h-full overflow-hidden">
       <PageBackdrop page="logs" />
       {/* Header & Controls */}
-      <div className="relative w-full px-6 pt-6 pb-4">
+      <div className="relative w-full px-4 sm:px-6 pt-4 sm:pt-6 pb-4">
         <div className="flex flex-col gap-4">
           
           {/* Title */}
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-             <h1 className="font-display text-4xl font-semibold">Your logs</h1>
+             <h1 className="font-display text-3xl sm:text-4xl font-semibold">Your logs</h1>
              {logs.length > 0 && (
                <p className="text-sm text-muted-foreground">
                  {logs.length} {logs.length === 1 ? "log" : "logs"} · {logsThisYear} this year
@@ -330,7 +330,7 @@ export default function LogsSection() {
         )}
 
         {!isPending && processedLogs.length > 0 && (
-          <div className="px-6 pb-10 pt-2">
+          <div className="px-4 sm:px-6 pb-10 pt-2">
             {groups.map((group) => {
               const { visible, remaining } = reveal.slice(group.key, group.logs)
               return (

@@ -197,9 +197,9 @@ export function MusicSearchSection() {
         <div className="relative isolate flex flex-col h-full overflow-hidden">
             <PageBackdrop page="music" />
             {/* Header */}
-            <div className="flex flex-col gap-4 px-6 pt-6 pb-4">
+            <div className="flex flex-col gap-4 px-4 sm:px-6 pt-4 sm:pt-6 pb-4">
                 <div>
-                <h1 className="font-display text-4xl font-semibold">Music search</h1>
+                <h1 className="font-display text-3xl sm:text-4xl font-semibold">Music search</h1>
                 <ProviderAttribution href={LASTFM_URL}>
                     {LASTFM_ATTRIBUTION_TEXT}
                 </ProviderAttribution>

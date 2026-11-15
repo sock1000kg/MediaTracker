@@ -193,7 +193,7 @@ function TvShowItem({ show, view, logs, onLog }: TvShowItemProps) {
           />
         }
         aside={
-          <div className="flex flex-col items-start gap-2 min-[481px]:items-end">
+          <div className="ml-auto flex flex-col items-end gap-2">
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
@@ -400,9 +400,9 @@ export function TvSearchSection() {
     <div className="relative isolate flex flex-col h-full overflow-hidden">
       <PageBackdrop page="tv" />
       {/* Header */}
-      <div className="flex flex-col gap-4 px-6 pt-6 pb-4">
+      <div className="flex flex-col gap-4 px-4 sm:px-6 pt-4 sm:pt-6 pb-4">
         <div>
-          <h1 className="font-display text-4xl font-semibold">TV search</h1>
+          <h1 className="font-display text-3xl sm:text-4xl font-semibold">TV search</h1>
           <ProviderAttribution href={TMDB_URL}>
             {TMDB_ATTRIBUTION}
           </ProviderAttribution>

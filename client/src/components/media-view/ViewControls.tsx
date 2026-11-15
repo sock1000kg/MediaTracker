@@ -18,13 +18,13 @@ interface ViewControlsProps {
 export function ViewControls({ view, onView, group, onGroup, groupOptions, groupAriaLabel = "Group" }: ViewControlsProps) {
   return (
     <>
-      <div role="group" aria-label="View" className="flex items-center border border-border-strong rounded-full h-9 overflow-hidden bg-card">
+      <div role="group" aria-label="View" className="flex items-center border border-border-strong rounded-full h-8 overflow-hidden bg-card">
         <Button
           variant="ghost" size="sm" aria-pressed={view === "list"}
           className={`h-full rounded-none px-3 gap-2 font-normal ${view === "list" ? "bg-muted text-foreground" : "bg-card text-muted-foreground hover:text-foreground"}`}
           onClick={() => onView("list")}
         >
-          <List className="h-3.5 w-3.5" />
+          <List className="h-3.5 w-3.5" aria-hidden="true" />
           <span className="hidden sm:inline">List</span>
         </Button>
         <div className="w-[1px] h-4 bg-border" />
@@ -33,13 +33,13 @@ export function ViewControls({ view, onView, group, onGroup, groupOptions, group
           className={`h-full rounded-none px-3 gap-2 font-normal ${view === "grid" ? "bg-muted text-foreground" : "bg-card text-muted-foreground hover:text-foreground"}`}
           onClick={() => onView("grid")}
         >
-          <LayoutGrid className="h-3.5 w-3.5" />
+          <LayoutGrid className="h-3.5 w-3.5" aria-hidden="true" />
           <span className="hidden sm:inline">Grid</span>
         </Button>
       </div>
       {groupOptions && group !== undefined && onGroup && (
       <Select value={group} onValueChange={onGroup}>
-        <SelectTrigger aria-label={groupAriaLabel} className="h-9 w-fit gap-2 rounded-full border-border-strong bg-card px-3 text-sm font-normal">
+        <SelectTrigger aria-label={groupAriaLabel} className="h-8 w-fit gap-1.5 rounded-full border-border-strong bg-card px-3 text-xs font-normal sm:text-sm">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

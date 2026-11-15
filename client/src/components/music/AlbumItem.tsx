@@ -264,7 +264,7 @@ export function AlbumItem({ album, view, logs, onLog, onMore, onErrorToast }: Al
         />
       }
       aside={
-        <div className="flex flex-col items-start gap-2 min-[481px]:items-end">
+        <div className="ml-auto flex flex-col items-end gap-2">
           <div className="flex items-center gap-2">
             <Button
               size="sm"

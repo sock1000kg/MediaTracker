@@ -30,7 +30,7 @@ export function GroupHeading({ label, expanded = false, onCollapse, headingRef, 
     <div
       ref={barRef}
       className={expanded
-        ? "sticky top-0 z-10 -mx-6 mb-2 flex items-center justify-between gap-2 bg-background/70 px-6 py-1.5 backdrop-blur-sm"
+        ? "sticky top-0 z-10 -mx-4 sm:-mx-6 mb-2 flex items-center justify-between gap-2 bg-background/70 px-4 sm:px-6 py-1.5 backdrop-blur-sm"
         : "mb-2 flex items-center justify-between gap-2"}
     >
       {label ? (

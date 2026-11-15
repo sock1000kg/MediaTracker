@@ -240,9 +240,9 @@ export default function BooksSearchSection() {
         <div className="relative isolate flex flex-col h-full overflow-hidden">
             <PageBackdrop page="books" />
             {/* Header */}
-            <div className="flex flex-col gap-4 px-6 pt-6 pb-4">
+            <div className="flex flex-col gap-4 px-4 sm:px-6 pt-4 sm:pt-6 pb-4">
                 <div>
-                <h1 className="font-display text-4xl font-semibold">Book search</h1>
+                <h1 className="font-display text-3xl sm:text-4xl font-semibold">Book search</h1>
                 <ProviderAttribution href={OPEN_LIBRARY_URL}>
                     {OPEN_LIBRARY_ATTRIBUTION_TEXT}
                 </ProviderAttribution>
@@ -289,7 +289,7 @@ export default function BooksSearchSection() {
             </div>
 
             {showFilters && (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 px-6 pb-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 px-4 sm:px-6 pb-4">
                     <div className="grid gap-1">
                         <Label htmlFor="book-filter-author">Author</Label>
                         <Input id="book-filter-author" maxLength={limits.search.queryMaxLength} value={draftFilters.author ?? ""}

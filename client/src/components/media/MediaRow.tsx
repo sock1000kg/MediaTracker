@@ -31,16 +31,16 @@ export function MediaRow({ media, log, onEdit, onDelete, onLog }: MediaRowProps)
         <>
           {log && rating ? (
             <>
-              <p className="font-display text-2xl tabular-nums" aria-label={rating.label}>
+              <p className="font-display text-xl tabular-nums sm:text-2xl" aria-label={rating.label}>
                 {rating.text}
                 {rating.text !== "–" && <span className="text-xs text-muted-foreground">/100</span>}
               </p>
               {status && <p className="text-xs text-muted-foreground">{status}</p>}
             </>
           ) : (
-              <Button size="sm" variant="amber" className="mt-1" onClick={() => onLog(media)}>+ Log</Button>
+              <Button size="sm" variant="amber" className="sm:mt-1" onClick={() => onLog(media)}>+ Log</Button>
           )}
-          <div>
+          <div className="max-sm:ml-auto">
             <MediaActions media={media} logged={!!log} onEdit={onEdit} onDelete={onDelete} onLog={onLog} />
           </div>
         </>

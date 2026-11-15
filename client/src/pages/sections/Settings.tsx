@@ -13,14 +13,14 @@ export default function Settings() {
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
-            <div className="flex justify-between px-6 pt-6 pb-4 items-center">
+            <div className="flex justify-between px-4 sm:px-6 pt-4 sm:pt-6 pb-4 items-center">
                 <div>
-                    <h1 className="font-display text-4xl font-semibold">Settings</h1>
+                    <h1 className="font-display text-3xl sm:text-4xl font-semibold">Settings</h1>
                 </div>
             </div>
 
             {/* Tab chips below header */}
-            <div className="flex flex-wrap gap-2 px-6 pb-2" role="tablist">
+            <div className="flex flex-wrap gap-2 px-4 sm:px-6 pb-2" role="tablist">
                 {([["user", "User"], ["tags", "Tags"], ["apiKeys", "API Keys"], ["imports", "Data Imports"]] as const).map(([tab, label]) => (
                     <Button
                         key={tab}
