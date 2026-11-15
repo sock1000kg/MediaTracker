@@ -1526,7 +1526,7 @@
           "networks": [
             "Adult Swim"
           ],
-          "genres": [
+          "categories": [
             "Animation",
             "Comedy",
             "Sci-Fi & Fantasy",
@@ -1547,7 +1547,7 @@
           "kind": "show",
           "tmdbId": 60625,
           "firstAirDate": "2013-12-02",
-          "genres": [
+          "categories": [
             "Animation",
             "Comedy",
             "Sci-Fi & Fantasy",
@@ -1600,7 +1600,7 @@
           "networks": [
             "Adult Swim"
           ],
-          "genres": [
+          "categories": [
             "Animation",
             "Comedy",
             "Sci-Fi & Fantasy",
@@ -1621,7 +1621,7 @@
           "kind": "show",
           "tmdbId": 60625,
           "firstAirDate": "2013-12-02",
-          "genres": [
+          "categories": [
             "Animation",
             "Comedy",
             "Sci-Fi & Fantasy",
@@ -1674,7 +1674,7 @@
           "networks": [
             "Netflix"
           ],
-          "genres": [
+          "categories": [
             "Drama",
             "Crime"
           ]
@@ -1694,7 +1694,7 @@
           "tmdbId": 136283,
           "originalTitle": "더 글로리",
           "firstAirDate": "2022-12-30",
-          "genres": [
+          "categories": [
             "Drama",
             "Crime"
           ],
@@ -1745,7 +1745,7 @@
           "networks": [
             "Apple TV"
           ],
-          "genres": [
+          "categories": [
             "Drama",
             "Mystery",
             "Sci-Fi & Fantasy"
@@ -1765,7 +1765,7 @@
           "kind": "show",
           "tmdbId": 95396,
           "firstAirDate": "2022-02-17",
-          "genres": [
+          "categories": [
             "Drama",
             "Mystery",
             "Sci-Fi & Fantasy"
@@ -1816,7 +1816,7 @@
           "networks": [
             "Netflix"
           ],
-          "genres": [
+          "categories": [
             "Animation",
             "Action & Adventure",
             "Sci-Fi & Fantasy"
@@ -1836,7 +1836,7 @@
           "kind": "show",
           "tmdbId": 94605,
           "firstAirDate": "2021-11-06",
-          "genres": [
+          "categories": [
             "Animation",
             "Action & Adventure",
             "Sci-Fi & Fantasy"
@@ -1884,7 +1884,7 @@
           "kind": "show",
           "tmdbId": 1396,
           "firstAirDate": "2008-01-20",
-          "genres": [
+          "categories": [
             "Drama",
             "Crime"
           ],

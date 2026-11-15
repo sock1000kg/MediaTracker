@@ -947,6 +947,13 @@ describe('Search Routes - TV (TMDB)', () => {
         const logRes = await logItem(0, seasonData)
         expect(logRes.statusCode).toBeLessThan(300)
 
+        // TMDB genres become the season's genres
+        const saved = await prisma.media.findFirst({
+            where: { source: 'tmdb', sourceId: 'tv:60625:s1' },
+            include: { genres: { include: { genre: true }, orderBy: { position: 'asc' } } },
+        })
+        expect(saved?.genres.map(g => g.genre.name)).toEqual(['Animation', 'Comedy'])
+
         // Fetch seasons again -> inLibrary should be true
         const after = await getSeasons(0, 60625)
         expect(after.statusCode).toBe(200)

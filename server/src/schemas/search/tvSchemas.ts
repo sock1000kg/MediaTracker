@@ -9,7 +9,7 @@ export const tvShowMetadataSchema = z.object({
     tmdbId: z.number(),
     originalTitle: z.string().nullable().optional(),
     firstAirDate: z.string().nullable().optional(),
-    genres: z.array(z.string()).nullable().optional(),
+    categories: z.array(z.string()).nullable().optional(),
     originCountry: z.union([z.array(z.string()), z.string()]).nullable().optional(),
     seasonCount: z.number().nullable().optional(),
     episodeCount: z.number().nullable().optional(),
@@ -27,7 +27,7 @@ export const tvSeasonMetadataSchema = z.object({
     episodeCount: z.number().nullable().optional(),
     airDate: z.string().nullable().optional(),
     networks: z.array(z.string()).nullable().optional(),
-    genres: z.array(z.string()).nullable().optional(),
+    categories: z.array(z.string()).nullable().optional(),
 }).strict()
 
 // TMDB /3/search/tv

@@ -123,7 +123,7 @@ export function mapTmdbShow(item: TmdbTvItem): SearchResult {
             tmdbId: item.id!,
             ...(originalTitle ? { originalTitle } : {}),
             firstAirDate: item.first_air_date ?? null,
-            genres: genres.length ? genres : null,
+            categories: genres.length ? genres : null,
             originCountry: item.origin_country ?? null,
         },
     }
@@ -332,7 +332,7 @@ export class TmdbSearchService {
                 tmdbId: d.id!,
                 ...(originalTitle ? { originalTitle } : {}),
                 firstAirDate: d.first_air_date ?? null,
-                genres: genres.length ? genres : null,
+                categories: genres.length ? genres : null,
                 originCountry: d.origin_country ?? null,
                 seasonCount: d.number_of_seasons ?? null,
                 episodeCount: d.number_of_episodes ?? null,
@@ -382,7 +382,7 @@ export class TmdbSearchService {
                     episodeCount: s.episode_count ?? null,
                     airDate: s.air_date ?? null,
                     networks: networks.length ? networks : null,
-                    genres: genres.length ? genres : null,
+                    categories: genres.length ? genres : null,
                 },
             }
         })

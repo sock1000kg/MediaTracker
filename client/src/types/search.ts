@@ -108,7 +108,7 @@ export type TvShowMetadata = {
   tmdbId: number
   originalTitle?: string | null
   firstAirDate?: string | null
-  genres?: string[] | null
+  categories?: string[] | null
   originCountry?: string[] | string | null
   seasonCount?: number | null
   episodeCount?: number | null
@@ -126,7 +126,7 @@ export type TvSeasonMetadata = {
   episodeCount: number | null
   airDate?: string | null
   networks?: string[] | null
-  genres?: string[] | null
+  categories?: string[] | null
 }
 
 export type TvResult = MediaResult<"tv"> & {

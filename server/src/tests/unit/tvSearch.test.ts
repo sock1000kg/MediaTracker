@@ -87,7 +87,7 @@ describe('mapTmdbShow', () => {
             kind: 'show',
             tmdbId: 60625,
             firstAirDate: '2013-12-02',
-            genres: ['Animation', 'Comedy', 'Sci-Fi & Fantasy'],
+            categories: ['Animation', 'Comedy', 'Sci-Fi & Fantasy'],
             originCountry: ['US'],
         })
         expect(searchResultsSchema.parse([r])[0].metadata).toMatchObject({ kind: 'show' })
@@ -102,7 +102,7 @@ describe('mapTmdbShow', () => {
         const r = mapTmdbShow({ ...item, first_air_date: '', poster_path: null, genre_ids: [] })
         expect(r.year).toBeNull()
         expect(r.imageUrl).toBeNull()
-        expect(r.metadata).toMatchObject({ genres: null })
+        expect(r.metadata).toMatchObject({ categories: null })
     })
 
     it('genre map has 16 entries', () => {
