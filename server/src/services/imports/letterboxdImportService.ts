@@ -722,7 +722,8 @@ export class LetterboxdImportService {
                     rating: f.rating,
                     notes: f.notes,
                     loggedAt: f.loggedAt,
-                    startedAt: null,
+                    // Films are watched in one sitting: start on the day they were finished
+                    startedAt: f.finishedAt,
                     finishedAt: f.finishedAt,
                     tags: f.tags,
                     progress: f.progress ?? null,
@@ -766,6 +767,7 @@ export class LetterboxdImportService {
                 const logUpdates: {
                     rating?: number | null
                     finished_at?: Date | null
+                    started_at?: Date | null
                     notes?: string | null
                     status?: string | null
                     progress?: Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput
@@ -782,6 +784,14 @@ export class LetterboxdImportService {
                         logUpdates.finished_at = item.logData.finishedAt
                         filled = true
                     }
+                }
+
+                // Start date: same day as the finish when the existing log has none
+                const finish = logUpdates.finished_at ?? log.finished_at
+                if (log.started_at === null && item.logData.startedAt !== null && finish
+                    && item.logData.startedAt.getTime() <= finish.getTime()) {
+                    logUpdates.started_at = item.logData.startedAt
+                    filled = true
                 }
 
                 if ((log.notes === null || log.notes.trim() === "") && (item.logData.notes && item.logData.notes.trim() !== "")) {

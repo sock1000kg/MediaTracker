@@ -123,16 +123,16 @@ export function mapMalStatus(raw: unknown): string {
     const clean = raw.trim().toLowerCase()
     switch (clean) {
         case "completed":
-            return "Completed"
+            return "completed"
         case "watching":
         case "reading":
         case "on-hold":
-            return "In progress"
+            return "in progress"
         case "dropped":
-            return "Dropped"
+            return "dropped"
         case "plan to watch":
         case "plan to read":
-            return "Wishlist"
+            return "wishlist"
         default:
             throw new AppError(`Unknown MAL status: ${raw}`, 400)
     }

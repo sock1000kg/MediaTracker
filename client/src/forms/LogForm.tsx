@@ -1,5 +1,6 @@
 import type { Log, Media, LogStatus } from "@/types/mainTypes"
 import { useLimits } from "@/hooks/useLimits"
+import { applyStatus } from "@/lib/logStatus"
 
 import {
   Select,
@@ -116,7 +117,7 @@ export function LogForm({
         <Select
           value={formData.status ?? ""}
           onValueChange={(val: LogStatus) =>
-            setFormData((prev) => ({ ...prev, status: val }))
+            setFormData((prev) => applyStatus(prev, val, getTodayString()))
           }
         >
           <SelectTrigger className="mt-1 flex w-full rounded-md border border-input bg-card px-3 py-2 text-sm focus:ring-2 focus:outline-none">

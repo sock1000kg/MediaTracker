@@ -1,7 +1,7 @@
 import prisma from "@/prismaClient.js"
 import { Prisma, Media, UserLogs } from "@/db.js"
 import { mergeMediaMetadata, findMediaByExternalIds, ExternalIdKey } from "@/repositories/mediaRepository.js"
-import { tagKey, normalizeTagName, sanitizeNotes } from "@/utilities.js"
+import { tagKey, normalizeTagName, sanitizeNotes, sanitizeStatus } from "@/utilities.js"
 import { ImportResult } from "@/api/domain/imports.js"
 import { makeProgressReporter, type ImportProgressCallback } from "./goodreadsImportService.js"
 import {
@@ -580,7 +580,7 @@ export async function executeBatchImport(options: {
                         data: validRowsNeedingLog.map(r => ({
                             userId,
                             mediaId: r.mediaId!,
-                            status: r.item.logData.status,
+                            status: sanitizeStatus(r.item.logData.status),
                             rating: r.item.logData.rating,
                             notes: sanitizeNotes(r.item.logData.notes),
                             progress: (r.item.logData.progress as Prisma.InputJsonValue) ?? Prisma.JsonNull,
@@ -621,6 +621,9 @@ export async function executeBatchImport(options: {
                             where: { id: r.logId },
                             data: {
                                 ...r.gapFill.logUpdates,
+                                ...("status" in r.gapFill.logUpdates
+                                    ? { status: sanitizeStatus(r.gapFill.logUpdates.status) }
+                                    : {}),
                                 ...(typeof r.gapFill.logUpdates.notes === "string"
                                     ? { notes: sanitizeNotes(r.gapFill.logUpdates.notes) }
                                     : {}),

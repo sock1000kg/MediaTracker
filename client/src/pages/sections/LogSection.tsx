@@ -121,7 +121,7 @@ export default function LogsSection() {
     const canonicalTag = new Map(uniqueTags.map(t => [t.toLowerCase(), t]))
     return [
       { id: "type", field: (log: Log) => log.media.mediaType.name },
-      { id: "status", field: (log: Log) => log.status },
+      { id: "status", field: (log: Log) => log.status?.trim().toLowerCase() ?? null },
       { id: "category", field: (log: Log) => (log.media.genres ?? getCategories(log.media.metadata)).map(c => canonicalCat.get(c.toLowerCase()) ?? c) },
       {
         id: "tag",
@@ -178,7 +178,7 @@ export default function LogsSection() {
   [logs, knownTypes])
 
   const uniqueStatuses = useMemo(() => 
-    Array.from(new Set(logs.map((l) => l.status))).filter(Boolean).sort(), 
+    Array.from(new Set(logs.map((l) => l.status?.trim().toLowerCase()))).filter((s): s is string => !!s).sort(), 
   [logs])
 
   const uniqueSources = useMemo(() =>

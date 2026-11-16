@@ -95,27 +95,27 @@ describe("MyAnimeList Import (Unit)", () => {
 
     describe("Status Mapping", () => {
         it("maps Completed to Completed", () => {
-            expect(mapMalStatus("Completed")).toBe("Completed")
-            expect(mapMalStatus("completed")).toBe("Completed")
+            expect(mapMalStatus("Completed")).toBe("completed")
+            expect(mapMalStatus("completed")).toBe("completed")
         })
 
         it("maps Watching and Reading to In progress", () => {
-            expect(mapMalStatus("Watching")).toBe("In progress")
-            expect(mapMalStatus("Reading")).toBe("In progress")
+            expect(mapMalStatus("Watching")).toBe("in progress")
+            expect(mapMalStatus("Reading")).toBe("in progress")
         })
 
         it("maps On-Hold to In progress", () => {
-            expect(mapMalStatus("On-Hold")).toBe("In progress")
-            expect(mapMalStatus("on-hold")).toBe("In progress")
+            expect(mapMalStatus("On-Hold")).toBe("in progress")
+            expect(mapMalStatus("on-hold")).toBe("in progress")
         })
 
         it("maps Dropped to Dropped", () => {
-            expect(mapMalStatus("Dropped")).toBe("Dropped")
+            expect(mapMalStatus("Dropped")).toBe("dropped")
         })
 
         it("maps Plan to Watch and Plan to Read to Wishlist", () => {
-            expect(mapMalStatus("Plan to Watch")).toBe("Wishlist")
-            expect(mapMalStatus("Plan to Read")).toBe("Wishlist")
+            expect(mapMalStatus("Plan to Watch")).toBe("wishlist")
+            expect(mapMalStatus("Plan to Read")).toBe("wishlist")
         })
 
         it("throws an AppError for an unknown status", () => {

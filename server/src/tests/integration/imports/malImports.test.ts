@@ -149,7 +149,7 @@ describe("Media Import Routes (MyAnimeList)", () => {
             include: { tags: { include: { tag: true } } },
         })
         expect(log).not.toBeNull()
-        expect(log!.status).toBe("Completed")
+        expect(log!.status).toBe("completed")
         expect(log!.rating).toBe(90) // 9 * 10
         expect(log!.notes).toBe("Incredible journey")
         expect(log!.finished_at).not.toBeNull()
