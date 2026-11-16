@@ -28,7 +28,7 @@ import { ResultList } from "@/components/search/ResultList"
 import { ViewControls } from "@/components/media-view/ViewControls"
 import { useStoredView } from "@/hooks/useStoredView"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { SEARCH_QUERY_OPTIONS } from "@/lib/searchQuery"
+import { SEARCH_QUERY_OPTIONS, SEARCH_PLACEHOLDER } from "@/lib/searchQuery"
 
 export function AnimeSearchSection() {
   const [loadingLine] = useState(() => pickLoadingLine())
@@ -189,7 +189,7 @@ export function AnimeSearchSection() {
 
                 <div className="flex flex-wrap gap-2 items-center">
                     <Input
-                        placeholder="Type a title..."
+                        placeholder={SEARCH_PLACEHOLDER}
                         value={inputValue}
                         maxLength={limits.search.queryMaxLength}
                         onChange={(e) => setInputValue(e.target.value)}

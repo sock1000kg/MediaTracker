@@ -37,7 +37,7 @@ import {
   resultProviderLabel,
   resultUrl,
 } from "@/lib/resultView"
-import { SEARCH_QUERY_OPTIONS } from "@/lib/searchQuery"
+import { SEARCH_QUERY_OPTIONS, SEARCH_PLACEHOLDER } from "@/lib/searchQuery"
 
 interface TvShowItemProps {
   show: TvResult
@@ -410,7 +410,7 @@ export function TvSearchSection() {
 
         <div className="flex flex-wrap gap-2 items-center">
           <Input
-            placeholder="Type a TV show title..."
+            placeholder={SEARCH_PLACEHOLDER}
             value={inputValue}
             maxLength={limits.search.queryMaxLength}
             onChange={(e) => setInputValue(e.target.value)}

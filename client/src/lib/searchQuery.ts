@@ -4,3 +4,6 @@ export const SEARCH_QUERY_OPTIONS = {
   staleTime: 10 * 60 * 1000,
   refetchOnWindowFocus: false,
 } as const
+
+/** Placeholder for every search page's main input. */
+export const SEARCH_PLACEHOLDER = "Type a name..."

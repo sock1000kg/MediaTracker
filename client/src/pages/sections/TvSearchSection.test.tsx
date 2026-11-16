@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { SEARCH_PLACEHOLDER } from "@/lib/searchQuery"
 import { describe, expect, it, vi, beforeEach } from "vitest"
 import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
@@ -88,7 +89,7 @@ describe("TvSearchSection component", () => {
 
     renderWithProviders(<TvSearchSection />)
 
-    const input = screen.getByPlaceholderText("Type a TV show title...")
+    const input = screen.getByPlaceholderText(SEARCH_PLACEHOLDER)
     await user.type(input, "Rick{enter}")
 
     await waitFor(() => {
@@ -136,7 +137,7 @@ describe("TvSearchSection component", () => {
     vi.mocked(searchApi.searchTv).mockResolvedValue({ results: [show], nextStartIndex: null })
 
     renderWithProviders(<TvSearchSection />)
-    await user.type(screen.getByPlaceholderText("Type a TV show title..."), "Regular{enter}")
+    await user.type(screen.getByPlaceholderText(SEARCH_PLACEHOLDER), "Regular{enter}")
     await user.click((await screen.findAllByRole("button", { name: "Log show" }))[0])
     await user.click(await screen.findByRole("button", { name: "Create" }))
 

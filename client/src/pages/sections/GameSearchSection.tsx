@@ -29,7 +29,7 @@ import { createMediaAndLog } from "@/api/media"
 import { ResultList } from "@/components/search/ResultList"
 import { ViewControls } from "@/components/media-view/ViewControls"
 import { useStoredView } from "@/hooks/useStoredView"
-import { SEARCH_QUERY_OPTIONS } from "@/lib/searchQuery"
+import { SEARCH_QUERY_OPTIONS, SEARCH_PLACEHOLDER } from "@/lib/searchQuery"
 
 const PLATFORM_OPTIONS: { value: GamePlatform; label: string }[] = [
     { value: "pc", label: "PC" }, { value: "playstation", label: "PlayStation" }, { value: "xbox", label: "Xbox" },
@@ -200,7 +200,7 @@ export function GameSearchSection() {
 
                 <div className="flex flex-wrap gap-2 items-center">
                     <Input
-                        placeholder="Type a game title..."
+                        placeholder={SEARCH_PLACEHOLDER}
                         value={inputValue}
                         maxLength={limits.search.queryMaxLength}
                         onChange={(e) => setInputValue(e.target.value)}

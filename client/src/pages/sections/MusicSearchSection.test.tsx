@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { SEARCH_PLACEHOLDER } from "@/lib/searchQuery"
 import { describe, expect, it, vi, beforeEach } from "vitest"
 import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
@@ -93,7 +94,7 @@ describe("MusicSearchSection component", () => {
 
     renderWithProviders(<MusicSearchSection />)
 
-    const input = screen.getByPlaceholderText(/type book name|type an artist/i)
+    const input = screen.getByPlaceholderText(SEARCH_PLACEHOLDER)
     await user.type(input, "Loveless{enter}")
 
     await waitFor(() => {
@@ -146,7 +147,7 @@ describe("MusicSearchSection component", () => {
 
     renderWithProviders(<MusicSearchSection />)
 
-    const input = screen.getByPlaceholderText(/type book name|type an artist/i)
+    const input = screen.getByPlaceholderText(SEARCH_PLACEHOLDER)
     await user.type(input, "Loveless{enter}")
 
     await waitFor(() => {
@@ -203,7 +204,7 @@ describe("MusicSearchSection component", () => {
 
     renderWithProviders(<MusicSearchSection />)
 
-    const input = screen.getByPlaceholderText(/type book name|type an artist/i)
+    const input = screen.getByPlaceholderText(SEARCH_PLACEHOLDER)
     await user.type(input, "Loveless{enter}")
 
     await waitFor(() => {
