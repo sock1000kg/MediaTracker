@@ -12,6 +12,7 @@ export const SEARCH_PLACEHOLDER = "Type a name..."
 
 /** Server errors for a missing per-user provider key → the provider to tell the user about. */
 export const MISSING_KEY_PROVIDERS: Record<string, string> = {
+  "Missing Music API Key": "Last.fm",
   "Missing Movie API Key": "TMDB",
   "Missing TV API Key": "TMDB",
   "Missing Game API Key": "RAWG",
