@@ -13,8 +13,19 @@ import { findMediaTypeForUserOrGlobal } from "@/repositories/mediaTypeRepository
 import { tagService } from "@/services/tagService.js"
 import { createLogSchema, updateLogSchema, deleteLogSchema } from "@/schemas/logSchemas.js"
 import { AppError } from "@/api/domain/error.js"
-import { validateSchema } from "@/utilities.js"
+import { validateSchema, toDayPrecision } from "@/utilities.js"
 import { DbClient } from "@/db.js"
+
+/**
+ * Start date to fill in when a log is "in progress" with none: today (day precision),
+ * unless an earlier finish date would make it invalid. Null when nothing should change.
+ */
+export function startDateForInProgress(status: string | null | undefined, startedAt: Date | null, finishedAt: Date | null, now = new Date()): Date | null {
+    if (status !== "in progress" || startedAt) return null
+    const today = toDayPrecision(now)!
+    if (finishedAt && finishedAt.getTime() < today.getTime()) return null
+    return today
+}
 
 export class LogService {
     async getAll(userId: string) {
@@ -44,7 +55,8 @@ export class LogService {
 
             try {
                 //Final Log creation
-                const log = await createLog(userId, mediaId, status, rating, notes, tx, null, startedAt, finishedAt, progress)
+                const autoStart = startDateForInProgress(status, startedAt ?? null, finishedAt ?? null)
+                const log = await createLog(userId, mediaId, status, rating, notes, tx, null, autoStart ?? startedAt, finishedAt, progress)
                 if (tags !== undefined) {
                     await tagService.resolveAndSyncTags(userId, log.id, tags, tx)
                     return await findLogById(log.id, tx)
@@ -79,8 +91,12 @@ export class LogService {
                 throw new AppError("Finished date can't be before the start date", 400)
             }
 
+            // Moving a log into "in progress" starts it today when it has no start date
+            const statusChanged = status !== undefined && status !== existingLog.status?.trim().toLowerCase()
+            const autoStart = statusChanged ? startDateForInProgress(status ?? null, effectiveStartedAt, effectiveFinishedAt) : null
+
             try {
-                const updated = await updateLog(logId, status, rating, notes, tx, startedAt, finishedAt, progress)
+                const updated = await updateLog(logId, status, rating, notes, tx, autoStart ?? startedAt, finishedAt, progress)
                 if (tags !== undefined) {
                     await tagService.resolveAndSyncTags(userId, logId, tags, tx)
                     return await findLogById(logId, tx)
