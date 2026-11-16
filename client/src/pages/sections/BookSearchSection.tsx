@@ -1,35 +1,22 @@
-import { ProviderAttribution } from "@/components/search/ProviderAttribution"
-import { OPEN_LIBRARY_URL, OPEN_LIBRARY_ATTRIBUTION_TEXT } from "@/lib/bookFormat"
-import { PageBackdrop } from "@/components/media-view/PageBackdrop"
-import { effectiveHideLogged } from "@/lib/preferences"
-import { usePreferences } from "@/hooks/usePreferences"
-import { useLimits } from "@/hooks/useLimits"
-import EmptyState from "@/components/EmptyState"
-import { EMPTY_LINES, pickLoadingLine } from "@/lib/whimsy"
-import { Filter, Search, X } from "lucide-react"
-import { Button } from "../../components/ui/button"
-import { Input } from "../../components/ui/input"
-import { Label } from "../../components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
-import { ResultList } from "@/components/search/ResultList"
-import { ViewControls } from "@/components/media-view/ViewControls"
-import { useStoredView } from "@/hooks/useStoredView"
-
+import { useState } from "react"
+import { Filter, X } from "lucide-react"
 import { searchBooks } from "@/api/search"
-import { useCallback, useEffect, useRef, useState } from "react"
-import { findLogForResult, isResultLogged, readStoredBool, writeStoredBool } from "@/lib/utils"
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData  } from "@tanstack/react-query"
-
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { SearchPageShell } from "@/components/search/SearchPageShell"
+import { SearchHeader } from "@/components/search/SearchHeader"
+import { SearchResults } from "@/components/search/SearchResults"
+import { ResultList } from "@/components/search/ResultList"
+import { useHideLogged } from "@/hooks/useHideLogged"
+import { useLimits } from "@/hooks/useLimits"
+import { useProviderSearch } from "@/hooks/useProviderSearch"
+import { useSearchLogging } from "@/hooks/useSearchLogging"
+import { useStoredView } from "@/hooks/useStoredView"
+import { isResultLogged } from "@/lib/utils"
+import { OPEN_LIBRARY_URL, OPEN_LIBRARY_ATTRIBUTION_TEXT } from "@/lib/bookFormat"
 import type { BookResult, BookSearchFilters, BookSort } from "@/types/search"
-import { type DialogName, type Log } from "@/types/mainTypes"
-
-import EntityDialog from "../../components/dialogs/EntityDialog"
-import { editLog } from "@/api/logs"
-import { fetchLogsQueryOptions } from "@/queryOptions/fetchLogsQueryOptions"
-import { fetchMediasQueryOptions } from "@/queryOptions/fetchMediasQueryOptions"
-import { MediaSearchLogForm } from "@/forms/MediaSearchLogForm"
-import { createMediaAndLog } from "@/api/media"
-import { SEARCH_QUERY_OPTIONS, SEARCH_PLACEHOLDER } from "@/lib/searchQuery"
 
 const LANGUAGES: { value: string, label: string }[] = [
     { value: "eng", label: "English" },
@@ -78,325 +65,136 @@ function filterChips(f: BookSearchFilters): { key: keyof BookSearchFilters, labe
 }
 
 export default function BooksSearchSection() {
-  const [loadingLine] = useState(() => pickLoadingLine())
-    const [openDialog, setOpenDialog] = useState<DialogName>(null)
-    const [inputValue, setInputValue] = useState("")
-    const [query, setQuery] = useState("")
+  const [inputValue, setInputValue] = useState("")
+  const [query, setQuery] = useState("")
 
-    //FILTERS: draft = what's in the panel, applied = what the search uses
-    const [showFilters, setShowFilters] = useState(false)
-    const [draftFilters, setDraftFilters] = useState<BookSearchFilters>({})
-    const [appliedFilters, setAppliedFilters] = useState<BookSearchFilters>({})
+  // Filters: draft = what's in the panel, applied = what the search uses
+  const [showFilters, setShowFilters] = useState(false)
+  const [draftFilters, setDraftFilters] = useState<BookSearchFilters>({})
+  const [appliedFilters, setAppliedFilters] = useState<BookSearchFilters>({})
 
-    //TARGET MEDIA/LOG FOR LOGGING
-    const [targetMedia, setTargetMedia] = useState<BookResult>()
-    const [targetLog, setTargetLog] = useState<Log | null>(null)
+  const [view, setView] = useStoredView("search.view.books")
+  const [hideLogged, toggleHideLogged] = useHideLogged("books")
+  const limits = useLimits()
 
-    const { prefs, isLoaded: prefsLoaded, updatePrefs } = usePreferences()
-    const [view, setView] = useStoredView("search.view.books")
-    const [hideLogged, setHideLogged] = useState(() => effectiveHideLogged(prefs.hideLogged?.books, readStoredBool("hideLogged.books")))
-    const hideTouched = useRef(false)
-    // Prefs arriving after mount: adopt the server value unless the toggle was used
-    useEffect(() => {
-        const v = prefs.hideLogged?.books
-        if (prefsLoaded && !hideTouched.current && v !== undefined) setHideLogged(v)
-    }, [prefsLoaded, prefs.hideLogged?.books])
-    const toggleHideLogged = () => {
-        const next = !hideLogged
-        hideTouched.current = true
-        setHideLogged(next)
-        writeStoredBool("hideLogged.books", next)
-        updatePrefs({ hideLogged: { books: next } })
-    }
+  const search = useProviderSearch<BookResult>({
+    queryKey: ["searchBooks", query, appliedFilters],
+    query,
+    fetchPage: (page) => searchBooks(query, page, appliedFilters),
+    hideLogged,
+  })
+  const { openLog, dialog } = useSearchLogging<BookResult>(search.logs)
 
-    const queryClient = useQueryClient()
-    const limits = useLimits()
+  // Applies the panel's filters together with the typed query
+  const handleSearch = () => {
+    setAppliedFilters(cleanFilters(draftFilters))
+    if (inputValue.trim()) setQuery(inputValue.trim())
+  }
 
-    //Infinite search
-    const {
-        data,
-        error,
-        fetchNextPage,
-        hasNextPage,
-        isFetchingNextPage,
-        isLoading,
-    } = useInfiniteQuery<
-        { results: BookResult[], nextStartIndex: number | null }, //QueryFnData
-        Error, //Error
-        InfiniteData<{ results: BookResult[], nextStartIndex: number | null }, number>, //TData
-        [string, string, BookSearchFilters], //QueryKey
-        number //PageParam
-    >({
-        queryKey: ["searchBooks", query, appliedFilters],
-        ...SEARCH_QUERY_OPTIONS,
-        queryFn: async ({ pageParam = 0 }) => {
-            return searchBooks(query, pageParam, appliedFilters)
-        },
-        getNextPageParam: (lastPage) => {
-            return lastPage.nextStartIndex
-        },
-        initialPageParam: 1,  
-        enabled: !!query, //fires only when query isnt empty
-    })
+  const applyFilters = (next: BookSearchFilters) => {
+    const cleaned = cleanFilters(next)
+    setDraftFilters(cleaned)
+    setAppliedFilters(cleaned)
+  }
 
-    // media and logs cache
-    const { data: logs = [] } = useQuery(fetchLogsQueryOptions())
+  const removeChip = (key: keyof BookSearchFilters) => {
+    const next = { ...appliedFilters }
+    delete next[key]
+    applyFilters(next)
+  }
 
-    const results = data?.pages.flatMap((page) => page.results) ?? []
+  const chips = filterChips(appliedFilters)
 
-    const visibleResults = hideLogged ? results.filter(r => !isResultLogged(logs, r)) : results
-    const hiddenCount = results.length - visibleResults.length
+  return (
+    <SearchPageShell page="books">
+      <SearchHeader
+        title="Book search"
+        attribution={{ href: OPEN_LIBRARY_URL, text: OPEN_LIBRARY_ATTRIBUTION_TEXT }}
+        value={inputValue}
+        onChange={setInputValue}
+        onSearch={handleSearch}
+        busy={search.busy}
+        below={chips.length > 0 && (
+          <div className="flex flex-wrap gap-2 items-center mt-1">
+            <span className="text-xs font-medium text-muted-foreground">Filters:</span>
+            {chips.map(chip => (
+              <div key={chip.key} className="flex items-center gap-1 border rounded-full px-2.5 py-0.5 text-xs bg-tag text-tag-foreground border-tag">
+                <Filter className="h-3 w-3 opacity-50" />
+                <span className="font-medium">{chip.label}</span>
+                <button aria-label={`Remove ${chip.label}`} onClick={() => removeChip(chip.key)} className="ml-1 hover:opacity-100 opacity-60">
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+            <button className="text-xs text-muted-foreground hover:underline" onClick={() => applyFilters({})}>Clear all</button>
+          </div>
+        )}
+      >
+        <Button variant="outline" className="h-10 rounded-full border-border-strong bg-card" onClick={() => setShowFilters(v => !v)} aria-expanded={showFilters}>
+          <Filter /> Filters
+        </Button>
+      </SearchHeader>
 
-    //MUTATIONS
-    const createMediaAndLogMutation = useMutation({
-        mutationFn: ({ mediaData, logData }: { mediaData: BookResult, logData: Partial<Log> }) =>
-            createMediaAndLog(mediaData, logData),
-
-        onSuccess: () => {
-            queryClient.refetchQueries({ queryKey: fetchMediasQueryOptions().queryKey})
-            queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey })
-            queryClient.invalidateQueries({ queryKey: ["tags"] })
-        }
-    })
-
-    const editLogMutation = useMutation({
-        mutationFn: editLog,
-        onSuccess: () => {
-            queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey})
-            queryClient.invalidateQueries({ queryKey: ["tags"] })
-        },
-    })
-
-    // Applies the panel's filters together with the typed query
-    const handleSearch = () => {
-        setAppliedFilters(cleanFilters(draftFilters))
-        if (inputValue.trim()) {
-            setQuery(inputValue.trim())
-        }
-    }
-
-    const applyFilters = (next: BookSearchFilters) => {
-        const cleaned = cleanFilters(next)
-        setDraftFilters(cleaned)
-        setAppliedFilters(cleaned)
-    }
-
-    const removeChip = (key: keyof BookSearchFilters) => {
-        const next = { ...appliedFilters }
-        delete next[key]
-        applyFilters(next)
-    }
-
-    const chips = filterChips(appliedFilters)
-
-    const handleLogClick = (item: BookResult) => {
-        //Check if log of this item exists already
-        const existingLog = findLogForResult(logs, item)
-
-        setTargetMedia(item)
-        setTargetLog(existingLog ?? null)
-        setOpenDialog("logForm")
-    }
-
-    const handleSubmit = async (formData: Partial<Log>) => {
-        // If a log exists, edit it
-        if(targetLog) return await editLogMutation.mutateAsync({...targetLog, ...formData})
-        
-        if (!targetMedia) {
-            // This case should theoretically never be reached if handleLogClick worked correctly
-            console.error("targetMedia is missing for creation.")
-            // Rejecting the Promise will prevent onSuccess from running and display error message
-            return Promise.reject(new Error("Cannot create log: Target media data is missing."))
-        }
-
-        else {
-            return await createMediaAndLogMutation.mutateAsync({
-                mediaData: targetMedia,
-                logData: formData
-            })
-        }
-    }
-
-    // Media Form
-    const renderLogForm = useCallback((
-        formData: Partial<Log>,
-        setFormData: React.Dispatch<React.SetStateAction<Partial<Log>>> //state setter for formData
-    ) => {
-        if (!targetMedia) {
-            // This case should theoretically never be reached if handleLogClick worked correctly
-            console.error("Attempted to render MediaSearchLogForm without a targetMedia.")
-            return null
-        } 
-        return (
-            <MediaSearchLogForm 
-                targetMedia={targetMedia} 
-                formData={formData}
-                setFormData={setFormData}
-            />
-        )
-    }, [targetMedia])
-
-    return(
-        <div className="relative isolate flex flex-col h-full overflow-hidden">
-            <PageBackdrop page="books" />
-            {/* Header */}
-            <div className="flex flex-col gap-4 px-4 sm:px-6 pt-4 sm:pt-6 pb-4">
-                <div>
-                <h1 className="font-display text-3xl sm:text-4xl font-semibold">Book search</h1>
-                <ProviderAttribution href={OPEN_LIBRARY_URL}>
-                    {OPEN_LIBRARY_ATTRIBUTION_TEXT}
-                </ProviderAttribution>
-                </div>
-
-                <div className="flex flex-wrap gap-2 items-center">
-                    <Input
-                        placeholder={SEARCH_PLACEHOLDER}
-                        value={inputValue}
-                        maxLength={limits.search.queryMaxLength}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        onKeyDown={(e) => { 
-                            if(e.key === "Enter") {
-                                e.preventDefault()
-                                handleSearch()
-                            }
-                        }}
-                        className="h-10 flex-1 min-w-[12rem] rounded-full border-border-strong bg-card px-4"
-                        />
-                    <Button size="icon" variant="amber" aria-label="Search" className="h-10 w-10 rounded-full" disabled={isLoading || isFetchingNextPage} onClick={() => handleSearch()}>
-                        <Search />
-                    </Button>
-                    <div className="basis-full sm:basis-auto flex flex-wrap items-center gap-2">
-                    <Button size="default" variant="outline" className="h-10 rounded-full border-border-strong bg-card" onClick={() => setShowFilters(v => !v)} aria-expanded={showFilters}>
-                        <Filter /> Filters
-                    </Button>
-                    </div>
-                </div>
-                {chips.length > 0 && (
-                    <div className="flex flex-wrap gap-2 items-center mt-1">
-                        <span className="text-xs font-medium text-muted-foreground">Filters:</span>
-                        {chips.map(chip => (
-                            <div key={chip.key} className="flex items-center gap-1 border rounded-full px-2.5 py-0.5 text-xs bg-tag text-tag-foreground border-tag">
-                                <Filter className="h-3 w-3 opacity-50" />
-                                <span className="font-medium">{chip.label}</span>
-                                <button aria-label={`Remove ${chip.label}`} onClick={() => removeChip(chip.key)} className="ml-1 hover:opacity-100 opacity-60">
-                                    <X className="h-3 w-3" />
-                                </button>
-                            </div>
-                        ))}
-                        <button className="text-xs text-muted-foreground hover:underline" onClick={() => applyFilters({})}>Clear all</button>
-                    </div>
-                )}
-            </div>
-
-            {showFilters && (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 px-4 sm:px-6 pb-4">
-                    <div className="grid gap-1">
-                        <Label htmlFor="book-filter-author">Author</Label>
-                        <Input id="book-filter-author" maxLength={limits.search.queryMaxLength} value={draftFilters.author ?? ""}
-                            onChange={(e) => setDraftFilters(f => ({ ...f, author: e.target.value }))} />
-                    </div>
-                    <div className="grid gap-1">
-                        <Label htmlFor="book-filter-subject">Subject</Label>
-                        <Input id="book-filter-subject" maxLength={limits.search.queryMaxLength} value={draftFilters.subject ?? ""}
-                            onChange={(e) => setDraftFilters(f => ({ ...f, subject: e.target.value }))} />
-                    </div>
-                    <div className="grid gap-1">
-                        <Label>Language</Label>
-                        <Select value={draftFilters.language ?? ANY}
-                            onValueChange={(v) => setDraftFilters(f => ({ ...f, language: v === ANY ? undefined : v }))}>
-                            <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value={ANY}>Any</SelectItem>
-                                {LANGUAGES.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="grid gap-1">
-                        <Label htmlFor="book-filter-year-from">Year from</Label>
-                        <Input id="book-filter-year-from" type="number" min={0} max={2100} value={draftFilters.yearFrom ?? ""}
-                            onChange={(e) => setDraftFilters(f => ({ ...f, yearFrom: e.target.value === "" ? undefined : Number(e.target.value) }))} />
-                    </div>
-                    <div className="grid gap-1">
-                        <Label htmlFor="book-filter-year-to">Year to</Label>
-                        <Input id="book-filter-year-to" type="number" min={0} max={2100} value={draftFilters.yearTo ?? ""}
-                            onChange={(e) => setDraftFilters(f => ({ ...f, yearTo: e.target.value === "" ? undefined : Number(e.target.value) }))} />
-                    </div>
-                    <div className="grid gap-1">
-                        <Label>Sort</Label>
-                        <Select value={draftFilters.sort ?? "relevance"}
-                            onValueChange={(v) => setDraftFilters(f => ({ ...f, sort: v as BookSort }))}>
-                            <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                {SORTS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="col-span-2 md:col-span-3 flex justify-end">
-                        <Button variant="amber" onClick={() => applyFilters(draftFilters)}>Apply</Button>
-                    </div>
-                </div>
-            )}
-
-            {/* Results */}
-            <div className="p-4 flex-1 overflow-y-auto min-h-0 scrollbar-hide border-t border-border">
-                {isLoading && <p className="font-hand text-lg animate-pulse">{loadingLine}</p>}
-                {error && 
-                    <p className="text-destructive">
-                        {error.message}
-                    </p>
-                }
-
-                {results.length > 0 && (
-                    <div className="flex items-center justify-between gap-2 mb-3">
-                        <p className="text-xs text-muted-foreground">
-                            {hideLogged && hiddenCount > 0 ? `${hiddenCount} logged result${hiddenCount === 1 ? "" : "s"} hidden` : ""}
-                        </p>
-                        <div className="flex items-center gap-2">
-                            <ViewControls view={view} onView={setView} />
-                            <Button size="sm" variant="outline" onClick={toggleHideLogged} aria-pressed={hideLogged}>
-                            {hideLogged ? "Showing unlogged only" : "Hide logged"}
-                        </Button>
-                        </div>
-                    </div>
-                )}
-
-                {results.length > 0 ? (
-                <div className="grid gap-4">
-                    <ResultList
-                        results={visibleResults}
-                        view={view}
-                        kindOf={() => "book"}
-                        isLogged={(item) => isResultLogged(logs, item)}
-                        onLog={handleLogClick}
-                    />
-
-                    {hideLogged && visibleResults.length === 0 && (
-                        <EmptyState line={EMPTY_LINES.allHidden}>
-                            <p>All loaded results are already logged.</p>
-                        </EmptyState>
-                    )}
-
-                    {hasNextPage && (
-                        <Button variant={"amber"} onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
-                            {isFetchingNextPage ? "Loading more..." : "More books"}
-                        </Button>
-                    )}
-                </div>
-                ) : (
-                !isLoading && !error && query !== "" && (
-                    <EmptyState line={EMPTY_LINES.noResults}><p>No results</p></EmptyState>
-                )
-                )}
-            </div>
-
-            <EntityDialog 
-                mode={targetLog ? "edit" : "create"}
-                open={openDialog === "logForm"}
-                onOpenChange={(isOpen) => setOpenDialog(isOpen ? "logForm" : null)}
-                target={targetLog ?? undefined}
-                onSubmit={handleSubmit}
-                renderForm={renderLogForm}
-            />
+      {showFilters && (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 px-4 sm:px-6 pb-4">
+          <div className="grid gap-1">
+            <Label htmlFor="book-filter-author">Author</Label>
+            <Input id="book-filter-author" maxLength={limits.search.queryMaxLength} value={draftFilters.author ?? ""}
+              onChange={(e) => setDraftFilters(f => ({ ...f, author: e.target.value }))} />
+          </div>
+          <div className="grid gap-1">
+            <Label htmlFor="book-filter-subject">Subject</Label>
+            <Input id="book-filter-subject" maxLength={limits.search.queryMaxLength} value={draftFilters.subject ?? ""}
+              onChange={(e) => setDraftFilters(f => ({ ...f, subject: e.target.value }))} />
+          </div>
+          <div className="grid gap-1">
+            <Label>Language</Label>
+            <Select value={draftFilters.language ?? ANY}
+              onValueChange={(v) => setDraftFilters(f => ({ ...f, language: v === ANY ? undefined : v }))}>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ANY}>Any</SelectItem>
+                {LANGUAGES.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-1">
+            <Label htmlFor="book-filter-year-from">Year from</Label>
+            <Input id="book-filter-year-from" type="number" min={0} max={2100} value={draftFilters.yearFrom ?? ""}
+              onChange={(e) => setDraftFilters(f => ({ ...f, yearFrom: e.target.value === "" ? undefined : Number(e.target.value) }))} />
+          </div>
+          <div className="grid gap-1">
+            <Label htmlFor="book-filter-year-to">Year to</Label>
+            <Input id="book-filter-year-to" type="number" min={0} max={2100} value={draftFilters.yearTo ?? ""}
+              onChange={(e) => setDraftFilters(f => ({ ...f, yearTo: e.target.value === "" ? undefined : Number(e.target.value) }))} />
+          </div>
+          <div className="grid gap-1">
+            <Label>Sort</Label>
+            <Select value={draftFilters.sort ?? "relevance"}
+              onValueChange={(v) => setDraftFilters(f => ({ ...f, sort: v as BookSort }))}>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {SORTS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="col-span-2 md:col-span-3 flex justify-end">
+            <Button variant="amber" onClick={() => applyFilters(draftFilters)}>Apply</Button>
+          </div>
         </div>
-    )
+      )}
+
+      <SearchResults query={query} search={search} hideLogged={hideLogged} onToggleHideLogged={toggleHideLogged} view={view} onView={setView}>
+        <ResultList
+          results={search.visibleResults}
+          view={view}
+          kindOf={() => "book"}
+          isLogged={(item) => isResultLogged(search.logs, item)}
+          onLog={(item) => openLog(item)}
+        />
+      </SearchResults>
+
+      {dialog}
+    </SearchPageShell>
+  )
 }

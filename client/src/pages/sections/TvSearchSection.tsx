@@ -1,34 +1,22 @@
-import { PageBackdrop } from "@/components/media-view/PageBackdrop"
-import { effectiveHideLogged } from "@/lib/preferences"
-import { usePreferences } from "@/hooks/usePreferences"
-import { useLimits } from "@/hooks/useLimits"
-import EmptyState from "@/components/EmptyState"
-import { EMPTY_LINES, pickLoadingLine } from "@/lib/whimsy"
-import { ChevronDown, ChevronUp, Search } from "lucide-react"
-import { Button } from "../../components/ui/button"
-import { Input } from "../../components/ui/input"
-
+import { useState } from "react"
+import { useQuery } from "@tanstack/react-query"
+import { ChevronDown, ChevronUp } from "lucide-react"
 import { getTvSeasons, searchTv } from "@/api/search"
-import { useCallback, useEffect, useRef, useState } from "react"
-import { findLogForResult, isResultLogged, readStoredBool, writeStoredBool } from "@/lib/utils"
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query"
-
-import { ProviderAttribution } from "@/components/search/ProviderAttribution"
-import type { TvResult, TvSeasonResult } from "@/types/search"
-import { TMDB_ATTRIBUTION, TMDB_URL, tvMetaParts } from "@/lib/tvFormat"
-import { type DialogName, type Log } from "@/types/mainTypes"
-
-import EntityDialog from "../../components/dialogs/EntityDialog"
-import { editLog } from "@/api/logs"
-import { fetchLogsQueryOptions } from "@/queryOptions/fetchLogsQueryOptions"
-import { fetchMediasQueryOptions } from "@/queryOptions/fetchMediasQueryOptions"
-import { MediaSearchLogForm } from "@/forms/MediaSearchLogForm"
-import { createMediaAndLog } from "@/api/media"
-import { ViewControls } from "@/components/media-view/ViewControls"
-import { useStoredView } from "@/hooks/useStoredView"
+import { Button } from "@/components/ui/button"
 import { Cover } from "@/components/media-view/Cover"
 import { RowShell } from "@/components/media-view/RowShell"
 import { ClampText } from "@/components/media-view/ClampText"
+import { SearchPageShell } from "@/components/search/SearchPageShell"
+import { SearchHeader } from "@/components/search/SearchHeader"
+import { SearchResults } from "@/components/search/SearchResults"
+import { YearInput } from "@/components/search/SearchControls"
+import { useHideLogged } from "@/hooks/useHideLogged"
+import { useProviderSearch } from "@/hooks/useProviderSearch"
+import { useSearchLogging } from "@/hooks/useSearchLogging"
+import { useStoredView } from "@/hooks/useStoredView"
+import { isResultLogged } from "@/lib/utils"
+import { SEARCH_QUERY_OPTIONS, parseYear } from "@/lib/searchQuery"
+import { TMDB_ATTRIBUTION, TMDB_URL, tvMetaParts } from "@/lib/tvFormat"
 import {
   resultAspect,
   resultCategories,
@@ -37,7 +25,8 @@ import {
   resultProviderLabel,
   resultUrl,
 } from "@/lib/resultView"
-import { SEARCH_QUERY_OPTIONS, SEARCH_PLACEHOLDER } from "@/lib/searchQuery"
+import type { Log } from "@/types/mainTypes"
+import type { TvResult, TvSeasonResult } from "@/types/search"
 
 interface TvShowItemProps {
   show: TvResult
@@ -252,296 +241,57 @@ function TvShowItem({ show, view, logs, onLog }: TvShowItemProps) {
 }
 
 export function TvSearchSection() {
-  const [loadingLine] = useState(() => pickLoadingLine())
-  const [openDialog, setOpenDialog] = useState<DialogName>(null)
   const [inputValue, setInputValue] = useState("")
   const [query, setQuery] = useState("")
   const [yearInput, setYearInput] = useState("")
   const [year, setYear] = useState("")
 
-  const [targetMedia, setTargetMedia] = useState<TvResult | TvSeasonResult>()
-  const [targetParent, setTargetParent] = useState<TvResult | undefined>()
-  const [targetLog, setTargetLog] = useState<Log | null>(null)
-
-  const { prefs, isLoaded: prefsLoaded, updatePrefs } = usePreferences()
   const [view, setView] = useStoredView("search.view.tv")
-  const [hideLogged, setHideLogged] = useState(() =>
-    effectiveHideLogged(prefs.hideLogged?.tv, readStoredBool("hideLogged.tv"))
-  )
-  const hideTouched = useRef(false)
+  const [hideLogged, toggleHideLogged] = useHideLogged("tv")
 
-  useEffect(() => {
-    const v = prefs.hideLogged?.tv
-    if (prefsLoaded && !hideTouched.current && v !== undefined) setHideLogged(v)
-  }, [prefsLoaded, prefs.hideLogged?.tv])
-
-  const toggleHideLogged = () => {
-    const next = !hideLogged
-    hideTouched.current = true
-    setHideLogged(next)
-    writeStoredBool("hideLogged.tv", next)
-    updatePrefs({ hideLogged: { tv: next } })
-  }
-
-  const queryClient = useQueryClient()
-  const limits = useLimits()
-
-  const {
-    data,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-  } = useInfiniteQuery<
-    { results: TvResult[]; nextStartIndex: number | null },
-    Error,
-    InfiniteData<{ results: TvResult[]; nextStartIndex: number | null }, number>,
-    [string, string, string],
-    number
-  >({
+  const search = useProviderSearch<TvResult>({
     queryKey: ["searchTv", query, year],
-    ...SEARCH_QUERY_OPTIONS,
-    queryFn: async ({ pageParam = 1 }) => {
-      return searchTv(query, pageParam, { year: year ? Number(year) : undefined })
-    },
-    getNextPageParam: (lastPage) => lastPage.nextStartIndex,
-    initialPageParam: 1,
-    enabled: !!query,
+    query,
+    fetchPage: (page) => searchTv(query, page, { year: year ? Number(year) : undefined }),
+    hideLogged,
   })
-
-  const { data: logs = [] } = useQuery(fetchLogsQueryOptions())
-
-  const results = Array.from(
-    new Map(
-      data?.pages
-        .flatMap((p) => p.results)
-        .map((item) => [item.sourceId, item])
-    ).values()
-  )
-
-  const visibleResults = hideLogged ? results.filter((r) => !isResultLogged(logs, r)) : results
-  const hiddenCount = results.length - visibleResults.length
-
-  const createMediaAndLogMutation = useMutation({
-    mutationFn: ({
-      mediaData,
-      logData,
-      parent,
-    }: {
-      mediaData: TvResult | TvSeasonResult
-      logData: Partial<Log>
-      parent?: TvResult
-    }) => createMediaAndLog(mediaData, logData, parent),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: fetchLogsQueryOptions().queryKey })
-      queryClient.invalidateQueries({ queryKey: fetchMediasQueryOptions().queryKey })
-      setOpenDialog(null)
-    },
-  })
-
-  const editLogMutation = useMutation({
-    mutationFn: (logData: Partial<Log>) => {
-      if (!targetLog) throw new Error("No target log")
-      return editLog({ id: targetLog.id, ...logData })
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: fetchLogsQueryOptions().queryKey })
-      queryClient.invalidateQueries({ queryKey: fetchMediasQueryOptions().queryKey })
-      setOpenDialog(null)
-    },
-  })
+  const { openLog, dialog } = useSearchLogging<TvResult | TvSeasonResult>(search.logs)
 
   const handleSearch = () => {
+    if (!inputValue.trim()) return
     setQuery(inputValue.trim())
-    setYear(yearInput.trim())
+    setYear(parseYear(yearInput))
   }
 
-  const handleLogClick = (item: TvResult | TvSeasonResult, parent?: TvResult) => {
-    setTargetMedia(item)
-    setTargetParent(parent)
-    const existingLog = findLogForResult(logs, item) ?? null
-    setTargetLog(existingLog)
-    setOpenDialog("logForm")
-  }
+  const handleLog = (item: TvResult | TvSeasonResult, parent?: TvResult) => openLog(item, { parent })
 
-  const handleSubmit = async (formData: Partial<Log>) => {
-    if (targetLog) {
-      return await editLogMutation.mutateAsync(formData)
-    }
-    if (!targetMedia) {
-      return Promise.reject(new Error("Cannot create log: Target media data is missing."))
-    }
-    return await createMediaAndLogMutation.mutateAsync({
-      mediaData: targetMedia,
-      logData: formData,
-      parent: targetParent,
-    })
-  }
-
-  const renderLogForm = useCallback(
-    (
-      formData: Partial<Log>,
-      setFormData: React.Dispatch<React.SetStateAction<Partial<Log>>>
-    ) => {
-      if (!targetMedia) return null
-      return (
-        <MediaSearchLogForm
-          targetMedia={targetMedia}
-          formData={formData}
-          setFormData={setFormData}
-        />
-      )
-    },
-    [targetMedia]
-  )
+  const showItems = search.visibleResults.map((show) => (
+    <TvShowItem key={show.sourceId} show={show} view={view} logs={search.logs} onLog={handleLog} />
+  ))
 
   return (
-    <div className="relative isolate flex flex-col h-full overflow-hidden">
-      <PageBackdrop page="tv" />
-      {/* Header */}
-      <div className="flex flex-col gap-4 px-4 sm:px-6 pt-4 sm:pt-6 pb-4">
-        <div>
-          <h1 className="font-display text-3xl sm:text-4xl font-semibold">TV search</h1>
-          <ProviderAttribution href={TMDB_URL}>
-            {TMDB_ATTRIBUTION}
-          </ProviderAttribution>
-        </div>
+    <SearchPageShell page="tv">
+      <SearchHeader
+        title="TV search"
+        attribution={{ href: TMDB_URL, text: TMDB_ATTRIBUTION }}
+        value={inputValue}
+        onChange={setInputValue}
+        onSearch={handleSearch}
+        busy={search.busy}
+      >
+        <YearInput value={yearInput} onChange={setYearInput} onSearch={handleSearch} />
+      </SearchHeader>
 
-        <div className="flex flex-wrap gap-2 items-center">
-          <Input
-            placeholder={SEARCH_PLACEHOLDER}
-            value={inputValue}
-            maxLength={limits.search.queryMaxLength}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault()
-                handleSearch()
-              }
-            }}
-            className="h-10 flex-1 min-w-[12rem] rounded-full border-border-strong bg-card px-4"
-          />
-          <Button
-            size="icon"
-            variant="amber"
-            aria-label="Search"
-            className="h-10 w-10 rounded-full"
-            onClick={() => handleSearch()}
-          >
-            <Search />
-          </Button>
-          <div className="basis-full sm:basis-auto flex flex-wrap items-center gap-2">
-            <Input
-              type="number"
-              inputMode="numeric"
-              aria-label="Year"
-              placeholder="Year"
-              min={1874}
-              value={yearInput}
-              onChange={(e) => setYearInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault()
-                  handleSearch()
-                }
-              }}
-              className="w-24 rounded-md border border-input bg-card px-3 py-2 text-sm focus:ring-2 focus:outline-none"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Results */}
-      <div className="p-4 flex-1 overflow-y-auto min-h-0 scrollbar-hide border-t border-border">
-        {isLoading && <p className="font-hand text-lg animate-pulse">{loadingLine}</p>}
-        {error && (error.message === "Missing TV API Key" || error.message === "Missing Movie API Key") && (
-          <EmptyState line="You'll need a TMDB key first.">
-            <p>Add one under Settings → API Keys, then search again.</p>
-          </EmptyState>
-        )}
-        {error && error.message !== "Missing TV API Key" && error.message !== "Missing Movie API Key" && (
-          <p className="text-destructive">{error.message}</p>
-        )}
-
-        {results.length > 0 && (
-          <div className="flex items-center justify-between gap-2 mb-3">
-            <p className="text-xs text-muted-foreground">
-              {hideLogged && hiddenCount > 0
-                ? `${hiddenCount} logged result${hiddenCount === 1 ? "" : "s"} hidden`
-                : ""}
-            </p>
-            <div className="flex items-center gap-2">
-              <ViewControls view={view} onView={setView} />
-              <Button size="sm" variant="outline" onClick={toggleHideLogged} aria-pressed={hideLogged}>
-                {hideLogged ? "Showing unlogged only" : "Hide logged"}
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {results.length > 0 ? (
-          <div className="grid gap-4">
-            {view === "grid" ? (
-              <ul className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-5">
-                {visibleResults.map((show) => (
-                  <TvShowItem
-                    key={show.sourceId}
-                    show={show}
-                    view="grid"
-                    logs={logs}
-                    onLog={handleLogClick}
-                  />
-                ))}
-              </ul>
-            ) : (
-              <ul className="flex flex-col gap-3">
-                {visibleResults.map((show) => (
-                  <TvShowItem
-                    key={show.sourceId}
-                    show={show}
-                    view="list"
-                    logs={logs}
-                    onLog={handleLogClick}
-                  />
-                ))}
-              </ul>
-            )}
-
-            {hideLogged && visibleResults.length === 0 && (
-              <EmptyState line={EMPTY_LINES.allHidden}>
-                <p>All loaded results are already logged.</p>
-              </EmptyState>
-            )}
-
-            {hasNextPage && (
-              <Button
-                variant="amber"
-                onClick={() => fetchNextPage()}
-                disabled={isFetchingNextPage}
-              >
-                {isFetchingNextPage ? "Loading more..." : "More"}
-              </Button>
-            )}
-          </div>
+      <SearchResults query={query} search={search} hideLogged={hideLogged} onToggleHideLogged={toggleHideLogged} view={view} onView={setView}>
+        {view === "grid" ? (
+          <ul className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-5">{showItems}</ul>
         ) : (
-          !isLoading && !error && query !== "" && (
-            <EmptyState line={EMPTY_LINES.noResults}>
-              <p>No results</p>
-            </EmptyState>
-          )
+          <ul className="flex flex-col gap-3">{showItems}</ul>
         )}
-      </div>
+      </SearchResults>
 
-      <EntityDialog
-        mode={targetLog ? "edit" : "create"}
-        open={openDialog === "logForm"}
-        onOpenChange={(isOpen) => setOpenDialog(isOpen ? "logForm" : null)}
-        target={targetLog ?? undefined}
-        onSubmit={handleSubmit}
-        renderForm={renderLogForm}
-      />
-    </div>
+      {dialog}
+    </SearchPageShell>
   )
 }
 
