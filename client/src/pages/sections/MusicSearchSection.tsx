@@ -1,362 +1,123 @@
-import { ProviderAttribution } from "@/components/search/ProviderAttribution"
-import { LASTFM_URL, LASTFM_ATTRIBUTION_TEXT } from "@/lib/musicFormat"
-import { PageBackdrop } from "@/components/media-view/PageBackdrop"
-import { effectiveHideLogged } from "@/lib/preferences"
-import { usePreferences } from "@/hooks/usePreferences"
-import { useLimits } from "@/hooks/useLimits"
-import EmptyState from "@/components/EmptyState"
-import { EMPTY_LINES, pickLoadingLine } from "@/lib/whimsy"
-import { Search } from "lucide-react"
-import { Button } from "../../components/ui/button"
-import { Input } from "../../components/ui/input"
-
+import { useEffect, useState } from "react"
 import { searchAlbums, searchTracks } from "@/api/search"
-import { useCallback, useEffect, useRef, useState } from "react"
-import { findLogForResult, isResultLogged, readStoredBool, writeStoredBool } from "@/lib/utils"
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData  } from "@tanstack/react-query"
-
-import { AlbumItem } from "@/components/music/AlbumItem"
-import type { MusicResult, MusicTrackResult } from "@/types/search"
-import { type DialogName, type Log } from "@/types/mainTypes"
-
-import EntityDialog from "../../components/dialogs/EntityDialog"
-import { editLog } from "@/api/logs"
-import { fetchLogsQueryOptions } from "@/queryOptions/fetchLogsQueryOptions"
-import { fetchMediasQueryOptions } from "@/queryOptions/fetchMediasQueryOptions"
-import { MediaSearchLogForm } from "@/forms/MediaSearchLogForm"
-import { createMediaAndLog } from "@/api/media"
+import { SearchPageShell } from "@/components/search/SearchPageShell"
+import { SearchHeader } from "@/components/search/SearchHeader"
+import { SearchResults } from "@/components/search/SearchResults"
+import { FilterSelect } from "@/components/search/SearchControls"
 import { ResultList } from "@/components/search/ResultList"
-import { ViewControls } from "@/components/media-view/ViewControls"
+import { AlbumItem } from "@/components/music/AlbumItem"
+import { useHideLogged } from "@/hooks/useHideLogged"
+import { useProviderSearch } from "@/hooks/useProviderSearch"
+import { useSearchLogging } from "@/hooks/useSearchLogging"
 import { useStoredView } from "@/hooks/useStoredView"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { SEARCH_QUERY_OPTIONS, SEARCH_PLACEHOLDER } from "@/lib/searchQuery"
+import { isResultLogged } from "@/lib/utils"
+import { LASTFM_URL, LASTFM_ATTRIBUTION_TEXT } from "@/lib/musicFormat"
+import type { MusicResult, MusicTrackResult } from "@/types/search"
+
+type MusicMode = "albums" | "tracks"
+
+const MODE_OPTIONS: { value: MusicMode; label: string }[] = [
+  { value: "albums", label: "Albums" },
+  { value: "tracks", label: "Tracks" },
+]
 
 export function MusicSearchSection() {
-  const [loadingLine] = useState(() => pickLoadingLine())
-    const [openDialog, setOpenDialog] = useState<DialogName>(null)
-    const [inputValue, setInputValue] = useState("")
-    const [query, setQuery] = useState("")
-    const [searchMode, setSearchMode] = useState<"albums" | "tracks">("albums")
+  const [inputValue, setInputValue] = useState("")
+  const [query, setQuery] = useState("")
+  const [searchMode, setSearchMode] = useState<MusicMode>("albums")
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
 
-    const [targetMedia, setTargetMedia] = useState<MusicResult>()
-    const [targetParent, setTargetParent] = useState<MusicResult | undefined>()
-    const [targetLog, setTargetLog] = useState<Log | null>(null)
-    const [toastMessage, setToastMessage] = useState<string | null>(null)
+  useEffect(() => {
+    if (!toastMessage) return
+    const t = setTimeout(() => setToastMessage(null), 4000)
+    return () => clearTimeout(t)
+  }, [toastMessage])
 
-    useEffect(() => {
-        if (!toastMessage) return
-        const t = setTimeout(() => setToastMessage(null), 4000)
-        return () => clearTimeout(t)
-    }, [toastMessage])
+  const [view, setView] = useStoredView("search.view.music")
+  const [hideLogged, toggleHideLogged] = useHideLogged("music")
 
-    const { prefs, isLoaded: prefsLoaded, updatePrefs } = usePreferences()
-    const [view, setView] = useStoredView("search.view.music")
-    const [hideLogged, setHideLogged] = useState(() => effectiveHideLogged(prefs.hideLogged?.music, readStoredBool("hideLogged.music")))
-    const hideTouched = useRef(false)
-    // Prefs arriving after mount: adopt the server value unless the toggle was used
-    useEffect(() => {
-        const v = prefs.hideLogged?.music
-        if (prefsLoaded && !hideTouched.current && v !== undefined) setHideLogged(v)
-    }, [prefsLoaded, prefs.hideLogged?.music])
-    const toggleHideLogged = () => {
-        const next = !hideLogged
-        hideTouched.current = true
-        setHideLogged(next)
-        writeStoredBool("hideLogged.music", next)
-        updatePrefs({ hideLogged: { music: next } })
-    }
+  const search = useProviderSearch<MusicResult>({
+    queryKey: ["searchMusic", searchMode, query],
+    query,
+    fetchPage: (page) => (searchMode === "tracks" ? searchTracks(query, page) : searchAlbums(query, page)),
+    hideLogged,
+  })
+  const { openLog, dialog } = useSearchLogging<MusicResult | MusicTrackResult>(search.logs, [["albumTracks"]])
 
-    const queryClient = useQueryClient()
-    const limits = useLimits()
+  const handleSearch = () => {
+    if (inputValue.trim()) setQuery(inputValue.trim())
+  }
 
-    //Infinite search
-    const {
-        data,
-        error,
-        fetchNextPage,
-        hasNextPage,
-        isFetchingNextPage,
-        isLoading,
-    } = useInfiniteQuery<
-        { results: MusicResult[], nextStartIndex: number | null }, //QueryFnData
-        Error, //Error
-        InfiniteData<{ results: MusicResult[], nextStartIndex: number | null }, number>, //TData
-        [string, string, string], //QueryKey
-        number //PageParam
-    >({
-        queryKey: ["searchMusic", searchMode, query],
-        ...SEARCH_QUERY_OPTIONS,
-        queryFn: async ({ pageParam = 1 }) => {
-            return (searchMode === "tracks") ? searchTracks(query, pageParam) : searchAlbums(query, pageParam)
-        },
-        getNextPageParam: (lastPage) => {
-            return lastPage.nextStartIndex
-        },
-        initialPageParam: 1,  
-        enabled: !!query, //fires only when query isnt empty
-    })
+  const handleTrackMore = (track: MusicTrackResult, album: MusicResult) => {
+    const existing = track.myLog ? search.logs.find((l) => l.id === track.myLog?.id) : undefined
+    openLog(track, { parent: album, existing })
+  }
 
-    // media and logs cache
-    const { data: logs = [] } = useQuery(fetchLogsQueryOptions())
+  const albumItems = search.visibleResults.map((album) => (
+    <AlbumItem
+      key={album.sourceId}
+      album={album}
+      view={view}
+      logs={search.logs}
+      onLog={(item) => openLog(item)}
+      onMore={handleTrackMore}
+      onErrorToast={setToastMessage}
+    />
+  ))
 
-    const results = Array.from(
-        new Map(
-            data?.pages
-                .flatMap((p) => p.results)
-                .map(item => [item.sourceId, item])
-        ).values()
-    )
+  return (
+    <SearchPageShell page="music">
+      <SearchHeader
+        title="Music search"
+        attribution={{ href: LASTFM_URL, text: LASTFM_ATTRIBUTION_TEXT }}
+        value={inputValue}
+        onChange={setInputValue}
+        onSearch={handleSearch}
+        busy={search.busy}
+      >
+        <FilterSelect label="Albums or tracks" value={searchMode} onChange={(v) => setSearchMode(v || "albums")} options={MODE_OPTIONS} />
+      </SearchHeader>
 
-    const visibleResults = hideLogged ? results.filter(r => !isResultLogged(logs, r)) : results
-    const hiddenCount = results.length - visibleResults.length
+      <SearchResults query={query} search={search} hideLogged={hideLogged} onToggleHideLogged={toggleHideLogged} view={view} onView={setView}>
+        {searchMode === "albums" ? (
+          view === "grid" ? (
+            <ul className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-x-5 gap-y-7">
+              {albumItems}
+            </ul>
+          ) : (
+            <ul className="flex flex-col gap-3">{albumItems}</ul>
+          )
+        ) : (
+          <ResultList
+            results={search.visibleResults}
+            view={view}
+            kindOf={() => "music"}
+            isLogged={(item) => isResultLogged(search.logs, item)}
+            onLog={(item) => openLog(item)}
+          />
+        )}
+      </SearchResults>
 
-    //MUTATIONS
-    const createMediaAndLogMutation = useMutation({
-        mutationFn: ({ mediaData, logData, parent }: { mediaData: MusicResult, logData: Partial<Log>, parent?: MusicResult }) =>
-            createMediaAndLog(mediaData, logData, parent),
-
-        onSuccess: () => {
-            queryClient.refetchQueries({ queryKey: fetchMediasQueryOptions().queryKey})
-            queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey })
-            queryClient.invalidateQueries({ queryKey: ["albumTracks"] })
-            queryClient.invalidateQueries({ queryKey: ["tags"] })
-        }
-    })
-
-    const editLogMutation = useMutation({
-        mutationFn: editLog,
-        onSuccess: () => {
-            queryClient.refetchQueries({ queryKey: fetchMediasQueryOptions().queryKey})
-            queryClient.invalidateQueries({ queryKey: ["tags"] })
-        },
-    })
-
-    const handleSearch = () => {
-        if (inputValue.trim()) {
-            setQuery(inputValue.trim())
-        }
-    }
-
-    const handleLogClick = (item: MusicResult) => {
-        //Check if log of this item exists already
-        const existingLog = findLogForResult(logs, item)
-
-        setTargetMedia(item)
-        setTargetParent(undefined)
-        setTargetLog(existingLog ?? null)
-        setOpenDialog("logForm")
-    }
-
-    const handleTrackMoreClick = (track: MusicTrackResult, album: MusicResult) => {
-        const existingLog = (track.myLog ? logs.find(l => l.id === track.myLog?.id) : null) ?? findLogForResult(logs, track) ?? null
-        setTargetMedia(track)
-        setTargetParent(album)
-        setTargetLog(existingLog)
-        setOpenDialog("logForm")
-    }
-
-    const handleSubmit = async (formData: Partial<Log>) => {
-        // If a log exists, edit it
-        if(targetLog) return await editLogMutation.mutateAsync({...targetLog, ...formData})
-
-        if (!targetMedia) {
-            // This case should theoretically never be reached if handleLogClick worked correctly
-            console.error("targetMedia is missing for creation.")
-            // Rejecting the Promise will prevent onSuccess from running and display error message
-            return Promise.reject(new Error("Cannot create log: Target media data is missing."))
-        }
-
-        else {
-            return await createMediaAndLogMutation.mutateAsync({
-                mediaData: targetMedia,
-                logData: formData,
-                parent: targetParent,
-            })
-        }
-    }
-
-    // Media Form
-    const renderLogForm = useCallback((
-        formData: Partial<Log>,
-        setFormData: React.Dispatch<React.SetStateAction<Partial<Log>>> //state setter for formData
-    ) => {
-        if (!targetMedia) {
-            // This case should theoretically never be reached if handleLogClick worked correctly
-            console.error("Attempted to render MediaSearchLogForm without a targetMedia.")
-            return null
-        } 
-        return <MediaSearchLogForm 
-            targetMedia={targetMedia} 
-            formData={formData}
-            setFormData={setFormData}
-        />
-    }, [targetMedia])
-    
-
-    return(
-        <div className="relative isolate flex flex-col h-full overflow-hidden">
-            <PageBackdrop page="music" />
-            {/* Header */}
-            <div className="flex flex-col gap-4 px-4 sm:px-6 pt-4 sm:pt-6 pb-4">
-                <div>
-                <h1 className="font-display text-3xl sm:text-4xl font-semibold">Music search</h1>
-                <ProviderAttribution href={LASTFM_URL}>
-                    {LASTFM_ATTRIBUTION_TEXT}
-                </ProviderAttribution>
-                </div>
-
-                <div className="flex flex-wrap gap-2 items-center">
-                    <Input
-                        placeholder={SEARCH_PLACEHOLDER}
-                        value={inputValue}
-                        maxLength={limits.search.queryMaxLength}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        onKeyDown={(e) => { 
-                            if(e.key === "Enter") {
-                                e.preventDefault()
-                                handleSearch()
-                            }
-                        }}
-                        className="h-10 flex-1 min-w-[12rem] rounded-full border-border-strong bg-card px-4"
-                        />
-                    <Button size="icon" variant="amber" aria-label="Search" className="h-10 w-10 rounded-full" onClick={() => handleSearch()}>
-                        <Search />
-                    </Button>
-                    <div className="basis-full sm:basis-auto flex flex-wrap items-center gap-2">
-                    {/* MODE SELECT */}
-                    <Select 
-                        onValueChange={(val: "albums" | "tracks") => setSearchMode(val)} 
-                        value={searchMode}
-                    >
-                        <SelectTrigger className="rounded-md border border-input bg-card focus:ring-2">
-                            <SelectValue placeholder="Mode" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="defaultMode" disabled className="text-muted-foreground">
-                                Search Mode
-                            </SelectItem>
-                            <SelectItem value="albums">
-                                Albums
-                            </SelectItem>
-                            <SelectItem value="tracks">
-                                Tracks
-                            </SelectItem>
-                        </SelectContent>
-                    </Select>
-                    </div>
-                </div>
-            </div>
-
-            {/* Results */}
-            <div className="p-4 flex-1 overflow-y-auto min-h-0 scrollbar-hide border-t border-border">
-                {isLoading && <p className="font-hand text-lg animate-pulse">{loadingLine}</p>}
-                {error && 
-                    <p className="text-destructive">
-                        {error.message}
-                    </p>
-                }
-
-                {results.length > 0 && (
-                    <div className="flex items-center justify-between gap-2 mb-3">
-                        <p className="text-xs text-muted-foreground">
-                            {hideLogged && hiddenCount > 0 ? `${hiddenCount} logged result${hiddenCount === 1 ? "" : "s"} hidden` : ""}
-                        </p>
-                        <div className="flex items-center gap-2">
-                            <ViewControls view={view} onView={setView} />
-                            <Button size="sm" variant="outline" onClick={toggleHideLogged} aria-pressed={hideLogged}>
-                            {hideLogged ? "Showing unlogged only" : "Hide logged"}
-                        </Button>
-                        </div>
-                    </div>
-                )}
-
-                {results.length > 0 ? (
-                <div className="grid gap-4">
-                    {searchMode === "albums" ? (
-                        view === "grid" ? (
-                            <ul className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-x-5 gap-y-7">
-                                {visibleResults.map((album) => (
-                                    <AlbumItem
-                                        key={album.sourceId}
-                                        album={album}
-                                        view="grid"
-                                        logs={logs}
-                                        onLog={handleLogClick}
-                                        onMore={handleTrackMoreClick}
-                                        onErrorToast={setToastMessage}
-                                    />
-                                ))}
-                            </ul>
-                        ) : (
-                            <ul className="flex flex-col gap-3">
-                                {visibleResults.map((album) => (
-                                    <AlbumItem
-                                        key={album.sourceId}
-                                        album={album}
-                                        view="list"
-                                        logs={logs}
-                                        onLog={handleLogClick}
-                                        onMore={handleTrackMoreClick}
-                                        onErrorToast={setToastMessage}
-                                    />
-                                ))}
-                            </ul>
-                        )
-                    ) : (
-                        <ResultList
-                            results={visibleResults}
-                            view={view}
-                            kindOf={() => "music"}
-                            isLogged={(item) => isResultLogged(logs, item)}
-                            onLog={handleLogClick}
-                        />
-                    )}
-
-                    {hideLogged && visibleResults.length === 0 && (
-                        <EmptyState line={EMPTY_LINES.allHidden}>
-                            <p>All loaded results are already logged.</p>
-                        </EmptyState>
-                    )}
-
-                    {hasNextPage && (
-                        <Button variant={"amber"} onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
-                            {isFetchingNextPage ? "Loading more..." : "More"}
-                        </Button>
-                    )}
-                </div>
-                ) : (
-                !isLoading && !error && query !== "" && (
-                    <EmptyState line={EMPTY_LINES.noResults}><p>No results</p></EmptyState>
-                )
-                )}
-            </div>
-
-            {toastMessage && (
-                <div
-                    role="alert"
-                    className="fixed bottom-4 right-4 z-50 rounded-lg border border-destructive/20 bg-card px-4 py-2.5 text-sm text-destructive shadow-lg flex items-center gap-2"
-                >
-                    <span>{toastMessage}</span>
-                    <button
-                        type="button"
-                        onClick={() => setToastMessage(null)}
-                        className="text-xs text-muted-foreground hover:text-foreground"
-                    >
-                        ✕
-                    </button>
-                </div>
-            )}
-
-            <EntityDialog 
-                mode={targetLog ? "edit" : "create"}
-                open={openDialog === "logForm"}
-                onOpenChange={(isOpen) => setOpenDialog(isOpen ? "logForm" : null)}
-                target={targetLog ?? undefined}
-                onSubmit={handleSubmit}
-                renderForm={renderLogForm}
-            />
+      {toastMessage && (
+        <div
+          role="alert"
+          className="fixed bottom-4 right-4 z-50 rounded-lg border border-destructive/20 bg-card px-4 py-2.5 text-sm text-destructive shadow-lg flex items-center gap-2"
+        >
+          <span>{toastMessage}</span>
+          <button
+            type="button"
+            aria-label="Dismiss"
+            onClick={() => setToastMessage(null)}
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            ✕
+          </button>
         </div>
-    )
+      )}
+
+      {dialog}
+    </SearchPageShell>
+  )
 }
 
 export default MusicSearchSection
