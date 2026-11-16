@@ -969,3 +969,37 @@ describe('Search Routes - TV (TMDB)', () => {
         expect(after.body.seasons[0].inLibrary).toBe(true)
     })
 })
+
+describe('Search Routes - music key is per user', () => {
+    const username = 'MusicNoKeyUser'
+    let token: string
+    let fetchSpy: SpiedFunction<typeof fetch>
+    const savedEnvKey = process.env.LASTFM_API_KEY
+
+    beforeAll(async () => {
+        await prisma.user.deleteMany({ where: { username } })
+        await request(app).post('/auth/register')
+            .send({ username, password: 'StrongPass1!', displayName: username, registerKey: process.env.REGISTER_KEY })
+        const login = await request(app).post('/auth/login').send({ username, password: 'StrongPass1!' })
+        token = login.body.accessToken
+    })
+    beforeEach(() => {
+        process.env.LASTFM_API_KEY = 'server-env-key' // must never be used for a user's search
+        fetchSpy = jest.spyOn(global, 'fetch')
+    })
+    afterEach(() => {
+        fetchSpy.mockRestore()
+        if (savedEnvKey === undefined) delete process.env.LASTFM_API_KEY
+        else process.env.LASTFM_API_KEY = savedEnvKey
+    })
+    afterAll(async () => {
+        await prisma.user.deleteMany({ where: { username } })
+    })
+
+    it.each(['albums', 'tracks'])('no Last.fm key -> 404 Missing Music API Key even with a server key set (%s)', async (kind) => {
+        const res = await request(app).get(`/search/music/${kind}?q=test`).set('Authorization', `Bearer ${token}`)
+        expect(res.statusCode).toBe(404)
+        expect(res.body.message).toBe('Missing Music API Key')
+        expect(fetchSpy).not.toHaveBeenCalled()
+    })
+})
