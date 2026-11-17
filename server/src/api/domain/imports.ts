@@ -13,4 +13,5 @@ export type ImportResult = {
   notes?: string[]
   unmatched?: number
   liked?: number
+  lists?: number
 }

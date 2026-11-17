@@ -1088,7 +1088,7 @@ describe('Search Routes - board games (BoardGameGeek)', () => {
                 playingTime: 90,
                 minPlayTime: 60,
                 maxPlayTime: 90,
-                bggRating: 7.12,
+                bggRating: 7.1234,
                 categories: ['Strategy'],
             },
         })

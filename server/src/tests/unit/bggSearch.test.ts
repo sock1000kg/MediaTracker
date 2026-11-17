@@ -1,6 +1,7 @@
 import { describe, expect, it } from '@jest/globals'
 import { parseBggXml, mapBggThing } from '@/services/search/bggSearchService.js'
 import { bggSearchResponseSchema, bggThingResponseSchema, bggSearchQuerySchema } from '@/schemas/search/bggSchemas.js'
+import { searchMediaSchema } from '@/schemas/mediaSchemas.js'
 
 describe('BGG XML Parsing and Mapping', () => {
     it('bggSearchQuerySchema accepts and validates query params', () => {
@@ -81,7 +82,7 @@ describe('BGG XML Parsing and Mapping', () => {
                 playingTime: 120,
                 minPlayTime: 60,
                 maxPlayTime: 120,
-                bggRating: 7.12,
+                bggRating: 7.1234,
                 categories: ['Economic', 'Negotiation'],
             },
         })
@@ -109,5 +110,36 @@ describe('BGG XML Parsing and Mapping', () => {
         expect((mapped.metadata as any)?.bggRating).toBeNull()
         expect(mapped.imageUrl).toBe('https://cf.geekdo-images.com/thumb.jpg')
         expect(mapped.creator).toBeNull()
+    })
+
+    it('preserves BGG description with markup, entities, and text longer than 3000 chars unchanged', () => {
+        const longText = 'A'.repeat(4000)
+        const xmlDesc = `In Catan: &lt;b&gt;Trade&lt;/b&gt; &amp;amp; &lt;i&gt;build&lt;/i&gt;!&lt;br/&gt;&#10;&#10;&lt;p&gt;Paragraph&lt;/p&gt;${longText}`
+        const xml = `
+        <items>
+            <item type="boardgame" id="42">
+                <name type="primary" value="Epic Game"/>
+                <description>${xmlDesc}</description>
+            </item>
+        </items>`
+
+        const raw = parseBggXml(xml)
+        const parsed = bggThingResponseSchema.parse(raw)
+        const mapped = mapBggThing(parsed.items!.item[0])
+
+        expect(mapped.description?.length).toBeGreaterThan(4000)
+        expect(mapped.description).toContain('<b>Trade</b> & <i>build</i>!')
+        expect(mapped.description).toContain('<p>Paragraph</p>')
+
+        const parsedMedia = searchMediaSchema.parse({
+            title: mapped.title,
+            mediaType: 'boardgame',
+            source: 'bgg',
+            sourceId: mapped.sourceId,
+            description: mapped.description,
+            metadata: mapped.metadata,
+        })
+        expect(parsedMedia.description).toBe(mapped.description)
+        expect(parsedMedia.description?.length).toBeGreaterThan(4000)
     })
 })

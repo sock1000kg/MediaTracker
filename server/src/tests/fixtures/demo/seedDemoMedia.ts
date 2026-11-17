@@ -98,12 +98,17 @@ export async function seedDemoMedia(
                         sourceId: item.media.sourceId,
                         description: item.media.description ?? null,
                         imageUrl: item.media.imageUrl ?? null,
-                        metadata: item.media.metadata ?? null,
+                        metadata: item.media.source === "tmdb"
+                            ? { ...(item.media.metadata as object ?? {}), fetchedAt: new Date().toISOString() }
+                            : (item.media.metadata ?? null),
                     },
                     parent: item.parent
                         ? {
                               ...item.parent,
                               year: item.parent.year ? Number(item.parent.year) : null,
+                              metadata: item.parent.source === "tmdb"
+                                  ? { ...(item.parent.metadata as object ?? {}), fetchedAt: new Date().toISOString() }
+                                  : (item.parent.metadata ?? null),
                           }
                         : undefined,
                     logData: {

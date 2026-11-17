@@ -344,7 +344,7 @@ export function ImportsForm({ onNavigateToApiKeys }: ImportsFormProps = {}) {
 
                 <ImportCard
                     title="Letterboxd"
-                    formats=".zip"
+                    formats=".zip (ratings, diary, watchlist, likes and your lists)"
                     accept=".zip,application/zip"
                     jobName="import.letterboxd"
                     startImport={startLetterboxdImport}

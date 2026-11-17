@@ -63,3 +63,39 @@ export function boardGameMetaParts(m?: BoardGameResult["metadata"] | null): stri
   if (rating) parts.push(rating)
   return parts
 }
+
+/**
+ * Turns BGG's line breaks into paragraph strings, stripping and escaping markup safely.
+ * Never uses dangerouslySetInnerHTML.
+ */
+export function formatBggParagraphs(desc?: string | null): string[] {
+  if (!desc) return []
+  let text = desc
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/?p[^>]*>/gi, "\n\n")
+  text = text.replace(/<[^>]+>/g, "")
+  text = text
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#0?39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&#10;/g, "\n")
+
+  return text
+    .split(/\r?\n+/)
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0)
+}
+
+/**
+ * Turns BGG's line breaks into double-newline paragraphs for text display,
+ * stripping and escaping any markup safely without dangerouslySetInnerHTML.
+ */
+export function formatBggDescription(desc?: string | null): string {
+  if (!desc) return ""
+  return formatBggParagraphs(desc).join("\n\n")
+}
+

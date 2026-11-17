@@ -89,6 +89,7 @@ describe('mapTmdbShow', () => {
             firstAirDate: '2013-12-02',
             categories: ['Animation', 'Comedy', 'Sci-Fi & Fantasy'],
             originCountry: ['US'],
+            fetchedAt: expect.any(String),
         })
         expect(searchResultsSchema.parse([r])[0].metadata).toMatchObject({ kind: 'show' })
     })

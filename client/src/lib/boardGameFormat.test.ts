@@ -4,6 +4,8 @@ import {
   formatBoardGamePlayers,
   formatBoardGamePlayingTime,
   boardGameMetaParts,
+  formatBggDescription,
+  formatBggParagraphs,
 } from "./boardGameFormat"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -61,5 +63,29 @@ describe("boardGameFormat", () => {
     ).toEqual(["1 player", "30 min"])
 
     expect(boardGameMetaParts({} as any)).toEqual([])
+  })
+
+  it("formatBggParagraphs and formatBggDescription turn line breaks into paragraphs and strip/escape markup safely", () => {
+    expect(formatBggParagraphs(null)).toEqual([])
+    expect(formatBggParagraphs(undefined)).toEqual([])
+    expect(formatBggParagraphs("")).toEqual([])
+    expect(formatBggDescription(null)).toBe("")
+
+    const raw = "Paragraph 1 with <b>bold</b> and &amp; ampersand.&#10;&#10;Paragraph 2<br/><br/>Paragraph 3 with <a href='https://example.com'>link</a> &lt;script&gt;alert(1)&lt;/script&gt;.<p>Paragraph 4</p>"
+    const paragraphs = formatBggParagraphs(raw)
+    expect(paragraphs).toEqual([
+      "Paragraph 1 with bold and & ampersand.",
+      "Paragraph 2",
+      "Paragraph 3 with link <script>alert(1)</script>.",
+      "Paragraph 4",
+    ])
+
+    const formattedDesc = formatBggDescription(raw)
+    expect(formattedDesc).toBe(
+      "Paragraph 1 with bold and & ampersand.\n\nParagraph 2\n\nParagraph 3 with link <script>alert(1)</script>.\n\nParagraph 4"
+    )
+    // Never contains raw HTML tags
+    expect(formattedDesc).not.toContain("<b>")
+    expect(formattedDesc).not.toContain("<a href")
   })
 })

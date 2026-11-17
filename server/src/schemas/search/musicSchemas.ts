@@ -8,6 +8,7 @@ export const musicMetadataSchema = z.object({
     albumSourceId: z.string().optional(),
     trackNumber: z.number().optional(),
     durationSec: z.number().nullable().optional(),
+    mbid: z.string().nullable().optional(),
 })
 
 export type MusicMetadata = z.infer<typeof musicMetadataSchema>

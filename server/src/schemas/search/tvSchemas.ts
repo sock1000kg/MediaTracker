@@ -16,6 +16,9 @@ export const tvShowMetadataSchema = z.object({
     status: z.string().nullable().optional(),
     networks: z.array(z.string()).nullable().optional(),
     creator: z.string().nullable().optional(),
+    fetchedAt: z.string().nullable().optional(),
+    purgedAt: z.string().nullable().optional(),
+    refreshCheckedAt: z.string().nullable().optional(),
 }).strict()
 
 export const tvSeasonMetadataSchema = z.object({
@@ -28,6 +31,9 @@ export const tvSeasonMetadataSchema = z.object({
     airDate: z.string().nullable().optional(),
     networks: z.array(z.string()).nullable().optional(),
     categories: z.array(z.string()).nullable().optional(),
+    fetchedAt: z.string().nullable().optional(),
+    purgedAt: z.string().nullable().optional(),
+    refreshCheckedAt: z.string().nullable().optional(),
 }).strict()
 
 // TMDB /3/search/tv

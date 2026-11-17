@@ -23,7 +23,7 @@ import {
 } from "@/repositories/collectionRepository.js"
 import { executeBatchImport, BatchRowItem } from "./batchWrite.js"
 import { type ImportProgressCallback } from "./goodreadsImportService.js"
-import { parseImportDate, normalizeTagName, tagKey, createUserAgentHeader, collectionKey, MAX_ITEMS_PER_COLLECTION } from "@/utilities.js"
+import { parseImportDate, normalizeTagName, tagKey, createUserAgentHeader, collectionKey, MAX_ITEMS_PER_COLLECTION, sanitizeCollectionDescription } from "@/utilities.js"
 import { Prisma, Media } from "@/db.js"
 import { LIMITS } from "@/config/limits.js"
 
@@ -50,6 +50,7 @@ export interface LetterboxdExportFiles {
     diary?: string
     reviews?: string
     likes?: string
+    lists?: { fileName: string; text: string }[]
 }
 
 export interface LetterboxdMergedFilm {
@@ -64,6 +65,130 @@ export interface LetterboxdMergedFilm {
     tags: string[]
     progress: { watches: number } | null
     liked: boolean
+    inLists?: boolean
+    onlyInLists?: boolean
+}
+
+export interface ParsedLetterboxdListFilm {
+    position: number
+    name: string
+    year: number | null
+    uri: string | null
+}
+
+export interface ParsedLetterboxdList {
+    name: string
+    description: string | null
+    films: ParsedLetterboxdListFilm[]
+}
+
+export type ParseLetterboxdListResult =
+    | { ok: true; list: ParsedLetterboxdList }
+    | { ok: false; reason: string }
+
+export function parseLetterboxdList(
+    text: string,
+    fileName?: string
+): ParseLetterboxdListResult {
+    if (!text || !text.trim()) {
+        return { ok: false, reason: "empty or unreadable file" }
+    }
+    let rows: string[][]
+    try {
+        rows = parse(text, {
+            relax_column_count: true,
+            skip_empty_lines: true,
+            bom: true,
+        }) as string[][]
+    } catch {
+        return { ok: false, reason: "empty or unreadable file" }
+    }
+    if (!rows || rows.length < 2) {
+        return { ok: false, reason: "empty or unreadable file" }
+    }
+
+    let metaHeaderIdx = -1
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i].map(c => c.trim().toLowerCase())
+        if (row.includes("name") && !row.includes("position")) {
+            metaHeaderIdx = i
+            break
+        }
+    }
+    if (metaHeaderIdx === -1 || metaHeaderIdx + 1 >= rows.length) {
+        return { ok: false, reason: "no list name" }
+    }
+
+    const metaHeader = rows[metaHeaderIdx].map(c => c.trim().toLowerCase())
+    const nameCol = metaHeader.indexOf("name")
+    const descCol = metaHeader.indexOf("description")
+
+    const rawName = rows[metaHeaderIdx + 1][nameCol]?.trim()
+    if (!rawName) {
+        return { ok: false, reason: "no list name" }
+    }
+    const rawDesc = descCol !== -1 ? rows[metaHeaderIdx + 1][descCol]?.trim() : null
+    const description = rawDesc && rawDesc.length > 0 ? rawDesc : null
+
+    let filmHeaderIdx = -1
+    for (let i = metaHeaderIdx + 2; i < rows.length; i++) {
+        const row = rows[i].map(c => c.trim().toLowerCase())
+        if (row.includes("position") && row.includes("name")) {
+            filmHeaderIdx = i
+            break
+        }
+    }
+    if (filmHeaderIdx === -1) {
+        return { ok: false, reason: "no film section" }
+    }
+
+    const filmHeader = rows[filmHeaderIdx].map(c => c.trim().toLowerCase())
+    const posCol = filmHeader.indexOf("position")
+    const filmNameCol = filmHeader.indexOf("name")
+    const yearCol = filmHeader.indexOf("year")
+    const uriCol = filmHeader.findIndex(c => c === "url" || c === "uri" || c === "letterboxd uri")
+
+    const films: ParsedLetterboxdListFilm[] = []
+    for (let i = filmHeaderIdx + 1; i < rows.length; i++) {
+        const r = rows[i]
+        const rawPos = r[posCol]?.trim()
+        const pos = rawPos ? parseInt(rawPos, 10) : NaN
+        if (Number.isNaN(pos)) continue
+        const name = r[filmNameCol]?.trim()
+        if (!name) continue
+        const rawYear = yearCol !== -1 ? r[yearCol]?.trim() : null
+        const year = rawYear && !Number.isNaN(Number(rawYear)) ? Number(rawYear) : null
+        const rawUri = uriCol !== -1 ? r[uriCol]?.trim() : null
+        const uri = rawUri ? normalizeLetterboxdUri(rawUri) : null
+        films.push({ position: pos, name, year, uri })
+    }
+
+    if (films.length === 0) {
+        return { ok: false, reason: "no films" }
+    }
+    return { ok: true, list: { name: rawName, description, films } }
+}
+
+export async function loadCollectionState(collectionId: string, client = prisma) {
+    const items = await client.collectionItem.findMany({
+        where: { collectionId },
+        select: { logId: true, position: true },
+    })
+
+    const existingLogIds = new Set<string>()
+    let maxPosition = -1
+    for (const item of items) {
+        existingLogIds.add(item.logId)
+        if (item.position > maxPosition) {
+            maxPosition = item.position
+        }
+    }
+
+    return {
+        existingLogIds,
+        currentItemCount: items.length,
+        nextPosition: maxPosition >= 0 ? maxPosition + 1 : 0,
+    }
 }
 
 export type LetterboxdResolver = (
@@ -74,6 +199,7 @@ export type LetterboxdResolver = (
 export interface LetterboxdImportOptions {
     resolver?: LetterboxdResolver
     onProgress?: ImportProgressCallback
+    maxItemsPerCollection?: number
 }
 
 export function normalizeLetterboxdUri(rawUri: string): string {
@@ -103,7 +229,9 @@ export function unzipLetterboxdExport(buffer: Buffer): LetterboxdExportFiles {
                 const lower = cleanName.toLowerCase()
 
                 if (cleanName.includes("/")) {
-                    if (lower !== "likes/films.csv") return false
+                    const isLikesFilms = lower === "likes/films.csv"
+                    const isUserList = lower.startsWith("lists/") && lower.endsWith(".csv") && !lower.slice("lists/".length).includes("/")
+                    if (!isLikesFilms && !isUserList) return false
                 } else {
                     if (!ALLOWED_FILES.has(lower)) return false
                 }
@@ -130,14 +258,22 @@ export function unzipLetterboxdExport(buffer: Buffer): LetterboxdExportFiles {
 
     const files: LetterboxdExportFiles = {}
     for (const [name, data] of Object.entries(unzipped)) {
-        const cleanName = name.replace(/^\.\//, "").toLowerCase()
+        const cleanName = name.replace(/^\.\//, "")
+        const lower = cleanName.toLowerCase()
         const text = strFromU8(data)
-        if (cleanName === "watched.csv") files.watched = text
-        else if (cleanName === "ratings.csv") files.ratings = text
-        else if (cleanName === "watchlist.csv") files.watchlist = text
-        else if (cleanName === "diary.csv") files.diary = text
-        else if (cleanName === "reviews.csv") files.reviews = text
-        else if (cleanName === "likes/films.csv") files.likes = text
+        if (lower === "watched.csv") files.watched = text
+        else if (lower === "ratings.csv") files.ratings = text
+        else if (lower === "watchlist.csv") files.watchlist = text
+        else if (lower === "diary.csv") files.diary = text
+        else if (lower === "reviews.csv") files.reviews = text
+        else if (lower === "likes/films.csv") files.likes = text
+        else if (lower.startsWith("lists/") && lower.endsWith(".csv") && !lower.slice("lists/".length).includes("/")) {
+            if (!files.lists) files.lists = []
+            files.lists.push({ fileName: cleanName, text })
+        }
+    }
+    if (files.lists) {
+        files.lists.sort((a, b) => a.fileName.localeCompare(b.fileName))
     }
 
     if (Object.keys(files).length === 0) {
@@ -223,6 +359,7 @@ export function mergeLetterboxdFiles(files: LetterboxdExportFiles): LetterboxdMe
         diary: ParsedRow[]
         reviews: ParsedRow[]
         likes: ParsedRow[]
+        inLists: boolean
     }
 
     const byKey = new Map<string, FilmAccumulator>()
@@ -241,6 +378,7 @@ export function mergeLetterboxdFiles(files: LetterboxdExportFiles): LetterboxdMe
                 diary: [],
                 reviews: [],
                 likes: [],
+                inLists: false,
             }
             byKey.set(key, acc)
         }
@@ -281,6 +419,18 @@ export function mergeLetterboxdFiles(files: LetterboxdExportFiles): LetterboxdMe
         if (!acc.filmUri && r.uri) acc.filmUri = normalizeLetterboxdUri(r.uri)
     }
 
+    const listFiles = files.lists ?? []
+    const listFilesToProcess = listFiles.slice(0, 200)
+    for (const file of listFilesToProcess) {
+        const parsed = parseLetterboxdList(file.text, file.fileName)
+        if (!parsed.ok) continue
+        for (const f of parsed.list.films) {
+            const acc = getOrCreate(f.name, f.year)
+            acc.inLists = true
+            if (!acc.filmUri && f.uri) acc.filmUri = normalizeLetterboxdUri(f.uri)
+        }
+    }
+
     const merged: LetterboxdMergedFilm[] = []
 
     for (const acc of byKey.values()) {
@@ -292,6 +442,7 @@ export function mergeLetterboxdFiles(files: LetterboxdExportFiles): LetterboxdMe
             acc.likes.length > 0
 
         const status: "completed" | "wishlist" = isCompleted ? "completed" : "wishlist"
+        const isOnlyInLists = acc.inLists && !isCompleted && acc.watchlist.length === 0
 
         // Rating: ratings.csv first, else latest diary rating. Stars * 20.
         let rating: number | null = null
@@ -401,6 +552,8 @@ export function mergeLetterboxdFiles(files: LetterboxdExportFiles): LetterboxdMe
             tags: cleanTags,
             progress,
             liked: acc.likes.length > 0,
+            inLists: acc.inLists,
+            onlyInLists: isOnlyInLists,
         })
     }
 
@@ -581,6 +734,7 @@ export class LetterboxdImportService {
                 media: true,
             },
         })
+        const existingLogMediaIds = new Set(userMovieLogs.map(ul => ul.mediaId))
 
         const userMediaByKey = new Map<string, Media>()
         for (const ul of userMovieLogs) {
@@ -829,10 +983,102 @@ export class LetterboxdImportService {
             ]
         }
 
+        // Build log mapping by letterboxdFilmKey
+        const allUserLogs = await prisma.userLogs.findMany({
+            where: {
+                userId,
+                media: {
+                    mediaTypeId: movieType.id,
+                },
+            },
+            select: {
+                id: true,
+                mediaId: true,
+                status: true,
+                media: {
+                    select: {
+                        id: true,
+                        title: true,
+                        year: true,
+                        source: true,
+                        sourceId: true,
+                        externalIds: {
+                            select: {
+                                provider: true,
+                                externalId: true,
+                            },
+                        },
+                    },
+                },
+            },
+        })
+
+        const logByExtId = new Map<string, { id: string; mediaId: string; status: string | null }>()
+        const logBySourceId = new Map<string, { id: string; mediaId: string; status: string | null }>()
+        const logByNullSource = new Map<string, { id: string; mediaId: string; status: string | null }>()
+        const logByTitleYear = new Map<string, { id: string; mediaId: string; status: string | null }>()
+
+        for (const ul of allUserLogs) {
+            const m = ul.media
+            if (m.externalIds) {
+                for (const ext of m.externalIds) {
+                    logByExtId.set(`${ext.provider.toLowerCase()}:${ext.externalId}`, ul)
+                }
+            }
+            if (m.source && m.sourceId) {
+                logBySourceId.set(`${m.source.toLowerCase()}:${m.sourceId}`, ul)
+            }
+            if (m.source && !m.sourceId && m.title) {
+                const k = `null-source:${m.source.toLowerCase()}:${m.title.toLowerCase()}:${m.year ?? ""}`
+                logByNullSource.set(k, ul)
+            }
+            if (m.title) {
+                logByTitleYear.set(letterboxdFilmKey(m.title, m.year), ul)
+            }
+        }
+
+        const logByFilmKey = new Map<string, { id: string; mediaId: string; status: string | null }>()
+
+        for (let i = 0; i < mergedFilms.length; i++) {
+            const f = mergedFilms[i]
+            const item = validItems[i]
+            const key = letterboxdFilmKey(f.name, f.year)
+
+            let matchedLog: { id: string; mediaId: string; status: string | null } | null = null
+
+            if (item.externalIds) {
+                for (const ext of item.externalIds) {
+                    const l = logByExtId.get(`${ext.provider.toLowerCase()}:${ext.id}`)
+                    if (l) {
+                        matchedLog = l
+                        break
+                    }
+                }
+            }
+            if (!matchedLog && item.mediaData.source && item.mediaData.sourceId) {
+                matchedLog = logBySourceId.get(`${item.mediaData.source.toLowerCase()}:${item.mediaData.sourceId}`) ?? null
+            }
+            if (!matchedLog && !item.mediaData.sourceId && item.mediaData.source && item.mediaData.title) {
+                const nullKey = `null-source:${item.mediaData.source.toLowerCase()}:${item.mediaData.title.toLowerCase()}:${item.mediaData.year ?? ""}`
+                matchedLog = logByNullSource.get(nullKey) ?? null
+            }
+            if (!matchedLog && item.mediaData.title) {
+                matchedLog = logByTitleYear.get(letterboxdFilmKey(item.mediaData.title, item.mediaData.year)) ?? null
+            }
+            if (!matchedLog) {
+                matchedLog = logByTitleYear.get(key) ?? null
+            }
+
+            if (matchedLog) {
+                logByFilmKey.set(key, matchedLog)
+            }
+        }
+
         const likedFilms = mergedFilms.filter(f => f.liked)
         if (likedFilms.length > 0) {
             const key = collectionKey("Letterboxd likes")
             let coll = await findCollectionByNameKey(userId, key, prisma)
+            let isNew = false
             if (!coll) {
                 coll = await createCollection(
                     userId,
@@ -844,7 +1090,12 @@ export class LetterboxdImportService {
                     },
                     prisma
                 )
+                isNew = true
             }
+
+            let { existingLogIds, currentItemCount, nextPosition } = isNew
+                ? { existingLogIds: new Set<string>(), currentItemCount: 0, nextPosition: 0 }
+                : await loadCollectionState(coll.id, prisma)
 
             const likesRows = parseCsvRows(files.likes)
             const orderedLikedKeys: string[] = []
@@ -864,48 +1115,19 @@ export class LetterboxdImportService {
                 }
             }
 
-            const likedFilmByKey = new Map<string, LetterboxdMergedFilm>()
-            for (const f of likedFilms) {
-                likedFilmByKey.set(letterboxdFilmKey(f.name, f.year), f)
-            }
-
             let newlyAddedLikedCount = 0
             for (const k of orderedLikedKeys) {
-                const f = likedFilmByKey.get(k)
-                if (!f) continue
-
-                const userLog = await prisma.userLogs.findFirst({
-                    where: {
-                        userId,
-                        media: {
-                            mediaTypeId: movieType.id,
-                            OR: [
-                                ...(f.filmUri ? [{ externalIds: { some: { provider: "letterboxd", externalId: f.filmUri } } }] : []),
-                                {
-                                    title: { equals: f.name, mode: "insensitive" },
-                                    ...(f.year != null ? { year: f.year } : {}),
-                                },
-                            ],
-                        },
-                    },
-                    select: { id: true },
-                })
-
+                const userLog = logByFilmKey.get(k)
                 if (!userLog) continue
 
-                const existingItem = await findCollectionItem(coll.id, userLog.id, prisma)
-                if (!existingItem) {
-                    const currentItemCount = await countItemsInCollection(coll.id, prisma)
+                if (!existingLogIds.has(userLog.id)) {
                     if (currentItemCount >= MAX_ITEMS_PER_COLLECTION) {
                         break
                     }
-                    const lastItem = await prisma.collectionItem.findFirst({
-                        where: { collectionId: coll.id },
-                        orderBy: { position: "desc" },
-                        select: { position: true },
-                    })
-                    const position = lastItem != null ? lastItem.position + 1 : 0
-                    await addItem(coll.id, userLog.id, position, prisma)
+                    await addItem(coll.id, userLog.id, nextPosition, prisma)
+                    existingLogIds.add(userLog.id)
+                    currentItemCount++
+                    nextPosition++
                     newlyAddedLikedCount++
                 }
             }
@@ -917,6 +1139,110 @@ export class LetterboxdImportService {
             results.liked = newlyAddedLikedCount
             if (newlyAddedLikedCount > 0) {
                 const note = `Added ${newlyAddedLikedCount} liked films to the Letterboxd likes collection`
+                results.notes = results.notes ? [...results.notes, note] : [note]
+            }
+        }
+
+        const listFiles = files.lists ?? []
+        if (listFiles.length > 200) {
+            const skippedCount = listFiles.length - 200
+            const note = `Skipped ${skippedCount} list files (maximum 200 lists per import).`
+            results.notes = results.notes ? [...results.notes, note] : [note]
+        }
+
+        const listFilesToProcess = listFiles.slice(0, 200)
+        const validLists: { fileName: string; parsed: ParsedLetterboxdList }[] = []
+
+        for (const file of listFilesToProcess) {
+            const parsed = parseLetterboxdList(file.text, file.fileName)
+            if (!parsed.ok) {
+                const note = `Skipped ${file.fileName}: ${parsed.reason}`
+                results.notes = results.notes ? [...results.notes, note] : [note]
+                continue
+            }
+            validLists.push({ fileName: file.fileName, parsed: parsed.list })
+        }
+
+        let listsModifiedCount = 0
+        const maxItemsCap = opts.maxItemsPerCollection ?? MAX_ITEMS_PER_COLLECTION
+
+        for (const { parsed: list } of validLists) {
+            const key = collectionKey(list.name)
+            let coll = await findCollectionByNameKey(userId, key, prisma)
+            let isNew = false
+            if (!coll) {
+                coll = await createCollection(
+                    userId,
+                    {
+                        name: list.name,
+                        nameKey: key,
+                        description: sanitizeCollectionDescription(list.description),
+                        ranked: false,
+                    },
+                    prisma
+                )
+                isNew = true
+            }
+
+            let { existingLogIds, currentItemCount, nextPosition } = isNew
+                ? { existingLogIds: new Set<string>(), currentItemCount: 0, nextPosition: 0 }
+                : await loadCollectionState(coll.id, prisma)
+
+            const sortedFilms = [...list.films].sort((a, b) => a.position - b.position)
+            let newlyAddedCount = 0
+            let unresolvedCount = 0
+
+            for (const f of sortedFilms) {
+                const filmKey = letterboxdFilmKey(f.name, f.year)
+                const userLog = logByFilmKey.get(filmKey)
+
+                if (!userLog) {
+                    unresolvedCount++
+                    continue
+                }
+
+                if (!existingLogIds.has(userLog.id)) {
+                    if (currentItemCount >= maxItemsCap) {
+                        const note = `List '${list.name}' was cut at ${maxItemsCap} films`
+                        results.notes = results.notes ? [...results.notes, note] : [note]
+                        break
+                    }
+                    await addItem(coll.id, userLog.id, nextPosition, prisma)
+                    existingLogIds.add(userLog.id)
+                    currentItemCount++
+                    nextPosition++
+                    newlyAddedCount++
+                }
+            }
+
+            if (unresolvedCount > 0) {
+                const note = `${unresolvedCount} films from list '${list.name}' couldn't be added`
+                results.notes = results.notes ? [...results.notes, note] : [note]
+            }
+
+            if (newlyAddedCount > 0) {
+                await touchCollection(coll.id, prisma)
+            }
+
+            if (isNew || newlyAddedCount > 0) {
+                listsModifiedCount++
+            }
+        }
+
+        let wishlistAddedCount = 0
+        const onlyInListsFilms = mergedFilms.filter(f => f.onlyInLists)
+        for (const f of onlyInListsFilms) {
+            const filmKey = letterboxdFilmKey(f.name, f.year)
+            const userLog = logByFilmKey.get(filmKey)
+            if (userLog && userLog.status === "wishlist" && !existingLogMediaIds.has(userLog.mediaId)) {
+                wishlistAddedCount++
+            }
+        }
+
+        if (listFiles.length > 0) {
+            results.lists = listsModifiedCount
+            if (listsModifiedCount > 0 || wishlistAddedCount > 0) {
+                const note = `Imported ${listsModifiedCount} Letterboxd lists into collections (${wishlistAddedCount} films added as Wishlist).`
                 results.notes = results.notes ? [...results.notes, note] : [note]
             }
         }

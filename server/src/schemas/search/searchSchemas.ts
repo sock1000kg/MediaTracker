@@ -2,7 +2,7 @@ import { z } from "zod"
 import { uuidSchema } from "@/schemas/common.js"
 import { searchMediaSchema } from "@schemas/mediaSchemas.js"
 import { searchLogSchema } from "@/schemas/logSchemas.js"
-import { normalizeTypeName } from "@/utilities.js"
+import { normalizeTypeName, sanitizeDescription } from "@/utilities.js"
 import { bookMetadataSchema } from "./bookSchemas.js"
 import { musicMetadataSchema } from "./musicSchemas.js"
 import { animeMetadataSchema } from "./animeSchemas.js"
@@ -27,6 +27,18 @@ export const createMediaAndLogSchema = z.object({
 }).transform((data) => {
     if (data.parent && !data.parent.mediaType) {
         data.parent.mediaType = data.mediaData.mediaType
+    }
+    if (data.mediaData.source !== "bgg") {
+        data.mediaData.description = sanitizeDescription(data.mediaData.description)
+    } else {
+        data.mediaData.description = data.mediaData.description ? String(data.mediaData.description).trim() || null : null
+    }
+    if (data.parent) {
+        if (data.parent.source !== "bgg") {
+            data.parent.description = sanitizeDescription(data.parent.description)
+        } else {
+            data.parent.description = data.parent.description ? String(data.parent.description).trim() || null : null
+        }
     }
     return data
 })

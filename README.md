@@ -3,9 +3,9 @@
 [![CI](https://github.com/sock1000kg/MediaTracker/actions/workflows/ci.yml/badge.svg)](https://github.com/sock1000kg/MediaTracker/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-A self-hostable media journal: books, music, anime, manga, movies and games, all in one place. Search a catalogue, log it, rate it and keep notes, or add your own media.
+A self-hostable media journal: books, music, anime, manga, movies and games, all in one place. Search a catalogue, log it, rate it and keep notes, or add your own media. Designed to be simple, and feels more like a journal rather than a media bank. Created for my personal use.
 
-**Live demo:** <https://media-tracker.sock1000kg.io.vn/> (username `demo`, password `Demo123!!!`; the demo account is reset weekly). It features sample logs across all media types (books, music, anime, manga, movies, games) with real covers, metadata, personal tags, and ranked collections.
+**Live demo:** <https://media-tracker.sock1000kg.io.vn/> (username `demo`, password `Demo123!!!`; the demo account is reset weekly)
 
 ## Features
 
@@ -18,17 +18,17 @@ A self-hostable media journal: books, music, anime, manga, movies and games, all
   - Games ([RAWG](https://rawg.io/apidocs)): video games and board games ([BoardGameGeek](https://boardgamegeek.com))
 - **Stats:** activity over time, ratings, top categories, top tags and creators, and type-specific stats.
 - **Personal tags:** private tags per user with autocomplete, set semantics on logs, and management in Settings.
-- **Collections:** private collections (ordered lists) with optional ranking, cover mosaics, and accessible reordering controls.
-- **Goodreads import:** upload your Goodreads CSV export; it runs as a background job with live progress; re-importing a Goodreads export fills in missing details.
-- **MyAnimeList import:** upload your MAL anime or manga export (`.xml` or `.xml.gz`); it runs as a background job with live progress, resolves covers and metadata via AniList, imports bare media when unresolved, and fills gaps on re-import.
-- **Letterboxd import:** upload your Letterboxd ZIP export; it runs as a background job with live progress, merges watched, ratings, watchlist, diary and reviews, checks the catalogue first, and resolves misses via TMDB title + year (needs your TMDB key). Unmatched films are added by title; likes are imported into the "Letterboxd likes" collection; lists aren't imported. Fills gaps on re-import.
-- **Browse your way:**
+- **Collections:** private collections (ordered lists) with optional ranking.
+- **Imports**:
+  - **Goodreads import:** upload your Goodreads CSV export
+  - **MyAnimeList import:** upload your MAL anime or manga export (`.xml` or `.xml.gz`)
+  - **Letterboxd import:** upload your Letterboxd ZIP export (ratings, diary, watchlist, likes, and lists as collections)
+- **Browsing:**
   - list or cover-grid views
   - grouping by month or type, with Load more / Load all per group
   - filters by type, status, category, tag, source and rating
   - multi-key sorting
 - **Settings:** profile and password, preferences synced across devices, JSON/CSV export, account deletion.
-- **A quiet, warm UI:** light and dark themes, plus a small blue mascot who has opinions. Design notes are in [`client/DESIGN.md`](client/DESIGN.md).
 - **Security:** short-lived JWT access tokens plus rotating HttpOnly refresh cookies, Zod validation, Helmet, rate limiting, and encrypted per-user API keys.
 
 ## Tech stack
@@ -72,6 +72,7 @@ See **[docs/setup.md](docs/setup.md)** for running tests, production builds and 
 | [docs/configuration.md](docs/configuration.md) | Every environment variable |
 | [docs/api.md](docs/api.md) | REST API reference |
 | [docs/architecture.md](docs/architecture.md) | How the server, search providers, job queue and auth fit together |
+| [docs/providers.md](docs/providers.md) | Data providers: their terms, what we must not do, required attribution |
 | [docs/deployment.md](docs/deployment.md) | Docker images, Compose files, CI/CD |
 | [client/DESIGN.md](client/DESIGN.md) | Visual design system and UI behaviour |
 
@@ -97,7 +98,7 @@ See **[docs/setup.md](docs/setup.md)** for running tests, production builds and 
 
 ## Roadmap
 
-- User statistics (yearly totals, ratings over time)
+- Cross-media recommendations (somehow)
 - More importers (e.g. MyAnimeList lists)
 - Recommendations across media types
 

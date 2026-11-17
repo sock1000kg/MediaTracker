@@ -103,21 +103,29 @@ export class LastFmSearchService implements ISearchService {
 
     // Shared mapper for both albums & tracks → SearchResult[]
     mapResults(items: LastFmMusicItem[], kind: "album" | "track" = "album"): SearchResult[] {
-        return items.map(i => ({
-            mediaType: "music",
-            title: i.name,
-            creator: i.artist,
-            creators: i.artist ? [{ name: i.artist, role: "artist" }] : undefined,
-            year: null,
-            description: null,
-            source: "lastfm",
-            sourceId: i.mbid || i.url,
-            imageUrl: i.image?.find(img => img.size === "large")?.["#text"] ?? null,
-            metadata: {
-                url: i.url,
-                kind
+        return items.map(i => {
+            const mbid = i.mbid?.trim() || null
+            const imageUrl = kind === "album" && mbid
+                ? `https://coverartarchive.org/release/${mbid}/front-250`
+                : null
+
+            return {
+                mediaType: "music",
+                title: i.name,
+                creator: i.artist,
+                creators: i.artist ? [{ name: i.artist, role: "artist" }] : undefined,
+                year: null,
+                description: null,
+                source: "lastfm",
+                sourceId: mbid || i.url,
+                imageUrl,
+                metadata: {
+                    url: i.url,
+                    kind,
+                    ...(mbid ? { mbid } : {}),
+                },
             }
-        }))
+        })
     }
 
     computePagination(items: LastFmMusicItem[], page: number) {
@@ -221,10 +229,7 @@ export class LastFmSearchService implements ISearchService {
             const album = raw.album
             if (album) {
                 if (album.mbid) lastFmMbid = album.mbid
-                const imageUrl = album.image?.find(img => img.size === "large")?.["#text"]
-                    || album.image?.find(img => img.size === "extralarge")?.["#text"]
-                    || album.image?.find(img => img.size === "mega")?.["#text"]
-                    || null
+                const albumCaaUrl = lastFmMbid ? `https://coverartarchive.org/release/${lastFmMbid}/front-250` : null
                 const albumSourceId = album.mbid || album.url || `${artist}:${album.name}`
 
                 albumResult = {
@@ -236,10 +241,11 @@ export class LastFmSearchService implements ISearchService {
                     description: album.wiki?.summary || null,
                     source: "lastfm",
                     sourceId: albumSourceId,
-                    imageUrl: imageUrl || null,
+                    imageUrl: albumCaaUrl,
                     metadata: {
                         url: album.url,
                         kind: "album",
+                        ...(lastFmMbid ? { mbid: lastFmMbid } : {}),
                     },
                 }
 
@@ -262,7 +268,7 @@ export class LastFmSearchService implements ISearchService {
                             description: null,
                             source: "lastfm",
                             sourceId,
-                            imageUrl: null,
+                            imageUrl: albumResult?.imageUrl ?? null,
                             metadata: {
                                 kind: "track",
                                 album: album.name,
@@ -301,11 +307,11 @@ export class LastFmSearchService implements ISearchService {
                     const mbTracks = musicBrainzService.mapReleaseTracks(release, artist || albumResult?.creator || "")
                     if (mbTracks.length > 0) {
                         provider = "musicbrainz"
-                        tracks = mbTracks
+                        const caaUrl = musicBrainzService.getCoverArtUrl(release.id)
 
                         if (albumResult) {
                             if (!albumResult.imageUrl) {
-                                albumResult.imageUrl = musicBrainzService.getCoverArtUrl(release.id)
+                                albumResult.imageUrl = caaUrl
                             }
                         } else {
                             const albumArtist = release["artist-credit"]?.[0]?.name || artist
@@ -319,13 +325,19 @@ export class LastFmSearchService implements ISearchService {
                                 description: null,
                                 source: "musicbrainz",
                                 sourceId: release.id,
-                                imageUrl: musicBrainzService.getCoverArtUrl(release.id),
+                                imageUrl: caaUrl,
                                 metadata: {
                                     url: `https://musicbrainz.org/release/${release.id}`,
                                     kind: "album",
+                                    mbid: release.id,
                                 },
                             }
                         }
+
+                        tracks = mbTracks.map(t => ({
+                            ...t,
+                            imageUrl: albumResult?.imageUrl ?? caaUrl,
+                        }))
                     }
                 }
             } catch (mbError) {

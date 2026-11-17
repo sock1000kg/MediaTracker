@@ -9,6 +9,7 @@ import { setMediaGenres, setMediaCreators, CreatorInput } from "@/services/genre
 import { findMediaTypeForUserOrGlobal } from "@/repositories/mediaTypeRepository.js"
 import { findLogOfUserByMediaId, createLog, updateLog, findLogById } from "@/repositories/logsRepository.js"
 import { tagService } from "@/services/tagService.js"
+import { sanitizeDescription } from "@/utilities.js"
 
 export type BookMetadata = {
     pageCount?: number | null
@@ -67,6 +68,36 @@ export async function createImportedMedia(
     tx: DbClient
 ) {
     const { userId, mediaTypeName, mediaData, logData, parent } = input
+
+    if (mediaData.source === "tmdb") {
+        const m = (mediaData.metadata && typeof mediaData.metadata === "object" && !Array.isArray(mediaData.metadata))
+            ? mediaData.metadata as Record<string, unknown>
+            : {}
+        if (!m.fetchedAt) {
+            mediaData.metadata = { ...m, fetchedAt: new Date().toISOString() }
+        }
+    }
+    if (mediaData.source !== "bgg") {
+        mediaData.description = sanitizeDescription(mediaData.description)
+    } else {
+        mediaData.description = mediaData.description ? String(mediaData.description).trim() || null : null
+    }
+
+    if (parent && parent.source === "tmdb") {
+        const pm = (parent.metadata && typeof parent.metadata === "object" && !Array.isArray(parent.metadata))
+            ? parent.metadata as Record<string, unknown>
+            : {}
+        if (!pm.fetchedAt) {
+            parent.metadata = { ...pm, fetchedAt: new Date().toISOString() }
+        }
+    }
+    if (parent) {
+        if (parent.source !== "bgg") {
+            parent.description = sanitizeDescription(parent.description)
+        } else {
+            parent.description = parent.description ? String(parent.description).trim() || null : null
+        }
+    }
 
     let parentMedia: { id: string } | null = null
     if (parent && parent.source && parent.sourceId) {

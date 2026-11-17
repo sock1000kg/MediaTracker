@@ -1,6 +1,7 @@
 import { BullmqQueue } from "@/queue/bullmqQueue.js"
 import { MemoryQueue } from "@/queue/memoryQueue.js"
 import { demoResetHandler } from "@/queue/handlers/demoReset.js"
+import { tmdbRefreshHandler } from "@/queue/handlers/tmdbRefresh.js"
 import { goodreadsImportHandler } from "@/queue/handlers/goodreadsImport.js"
 import { malImportHandler } from "@/queue/handlers/malImport.js"
 import { letterboxdImportHandler } from "@/queue/handlers/letterboxdImport.js"
@@ -41,6 +42,7 @@ export function resetQueueForTests() { instance = null }
 
 export function registerAllHandlers(queue: JobQueue = getQueue()): void {
     queue.registerHandler("demo.reset", demoResetHandler)
+    queue.registerHandler("tmdb.refresh", tmdbRefreshHandler)
     queue.registerHandler("import.goodreads", goodreadsImportHandler)
     queue.registerHandler("import.mal", malImportHandler)
     queue.registerHandler("import.letterboxd", letterboxdImportHandler)

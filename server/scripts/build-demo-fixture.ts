@@ -418,6 +418,11 @@ async function buildFixture() {
         throw new Error("SECURITY CHECK FAILED: LASTFM_API_KEY leaked into the fixture JSON!")
     }
 
+    // Compliance check: no Last.fm image URLs may be written
+    if (/lastfm.*fastly\.net|last\.fm\/.*image/i.test(jsonStr)) {
+        throw new Error("COMPLIANCE CHECK FAILED: Found Last.fm image URLs in the generated fixture JSON!")
+    }
+
     const outputPath = path.resolve(__dirname, "../src/tests/fixtures/demo/demo-media.json")
     fs.writeFileSync(outputPath, jsonStr, "utf-8")
     console.log(`Successfully wrote demo fixture with ${items.length} items to ${outputPath}`)

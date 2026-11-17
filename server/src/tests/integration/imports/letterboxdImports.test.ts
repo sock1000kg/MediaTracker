@@ -2,6 +2,7 @@ import { describe, expect, it, beforeEach } from "@jest/globals"
 import request from "supertest"
 import app from "@/app.js"
 import { prisma } from "@/tests/jest.setup.js"
+import appPrisma from "@/prismaClient.js"
 import { findUserByUsername } from "@/repositories/authRepository.js"
 import { findMediaTypeForUserOrGlobal } from "@/repositories/mediaTypeRepository.js"
 import { jest } from "@jest/globals"
@@ -124,6 +125,21 @@ describe("Media Import Routes (Letterboxd)", () => {
                     metadata: {
                         kind: "movie",
                         categories: ["Adventure", "Drama", "Science Fiction"],
+                    },
+                })
+            } else if (f.name.toLowerCase() === "spirited away") {
+                map.set(key, {
+                    mediaType: "movie",
+                    title: "Sen to Chihiro no Kamikakushi",
+                    creator: "Hayao Miyazaki",
+                    year: "2001",
+                    description: "During her family's move to the suburbs...",
+                    source: "tmdb",
+                    sourceId: "movie-129",
+                    imageUrl: "https://image.tmdb.org/t/p/w342/spiritedaway.jpg",
+                    metadata: {
+                        kind: "movie",
+                        categories: ["Animation", "Family", "Fantasy"],
                     },
                 })
             } else {
@@ -489,5 +505,268 @@ describe("Media Import Routes (Letterboxd)", () => {
         expect(collAfter!.items).toHaveLength(2)
         expect(collAfter!.items[0].log.media.title).toBe("Existing Film")
         expect(collAfter!.items[1].log.media.title).toBe("Whiplash")
+    })
+
+    it("imports Letterboxd lists as collections, sets wishlist status for list-only films, ignores likes/lists.csv, and prevents duplicates on re-import", async () => {
+        const topSciFiCsv = [
+            "Letterboxd list export v7",
+            "Date,Name,Tags,URL,Description",
+            "2024-05-01,Top Sci-Fi,\"sci-fi\",https://boxd.it/list1,Top Sci-Fi movies",
+            "",
+            "Position,Name,Year,URL",
+            "1,Inception,2010,https://boxd.it/1sXg",
+            "2,Interstellar,2014,https://boxd.it/157336",
+        ].join("\n")
+
+        const cultClassicsCsv = [
+            "Date,Name,Tags,URL,Description",
+            "2024-05-02,Cult Classics,\"cult\",https://boxd.it/list2,Cult movies",
+            "",
+            "Position,Name,Year,URL",
+            "1,Fight Club,1999,https://boxd.it/550",
+        ].join("\n")
+
+        const zipBytes = zipSync({
+            "watched.csv": strToU8("Date,Name,Year,Letterboxd URI\n2024-01-10,Inception,2010,https://boxd.it/1sXg\n"),
+            "lists/top-sci-fi.csv": strToU8(topSciFiCsv),
+            "lists/cult-classics.csv": strToU8(cultClassicsCsv),
+            "likes/lists.csv": strToU8("Date,Name,URL\n2024-05-03,Ignored Liked List,https://boxd.it/ignored\n"),
+        })
+
+        jest.spyOn(letterboxdImportService, "importFromLetterboxd").mockImplementation(async (u, files, opts) => {
+            return LetterboxdImportService.prototype.importFromLetterboxd.call(
+                letterboxdImportService,
+                u,
+                files,
+                { ...opts, resolver: mockResolver }
+            )
+        })
+
+        // First import
+        const first = await importAndWait(token, Buffer.from(zipBytes))
+        expect(first.status).toBe(200)
+        expect(first.job.result.imported).toBe(3)
+        // (f) result has lists and note
+        expect(first.job.result.lists).toBe(2)
+        expect(first.job.result.notes).toContain("Imported 2 Letterboxd lists into collections (2 films added as Wishlist).")
+
+        // (a) both collections exist with right names, descriptions and order
+        const sciFiColl = await prisma.collection.findFirst({
+            where: { userId, nameKey: "top sci-fi" },
+            include: { items: { include: { log: { include: { media: true } } }, orderBy: { position: "asc" } } },
+        })
+        expect(sciFiColl).not.toBeNull()
+        expect(sciFiColl!.name).toBe("Top Sci-Fi")
+        expect(sciFiColl!.description).toBe("Top Sci-Fi movies")
+        expect(sciFiColl!.ranked).toBe(false)
+        expect(sciFiColl!.items).toHaveLength(2)
+        expect(sciFiColl!.items[0].log.media.title).toBe("Inception")
+        expect(sciFiColl!.items[1].log.media.title).toBe("Interstellar")
+
+        const cultColl = await prisma.collection.findFirst({
+            where: { userId, nameKey: "cult classics" },
+            include: { items: { include: { log: { include: { media: true } } }, orderBy: { position: "asc" } } },
+        })
+        expect(cultColl).not.toBeNull()
+        expect(cultColl!.name).toBe("Cult Classics")
+        expect(cultColl!.description).toBe("Cult movies")
+        expect(cultColl!.ranked).toBe(false)
+        expect(cultColl!.items).toHaveLength(1)
+        expect(cultColl!.items[0].log.media.title).toBe("Fight Club")
+
+        // (b) film only in list is wishlist, film also in watched stays completed
+        const inceptionLog = await prisma.userLogs.findFirst({
+            where: { userId, media: { title: "Inception" } },
+        })
+        expect(inceptionLog).not.toBeNull()
+        expect(inceptionLog!.status).toBe("completed")
+
+        const interstellarLog = await prisma.userLogs.findFirst({
+            where: { userId, media: { title: "Interstellar" } },
+        })
+        expect(interstellarLog).not.toBeNull()
+        expect(interstellarLog!.status).toBe("wishlist")
+
+        const fightClubLog = await prisma.userLogs.findFirst({
+            where: { userId, media: { title: "Fight Club" } },
+        })
+        expect(fightClubLog).not.toBeNull()
+        expect(fightClubLog!.status).toBe("wishlist")
+
+        // (d) likes/lists.csv creates nothing
+        const ignoredColl = await prisma.collection.findFirst({
+            where: { userId, nameKey: "ignored liked list" },
+        })
+        expect(ignoredColl).toBeNull()
+
+        // (c) importing the same zip again creates no duplicate collections or items and no extra logs
+        const initialLogCount = await prisma.userLogs.count({ where: { userId } })
+        const initialCollCount = await prisma.collection.count({ where: { userId } })
+
+        const second = await importAndWait(token, Buffer.from(zipBytes))
+        expect(second.status).toBe(200)
+        expect(second.job.result.imported).toBe(0)
+        expect(second.job.result.lists).toBe(0)
+
+        const logCountAfter = await prisma.userLogs.count({ where: { userId } })
+        expect(logCountAfter).toBe(initialLogCount)
+
+        const collCountAfter = await prisma.collection.count({ where: { userId } })
+        expect(collCountAfter).toBe(initialCollCount)
+
+        const sciFiCollAfter = await prisma.collection.findFirst({
+            where: { userId, nameKey: "top sci-fi" },
+            include: { items: true },
+        })
+        expect(sciFiCollAfter!.items).toHaveLength(2)
+    })
+
+    it("(e) a list longer than MAX_ITEMS_PER_COLLECTION is cut with the note", async () => {
+        const topSciFiCsv = [
+            "Date,Name,Tags,URL,Description",
+            "2024-05-01,Top Sci-Fi,,https://boxd.it/list1,Top Sci-Fi movies",
+            "",
+            "Position,Name,Year,URL",
+            "1,Inception,2010,https://boxd.it/1sXg",
+            "2,Interstellar,2014,https://boxd.it/157336",
+        ].join("\n")
+
+        const zipBytes = zipSync({
+            "lists/top-sci-fi.csv": strToU8(topSciFiCsv),
+        })
+
+        // Use test seam opts.maxItemsPerCollection: 1
+        jest.spyOn(letterboxdImportService, "importFromLetterboxd").mockImplementation(async (u, files, opts) => {
+            return LetterboxdImportService.prototype.importFromLetterboxd.call(
+                letterboxdImportService,
+                u,
+                files,
+                { ...opts, resolver: mockResolver, maxItemsPerCollection: 1 }
+            )
+        })
+
+        const res = await importAndWait(token, Buffer.from(zipBytes))
+        expect(res.status).toBe(200)
+        expect(res.job.result.notes).toContain("List 'Top Sci-Fi' was cut at 1 films")
+
+        const coll = await prisma.collection.findFirst({
+            where: { userId, nameKey: "top sci-fi" },
+            include: { items: true },
+        })
+        expect(coll).not.toBeNull()
+        expect(coll!.items).toHaveLength(1)
+    })
+
+    it("resolves list films whose TMDB title differs from Letterboxd name without external ID", async () => {
+        const animationCsv = [
+            "Date,Name,Tags,URL,Description",
+            "2024-05-01,Animation Favorites,,https://boxd.it/anim,Great animation",
+            "",
+            "Position,Name,Year,URL",
+            "1,Spirited Away,2001,",
+        ].join("\n")
+
+        const zipBytes = zipSync({
+            "lists/animation.csv": strToU8(animationCsv),
+        })
+
+        jest.spyOn(letterboxdImportService, "importFromLetterboxd").mockImplementation(async (u, files, opts) => {
+            return LetterboxdImportService.prototype.importFromLetterboxd.call(
+                letterboxdImportService,
+                u,
+                files,
+                { ...opts, resolver: mockResolver }
+            )
+        })
+
+        const res = await importAndWait(token, Buffer.from(zipBytes))
+        expect(res.status).toBe(200)
+        expect(res.job.result.imported).toBe(1)
+        expect(res.job.result.lists).toBe(1)
+
+        const coll = await prisma.collection.findFirst({
+            where: { userId, nameKey: "animation favorites" },
+            include: { items: { include: { log: { include: { media: true } } } } },
+        })
+        expect(coll).not.toBeNull()
+        expect(coll!.items).toHaveLength(1)
+        expect(coll!.items[0].log.media.title).toBe("Sen to Chihiro no Kamikakushi")
+    })
+
+    it("skips invalid list CSV and reports reason in notes", async () => {
+        const emptyListCsv = [
+            "Letterboxd list export v7",
+            "Date,Name,Tags,URL,Description",
+            "2024-05-01,Empty List,,https://boxd.it/empty,Empty list",
+            "",
+            "Position,Name,Year,URL",
+        ].join("\n")
+
+        const zipBytes = zipSync({
+            "lists/empty.csv": strToU8(emptyListCsv),
+            "watched.csv": strToU8("Date,Name,Year,Letterboxd URI\n2024-01-01,Inception,2010,https://boxd.it/1sXg\n"),
+        })
+
+        jest.spyOn(letterboxdImportService, "importFromLetterboxd").mockImplementation(async (u, files, opts) => {
+            return LetterboxdImportService.prototype.importFromLetterboxd.call(
+                letterboxdImportService,
+                u,
+                files,
+                { ...opts, resolver: mockResolver }
+            )
+        })
+
+        const res = await importAndWait(token, Buffer.from(zipBytes))
+        expect(res.status).toBe(200)
+        expect(res.job.result.notes).toContain("Skipped lists/empty.csv: no films")
+    })
+
+    it("aggregates note when list films cannot be resolved to logs", async () => {
+        const topSciFiCsv = [
+            "Date,Name,Tags,URL,Description",
+            "2024-05-01,Top Sci-Fi,,https://boxd.it/list1,Top Sci-Fi movies",
+            "",
+            "Position,Name,Year,URL",
+            "1,Inception,2010,https://boxd.it/1sXg",
+            "2,Interstellar,2014,https://boxd.it/157336",
+        ].join("\n")
+
+        const zipBytes = zipSync({
+            "lists/top-sci-fi.csv": strToU8(topSciFiCsv),
+        })
+
+        jest.spyOn(letterboxdImportService, "importFromLetterboxd").mockImplementation(async (u, files, opts) => {
+            return LetterboxdImportService.prototype.importFromLetterboxd.call(
+                letterboxdImportService,
+                u,
+                files,
+                { ...opts, resolver: mockResolver }
+            )
+        })
+
+        const realFindMany = appPrisma.userLogs.findMany.bind(appPrisma)
+        const spyFindMany = jest.spyOn(appPrisma.userLogs, "findMany").mockImplementation(((async (args: any) => {
+            const res = await realFindMany(args)
+            if (args?.select?.media?.select?.externalIds) {
+                return (res as any[]).filter((ul: any) => ul.media?.title !== "Interstellar")
+            }
+            return res
+        }) as any))
+
+        try {
+            const res = await importAndWait(token, Buffer.from(zipBytes))
+            expect(res.status).toBe(200)
+            expect(res.job.result.notes).toContain("1 films from list 'Top Sci-Fi' couldn't be added")
+
+            const coll = await prisma.collection.findFirst({
+                where: { userId, nameKey: "top sci-fi" },
+                include: { items: { include: { log: { include: { media: true } } } } },
+            })
+            expect(coll).not.toBeNull()
+            expect(coll!.items).toHaveLength(1)
+            expect(coll!.items[0].log.media.title).toBe("Inception")
+        } finally {
+            spyFindMany.mockRestore()
+        }
     })
 })

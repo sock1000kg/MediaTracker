@@ -41,7 +41,7 @@ function decodeBggText(text?: string | null): string | null {
         .replace(/&lt;/g, "<")
         .replace(/&gt;/g, ">")
         .replace(/&apos;/g, "'")
-    return sanitizeDescription(decoded)
+    return decoded.trim() || null
 }
 
 function getPrimaryName(names?: Array<{ "@_type"?: string | null; "@_value"?: string | null }> | null): string {
@@ -91,7 +91,7 @@ export function mapBggThing(item: BggThingItem): SearchResult {
     const usersRated = parseNum(ratings?.usersrated?.["@_value"])
     const avgScore = parseNum(ratings?.average?.["@_value"])
     const bggRating = usersRated != null && usersRated > 0 && avgScore != null && avgScore > 0
-        ? Math.round(avgScore * 100) / 100
+        ? avgScore
         : null
 
     const minPlayers = parseNum(item.minplayers?.["@_value"])

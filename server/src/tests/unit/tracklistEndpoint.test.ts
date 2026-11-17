@@ -62,7 +62,8 @@ describe('Tracklist Resolution and Fetching', () => {
         expect(res.tracks[0].mediaType).toBe('music')
         expect(res.album.title).toBe('Loveless')
         expect(res.album.creator).toBe('my bloody valentine')
-        expect(res.album.imageUrl).toBe('https://cover.jpg')
+        expect(res.album.imageUrl).toBe('https://coverartarchive.org/release/mbid-123/front-250')
+        expect(res.tracks[0].imageUrl).toBe('https://coverartarchive.org/release/mbid-123/front-250')
         expect(res.tracks).toHaveLength(2)
         expect(res.tracks[0].title).toBe('Only Shallow')
         expect(res.tracks[0].metadata).toMatchObject({

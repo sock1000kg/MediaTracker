@@ -38,6 +38,7 @@ describe("ApiKeyForm", () => {
     // All four services shown
     expect(screen.getByText("Last.fm")).toBeInTheDocument()
     expect(screen.getByText("TMDB")).toBeInTheDocument()
+    expect(screen.getByRole("img", { name: "TMDB" })).toBeInTheDocument()
     expect(screen.getByText("RAWG")).toBeInTheDocument()
     expect(screen.getByText("BoardGameGeek")).toBeInTheDocument()
   })

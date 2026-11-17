@@ -48,6 +48,17 @@ Each provider lives in `services/search/*SearchService.ts`, and they share the s
 
   Enrichment failures never block the log.
 
+### Provider terms we follow
+
+Full details per provider (rules, what we must not do, required attribution): [providers.md](providers.md).
+
+- TMDB logo + 6-month refresh
+- Cover Art Archive for music art
+- BGG data unmodified + "Powered by BGG"
+- RAWG link-back
+- Open Library identified User-Agent (`CONTACT_EMAIL`)
+- Non-commercial use only
+
 ## Background jobs
 
 `server/src/queue/` defines a typed job registry (`JobPayloads`) and a `JobQueue` interface with two drivers:

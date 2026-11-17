@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Cover } from "@/components/media-view/Cover"
 import { RowShell } from "@/components/media-view/RowShell"
 import { ClampText } from "@/components/media-view/ClampText"
+import { formatBggDescription } from "@/lib/boardGameFormat"
 import { MediaActions } from "./MediaActions"
 
 interface MediaRowProps {
@@ -57,7 +58,7 @@ export function MediaRow({ media, log, onEdit, onDelete, onLog }: MediaRowProps)
         {metaParts.length > 0 && <> · {metaParts.join(" · ")}</>}
       </p>
 
-      <ClampText text={media.description ?? ""} />
+      <ClampText text={media.source === "bgg" || media.mediaType?.name === "boardgame" ? formatBggDescription(media.description) : (media.description ?? "")} />
 
       {categories.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1">

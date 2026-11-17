@@ -2,6 +2,7 @@ import type { MovieResult } from "@/types/search"
 
 export const TMDB_URL = "https://www.themoviedb.org"
 export const TMDB_ATTRIBUTION = "This product uses the TMDB API but is not endorsed or certified by TMDB."
+export { default as TMDB_LOGO_URL } from "@/assets/tmdb-alt-short-blue.svg"
 
 /** "TMDB 7.8": one decimal, null for missing or zero scores. */
 export function formatMovieScore(score: number | null | undefined): string | null {

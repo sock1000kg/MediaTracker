@@ -16,7 +16,7 @@ import { useSearchLogging } from "@/hooks/useSearchLogging"
 import { useStoredView } from "@/hooks/useStoredView"
 import { isResultLogged } from "@/lib/utils"
 import { SEARCH_QUERY_OPTIONS, parseYear } from "@/lib/searchQuery"
-import { TMDB_ATTRIBUTION, TMDB_URL, tvMetaParts } from "@/lib/tvFormat"
+import { TMDB_ATTRIBUTION, TMDB_URL, TMDB_LOGO_URL, tvMetaParts } from "@/lib/tvFormat"
 import {
   resultAspect,
   resultCategories,
@@ -273,7 +273,7 @@ export function TvSearchSection() {
     <SearchPageShell page="tv">
       <SearchHeader
         title="TV search"
-        attribution={{ href: TMDB_URL, text: TMDB_ATTRIBUTION }}
+        attribution={{ href: TMDB_URL, text: TMDB_ATTRIBUTION, logo: { src: TMDB_LOGO_URL, alt: "TMDB", before: true } }}
         value={inputValue}
         onChange={setInputValue}
         onSearch={handleSearch}

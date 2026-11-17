@@ -1,4 +1,4 @@
-export { TMDB_ATTRIBUTION, TMDB_URL } from "./movieFormat"
+export { TMDB_ATTRIBUTION, TMDB_URL, TMDB_LOGO_URL } from "./movieFormat"
 
 export const TMDB_TV_ATTRIBUTION = "This product uses the TMDB API but is not endorsed or certified by TMDB."
 

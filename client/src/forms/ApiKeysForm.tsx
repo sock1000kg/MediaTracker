@@ -5,7 +5,7 @@ import { fetchApiKeysQueryOptions } from "@/queryOptions/fetchApiKeysQueryOption
 import type { AllowedSource, ApiKey } from "@/types/mainTypes"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
-import { TMDB_ATTRIBUTION } from "@/lib/movieFormat"
+import { TMDB_ATTRIBUTION, TMDB_LOGO_URL } from "@/lib/movieFormat"
 import { RAWG_URL, RAWG_ATTRIBUTION_TEXT } from "@/lib/gameFormat"
 
 interface ServiceConfig {
@@ -17,7 +17,17 @@ interface ServiceConfig {
 
 const SERVICES: ServiceConfig[] = [
     { service: "lastfm", label: "Last.fm", placeholder: "Last.fm API Key. Used for music search." },
-    { service: "tmdb", label: "TMDB", placeholder: "TMDB API Key or read access token. Used for movie search.", attribution: TMDB_ATTRIBUTION },
+    {
+        service: "tmdb",
+        label: "TMDB",
+        placeholder: "TMDB API Key or read access token. Used for movie search.",
+        attribution: (
+            <span className="inline-flex items-center gap-2">
+                <img src={TMDB_LOGO_URL} alt="TMDB" className="h-4 w-auto inline-flex align-middle" />
+                <span>{TMDB_ATTRIBUTION}</span>
+            </span>
+        ),
+    },
     {
         service: "rawg",
         label: "RAWG",

@@ -60,7 +60,7 @@ export function GameSearchSection() {
   }
 
   const attribution = mode === "board"
-    ? { href: BGG_URL, text: BGG_ATTRIBUTION_TEXT, logo: { src: BGG_LOGO_URL, alt: "Powered by BGG" } }
+    ? { href: BGG_URL, text: BGG_ATTRIBUTION_TEXT, logo: { src: BGG_LOGO_URL, alt: "Powered by BGG", plate: true } }
     : { href: RAWG_URL, text: RAWG_ATTRIBUTION_TEXT }
 
   return (

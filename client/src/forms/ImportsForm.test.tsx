@@ -172,4 +172,50 @@ describe("ImportsForm component", () => {
             expect(screen.getByText("2 films couldn't be matched to TMDB and were added by title.")).toBeInTheDocument()
         })
     })
+
+    it("mentions lists on the Letterboxd card and displays list import notes on completion", async () => {
+        const user = userEvent.setup()
+
+        const mockJobResult = {
+            id: "boxd-job-2",
+            name: "import.letterboxd" as const,
+            status: "completed" as const,
+            progress: 100,
+            result: {
+                imported: 3,
+                updated: 0,
+                skipped: 0,
+                failures: [],
+                lists: 2,
+                notes: ["Imported 2 Letterboxd lists into collections (2 films added as Wishlist)."],
+            },
+            error: null,
+            userId: 1,
+            createdAt: new Date().toISOString(),
+            finishedAt: new Date().toISOString(),
+        }
+
+        vi.mocked(importsApi.startLetterboxdImport).mockResolvedValueOnce({ jobId: "boxd-job-2" })
+        vi.mocked(jobsApi.fetchJob).mockResolvedValue(mockJobResult)
+
+        renderWithProviders(<ImportsForm />)
+
+        // Verify Letterboxd card description mentions lists
+        expect(screen.getByText(/ratings, diary, watchlist, likes and your lists/)).toBeInTheDocument()
+
+        const boxdInput = document.querySelectorAll('input[type="file"]')[2] as HTMLInputElement
+        const testFile = new File(["fake zip content"], "letterboxd-export.zip", { type: "application/zip" })
+        await user.upload(boxdInput, testFile)
+
+        const uploadButtons = screen.getAllByRole("button", { name: /upload/i })
+        await user.click(uploadButtons[2])
+
+        await waitFor(() => {
+            expect(importsApi.startLetterboxdImport).toHaveBeenCalledWith(testFile)
+        })
+
+        await waitFor(() => {
+            expect(screen.getByText("Imported 2 Letterboxd lists into collections (2 films added as Wishlist).")).toBeInTheDocument()
+        })
+    })
 })

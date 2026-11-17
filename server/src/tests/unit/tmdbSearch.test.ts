@@ -71,6 +71,8 @@ describe('mapTmdbMovie', () => {
         expect(r.metadata).toEqual({
             url: 'https://www.themoviedb.org/movie/348', kind: 'movie', originalLanguage: 'en', score: 8.2,
             categories: ['Horror', 'Science Fiction'],
+            tmdbId: 348,
+            fetchedAt: expect.any(String),
         })
         expect(searchResultsSchema.parse([r])[0].metadata).toMatchObject({ kind: 'movie' })
     })

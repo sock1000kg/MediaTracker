@@ -79,6 +79,12 @@ describe("MusicSearchSection component", () => {
     },
   ]
 
+  it("credits Last.fm for data and the Cover Art Archive for covers, each with its own link", () => {
+    renderWithProviders(<MusicSearchSection />)
+    expect(screen.getByRole("link", { name: "Data from Last.fm" })).toHaveAttribute("href", "https://www.last.fm")
+    expect(screen.getByRole("link", { name: "Covers from the Cover Art Archive" })).toHaveAttribute("href", "https://coverartarchive.org")
+  })
+
   it("expands tracks disclosure once with aria-expanded toggle", async () => {
     const user = userEvent.setup()
 

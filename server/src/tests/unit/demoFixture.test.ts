@@ -50,6 +50,21 @@ describe("Demo Media Fixture (Unit)", () => {
                 expect(rawJson.includes(process.env.LASTFM_API_KEY)).toBe(false)
             }
         })
+
+        it("contains no Last.fm image hosts in the fixture", () => {
+            expect(rawJson).not.toMatch(/lastfm.*fastly\.net/i)
+            expect(rawJson).not.toMatch(/last\.fm\/.*image/i)
+            for (const item of fixture.items) {
+                if (item.media.imageUrl) {
+                    expect(item.media.imageUrl).not.toMatch(/lastfm/i)
+                    expect(item.media.imageUrl).not.toMatch(/last\.fm/i)
+                }
+                if (item.parent?.imageUrl) {
+                    expect(item.parent.imageUrl).not.toMatch(/lastfm/i)
+                    expect(item.parent.imageUrl).not.toMatch(/last\.fm/i)
+                }
+            }
+        })
     })
 
     describe("Collections definition", () => {
@@ -92,8 +107,12 @@ describe("Demo Media Fixture (Unit)", () => {
                 expect(item.media.title).toBeTruthy()
                 expect(item.media.source).toBeTruthy()
                 expect(item.media.sourceId).toBeTruthy()
-                expect(item.media.imageUrl).toBeTruthy()
-                expect(item.media.imageUrl).toMatch(/^https:\/\//)
+                if (item.mediaTypeName === "music" && (item.media.metadata as any)?.kind === "track" && !item.parent) {
+                    expect(item.media.imageUrl).toBeNull()
+                } else {
+                    expect(item.media.imageUrl).toBeTruthy()
+                    expect(item.media.imageUrl).toMatch(/^https:\/\//)
+                }
             }
         })
     })

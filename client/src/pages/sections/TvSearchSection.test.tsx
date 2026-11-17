@@ -88,6 +88,7 @@ describe("TvSearchSection component", () => {
     vi.mocked(searchApi.getTvSeasons).mockResolvedValue(mockSeasonsData)
 
     renderWithProviders(<TvSearchSection />)
+    expect(screen.getByRole("img", { name: "TMDB" })).toBeInTheDocument()
 
     const input = screen.getByPlaceholderText(SEARCH_PLACEHOLDER)
     await user.type(input, "Rick{enter}")

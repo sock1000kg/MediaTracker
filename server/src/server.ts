@@ -11,6 +11,8 @@ if (process.env.NODE_ENV !== 'test') {
     await getQueue().start()
     // Idempotent across restarts and instances; weekly demo reset (Sunday 00:00)
     await getQueue().schedule("demo-reset-weekly", "0 0 * * 0", "demo.reset", {}, { attempts: 3, backoffMs: 60_000 })
+    // Daily TMDB data refresh (at 03:00)
+    await getQueue().schedule("tmdb-refresh-daily", "0 3 * * *", "tmdb.refresh", {}, { attempts: 3, backoffMs: 60_000 })
 
     const server = app.listen(PORT, () => {
         console.log(`Server has started on port: ${PORT}, DB_URL: ${redactUrl(process.env.DATABASE_URL)}`)

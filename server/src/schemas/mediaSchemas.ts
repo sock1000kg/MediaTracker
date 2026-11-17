@@ -102,24 +102,37 @@ export const createMediaSchema = z.object({
     mediaType: mediaTypeSchema,
     creator: creatorSchema,
     year: yearSchema,
-    description: descriptionSchema,
+    description: z.string().nullable().default(null),
     source: sourceSchema,
     imageUrl: imageUrl,
     sourceId: sourceIdSchema,
     metadata: metadataSchema
+}).transform((data) => {
+    if (data.source !== "bgg") {
+        data.description = sanitizeDescription(data.description)
+    } else {
+        data.description = data.description ? String(data.description).trim() || null : null
+    }
+    return data
 })
-
 
 export const updateMediaSchema = z.object({
     title: titleSchema,
     mediaType: mediaTypeSchema,
     creator: creatorSchema,
     year: yearSchema,
-    description: descriptionSchema,
+    description: z.string().nullable().default(null),
     source: sourceSchema,
     imageUrl: imageUrl,
     sourceId: sourceIdSchema,
     metadata: metadataSchema,
+}).transform((data) => {
+    if (data.source !== "bgg") {
+        data.description = sanitizeDescription(data.description)
+    } else {
+        data.description = data.description ? String(data.description).trim() || null : null
+    }
+    return data
 })
 
 // Delete schema with optional confirm flag
@@ -138,7 +151,7 @@ export const searchMediaSchema = z.object({
     creators: z.array(z.object({ name: z.string(), role: z.string() })).optional(),
     genres: z.array(z.string()).optional(),
     year: yearSchema,
-    description: descriptionSchema,
+    description: z.string().nullable().default(null),
     source: searchSourceSchema,
     imageUrl: imageUrl,
     sourceId: sourceIdSchema,

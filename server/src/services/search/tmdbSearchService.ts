@@ -126,6 +126,7 @@ export function mapTmdbShow(item: TmdbTvItem): SearchResult {
             firstAirDate: item.first_air_date ?? null,
             categories: genres.length ? genres : null,
             originCountry: item.origin_country ?? null,
+            fetchedAt: new Date().toISOString(),
         },
     }
 }
@@ -151,10 +152,12 @@ export function mapTmdbMovie(item: TmdbMovieItem): SearchResult {
         metadata: {
             url: `https://www.themoviedb.org/movie/${item.id}`,
             kind: "movie",
+            tmdbId: item.id!,
             ...(originalTitle ? { originalTitle } : {}),
             originalLanguage: item.original_language ?? null,
             score: item.vote_average ?? null,
             categories: categories.length ? categories : null,
+            fetchedAt: new Date().toISOString(),
         },
     }
 }
@@ -220,6 +223,9 @@ export class TmdbSearchService {
             if (res.status === 401) {
                 throw new AppError("TMDB rejected your API key. Check it in Settings → API Keys.", 400)
             }
+            if (res.status === 404) {
+                throw new AppError("TMDB resource not found", 404, { cause: "upstream HTTP 404" })
+            }
             if (!res.ok) throw new AppError("TMDB search failed", 502, { cause: `upstream HTTP ${res.status}` })
             return await res.json()
         } catch (error) {
@@ -230,6 +236,10 @@ export class TmdbSearchService {
             }
             throw new AppError("TMDB search failed", 502, { cause: error })
         }
+    }
+
+    async fetchWithAuth(url: URL, auth: TmdbAuth): Promise<unknown> {
+        return this.fetchJson(url, auth)
     }
 
     async searchMoviesTmdb(userId: string, q: string, page = 1, filters: { year?: number } = {}):
@@ -340,6 +350,7 @@ export class TmdbSearchService {
                 status: d.status ?? null,
                 networks: networks.length ? networks : null,
                 creator,
+                fetchedAt: new Date().toISOString(),
             },
         }
 
@@ -384,6 +395,7 @@ export class TmdbSearchService {
                     airDate: s.air_date ?? null,
                     networks: networks.length ? networks : null,
                     categories: genres.length ? genres : null,
+                    fetchedAt: new Date().toISOString(),
                 },
             }
         })
@@ -449,6 +461,7 @@ export async function enrichTmdbOnLog(
         const patch = {
             runtime: details.runtime,
             imdbId: details.imdbId,
+            fetchedAt: new Date().toISOString(),
         }
 
         if (existing) {
@@ -466,7 +479,7 @@ export async function enrichTmdbOnLog(
         mediaData.creator = mediaData.creator ?? directors
         ;(mediaData as Record<string, unknown>).creators = directorsStructured
         ;(mediaData as Record<string, unknown>).genres = details.genres
-        mediaData.metadata = { ...(mediaData.metadata as object ?? {}), ...patch }
+        mediaData.metadata = { ...(mediaData.metadata as object ?? {}), ...patch, fetchedAt: new Date().toISOString() }
         return null
     } catch (error: unknown) {
         console.warn("Failed to enrich TMDB movie, logging without details:", error)
