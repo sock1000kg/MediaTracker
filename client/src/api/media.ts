@@ -82,3 +82,9 @@ export function getMediaChildren(mediaId: string): Promise<Array<Media & { log: 
         method: "GET"
     })
 }
+
+export function refreshMedia(id: string): Promise<Media> {
+    return apiFetch(`/media/${id}/refresh`, {
+        method: "POST"
+    })
+}

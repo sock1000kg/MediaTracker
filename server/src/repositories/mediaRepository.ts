@@ -354,7 +354,7 @@ export async function createMedia(
             }
             delete meta.categories
         }
-        cleanMetadata = Object.keys(meta).length > 0 ? (meta as Prisma.InputJsonValue) : Prisma.JsonNull
+        cleanMetadata = meta as Prisma.InputJsonValue
     } else if (metadata != null) {
         cleanMetadata = metadata as Prisma.InputJsonValue
     }

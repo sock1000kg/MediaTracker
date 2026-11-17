@@ -12,3 +12,28 @@ export function formatTrackDuration(durationSec: number | null | undefined): str
   const s = total % 60
   return `${m}:${s < 10 ? "0" : ""}${s}`
 }
+
+export function buildMusicBrainzReleaseGroupUrl(releaseGroupId: string): string {
+  return `https://musicbrainz.org/release-group/${encodeURIComponent(releaseGroupId)}`
+}
+
+export function buildMusicBrainzRecordingUrl(recordingId: string): string {
+  return `https://musicbrainz.org/recording/${encodeURIComponent(recordingId)}`
+}
+
+export function buildLastFmUrl({
+  artist,
+  title,
+  kind = "album",
+}: {
+  artist: string
+  title: string
+  kind?: "album" | "track"
+}): string {
+  const encArtist = encodeURIComponent(artist)
+  const encTitle = encodeURIComponent(title)
+  if (kind === "track") {
+    return `https://www.last.fm/music/${encArtist}/_/${encTitle}`
+  }
+  return `https://www.last.fm/music/${encArtist}/${encTitle}`
+}

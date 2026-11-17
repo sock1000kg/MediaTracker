@@ -138,7 +138,7 @@ export class BggSearchService {
         return key
     }
 
-    private async fetchXml(url: URL, token: string): Promise<string> {
+    async fetchXml(url: URL, token: string): Promise<string> {
         const send = () => fetch(url.toString(), {
             headers: {
                 Authorization: `Bearer ${token}`,

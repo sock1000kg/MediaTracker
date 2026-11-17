@@ -134,6 +134,16 @@ export async function createImportedMedia(
     }
 
     const meta = mediaData.metadata as Record<string, unknown> | null | undefined
+
+    if (!parentMedia && meta?.kind === "track" && meta?.mbReleaseGroupId && typeof meta.mbReleaseGroupId === "string") {
+        const ext = await tx.mediaExternalId.findFirst({
+            where: { provider: "musicbrainz", externalId: meta.mbReleaseGroupId },
+            include: { media: true },
+        })
+        if (ext?.media) {
+            parentMedia = ext.media
+        }
+    }
     let position: number | null = null
     if (meta?.trackNumber != null && !Number.isNaN(Number(meta.trackNumber))) {
         position = Number(meta.trackNumber)
@@ -162,6 +172,12 @@ export async function createImportedMedia(
     }
     if (meta?.imdbId != null && typeof meta.imdbId === "string") {
         lookupKeys.push({ provider: "imdb", externalId: meta.imdbId })
+    }
+    if (meta?.kind !== "track" && meta?.mbReleaseGroupId != null && typeof meta.mbReleaseGroupId === "string") {
+        lookupKeys.push({ provider: "musicbrainz", externalId: meta.mbReleaseGroupId })
+    }
+    if (meta?.mbRecordingId != null && typeof meta.mbRecordingId === "string") {
+        lookupKeys.push({ provider: "musicbrainz", externalId: meta.mbRecordingId })
     }
 
     const externalKeyMap = await findMediaByExternalIds(lookupKeys, tx)
@@ -210,6 +226,12 @@ export async function createImportedMedia(
             throw new AppError("System user missing", 500)
         }
 
+        let effectiveMetadata = mediaData.metadata ?? null
+        if (mediaData.source === "lastfm" && effectiveMetadata && typeof effectiveMetadata === "object" && !Array.isArray(effectiveMetadata)) {
+            const { url: _unusedUrl, ...restMeta } = effectiveMetadata as Record<string, unknown>
+            effectiveMetadata = restMeta
+        }
+
         media = await createMedia(
             mediaData.title,
             mediaType,
@@ -218,7 +240,7 @@ export async function createImportedMedia(
             mediaData.source,
             mediaData.sourceId,
             mediaData.description ?? null,
-            mediaData.metadata ?? null,
+            effectiveMetadata,
             mediaData.imageUrl ?? null,
             systemUser.id,
             tx,

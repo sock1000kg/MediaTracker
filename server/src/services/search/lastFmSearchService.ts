@@ -13,6 +13,7 @@ import { findUserById } from "@/repositories/authRepository.js"
 import { ISearchService } from "./searchServiceInterface.js"
 import { AppError } from "@/api/domain/error.js"
 import { musicBrainzService, MusicBrainzRelease } from "./musicBrainzService.js"
+import { musicBrainzClient } from "./musicBrainzClient.js"
 import prisma from "@/prismaClient.js"
 
 import { isJunkGenre, JUNK_MUSIC_TAGS } from "@/services/genreService.js"
@@ -102,12 +103,22 @@ export class LastFmSearchService implements ISearchService {
     }
 
     // Shared mapper for both albums & tracks → SearchResult[]
-    mapResults(items: LastFmMusicItem[], kind: "album" | "track" = "album"): SearchResult[] {
+    mapResults(
+        items: LastFmMusicItem[],
+        kind: "album" | "track" = "album",
+        releaseGroupMap?: Map<string, string | null>
+    ): SearchResult[] {
         return items.map(i => {
             const mbid = i.mbid?.trim() || null
-            const imageUrl = kind === "album" && mbid
-                ? `https://coverartarchive.org/release/${mbid}/front-250`
-                : null
+            let imageUrl: string | null = null
+            let mbReleaseGroupId: string | null = null
+            if (kind === "album" && mbid && releaseGroupMap) {
+                const rgid = releaseGroupMap.get(mbid)
+                if (rgid) {
+                    imageUrl = musicBrainzClient.getCoverArtUrl(rgid)
+                    mbReleaseGroupId = rgid
+                }
+            }
 
             return {
                 mediaType: "music",
@@ -123,6 +134,7 @@ export class LastFmSearchService implements ISearchService {
                     url: i.url,
                     kind,
                     ...(mbid ? { mbid } : {}),
+                    ...(mbReleaseGroupId ? { mbReleaseGroupId } : {}),
                 },
             }
         })
@@ -191,7 +203,15 @@ export class LastFmSearchService implements ISearchService {
         const items = parsed.results?.albummatches?.album ?? []
         const nextPage = this.computePagination(items, page)
 
-        const results = this.mapResults(items, "album")
+        const mbids = items
+            .map(i => i.mbid?.trim())
+            .filter((id): id is string => Boolean(id))
+
+        const { groups: releaseGroupMap } = mbids.length > 0
+            ? await musicBrainzClient.resolveReleaseGroups(mbids)
+            : { groups: new Map<string, string | null>() }
+
+        const results = this.mapResults(items, "album", releaseGroupMap)
         return {
             results: validateSchema(searchResultsSchema, results),
             nextStartIndex: nextPage

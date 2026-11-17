@@ -41,8 +41,10 @@ Each provider lives in `services/search/*SearchService.ts`, and they share the s
 - **Request limits:** a per-attempt timeout, with one retry on `429`.
 - **Error mapping:** a missing user key gives `404`, a rejected key gives `400` (never `401`, which the client treats as an expired session), a provider failure gives `502`, a provider rate limit or outage gives `503`, and a timeout gives `504`.
 - **Keys:** Last.fm, TMDB, RAWG, and BoardGameGeek use the user's own API key/token (`UserAPIKey`, encrypted with `API_KEY_SECRET`; token from boardgamegeek.com/applications). Open Library and AniList need none. AniList calls are throttled to stay under its public rate limit (existing Jikan data is still supported).
+- **Music:** Music data stored in MediaTracker comes from MusicBrainz (release groups for albums, recordings for tracks, curated genres and Cover Art Archive URLs). Last.fm ranks search results and provides a fallback for genres only when MusicBrainz has none.
+- **Refresh:** Automatic for TMDB (6-month refresh job); on demand for everything else via `POST /media/:id/refresh`.
 - **Log-time enrichment:** some details are fetched once, the first time a result is logged, and stored on the shared media:
-  - Last.fm top tags (junk tags removed)
+  - MusicBrainz release-group details and curated genres (with Last.fm top tags fallback)
   - the TMDB director, runtime and genres
   - the RAWG developers, publishers and description
 
@@ -70,6 +72,8 @@ Jobs:
   - One import runs per user at a time.
   - The uploaded CSV is removed from the queue once the job finishes.
 - `demo.reset`: resets the demo account. Scheduled weekly with an idempotent job scheduler, so it runs once even with several instances.
+- `tmdb.refresh`: refreshes stale TMDB metadata older than 6 months or purges metadata for unlinked items.
+- `music.coverBackfill`: walks Last.fm music media to migrate release URLs to release-group URLs and resolve covers for standalone tracks via MusicBrainz, marking rows with `coverResolvedAt`. Enqueued at server startup and after demo resets.
 
 Users see their jobs through `GET /jobs` and `GET /jobs/:id`, and only their own. The worker runs in the API process by default (`QUEUE_WORKER=true`).
 

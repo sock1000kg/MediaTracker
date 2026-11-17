@@ -61,6 +61,7 @@ describe("labels and aspects", () => {
     expect(resultProviderLabel("book", "google_books")).toBe("View on Google Books")
     expect(resultProviderLabel("book", "x")).toBe("View source")
     expect(resultProviderLabel("music")).toBe("View on Last.fm")
+    expect(resultProviderLabel("music", "musicbrainz")).toBe("View on MusicBrainz")
     expect(resultProviderLabel("manga")).toBe("View on AniList")
     expect(resultProviderLabel("anime")).toBe("View on AniList")
     expect(resultProviderLabel("anime", "anilist")).toBe("View on AniList")
@@ -87,6 +88,8 @@ describe("metadata accessors", () => {
     expect(resultUrl({ metadata: { url: "https://a" } } as any)).toBe("https://a")
     expect(resultUrl({ metadata: { kind: "show", tmdbId: 100 } } as any)).toBe("https://www.themoviedb.org/tv/100")
     expect(resultUrl({ metadata: { kind: "season", tmdbId: 100, seasonNumber: 2 } } as any)).toBe("https://www.themoviedb.org/tv/100/season/2")
+    expect(resultUrl({ mediaType: "music", metadata: { mbReleaseGroupId: "rg-1" } } as any)).toBe("https://musicbrainz.org/release-group/rg-1")
+    expect(resultUrl({ mediaType: "music", creator: "Slowdive", title: "Souvlaki", metadata: { kind: "album" } } as any)).toBe("https://www.last.fm/music/Slowdive/Souvlaki")
     expect(resultUrl({ metadata: {} } as any)).toBeNull()
   })
   it("cover token derives from source:sourceId", () => {

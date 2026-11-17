@@ -7,6 +7,7 @@ import { anilistThrottle, mapAniListMedia } from "../src/services/search/anilist
 import { tmdbSearchService, tmdbAuth, mapTmdbMovie } from "../src/services/search/tmdbSearchService.js"
 import { rawgSearchService, mapRawgGame } from "../src/services/search/rawgSearchService.js"
 import { musicSearchService } from "../src/services/search/lastFmSearchService.js"
+import { musicBrainzClient } from "../src/services/search/musicBrainzClient.js"
 import { SearchResult } from "../src/schemas/search/searchSchemas.js"
 import { createUserAgentHeader } from "../src/utilities.js"
 import { parseMalExport, defaultAniListResolver } from "../src/services/imports/malImportService.js"
@@ -251,6 +252,12 @@ async function resolveLastFm(pick: DemoPick): Promise<{ media: SearchResult; par
             || res.results[0]
         if (!match) throw new Error(`No Last.fm track found for ${artist} - ${title}`)
         mapped = { ...match, creator: match.creator || artist }
+        if (!mapped.imageUrl) {
+            const trackCover = await musicBrainzClient.resolveTrackCover(mapped.creator || artist, mapped.title)
+            if (trackCover.status === "found") {
+                mapped.imageUrl = trackCover.imageUrl
+            }
+        }
     }
 
     const topTags = await musicSearchService.fetchTopTags(0, kind, artist, title)

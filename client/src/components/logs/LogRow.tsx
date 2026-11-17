@@ -29,13 +29,23 @@ export function LogRow({ log, onEdit, onDelete, onTagClick, leading, extraAction
   const categories = media.genres ?? (Array.isArray(media.metadata?.categories) ? (media.metadata.categories as string[]) : [])
   const metaParts = formatLogMetadata(media, log)
   const originalTitle = media.originalTitle ?? (typeof media.metadata?.originalTitle === "string" ? media.metadata.originalTitle : null)
-  const url = typeof media.metadata?.url === "string" ? media.metadata.url : null
+  const isMusic = media.mediaType?.name?.toLowerCase() === "music"
+  const mbUrl = (typeof media.metadata?.mbReleaseGroupId === "string")
+    ? `https://musicbrainz.org/release-group/${encodeURIComponent(media.metadata.mbReleaseGroupId)}`
+    : (typeof media.metadata?.mbRecordingId === "string")
+    ? `https://musicbrainz.org/recording/${encodeURIComponent(media.metadata.mbRecordingId)}`
+    : null
+  const lastFmUrl = (isMusic && media.creator && media.title)
+    ? (media.metadata?.kind === "track"
+        ? `https://www.last.fm/music/${encodeURIComponent(media.creator)}/_/${encodeURIComponent(media.title)}`
+        : `https://www.last.fm/music/${encodeURIComponent(media.creator)}/${encodeURIComponent(media.title)}`)
+    : null
+  const url = (typeof media.metadata?.url === "string" ? media.metadata.url : null) || mbUrl || lastFmUrl
   const byline = [media.creator, media.year].filter(Boolean).join(" · ")
   const rating = displayRating(log.rating)
   const status = logDateLine(log)
 
   const childSummary = media.childSummary
-  const isMusic = media.mediaType?.name?.toLowerCase() === "music"
   const unit = isMusic
     ? (childSummary?.rated === 1 ? "track" : "tracks")
     : (childSummary?.rated === 1 ? "season" : "seasons")
@@ -87,10 +97,30 @@ export function LogRow({ log, onEdit, onDelete, onTagClick, leading, extraAction
           </p>
           {status && <p className="text-xs text-muted-foreground">{status}</p>}
           <div className="flex items-center justify-end gap-1 max-sm:ml-auto">
-            {url && (
-              <a href={url} target="_blank" rel="noopener noreferrer" className="px-1 text-xs text-link underline-offset-4 hover:underline">
-                More info
-              </a>
+            {isMusic ? (
+              <>
+                {mbUrl && (
+                  <a href={mbUrl} target="_blank" rel="noopener noreferrer" className="px-1 text-xs text-link underline-offset-4 hover:underline">
+                    View on MusicBrainz
+                  </a>
+                )}
+                {lastFmUrl && (
+                  <a href={lastFmUrl} target="_blank" rel="noopener noreferrer" className="px-1 text-xs text-link underline-offset-4 hover:underline">
+                    View on Last.fm
+                  </a>
+                )}
+                {!mbUrl && !lastFmUrl && url && (
+                  <a href={url} target="_blank" rel="noopener noreferrer" className="px-1 text-xs text-link underline-offset-4 hover:underline">
+                    More info
+                  </a>
+                )}
+              </>
+            ) : (
+              url && (
+                <a href={url} target="_blank" rel="noopener noreferrer" className="px-1 text-xs text-link underline-offset-4 hover:underline">
+                  More info
+                </a>
+              )
             )}
             {extraActions}
             <LogActions log={log} onEdit={onEdit} onDelete={onDelete} extraMenuItems={extraMenuItems} />

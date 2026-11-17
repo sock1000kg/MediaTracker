@@ -1,0 +1,130 @@
+// @vitest-environment jsdom
+import { describe, expect, it, vi, beforeEach } from "vitest"
+import { screen, waitFor } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
+import { renderWithProviders } from "@/test/render"
+import { LogActions } from "./LogActions"
+import * as mediaApi from "@/api/media"
+import type { Log } from "@/types/mainTypes"
+
+vi.mock("@/api/media", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/api/media")>()
+  return {
+    ...actual,
+    refreshMedia: vi.fn(),
+  }
+})
+
+describe("LogActions component (T2)", () => {
+  const onEdit = vi.fn()
+  const onDelete = vi.fn()
+
+  const providerLog: Log = {
+    id: "log-1",
+    rating: 90,
+    status: "completed",
+    notes: "",
+    logged_at: "2024-01-01T00:00:00.000Z",
+    started_at: null,
+    finished_at: null,
+    tags: [],
+    media: {
+      id: "media-provider-1",
+      userId: "user-1",
+      title: "Inception",
+      creator: "Christopher Nolan",
+      year: 2010,
+      source: "tmdb",
+      sourceId: "movie-27205",
+      imageUrl: "https://image.tmdb.org/t/p/w500/test.jpg",
+      description: "A thief...",
+      created_at: "2024-01-01T00:00:00.000Z",
+      parentId: null,
+      position: null,
+      mediaType: { id: "mt-1", name: "movie", created_at: "2024-01-01T00:00:00.000Z", userId: "user-1" },
+      metadata: { kind: "movie" },
+    },
+  }
+
+  const customLog: Log = {
+    id: "log-2",
+    rating: 80,
+    status: "completed",
+    notes: "",
+    logged_at: "2024-01-01T00:00:00.000Z",
+    started_at: null,
+    finished_at: null,
+    tags: [],
+    media: {
+      id: "media-custom-1",
+      userId: "user-1",
+      title: "Home Video",
+      creator: "Me",
+      year: 2020,
+      source: "custom",
+      sourceId: "custom-1",
+      imageUrl: null,
+      description: null,
+      created_at: "2024-01-01T00:00:00.000Z",
+      parentId: null,
+      position: null,
+      mediaType: { id: "mt-1", name: "movie", created_at: "2024-01-01T00:00:00.000Z", userId: "user-1" },
+      metadata: undefined,
+    },
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it("shows 'Refresh from provider' for provider media and calls the endpoint", async () => {
+    const user = userEvent.setup()
+    vi.mocked(mediaApi.refreshMedia).mockResolvedValue(providerLog.media)
+
+    renderWithProviders(
+      <LogActions log={providerLog} onEdit={onEdit} onDelete={onDelete} />
+    )
+
+    const menuBtn = screen.getByRole("button", { name: `Actions for ${providerLog.media.title}` })
+    await user.click(menuBtn)
+
+    const refreshItem = screen.getByText("Refresh from provider")
+    expect(refreshItem).toBeInTheDocument()
+
+    await user.click(refreshItem)
+    expect(mediaApi.refreshMedia).toHaveBeenCalledWith("media-provider-1")
+  })
+
+  it("does not show 'Refresh from provider' for custom media", async () => {
+    const user = userEvent.setup()
+
+    renderWithProviders(
+      <LogActions log={customLog} onEdit={onEdit} onDelete={onDelete} />
+    )
+
+    const menuBtn = screen.getByRole("button", { name: `Actions for ${customLog.media.title}` })
+    await user.click(menuBtn)
+
+    expect(screen.queryByText("Refresh from provider")).not.toBeInTheDocument()
+  })
+
+  it("shows error toast with server error message on refresh failure", async () => {
+    const user = userEvent.setup()
+    vi.mocked(mediaApi.refreshMedia).mockRejectedValue(new Error("This item was refreshed recently. Please wait 10 minutes."))
+
+    renderWithProviders(
+      <LogActions log={providerLog} onEdit={onEdit} onDelete={onDelete} />
+    )
+
+    const menuBtn = screen.getByRole("button", { name: `Actions for ${providerLog.media.title}` })
+    await user.click(menuBtn)
+
+    const refreshItem = screen.getByText("Refresh from provider")
+    await user.click(refreshItem)
+
+    await waitFor(() => {
+      const alert = screen.getByRole("alert")
+      expect(alert).toHaveTextContent("This item was refreshed recently. Please wait 10 minutes.")
+    })
+  })
+})

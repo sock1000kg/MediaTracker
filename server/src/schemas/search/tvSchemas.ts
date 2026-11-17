@@ -70,6 +70,8 @@ export const tmdbTvShowDetailsSchema = z.object({
     id: nl(z.number()),
     name: nl(z.string()),
     original_name: nl(z.string()),
+    original_language: nl(z.string()),
+    vote_average: nl(z.number()),
     first_air_date: nl(z.string()),
     overview: nl(z.string()),
     poster_path: nl(z.string()),

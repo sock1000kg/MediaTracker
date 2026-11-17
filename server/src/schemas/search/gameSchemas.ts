@@ -37,6 +37,14 @@ export const rawgSearchResponseSchema = z.object({
 
 // RAWG /api/games/{id}
 export const rawgGameDetailsSchema = z.object({
+    id: nl(z.number()),
+    name: nl(z.string()),
+    released: nl(z.string()),
+    background_image: nl(z.string()),
+    metacritic: nl(z.number()),
+    rating: nl(z.number()),
+    playtime: nl(z.number()),
+    platforms: nl(z.array(z.object({ platform: nl(z.object({ name: nl(z.string()) })) }))),
     developers: nl(z.array(z.object({ name: nl(z.string()) }))),
     publishers: nl(z.array(z.object({ name: nl(z.string()) }))),
     description_raw: nl(z.string()),

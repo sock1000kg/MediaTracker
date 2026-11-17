@@ -15,8 +15,8 @@ MediaTracker gets its catalogue data from outside services. This page lists each
 | Provider | Used for | Key | Attribution we must show |
 |---|---|---|---|
 | Open Library | Book search, covers | None | Credit Open Library (we do) |
-| Last.fm | Music search, tags | Per-user API key | Credit and link back to Last.fm |
-| MusicBrainz | Album tracklists, release ids | None | Credit MusicBrainz (we do) |
+| Last.fm | Music search ranking, genre fallback | Per-user API key | Credit and link back to Last.fm |
+| MusicBrainz | Stored music data, genres, release ids | None | Credit MusicBrainz (CC BY-NC-SA genres) |
 | Cover Art Archive | Music covers | None | Credit the Cover Art Archive (Music search credit line) |
 | AniList | Anime and manga search, MAL id lookups | None | None required; never use "AniList" in our app's name |
 | TMDB | Movies and TV | Per-user API key | TMDB logo + "not endorsed" notice |
@@ -35,19 +35,21 @@ MediaTracker gets its catalogue data from outside services. This page lists each
 ## Last.fm
 **Terms:** [last.fm/api/tos](https://www.last.fm/api/tos)
 - **Rules:** non-commercial use only (§3.1); credit Last.fm and link back to its catalogue pages (§2.7, §4.2.2); keep at most 100 MB of Last.fm data stored at any time and cache per the response headers (§4.3.4); respect their rate limits (§4.4).
+- **Role in MediaTracker:** Last.fm is used only to rank search results and as a genre fallback when MusicBrainz has no curated genres. Last.fm data is otherwise not stored, keeping Last.fm's 100 MB storage cap out of play.
 - **Don't:** **use Last.fm images or album art**: they're excluded from the licence (§5.1.8). Music covers come from the Cover Art Archive instead. Don't sublicense the data, identify or contact Last.fm users from it, or subject it to derogatory treatment.
 - **On termination:** delete Last.fm data (§9.3).
 - **Attribution:** "Music data from Last.fm" with a link, plus per-item links.
 
 ## MusicBrainz
 **Terms:** [musicbrainz.org/doc/MusicBrainz_API](https://musicbrainz.org/doc/MusicBrainz_API) and [rate limiting](https://musicbrainz.org/doc/MusicBrainz_API/Rate_Limiting)
-- **Rules:** at most **1 request per second**; a meaningful `User-Agent` with contact info. Core data is CC0; some supplementary data (e.g. tags, annotations) is CC BY-NC-SA.
+- **Rules:** at most **1 request per second** enforced by a single shared in-process limiter across the server; a meaningful `User-Agent` with contact info.
+- **Role in MediaTracker:** MusicBrainz is the primary stored source for music data (album title, artist credit, first release year, release-group metadata, recording data for tracks, and curated genres). Covers use release-group URLs resolved via MusicBrainz and served from the Cover Art Archive. Core data is CC0; curated genres are CC BY-NC-SA with credit.
 - **Don't:** exceed the rate limit or send requests without a User-Agent.
-- **Attribution:** not required for CC0 core data; album tracklists from MusicBrainz show "Tracklist from MusicBrainz".
+- **Attribution:** not required for CC0 core data; curated genres credited under CC BY-NC-SA; album tracklists from MusicBrainz show "Tracklist from MusicBrainz".
 
 ## Cover Art Archive
 **About:** [coverartarchive.org](https://coverartarchive.org) (run by MetaBrainz with the Internet Archive)
-- **Rules:** link images through `coverartarchive.org/release/<mbid>/front-250` URLs; expect 404 when a release has no front image (the client falls back to the lettered cover).
+- **Rules:** link images through `coverartarchive.org/release-group/<rgid>/front-250` URLs (covers are release-group URLs; release URLs are no longer stored); expect 404 when a release group has no front image (the client falls back to the lettered cover).
 - **Note:** the artwork itself belongs to its rights holders; the archive makes it available for this kind of display. Don't re-host or sell the images.
 - **Attribution:** credit the Cover Art Archive: Music search's credit line reads "Data from Last.fm · covers from the Cover Art Archive".
 

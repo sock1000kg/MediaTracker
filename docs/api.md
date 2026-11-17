@@ -79,6 +79,7 @@ The preferences shape (every key is optional):
 | POST | `/media` | Create custom media (`title`, `mediaType`, optional `creator`, `year`, `description`, `imageUrl`, `metadata`). |
 | PUT | `/media/:id` | Update your own media. |
 | DELETE | `/media/:id` | `{ confirm }`. Without `confirm: true` it returns a warning with the number of logs that would be deleted. |
+| POST | `/media/:id/refresh` | Re-fetches provider details using the requesting user's key where required, updating only provider fields (title, original title, year, creator, description, image, metadata, genres, external ids). Allowed when the user has logged the item (or its parent/child). Rate-limited to once per 10 minutes per item (`429`). Custom media returns `400`. |
 | PUT | `/media/media-log` | `{ mediaData, logData }`. Logs a search result: it creates or reuses the media (matched by `source` + `sourceId`) and creates the log in one transaction. `logData` accepts `status`, `rating`, `notes`, `startedAt`, `finishedAt`, and optional `tags: string[]`. Some sources are enriched the first time they're logged: Last.fm tags, the TMDB director/runtime/genres, and the RAWG developers/description. |
 
 ## Logs

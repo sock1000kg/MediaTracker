@@ -1,19 +1,11 @@
-import pThrottle from "p-throttle"
 import { SearchResult } from "@/schemas/search/searchSchemas.js"
-import { createUserAgentHeader } from "@/utilities.js"
+import {
+    musicBrainzClient,
+    MB_BASE_URL,
+    mbReleaseDetailSchema,
+} from "./musicBrainzClient.js"
 
-const MB_BASE_URL = "https://musicbrainz.org/ws/2"
-const TIMEOUT_MS = 10000
-
-// MusicBrainz rate limit: at most 1 request per second process-wide
-const throttle = pThrottle({
-    limit: 1,
-    interval: 1000,
-})
-
-const throttledFetch = throttle(async (url: string, init?: RequestInit) => {
-    return fetch(url, init)
-})
+export { MB_BASE_URL }
 
 export type MusicBrainzTrack = {
     id: string
@@ -40,32 +32,23 @@ export type MusicBrainzRelease = {
     date?: string
     media?: MusicBrainzMedium[]
     "artist-credit"?: Array<{ name: string }>
+    "release-group"?: {
+        id: string
+        title?: string
+        "primary-type"?: string | null
+    } | null
 }
 
 export class MusicBrainzService {
     async fetchJson(url: string): Promise<unknown> {
-        const u = new URL(url)
-        u.searchParams.set("fmt", "json")
-        const headers = createUserAgentHeader().headers as Record<string, string>
-
-        const res = await throttledFetch(u.toString(), {
-            headers: {
-                ...headers,
-                Accept: "application/json",
-            },
-            signal: AbortSignal.timeout(TIMEOUT_MS),
-        })
-
-        if (!res.ok) {
-            throw new Error(`MusicBrainz request failed with status ${res.status}`)
-        }
-        return await res.json()
+        return musicBrainzClient.fetchJson(url)
     }
 
     async getRelease(mbid: string): Promise<MusicBrainzRelease | null> {
         try {
-            const data = await this.fetchJson(`${MB_BASE_URL}/release/${encodeURIComponent(mbid)}?inc=recordings`)
-            return data as MusicBrainzRelease
+            const data = await this.fetchJson(`${MB_BASE_URL}/release/${encodeURIComponent(mbid)}?inc=recordings+release-groups`)
+            const parsed = mbReleaseDetailSchema.parse(data)
+            return parsed as MusicBrainzRelease
         } catch (error) {
             console.warn(`MusicBrainz release lookup failed for mbid ${mbid}:`, error)
             return null
@@ -74,7 +57,6 @@ export class MusicBrainzService {
 
     async searchRelease(artist: string, album: string): Promise<string | null> {
         try {
-            // query=release:"…" AND artist:"…"&limit=1
             const query = `release:"${album.replace(/"/g, '\\"')}" AND artist:"${artist.replace(/"/g, '\\"')}"`
             const u = new URL(`${MB_BASE_URL}/release/`)
             u.searchParams.set("query", query)
@@ -139,8 +121,8 @@ export class MusicBrainzService {
         return results
     }
 
-    getCoverArtUrl(mbid: string): string {
-        return `https://coverartarchive.org/release/${mbid}/front-250`
+    getCoverArtUrl(id: string): string {
+        return musicBrainzClient.getCoverArtUrl(id)
     }
 }
 

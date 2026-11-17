@@ -49,7 +49,9 @@ export function resultProviderLabel(kind: ResultKind, source?: string): string {
       if (source === "open_library") return "View on Open Library"
       if (source === "google_books") return "View on Google Books"
       return "View source"
-    case "music": return "View on Last.fm"
+    case "music":
+      if (source === "musicbrainz") return "View on MusicBrainz"
+      return "View on Last.fm"
     case "anime":
     case "manga":
       if (source === "jikan") return "View on MyAnimeList"
@@ -89,12 +91,29 @@ export function resultOriginalTitle(r: SearchResult): string | null {
 export function resultUrl(r: SearchResult): string | null {
   const u = (r.metadata as { url?: string } | undefined)?.url
   if (u) return u
-  const meta = r.metadata as { kind?: string; tmdbId?: number; seasonNumber?: number } | undefined
+  const meta = r.metadata as { kind?: string; tmdbId?: number; seasonNumber?: number; mbReleaseGroupId?: string; mbRecordingId?: string } | undefined
   if (meta?.kind === "season" && meta.tmdbId != null && meta.seasonNumber != null) {
     return formatTvSeasonUrl(meta.tmdbId, meta.seasonNumber)
   }
   if (meta?.kind === "show" && meta.tmdbId != null) {
     return formatTvShowUrl(meta.tmdbId)
+  }
+  const src = "source" in r ? (r.source as string | undefined) : undefined
+  if (r.mediaType === "music" || src === "lastfm" || src === "musicbrainz") {
+    if (meta?.mbReleaseGroupId) {
+      return `https://musicbrainz.org/release-group/${encodeURIComponent(meta.mbReleaseGroupId)}`
+    }
+    if (meta?.mbRecordingId) {
+      return `https://musicbrainz.org/recording/${encodeURIComponent(meta.mbRecordingId)}`
+    }
+    if (r.creator && r.title) {
+      const isTrack = meta?.kind === "track"
+      const encArtist = encodeURIComponent(r.creator)
+      const encTitle = encodeURIComponent(r.title)
+      return isTrack
+        ? `https://www.last.fm/music/${encArtist}/_/${encTitle}`
+        : `https://www.last.fm/music/${encArtist}/${encTitle}`
+    }
   }
   return null
 }

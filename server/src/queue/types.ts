@@ -3,6 +3,7 @@
 export interface JobPayloads {
     "demo.reset": Record<string, never>
     "tmdb.refresh": Record<string, never>
+    "music.coverBackfill": Record<string, never>
     "import.goodreads": { csv: string }
     "import.mal": { xml: string }
     "import.letterboxd": {
