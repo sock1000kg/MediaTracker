@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { searchGames } from "@/api/search"
+import { searchBoardGames, searchGames } from "@/api/search"
 import { SearchPageShell } from "@/components/search/SearchPageShell"
 import { SearchHeader } from "@/components/search/SearchHeader"
 import { SearchResults } from "@/components/search/SearchResults"
@@ -11,7 +11,15 @@ import { useSearchLogging } from "@/hooks/useSearchLogging"
 import { useStoredView } from "@/hooks/useStoredView"
 import { isResultLogged } from "@/lib/utils"
 import { RAWG_URL, RAWG_ATTRIBUTION_TEXT } from "@/lib/gameFormat"
-import type { GamePlatform, GameResult, GameSort } from "@/types/search"
+import { BGG_URL, BGG_ATTRIBUTION_TEXT, BGG_LOGO_URL } from "@/lib/boardGameFormat"
+import type { BoardGameResult, GamePlatform, GameResult, GameSort } from "@/types/search"
+
+type GameMode = "video" | "board"
+
+const MODE_OPTIONS = [
+  { value: "video", label: "Video games" },
+  { value: "board", label: "Board games" },
+] as const
 
 const PLATFORM_OPTIONS: { value: GamePlatform; label: string }[] = [
   { value: "pc", label: "PC" }, { value: "playstation", label: "PlayStation" }, { value: "xbox", label: "Xbox" },
@@ -27,43 +35,63 @@ const SORT_OPTIONS: { value: GameSort; label: string }[] = [
 export function GameSearchSection() {
   const [inputValue, setInputValue] = useState("")
   const [query, setQuery] = useState("")
+  const [mode, setMode] = useState<GameMode>("video")
   const [platform, setPlatform] = useState<GamePlatform | "">("")
   const [sort, setSort] = useState<GameSort>("relevance")
 
   const [view, setView] = useStoredView("search.view.games")
   const [hideLogged, toggleHideLogged] = useHideLogged("games")
 
-  const search = useProviderSearch<GameResult>({
-    queryKey: ["searchGames", query, platform, sort],
+  const search = useProviderSearch<GameResult | BoardGameResult>({
+    queryKey: mode === "board"
+      ? ["searchBoardGames", query]
+      : ["searchGames", query, platform, sort],
     query,
-    fetchPage: (page) => searchGames(query, page, { platform: platform || undefined, sort }),
+    fetchPage: (page) =>
+      mode === "board"
+        ? searchBoardGames(query, page)
+        : searchGames(query, page, { platform: platform || undefined, sort }),
     hideLogged,
   })
-  const { openLog, dialog } = useSearchLogging<GameResult>(search.logs)
+  const { openLog, dialog } = useSearchLogging<GameResult | BoardGameResult>(search.logs)
 
   const handleSearch = () => {
     if (inputValue.trim()) setQuery(inputValue.trim())
   }
 
+  const attribution = mode === "board"
+    ? { href: BGG_URL, text: BGG_ATTRIBUTION_TEXT, logo: { src: BGG_LOGO_URL, alt: "Powered by BGG" } }
+    : { href: RAWG_URL, text: RAWG_ATTRIBUTION_TEXT }
+
   return (
     <SearchPageShell page="games">
       <SearchHeader
         title="Game search"
-        attribution={{ href: RAWG_URL, text: RAWG_ATTRIBUTION_TEXT }}
+        attribution={attribution}
         value={inputValue}
         onChange={setInputValue}
         onSearch={handleSearch}
         busy={search.busy}
       >
-        <FilterSelect label="Platform" value={platform} onChange={setPlatform} options={PLATFORM_OPTIONS} anyLabel="Any platform" />
-        <FilterSelect label="Sort" value={sort} onChange={(v) => setSort(v || "relevance")} options={SORT_OPTIONS} />
+        <FilterSelect
+          label="Video or board games"
+          value={mode}
+          onChange={(v) => setMode((v as GameMode) || "video")}
+          options={MODE_OPTIONS}
+        />
+        {mode === "video" && (
+          <>
+            <FilterSelect label="Platform" value={platform} onChange={setPlatform} options={PLATFORM_OPTIONS} anyLabel="Any platform" />
+            <FilterSelect label="Sort" value={sort} onChange={(v) => setSort(v || "relevance")} options={SORT_OPTIONS} />
+          </>
+        )}
       </SearchHeader>
 
       <SearchResults query={query} search={search} hideLogged={hideLogged} onToggleHideLogged={toggleHideLogged} view={view} onView={setView}>
         <ResultList
           results={search.visibleResults}
           view={view}
-          kindOf={() => "game"}
+          kindOf={(item) => (item.metadata?.kind === "boardgame" || mode === "board" ? "boardgame" : "game")}
           isLogged={(item) => isResultLogged(search.logs, item)}
           onLog={(item) => openLog(item)}
         />

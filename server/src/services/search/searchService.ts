@@ -6,6 +6,7 @@ import { tmdbSearchService } from "./tmdbSearchService.js"
 import { rawgSearchService } from "./rawgSearchService.js"
 import { GameSearchFilters } from "@/schemas/search/gameSchemas.js"
 import { openLibraryService } from "./openLibrarySearchService.js"
+import { bggSearchService } from "./bggSearchService.js"
 
 export class SearchService {
     async searchBooks(userId: string, q: string, page: number = 1, filters?: BookSearchFilters) {
@@ -47,6 +48,10 @@ export class SearchService {
 
     async searchGames(userId: string, q: string, page: number = 1, filters?: GameSearchFilters) {
         return rawgSearchService.searchGamesRawg(userId, q, page, filters)
+    }
+
+    async searchBoardGames(userId: string, q: string, page: number = 1) {
+        return bggSearchService.searchBoardGames(userId, q, page)
     }
 }
 

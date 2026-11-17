@@ -134,7 +134,7 @@ export function sanitizeDescription(desc: string | undefined | null): string | n
 
 // Sanitize source: only allow known sources (e.g., "google_books")
 // Every search provider's `source` must be listed here, or logging its results fails with 400.
-const allowedSources = ["google_books", "lastfm", "goodreads", "open_library", "jikan", "anilist", "tmdb", "rawg", "mal"] as const
+const allowedSources = ["google_books", "lastfm", "goodreads", "open_library", "jikan", "anilist", "tmdb", "rawg", "mal", "bgg"] as const
 export type AllowedSource = (typeof allowedSources)[number]
 export function sanitizeSource(source: string | undefined | null): AllowedSource | null {
     if (!source) return null

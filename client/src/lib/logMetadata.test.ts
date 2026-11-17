@@ -72,6 +72,13 @@ describe("formatLogMetadata", () => {
     expect(fmt({ kind: "season", seasonNumber: 3 })).toEqual(["Season 3"])
   })
 
+  it("formats board games", () => {
+    expect(fmt({ kind: "boardgame", minPlayers: 2, maxPlayers: 4, minPlayTime: 60, maxPlayTime: 90, bggRating: 7.12 }))
+      .toEqual(["2–4 players", "60–90 min", "BGG 7.12"])
+    expect(fmt({ kind: "boardgame", minPlayers: 1, maxPlayers: 1, playingTime: 45 }))
+      .toEqual(["1 player", "45 min"])
+  })
+
   it("shows arrays of primitives, skips empty values and objects", () => {
     expect(fmt({ tags: ["a", "b", 3, true, ""], empty: "  ", none: null, obj: { a: 1 }, flag: false }))
       .toEqual(["tags: a, b, 3, true", "flag: false"])

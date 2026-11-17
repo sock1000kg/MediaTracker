@@ -77,13 +77,22 @@ export class LastFmSearchService implements ISearchService {
     baseUrl = "https://ws.audioscrobbler.com/2.0/"
     maxResults = 30
 
-    async getUserApiKey(userId: string): Promise<string> {
+    async getUserApiKey(userId: string) {
+        if (!userId && process.env.LASTFM_API_KEY) {
+            return process.env.LASTFM_API_KEY
+        }
         const user = await findUserById(userId)
-        if (!user) throw new AppError("Non-existent userId", 404)
+        if (!user) {
+            if (process.env.LASTFM_API_KEY) return process.env.LASTFM_API_KEY
+            throw new AppError("Non-existent userId", 404)
+        }
 
-        const lastfmKey = user.apiKeys
-            .map(k => ({ ...k, key: decryptKey(k.key) }))
-            .find(k => k.service === "lastfm")?.key
+        const decrypted = user.apiKeys.map(k => ({
+            ...k,
+            key: decryptKey(k.key)
+        }))
+
+        const lastfmKey = decrypted.find(k => k.service === "lastfm")?.key || process.env.LASTFM_API_KEY
 
         if (!lastfmKey) {
             throw new AppError("Missing Music API Key", 404)

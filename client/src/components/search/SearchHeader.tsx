@@ -8,7 +8,8 @@ import { SEARCH_PLACEHOLDER, searchOnEnter } from "@/lib/searchQuery"
 
 interface SearchHeaderProps {
   title: string
-  attribution: { href: string; text: string }
+  /** `logo`: an image the provider requires next to its credit (shown on a light plate so it reads in both themes). */
+  attribution: { href: string; text: string; logo?: { src: string; alt: string } }
   value: string
   onChange: (value: string) => void
   onSearch: () => void
@@ -27,7 +28,14 @@ export function SearchHeader({ title, attribution, value, onChange, onSearch, bu
     <div className="flex flex-col gap-4 px-4 sm:px-6 pt-4 sm:pt-6 pb-4">
       <div>
         <h1 className="font-display text-3xl sm:text-4xl font-semibold">{title}</h1>
-        <ProviderAttribution href={attribution.href}>{attribution.text}</ProviderAttribution>
+        <ProviderAttribution href={attribution.href}>
+          {attribution.text}
+          {attribution.logo && (
+            <span className="ml-2 inline-flex align-middle rounded bg-white px-1.5 py-0.5">
+              <img src={attribution.logo.src} alt={attribution.logo.alt} className="h-4 w-auto" />
+            </span>
+          )}
+        </ProviderAttribution>
       </div>
 
       <div className="flex flex-wrap gap-2 items-center">

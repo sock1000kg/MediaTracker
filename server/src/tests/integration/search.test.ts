@@ -970,36 +970,241 @@ describe('Search Routes - TV (TMDB)', () => {
     })
 })
 
-describe('Search Routes - music key is per user', () => {
-    const username = 'MusicNoKeyUser'
-    let token: string
+describe('Search Routes - board games (BoardGameGeek)', () => {
+    const users = ['BggUserA', 'BggUserB']
+    const tokens: string[] = []
     let fetchSpy: SpiedFunction<typeof fetch>
-    const savedEnvKey = process.env.LASTFM_API_KEY
+    const BGG_KEY = 'BGGTOKEN123456'
+
+    const generateSearchXml = (count: number, exactTitle?: string) => {
+        let itemsXml = ''
+        if (exactTitle) {
+            itemsXml += `<item type="boardgame" id="100"><name type="primary" value="Other Game"/><yearpublished value="2000"/></item>`
+            itemsXml += `<item type="boardgame" id="101"><name type="primary" value="${exactTitle}"/><yearpublished value="1995"/></item>`
+        }
+        for (let i = 1; i <= count; i++) {
+            itemsXml += `<item type="boardgame" id="${i}"><name type="primary" value="Game ${i}"/><yearpublished value="2020"/></item>`
+        }
+        return `<items total="${count + (exactTitle ? 2 : 0)}">${itemsXml}</items>`
+    }
+
+    const generateThingXml = (ids: string[]) => {
+        const itemsXml = ids.map(id => `
+            <item type="boardgame" id="${id}">
+                <thumbnail>https://cf.geekdo-images.com/t_${id}.jpg</thumbnail>
+                <image>https://cf.geekdo-images.com/i_${id}.jpg</image>
+                <name type="primary" sortindex="1" value="Game ${id}"/>
+                <description>Description for game ${id}&#10;More details &amp; fun.</description>
+                <yearpublished value="2021"/>
+                <minplayers value="2"/>
+                <maxplayers value="4"/>
+                <playingtime value="90"/>
+                <minplaytime value="60"/>
+                <maxplaytime value="90"/>
+                <link type="boardgamecategory" id="101" value="Strategy"/>
+                <link type="boardgamedesigner" id="201" value="Designer One"/>
+                <statistics page="1">
+                    <ratings>
+                        <usersrated value="500"/>
+                        <average value="7.1234"/>
+                    </ratings>
+                </statistics>
+            </item>
+        `).join('')
+        return `<items>${itemsXml}</items>`
+    }
+
+    const setKey = async (i: number, key: string) => {
+        const auth = { Authorization: `Bearer ${tokens[i]}` }
+        let res = await request(app).post('/api-key').set(auth).send({ service: 'bgg', key })
+        if (res.statusCode === 409) res = await request(app).put('/api-key').set(auth).send({ service: 'bgg', key })
+        expect(res.statusCode).toBeLessThan(300)
+    }
+
+    const get = (i: number, qs: string) => request(app).get(`/search/boardgames?${qs}`).set('Authorization', `Bearer ${tokens[i]}`)
+    const logItem = (i: number, mediaData: object) => request(app).put('/media/media-log')
+        .set('Authorization', `Bearer ${tokens[i]}`).send({ mediaData, logData: { status: 'completed' } })
+    const findMedia = (sourceId: string) => prisma.media.findFirst({ where: { source: 'bgg', sourceId } })
 
     beforeAll(async () => {
-        await prisma.user.deleteMany({ where: { username } })
-        await request(app).post('/auth/register')
-            .send({ username, password: 'StrongPass1!', displayName: username, registerKey: process.env.REGISTER_KEY })
-        const login = await request(app).post('/auth/login').send({ username, password: 'StrongPass1!' })
-        token = login.body.accessToken
-    })
-    beforeEach(() => {
-        process.env.LASTFM_API_KEY = 'server-env-key' // must never be used for a user's search
-        fetchSpy = jest.spyOn(global, 'fetch')
-    })
-    afterEach(() => {
-        fetchSpy.mockRestore()
-        if (savedEnvKey === undefined) delete process.env.LASTFM_API_KEY
-        else process.env.LASTFM_API_KEY = savedEnvKey
-    })
-    afterAll(async () => {
-        await prisma.user.deleteMany({ where: { username } })
+        for (const username of users) {
+            await prisma.user.deleteMany({ where: { username } })
+            await request(app).post('/auth/register')
+                .send({ username, password: 'StrongPass1!', displayName: username, registerKey: process.env.REGISTER_KEY })
+            const login = await request(app).post('/auth/login').send({ username, password: 'StrongPass1!' })
+            tokens.push(login.body.accessToken)
+        }
     })
 
-    it.each(['albums', 'tracks'])('no Last.fm key -> 404 Missing Music API Key even with a server key set (%s)', async (kind) => {
-        const res = await request(app).get(`/search/music/${kind}?q=test`).set('Authorization', `Bearer ${token}`)
+    beforeEach(() => {
+        fetchSpy = jest.spyOn(global, 'fetch').mockImplementation(async (input) => {
+            const urlStr = String(input)
+            if (urlStr.includes('/thing')) {
+                const u = new URL(urlStr)
+                const ids = (u.searchParams.get('id') || '').split(',')
+                return new Response(generateThingXml(ids), { status: 200 })
+            }
+            return new Response(generateSearchXml(25), { status: 200 })
+        })
+    })
+
+    afterEach(() => fetchSpy.mockRestore())
+
+    afterAll(async () => {
+        await prisma.media.deleteMany({ where: { source: 'bgg' } })
+        await prisma.user.deleteMany({ where: { username: { in: users } } })
+    })
+
+    it('no BGG key -> 404 Missing Board Game API Key, no fetch', async () => {
+        const res = await get(0, 'q=catan')
         expect(res.statusCode).toBe(404)
-        expect(res.body.message).toBe('Missing Music API Key')
+        expect(res.body.message).toBe('Missing Board Game API Key')
         expect(fetchSpy).not.toHaveBeenCalled()
     })
+
+    it('with a key: sends Bearer token to search then /thing, maps to S2 shape, paginates 20/5', async () => {
+        await setKey(0, BGG_KEY)
+        const res = await get(0, 'q=game&page=1')
+        expect(res.statusCode).toBe(200)
+        expect(res.body.results).toHaveLength(20)
+        expect(res.body.nextStartIndex).toBe(2)
+
+        const first = res.body.results[0]
+        expect(first).toMatchObject({
+            mediaType: 'boardgame',
+            source: 'bgg',
+            sourceId: '1',
+            title: 'Game 1',
+            creator: 'Designer One',
+            year: '2021',
+            imageUrl: 'https://cf.geekdo-images.com/i_1.jpg',
+            description: 'Description for game 1\nMore details & fun.',
+            genres: ['Strategy'],
+            metadata: {
+                kind: 'boardgame',
+                url: 'https://boardgamegeek.com/boardgame/1',
+                minPlayers: 2,
+                maxPlayers: 4,
+                playingTime: 90,
+                minPlayTime: 60,
+                maxPlayTime: 90,
+                bggRating: 7.12,
+                categories: ['Strategy'],
+            },
+        })
+
+        // Check fetch calls
+        expect(fetchSpy).toHaveBeenCalledTimes(2)
+        const searchCall = fetchSpy.mock.calls[0]
+        const searchUrl = new URL(String(searchCall[0]))
+        expect(searchUrl.origin + searchUrl.pathname).toBe('https://boardgamegeek.com/xmlapi2/search')
+        expect(searchUrl.searchParams.get('query')).toBe('game')
+        expect(searchUrl.searchParams.get('type')).toBe('boardgame')
+        expect((searchCall[1]?.headers as Record<string, string>)?.Authorization).toBe(`Bearer ${BGG_KEY}`)
+
+        const thingCall = fetchSpy.mock.calls[1]
+        const thingUrl = new URL(String(thingCall[0]))
+        expect(thingUrl.origin + thingUrl.pathname).toBe('https://boardgamegeek.com/xmlapi2/thing')
+        expect(thingUrl.searchParams.get('stats')).toBe('1')
+        const requestedIds = thingUrl.searchParams.get('id')?.split(',')
+        expect(requestedIds).toHaveLength(20)
+        expect((thingCall[1]?.headers as Record<string, string>)?.Authorization).toBe(`Bearer ${BGG_KEY}`)
+
+        // Page 2
+        const res2 = await get(0, 'q=game&page=2')
+        expect(res2.statusCode).toBe(200)
+        expect(res2.body.results).toHaveLength(5)
+        expect(res2.body.nextStartIndex).toBeNull()
+    })
+
+    it('exact (case-insensitive) title matches first', async () => {
+        fetchSpy.mockImplementation(async (input) => {
+            const urlStr = String(input)
+            if (urlStr.includes('/thing')) {
+                const u = new URL(urlStr)
+                const ids = (u.searchParams.get('id') || '').split(',')
+                return new Response(generateThingXml(ids), { status: 200 })
+            }
+            return new Response(generateSearchXml(5, 'Target Title'), { status: 200 })
+        })
+
+        const res = await get(0, 'q=target%20title&page=1')
+        expect(res.statusCode).toBe(200)
+        // Id 101 was the exact match placed second in the XML
+        expect(res.body.results[0].sourceId).toBe('101')
+    })
+
+    it('upstream 401/403 -> 400 "BoardGameGeek rejected the token", key not in body', async () => {
+        for (const status of [401, 403]) {
+            fetchSpy.mockImplementation(async () => new Response('<error>Forbidden</error>', { status }))
+            const res = await get(0, 'q=catan')
+            expect(res.statusCode).toBe(400)
+            expect(res.body.message).toBe('BoardGameGeek rejected the token')
+            expect(JSON.stringify(res.body)).not.toContain(BGG_KEY)
+        }
+    })
+
+    it('429 then 200 -> succeeds after one retry; 429 then 429 -> 503', async () => {
+        let attempts = 0
+        fetchSpy.mockImplementation(async (input) => {
+            attempts++
+            if (attempts === 1) {
+                return new Response('{}', { status: 429, headers: { 'Retry-After': '0.01' } })
+            }
+            const urlStr = String(input)
+            if (urlStr.includes('/thing')) {
+                return new Response(generateThingXml(['1']), { status: 200 })
+            }
+            return new Response(generateSearchXml(1), { status: 200 })
+        })
+
+        const res = await get(0, 'q=catan')
+        expect(res.statusCode).toBe(200)
+        expect(attempts).toBe(3) // 1 search 429, 2 search 200, 3 thing 200
+
+        // Continuous 429 -> 503
+        fetchSpy.mockImplementation(async () =>
+            new Response('{}', { status: 429, headers: { 'Retry-After': '0.01' } })
+        )
+        const failRes = await get(0, 'q=catan')
+        expect(failRes.statusCode).toBe(503)
+    })
+
+    it('logging a board game result creates media under boardgame and second log reuses the media', async () => {
+        await setKey(1, BGG_KEY)
+        const res = await get(0, 'q=game&page=1')
+        const itemData = res.body.results[0]
+        const sourceId = itemData.sourceId
+
+        const logRes1 = await logItem(0, itemData)
+        expect(logRes1.statusCode).toBeLessThan(300)
+
+        const media = await findMedia(sourceId)
+        expect(media).not.toBeNull()
+        expect(media!.source).toBe('bgg')
+        expect(media!.sourceId).toBe(sourceId)
+        expect(media!.creator).toBe('Designer One')
+
+        const type = await prisma.media.findFirst({
+            where: { id: media!.id },
+            include: { mediaType: true },
+        })
+        expect(type!.mediaType?.name).toBe('boardgame')
+
+        const designers = await prisma.mediaCreator.findMany({
+            where: { mediaId: media!.id },
+            include: { creator: true },
+        })
+        expect(designers).toHaveLength(1)
+        expect(designers[0].role).toBe('designer')
+        expect(designers[0].creator.name).toBe('Designer One')
+
+        // Second log of the same result
+        const logRes2 = await logItem(1, itemData)
+        expect(logRes2.statusCode).toBeLessThan(300)
+
+        const totalMedias = await prisma.media.count({ where: { source: 'bgg', sourceId } })
+        expect(totalMedias).toBe(1)
+    })
 })
+

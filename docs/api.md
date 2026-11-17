@@ -136,6 +136,7 @@ All search endpoints take `q` (required) and `page` (default 1), and return `{ r
 | GET | `/search/manga` | AniList | `type` = `manga \| novel \| lightnovel \| oneshot \| manhwa \| manhua`, `sort` as for anime |
 | GET | `/search/movies` | TMDB (key) | `year` |
 | GET | `/search/games` | RAWG (key) | `platform` = `pc \| playstation \| xbox \| nintendo \| ios \| android \| mac \| linux`, `sort` = `relevance \| rating \| newest \| metacritic` |
+| GET | `/search/boardgames` | BoardGameGeek (per-user token) | none |
 
 A search that needs a key and has none returns `404` ("Missing … API Key"). A key the provider rejects returns `400`, never `401`.
 
@@ -150,7 +151,7 @@ A search that needs a key and has none returns `404` ("Missing … API Key"). A 
 }
 ```
 
-The `metadata` field varies by provider. For example: `kind` (`album` / `track` / `anime` / `manga` / `movie` / `game`), `pageCount`, `publisher`, `episodes`, `score` (0–100 on AniList, 0–10 on MAL/TMDB, 0–5 on RAWG), `scoreScale` (`anilist` or `mal`), `platforms`, `metacritic`.
+The `metadata` field varies by provider. For example: `kind` (`album` / `track` / `anime` / `manga` / `movie` / `game` / `boardgame`), `pageCount`, `publisher`, `episodes`, `score` (0–100 on AniList, 0–10 on MAL/TMDB, 0–5 on RAWG), `scoreScale` (`anilist` or `mal`), `platforms`, `metacritic`, `minPlayers`, `maxPlayers`, `playingTime`, `bggRating`.
 
 ## Imports and jobs
 

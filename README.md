@@ -15,7 +15,7 @@ A self-hostable media journal: books, music, anime, manga, movies and games, all
   - Music ([Last.fm](https://www.last.fm/api)): albums and tracks, with tags saved as categories
   - Anime and manga ([AniList](https://anilist.co))
   - Movies ([TMDB](https://www.themoviedb.org/documentation/api))
-  - Games ([RAWG](https://rawg.io/apidocs))
+  - Games ([RAWG](https://rawg.io/apidocs)): video games and board games ([BoardGameGeek](https://boardgamegeek.com))
 - **Stats:** activity over time, ratings, top categories, top tags and creators, and type-specific stats.
 - **Personal tags:** private tags per user with autocomplete, set semantics on logs, and management in Settings.
 - **Collections:** private collections (ordered lists) with optional ranking, cover mosaics, and accessible reordering controls.
@@ -60,7 +60,7 @@ docker compose --env-file server/.env -f docker-compose.yml -f docker-compose.de
 
 On start, the backend runs the database migrations and seeds the system and demo users. Registering a new account needs the `REGISTER_KEY` from your `.env`.
 
-Searching music, movies and games needs your own free API keys for Last.fm, TMDB and RAWG. Add them in the app under **Settings → API Keys**. Books and anime/manga need no key.
+Searching music, movies, video games, and board games needs your own free API keys or tokens: Last.fm, TMDB, RAWG, and BoardGameGeek (application token from [boardgamegeek.com/applications](https://boardgamegeek.com/applications)). These are per-user keys configured in the app under **Settings → API Keys**. Books and anime/manga need no key.
 
 See **[docs/setup.md](docs/setup.md)** for running tests, production builds and running without Docker.
 
@@ -101,15 +101,9 @@ See **[docs/setup.md](docs/setup.md)** for running tests, production builds and 
 - More importers (e.g. MyAnimeList lists)
 - Recommendations across media types
 
-Suggestions are welcome: please open an issue.
-
-## Contributing
-
-Issues and pull requests are welcome. See [docs/setup.md](docs/setup.md) for running the app, linting, and running tests.
-
 ## Acknowledgements
 
-Search data comes from Open Library, Last.fm, AniList, RAWG and TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.
+Search data comes from Open Library, Last.fm, AniList, RAWG, TMDB, and BoardGameGeek. This product uses the TMDB API but is not endorsed or certified by TMDB.
 
 ## License
 

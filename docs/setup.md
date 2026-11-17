@@ -73,8 +73,9 @@ docker compose --env-file server/.env -f docker-compose.yml -f docker-compose.de
 | Music | Last.fm | <https://www.last.fm/api/account/create> |
 | Movies | TMDB (API key or v4 read access token) | <https://www.themoviedb.org/settings/api> |
 | Games | RAWG | <https://rawg.io/apidocs> |
+| Board games | BoardGameGeek (token) | <https://boardgamegeek.com/applications> |
 
-Setting `LASTFM_API_KEY`, `TMDB_API_KEY` or `RAWG_API_KEY` in `server/.env` gives the demo user a key when the seed runs.
+Setting `LASTFM_API_KEY`, `TMDB_API_KEY` or `RAWG_API_KEY` in `server/.env` gives the demo user a key when the seed runs. BoardGameGeek is a per-user key added in the app under **Settings → API Keys**.
 
 ### Demo media fixture
 

@@ -7,6 +7,7 @@ import { movieSearchQuerySchema } from '@/schemas/search/movieSchemas.js'
 import { tvSearchQuerySchema } from '@/schemas/search/tvSchemas.js'
 import { gameSearchQuerySchema } from '@/schemas/search/gameSchemas.js'
 import { bookSearchQuerySchema } from '@/schemas/search/bookSchemas.js'
+import { bggSearchQuerySchema } from '@/schemas/search/bggSchemas.js'
 
 // Returns the book info fetched from google books (A media shaped item without media type cus its enforced in frontend)
 export const searchBooks = async (req: Request, res: Response, next: NextFunction) => {
@@ -210,3 +211,25 @@ export const getTvSeasons = async (req: Request, res: Response, next: NextFuncti
         next(error)
     }
 }
+
+export const searchBoardGames = async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.userId
+    if (!userId) {
+        return res.status(401).json({ message: "Unauthorized: missing userId" })
+    }
+
+    const parsedQuery = bggSearchQuerySchema.safeParse(req.query)
+    if (!parsedQuery.success) {
+        const message = parsedQuery.error.issues.map(i => i.message).join("; ")
+        return res.status(400).json({ message })
+    }
+    const { q, page } = parsedQuery.data
+
+    try {
+        const results = await searchService.searchBoardGames(userId, q, page)
+        res.status(200).json(results)
+    } catch (error) {
+        next(error)
+    }
+}
+

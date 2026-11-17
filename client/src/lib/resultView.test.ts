@@ -43,11 +43,16 @@ describe("resultDetailParts", () => {
     const season: any = { metadata: { kind: "season", tmdbId: 100, seasonNumber: 1, episodeCount: 8, airDate: "2021-05-01" } }
     expect(resultDetailParts("tv", season)).toEqual(["Season 1", "8 episodes", "2021"])
   })
+  it("boardgame uses its formatter", () => {
+    const bg: any = { metadata: { kind: "boardgame", minPlayers: 2, maxPlayers: 4, minPlayTime: 60, maxPlayTime: 90, bggRating: 7.12 } }
+    expect(resultDetailParts("boardgame", bg)).toEqual(["2–4 players", "60–90 min", "BGG 7.12"])
+  })
 })
 
 describe("labels and aspects", () => {
   it("aspect", () => {
     expect(resultAspect("music")).toBe("square")
+    expect(resultAspect("boardgame")).toBe("square")
     expect(resultAspect("game")).toBe("wide")
     for (const k of ["book", "movie", "anime", "manga", "tv"] as const) expect(resultAspect(k)).toBe("portrait")
   })
@@ -64,10 +69,12 @@ describe("labels and aspects", () => {
     expect(resultProviderLabel("movie")).toBe("View on TMDB")
     expect(resultProviderLabel("tv")).toBe("View on TMDB")
     expect(resultProviderLabel("game")).toBe("View on RAWG")
+    expect(resultProviderLabel("boardgame")).toBe("View on BoardGameGeek")
   })
   it("kind label", () => {
     expect(resultKindLabel("movie")).toBe("Movie")
     expect(resultKindLabel("tv")).toBe("TV")
+    expect(resultKindLabel("boardgame")).toBe("Board game")
   })
 })
 

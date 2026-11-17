@@ -9,6 +9,7 @@ import { animeMetadataSchema } from "./animeSchemas.js"
 import { movieMetadataSchema } from "./movieSchemas.js"
 import { gameMetadataSchema } from "./gameSchemas.js"
 import { tvSeasonMetadataSchema, tvShowMetadataSchema } from "./tvSchemas.js"
+import { boardgameMetadataSchema } from "./bggSchemas.js"
 
 const parentMediaSchema = searchMediaSchema.extend({
     mediaType: z
@@ -33,6 +34,7 @@ export const createMediaAndLogSchema = z.object({
 // Music goes first and is strict: the book schema would otherwise match music results and strip `kind`
 const mediaMetadataSchema = z.union([
   musicMetadataSchema.strict(),
+  boardgameMetadataSchema,
   tvSeasonMetadataSchema,
   tvShowMetadataSchema,
   animeMetadataSchema,
@@ -48,7 +50,7 @@ export const searchResultCreatorSchema = z.object({
 
 //Schema for ONE result of a search (generic normaliztion for all types)
 // Search providers stamp the type so clients can log a result as-is
-export const SEARCH_MEDIA_TYPES = ["book", "music", "movie", "tv", "game", "anime", "manga"] as const
+export const SEARCH_MEDIA_TYPES = ["book", "music", "movie", "tv", "game", "anime", "manga", "boardgame"] as const
 
 export const searchResultSchema = z.object({
     mediaType: z.enum(SEARCH_MEDIA_TYPES),
@@ -61,6 +63,7 @@ export const searchResultSchema = z.object({
         .nullable()
         .default(null),
     creators: z.array(searchResultCreatorSchema).optional(),
+    genres: z.array(z.string()).optional(),
     year: z
         .string()
         .nullable()

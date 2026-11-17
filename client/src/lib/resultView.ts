@@ -1,13 +1,14 @@
 // Pure helpers for search result rows and tiles. No React.
-import type { AnimeResult, BookResult, GameResult, MediaResult, MovieResult, MusicResult, TvResult } from "@/types/search"
+import type { AnimeResult, BoardGameResult, BookResult, GameResult, MediaResult, MovieResult, MusicResult, TvResult } from "@/types/search"
 import { animeMetaParts } from "@/lib/animeFormat"
 import { movieMetaParts } from "@/lib/movieFormat"
 import { gameMetaParts } from "@/lib/gameFormat"
+import { boardGameMetaParts } from "@/lib/boardGameFormat"
 import { formatTvSeasonUrl, formatTvShowUrl, tvMetaParts } from "@/lib/tvFormat"
 import { capitalise, coverTokenFromKey, type CoverAspect } from "@/lib/mediaView"
 
-export type ResultKind = "book" | "music" | "anime" | "manga" | "movie" | "game" | "tv"
-export type SearchResult = BookResult | MusicResult | AnimeResult | MovieResult | GameResult | TvResult
+export type ResultKind = "book" | "music" | "anime" | "manga" | "movie" | "game" | "tv" | "boardgame"
+export type SearchResult = BookResult | MusicResult | AnimeResult | MovieResult | GameResult | TvResult | BoardGameResult
 
 /** Detail parts after the kind label: book publisher/pages, music Album/Track, or the provider formatter's parts. */
 export function resultDetailParts(kind: ResultKind, result: SearchResult): string[] {
@@ -32,10 +33,13 @@ export function resultDetailParts(kind: ResultKind, result: SearchResult): strin
       return gameMetaParts((result as GameResult).metadata)
     case "tv":
       return tvMetaParts((result as TvResult).metadata, result.year)
+    case "boardgame":
+      return boardGameMetaParts((result as BoardGameResult).metadata)
   }
 }
 
 export function resultKindLabel(kind: ResultKind): string {
+  if (kind === "boardgame") return "Board game"
   return capitalise(kind)
 }
 
@@ -54,11 +58,12 @@ export function resultProviderLabel(kind: ResultKind, source?: string): string {
     case "tv":
       return "View on TMDB"
     case "game": return "View on RAWG"
+    case "boardgame": return "View on BoardGameGeek"
   }
 }
 
 export function resultAspect(kind: ResultKind): CoverAspect {
-  if (kind === "music") return "square"
+  if (kind === "music" || kind === "boardgame") return "square"
   if (kind === "game") return "wide"
   return "portrait"
 }

@@ -17,6 +17,7 @@ export const SOURCE_LABELS: Record<string, string> = {
   anilist: "AniList",
   tmdb: "TMDB",
   rawg: "RAWG",
+  bgg: "BoardGameGeek",
 }
 
 export function sourceLabel(source?: string | null): string {

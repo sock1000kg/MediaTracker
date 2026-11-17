@@ -5,7 +5,7 @@ Browser (React SPA) ──HTTPS──▶ Express API ──▶ PostgreSQL (Prism
         │                          │
         │                          ├──▶ Valkey ◀── BullMQ worker (in-process by default)
         │                          │
-        │                          └──▶ Search providers: Open Library, Last.fm, AniList, TMDB, RAWG
+        │                          └──▶ Search providers: Open Library, Last.fm, AniList, TMDB, RAWG, BoardGameGeek
         └── access token in localStorage, refresh token in an HttpOnly cookie
 ```
 
@@ -26,7 +26,7 @@ The request flow is **route → controller → service → repository** (`server
 - **Media**: title, creator, year, description, image, `source` + `sourceId` (where a search result came from), and a free-form `metadata` JSON (categories, page count, runtime, platforms, …).
   - Media logged from search or imports belongs to the internal **`system`** user, so everyone shares it.
   - Media created by hand belongs to its creator.
-- **MediaType**: built-in types (book, music, anime, manga, movie, game) belong to `system`. Users can add their own.
+- **MediaType**: built-in types (book, music, anime, manga, movie, game, boardgame) belong to `system`. Users can add their own.
 - **UserLogs**: one log per user per media, with status, rating (0–100), notes, `logged_at`, and optional `started_at` / `finished_at` stored at day precision (noon UTC) so time zones never flip the calendar day.
 - **Tag / LogTag**: personal tags on logs (private per user, unique per user case-insensitively, at most 20 tags per log and 500 per user).
 - **Collection / CollectionItem**: private, ordered lists of logs (owned by User, unique nameKey per user case-insensitively, optional description and ranked flag, at most 200 collections per user and 1000 items per collection; dense positions starting from 0, maintained on additions, removals and reorders).
@@ -40,7 +40,7 @@ Each provider lives in `services/search/*SearchService.ts`, and they share the s
 - **Responses:** validated against Zod schemas and mapped to a common `SearchResult`.
 - **Request limits:** a per-attempt timeout, with one retry on `429`.
 - **Error mapping:** a missing user key gives `404`, a rejected key gives `400` (never `401`, which the client treats as an expired session), a provider failure gives `502`, a provider rate limit or outage gives `503`, and a timeout gives `504`.
-- **Keys:** Last.fm, TMDB and RAWG use the user's own API key (`UserAPIKey`, encrypted with `API_KEY_SECRET`). Open Library and AniList need none. AniList calls are throttled to stay under its public rate limit (existing Jikan data is still supported).
+- **Keys:** Last.fm, TMDB, RAWG, and BoardGameGeek use the user's own API key/token (`UserAPIKey`, encrypted with `API_KEY_SECRET`; token from boardgamegeek.com/applications). Open Library and AniList need none. AniList calls are throttled to stay under its public rate limit (existing Jikan data is still supported).
 - **Log-time enrichment:** some details are fetched once, the first time a result is logged, and stored on the shared media:
   - Last.fm top tags (junk tags removed)
   - the TMDB director, runtime and genres

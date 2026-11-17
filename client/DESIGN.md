@@ -3,7 +3,7 @@
 > A quiet place to keep track of what you've read and listened to.
 > Warm paper by day, lamplight by night, and a small blue guy who lives in the sidebar and has opinions.
 
-This document describes the redesign. **It is a reskin, not a rebuild.** The layout (content on the left, nav sidebar on the right, header strip above each section, list of cards) stays as it is. Most of the change happens in `src/index.css` tokens and in swapping hard-coded Tailwind colours for those tokens. The new bits are a theme toggle, one small mascot component and some copy.
+This document describes the redesign. **It is a reskin, not a rebuild.** The layout (content on the left, nav sidebar on the right, header strip above each section, list of cards) stays as it is. Pages include Logs, Your media, Collections, Stats, Settings, and Search pages (Books, Music, Anime, Manga, Movies, and Games with Video and Board game modes). Most of the change happens in `src/index.css` tokens and in swapping hard-coded Tailwind colours for those tokens. The new bits are a theme toggle, one small mascot component and some copy.
 
 ---
 
@@ -392,4 +392,9 @@ Private, ordered lists of user logs (`pages/sections/CollectionsSection.tsx`, `c
   - **Reorder & Accessibility:** Optimistic list reordering with server sync (`PUT /collections/:id/order`) and rollback on failure. Focus is preserved on the moved item's active move button across re-renders. An always-mounted polite live region (`aria-live="polite"`) announces `"Moved {title} to position {n}"`.
   - **Add logs dialog (`AddLogsDialog.tsx`):** search logs by title or creator, checkbox selection with existing items checked, applying computes `membershipDiff` to add/remove diffs.
 - **Log actions integration:** `LogActions` includes "Add to collection…", which opens `AddToCollectionDialog` with checkboxes for user collections and an inline "New collection" creation form.
+
+## 17. Board games (task 40)
+
+- Games search includes a Board games mode powered by BoardGameGeek with square covers, player counts, playtime, and BGG ratings.
+
 

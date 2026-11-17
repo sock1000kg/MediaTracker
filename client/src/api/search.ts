@@ -1,4 +1,4 @@
-import type { GameResult, GameSearchFilters, MovieResult, AnimeKind, AnimeResult, AnimeSearchFilters, BookResult, BookSearchFilters, MusicResult, MusicTrackResult, TvResult, TvSeasonResult } from "@/types/search";
+import type { GameResult, GameSearchFilters, MovieResult, AnimeKind, AnimeResult, AnimeSearchFilters, BookResult, BookSearchFilters, MusicResult, MusicTrackResult, TvResult, TvSeasonResult, BoardGameResult } from "@/types/search";
 import { apiFetch } from "./clientWrapper";
 
 export function searchBooks(params: string, page: number = 1, filters: BookSearchFilters = {}): 
@@ -96,6 +96,15 @@ export function getAlbumTracks(params: { artist?: string; album?: string; mbid?:
     if (params.album) qs.set("album", params.album)
     if (params.mbid) qs.set("mbid", params.mbid)
     return apiFetch(`/search/music/albums/tracks?${qs.toString()}`, {
+        method: "GET"
+    })
+}
+
+export function searchBoardGames(params: string, page: number = 1):
+    Promise<{ results: BoardGameResult[], nextStartIndex: number | null }>
+{
+    const qs = new URLSearchParams({ q: params, page: String(page) })
+    return apiFetch(`/search/boardgames?${qs.toString()}`, {
         method: "GET"
     })
 }

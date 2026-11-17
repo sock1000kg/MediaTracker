@@ -138,6 +138,7 @@ export async function seedDatabase(options?: SeedOptions, deps?: SeedDeps) {
     await createMediaTypeSeed("tv", systemUser.id)
     await createMediaTypeSeed("anime", systemUser.id)
     await createMediaTypeSeed("manga", systemUser.id)
+    await createMediaTypeSeed("boardgame", systemUser.id)
 
     // CREATE SEED MEDIA
     let defaultMedia: { id: string } | null = await prisma.media.findFirst({

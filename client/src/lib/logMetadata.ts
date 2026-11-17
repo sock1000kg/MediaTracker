@@ -3,6 +3,7 @@ import type { AnimeResult, GameResult, MovieResult } from "@/types/search"
 import { formatRuntime, formatMovieScore } from "@/lib/movieFormat"
 import { formatGamePlatforms, formatMetacritic, formatRawgScore } from "@/lib/gameFormat"
 import { formatAnimeScore } from "@/lib/animeFormat"
+import { boardGameMetaParts } from "@/lib/boardGameFormat"
 import { num, str, strList } from "@/lib/coerce"
 
 // Never shown as raw "key: value" text
@@ -170,6 +171,34 @@ function trackBranch(meta: Meta): Branch {
   }
 }
 
+function boardgameBranch(meta: Meta): Branch {
+  const used = new Set<string>()
+  const minPlayers = num(meta.minPlayers)
+  const maxPlayers = num(meta.maxPlayers)
+  const playingTime = num(meta.playingTime)
+  const minPlayTime = num(meta.minPlayTime)
+  const maxPlayTime = num(meta.maxPlayTime)
+  const bggRating = num(meta.bggRating)
+
+  if (meta.minPlayers !== undefined) used.add("minPlayers")
+  if (meta.maxPlayers !== undefined) used.add("maxPlayers")
+  if (meta.playingTime !== undefined) used.add("playingTime")
+  if (meta.minPlayTime !== undefined) used.add("minPlayTime")
+  if (meta.maxPlayTime !== undefined) used.add("maxPlayTime")
+  if (meta.bggRating !== undefined) used.add("bggRating")
+
+  const parts = boardGameMetaParts({
+    kind: "boardgame",
+    minPlayers,
+    maxPlayers,
+    playingTime,
+    minPlayTime,
+    maxPlayTime,
+    bggRating,
+  })
+  return { parts, used }
+}
+
 function branchFor(meta: Meta, source?: string, progress?: Record<string, unknown> | null): Branch {
   switch (meta.kind) {
     case "album": return { parts: ["Album"], used: new Set() }
@@ -180,6 +209,7 @@ function branchFor(meta: Meta, source?: string, progress?: Record<string, unknow
     case "show":
     case "season": return tvBranch(meta)
     case "game": return gameBranch(meta)
+    case "boardgame": return boardgameBranch(meta)
     default: return bookBranch(meta) // books have no `kind`
   }
 }

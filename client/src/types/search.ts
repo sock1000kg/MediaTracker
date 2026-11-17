@@ -139,6 +139,20 @@ export type TvSeasonResult = MediaResult<"tv"> & {
 
 export type BookSort = "relevance" | "new" | "old" | "rating"
 
+export type BoardGameResult = MediaResult<"boardgame"> & {
+  metadata: {
+    url?: string
+    kind: "boardgame"
+    minPlayers?: number | null
+    maxPlayers?: number | null
+    playingTime?: number | null
+    minPlayTime?: number | null
+    maxPlayTime?: number | null
+    bggRating?: number | null
+    categories?: string[] | null
+  }
+}
+
 // Mirrors the server's BookSearchFilters (everything except q and page)
 export type BookSearchFilters = {
   author?: string
