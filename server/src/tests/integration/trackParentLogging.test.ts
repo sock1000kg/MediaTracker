@@ -30,6 +30,7 @@ describe('Track parent linking and duplicate track names', () => {
                 OR: [
                     { sourceId: { startsWith: 'test-album-' } },
                     { sourceId: { startsWith: 'test-track-' } },
+                    { sourceId: { startsWith: 'tv:95396' } },
                     { title: 'Intro', creator: 'SameArtist' },
                 ],
             },
@@ -206,5 +207,104 @@ describe('Track parent linking and duplicate track names', () => {
             },
         })
         expect(savedTracks).toHaveLength(2)
+    })
+
+    it('E2: logging a season from TV search links it to its show when the show is already in the library', async () => {
+        // 1. Show is in the library
+        const showPayload = {
+            mediaData: {
+                title: 'Severance',
+                mediaType: 'tv',
+                creator: 'Dan Erickson',
+                year: 2022,
+                source: 'tmdb',
+                sourceId: 'tv:95396',
+                metadata: { kind: 'show', tmdbId: 95396, seasonCount: 2 },
+            },
+            logData: {
+                status: 'completed',
+                rating: 95,
+            },
+        }
+
+        const showRes = await request(app)
+            .put('/media/media-log')
+            .set('Authorization', `Bearer ${token}`)
+            .send(showPayload)
+        expect(showRes.statusCode).toBe(201)
+
+        const show = await prisma.media.findFirst({
+            where: { source: 'tmdb', sourceId: 'tv:95396' },
+        })
+        expect(show).not.toBeNull()
+
+        // 2. Season 1 is logged with parent (from TV search)
+        const season1Payload = {
+            mediaData: {
+                title: 'Severance: Season 1',
+                mediaType: 'tv',
+                creator: 'Dan Erickson',
+                year: 2022,
+                source: 'tmdb',
+                sourceId: 'tv:95396:s1',
+                metadata: { kind: 'season', tmdbId: 95396, seasonNumber: 1, showTitle: 'Severance' },
+            },
+            parent: {
+                title: 'Severance',
+                mediaType: 'tv',
+                creator: 'Dan Erickson',
+                year: 2022,
+                source: 'tmdb',
+                sourceId: 'tv:95396',
+                metadata: { kind: 'show', tmdbId: 95396 },
+            },
+            logData: {
+                status: 'completed',
+                rating: 98,
+            },
+        }
+
+        const season1Res = await request(app)
+            .put('/media/media-log')
+            .set('Authorization', `Bearer ${token}`)
+            .send(season1Payload)
+        expect(season1Res.statusCode).toBe(201)
+
+        const savedSeason1 = await prisma.media.findFirst({
+            where: { source: 'tmdb', sourceId: 'tv:95396:s1' },
+        })
+        expect(savedSeason1).not.toBeNull()
+        expect(savedSeason1?.parentId).toBe(show!.id)
+        expect(savedSeason1?.position).toBe(1)
+
+        // 3. Season 2 is logged without explicit parent payload (auto-linking by tmdbId)
+        const season2Payload = {
+            mediaData: {
+                title: 'Severance: Season 2',
+                mediaType: 'tv',
+                creator: 'Dan Erickson',
+                year: 2025,
+                source: 'tmdb',
+                sourceId: 'tv:95396:s2',
+                metadata: { kind: 'season', tmdbId: 95396, seasonNumber: 2, showTitle: 'Severance' },
+            },
+            logData: {
+                status: 'completed',
+                rating: 90,
+            },
+        }
+
+        const season2Res = await request(app)
+            .put('/media/media-log')
+            .set('Authorization', `Bearer ${token}`)
+            .send(season2Payload)
+        expect(season2Res.statusCode).toBe(201)
+
+        const savedSeason2 = await prisma.media.findFirst({
+            where: { source: 'tmdb', sourceId: 'tv:95396:s2' },
+        })
+        expect(savedSeason2).not.toBeNull()
+        expect(savedSeason2?.parentId).toBe(show!.id)
+        expect(savedSeason2?.position).toBe(2)
     })
 })

@@ -88,13 +88,14 @@ export function getTvSeasons(tmdbId: number):
     })
 }
 
-export function getAlbumTracks(params: { artist?: string; album?: string; mbid?: string }):
+export function getAlbumTracks(params: { artist?: string; album?: string; mbid?: string; releaseGroupId?: string }):
     Promise<{ album: MusicResult; tracks: MusicTrackResult[]; provider: "lastfm" | "musicbrainz" | null }>
 {
     const qs = new URLSearchParams()
     if (params.artist) qs.set("artist", params.artist)
     if (params.album) qs.set("album", params.album)
     if (params.mbid) qs.set("mbid", params.mbid)
+    if (params.releaseGroupId) qs.set("releaseGroupId", params.releaseGroupId)
     return apiFetch(`/search/music/albums/tracks?${qs.toString()}`, {
         method: "GET"
     })

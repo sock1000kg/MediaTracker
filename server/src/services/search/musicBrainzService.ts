@@ -73,6 +73,34 @@ export class MusicBrainzService {
         }
     }
 
+    async getReleaseByReleaseGroup(releaseGroupId: string): Promise<MusicBrainzRelease | null> {
+        try {
+            const u = new URL(`${MB_BASE_URL}/release`)
+            u.searchParams.set("release-group", releaseGroupId.trim())
+            u.searchParams.set("limit", "100")
+            const data = await this.fetchJson(u.toString()) as { releases?: Array<{ id: string; status?: string; date?: string }> }
+            const releases = data?.releases ?? []
+            if (releases.length === 0) return null
+
+            const official = releases.filter(r => r.status?.toLowerCase() === "official")
+            const pool = official.length > 0 ? official : releases
+
+            pool.sort((a, b) => {
+                if (a.date && b.date) return a.date.localeCompare(b.date)
+                if (a.date) return -1
+                if (b.date) return 1
+                return 0
+            })
+
+            const chosen = pool[0]
+            if (!chosen?.id) return null
+            return this.getRelease(chosen.id)
+        } catch (error) {
+            console.warn(`MusicBrainz release-group lookup failed for ${releaseGroupId}:`, error)
+            return null
+        }
+    }
+
     mapReleaseTracks(release: MusicBrainzRelease, artistFallback: string): SearchResult[] {
         const albumArtist = release["artist-credit"]?.[0]?.name || artistFallback
         const albumYear = release.date && /^\d{4}/.test(release.date) ? release.date.slice(0, 4) : null

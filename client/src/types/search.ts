@@ -29,6 +29,9 @@ export type MusicMetadata = {
   albumSourceId?: string
   trackNumber?: number
   durationSec?: number | null
+  mbReleaseGroupId?: string
+  mbRecordingId?: string
+  mbid?: string
 }
 
 export type MusicResult = MediaResult<"music"> & {

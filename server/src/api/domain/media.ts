@@ -144,6 +144,12 @@ export async function createImportedMedia(
             parentMedia = ext.media
         }
     }
+    if (!parentMedia && meta?.kind === "season") {
+        const tmdbId = meta?.tmdbId != null ? String(meta.tmdbId) : (mediaData.sourceId?.match(/^tv:(\d+):s\d+$/)?.[1] ?? null)
+        if (tmdbId) {
+            parentMedia = await findMediaBySource(`tv:${tmdbId}`, "tmdb", tx)
+        }
+    }
     let position: number | null = null
     if (meta?.trackNumber != null && !Number.isNaN(Number(meta.trackNumber))) {
         position = Number(meta.trackNumber)

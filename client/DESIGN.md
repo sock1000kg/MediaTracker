@@ -359,6 +359,7 @@ Mockups: https://claude.ai/artifact/1T1tND4UjW7G6Qg7DPkaSU (Main.dc.html = A "Re
 - **Controls:** a List / Grid segmented pill (`aria-pressed`, labels at ≥ 640px) and a "Group: Month / Type / None" select. Defaults List + Month, stored in `localStorage` (`logs.view`, `logs.group`).
 - **Row (direction A):** `<li>` with a top border, no box. Cover (56×80 portrait, 64×64 music, 80×50 game), title in `font-display` with a muted "creator · year" byline, original title, type label + metadata, notes (italic, 3-line clamp, More/Less when long), category tags, "More info". Right column: rating (`/100`), "Status · 3 Nov 2026", and the "⋯" actions menu. Below 480px the right column drops under the content.
 - **Tile (direction B):** cover filling a `repeat(auto-fill, minmax(150px, 1fr))` cell with the aspect from the type, status badge top-left, title + rating, "type · creator", date, "⋯" menu.
+- **Expanded children:** expanding an album fetches and merges its full MusicBrainz tracklist (unlogged tracks show "–" with the same Edit button as logged ones); expanding a show lists every season 1…N from stored `seasonCount`.
 - **Covers:** without an image, a block in `--cover-1..6` (from the media id) with the title's first letter in `--cover-ink` (≥ 4.5:1 in both themes).
 
 ## 13a. Shared media-view pieces and the Media page (task 17)

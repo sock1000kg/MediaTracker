@@ -26,8 +26,8 @@ export class SearchService {
         return this.searchAlbums(userId, q, page)
     }
 
-    async getAlbumTracks(userId: string, artist: string, album: string, mbid?: string) {
-        return musicSearchService.fetchAlbumTracks(userId, artist, album, mbid)
+    async getAlbumTracks(userId: string, artist: string, album: string, mbid?: string, releaseGroupId?: string) {
+        return musicSearchService.fetchAlbumTracks(userId, artist, album, mbid, releaseGroupId)
     }
 
     async searchAnime(_userId: string, q: string, page: number = 1, filters?: AnimeSearchFilters) {

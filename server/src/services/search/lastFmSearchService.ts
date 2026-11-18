@@ -213,7 +213,8 @@ export class LastFmSearchService implements ISearchService {
         userId: string,
         artist: string,
         albumName: string,
-        mbid?: string
+        mbid?: string,
+        releaseGroupId?: string
     ): Promise<{
         album: SearchResult
         tracks: SearchResult[]
@@ -224,76 +225,123 @@ export class LastFmSearchService implements ISearchService {
         let provider: "lastfm" | "musicbrainz" | null = null
         let lastFmMbid: string | null = mbid || null
 
-        // 1. Try Last.fm first
-        try {
-            const key = await this.getUserApiKey(userId)
-            const url = buildAlbumInfoUrl(key, artist, albumName, mbid)
-            const init: RequestInit = { ...createUserAgentHeader(), signal: AbortSignal.timeout(10000) }
-            const raw = await fetchAndParse(
-                url,
-                lastFmAlbumInfoResponseSchema,
-                "Last.fm API error",
-                "Failed to fetch from Last.fm",
-                init
-            )
+        // 0. If releaseGroupId is directly provided, resolve from MusicBrainz first
+        if (releaseGroupId) {
+            try {
+                const release = await musicBrainzService.getReleaseByReleaseGroup(releaseGroupId)
+                if (release) {
+                    const mbTracks = musicBrainzService.mapReleaseTracks(release, artist)
+                    if (mbTracks.length > 0) {
+                        provider = "musicbrainz"
+                        const caaUrl = musicBrainzClient.getCoverArtUrl(releaseGroupId) || musicBrainzService.getCoverArtUrl(release.id)
+                        const albumArtist = release["artist-credit"]?.[0]?.name || artist
+                        const albumYear = release.date && /^\d{4}/.test(release.date) ? release.date.slice(0, 4) : null
 
-            const album = raw.album
-            if (album) {
-                if (album.mbid) lastFmMbid = album.mbid
-                const albumCaaUrl = lastFmMbid ? `https://coverartarchive.org/release/${lastFmMbid}/front-250` : null
-                const albumSourceId = album.mbid || album.url || `${artist}:${album.name}`
-
-                albumResult = {
-                    mediaType: "music",
-                    title: album.name,
-                    creator: album.artist,
-                    creators: album.artist ? [{ name: album.artist, role: "artist" }] : undefined,
-                    year: null,
-                    description: album.wiki?.summary || null,
-                    source: "lastfm",
-                    sourceId: albumSourceId,
-                    imageUrl: albumCaaUrl,
-                    metadata: {
-                        url: album.url,
-                        kind: "album",
-                        ...(lastFmMbid ? { mbid: lastFmMbid } : {}),
-                    },
-                }
-
-                const rawTracks = album.tracks?.track ?? []
-                if (rawTracks.length > 0) {
-                    provider = "lastfm"
-                    tracks = rawTracks.map((t, idx) => {
-                        const rankVal = t["@attr"]?.rank
-                        const trackNumber = rankVal != null && !Number.isNaN(Number(rankVal)) ? Number(rankVal) : idx + 1
-                        const trackArtist = (typeof t.artist === "object" ? t.artist?.name : t.artist) || album.artist
-                        const sourceId = `lastfm:${albumSourceId}#${trackNumber}`
-                        const dur = t.duration != null && !Number.isNaN(Number(t.duration)) && Number(t.duration) > 0 ? Number(t.duration) : null
-
-                        return {
+                        albumResult = {
                             mediaType: "music",
-                            title: t.name,
-                            creator: trackArtist,
-                            creators: trackArtist ? [{ name: trackArtist, role: "artist" }] : undefined,
-                            year: null,
+                            title: release.title,
+                            creator: albumArtist,
+                            creators: albumArtist ? [{ name: albumArtist, role: "artist" }] : undefined,
+                            year: albumYear,
                             description: null,
-                            source: "lastfm",
-                            sourceId,
-                            imageUrl: albumResult?.imageUrl ?? null,
+                            source: "musicbrainz",
+                            sourceId: releaseGroupId,
+                            imageUrl: caaUrl,
                             metadata: {
-                                kind: "track",
-                                album: album.name,
-                                albumSourceId,
-                                trackNumber,
-                                durationSec: dur,
-                                url: t.url,
+                                url: `https://musicbrainz.org/release-group/${releaseGroupId}`,
+                                kind: "album",
+                                mbid: release.id,
+                                mbReleaseGroupId: releaseGroupId,
                             },
                         }
-                    })
+
+                        tracks = mbTracks.map(t => ({
+                            ...t,
+                            imageUrl: albumResult?.imageUrl ?? caaUrl,
+                            metadata: {
+                                ...t.metadata,
+                                mbReleaseGroupId: releaseGroupId,
+                            },
+                        }))
+                    }
                 }
+            } catch (rgError) {
+                console.warn("MusicBrainz release-group lookup failed:", rgError)
             }
-        } catch (error) {
-            console.warn("Last.fm album.getInfo failed:", error)
+        }
+
+        // 1. Try Last.fm if no tracks yet
+        if (tracks.length === 0) {
+            try {
+                const key = await this.getUserApiKey(userId)
+                const url = buildAlbumInfoUrl(key, artist, albumName, mbid)
+                const init: RequestInit = { ...createUserAgentHeader(), signal: AbortSignal.timeout(10000) }
+                const raw = await fetchAndParse(
+                    url,
+                    lastFmAlbumInfoResponseSchema,
+                    "Last.fm API error",
+                    "Failed to fetch from Last.fm",
+                    init
+                )
+
+                const album = raw.album
+                if (album) {
+                    if (album.mbid) lastFmMbid = album.mbid
+                    const albumCaaUrl = lastFmMbid ? `https://coverartarchive.org/release/${lastFmMbid}/front-250` : null
+                    const albumSourceId = album.mbid || album.url || `${artist}:${album.name}`
+
+                    albumResult = {
+                        mediaType: "music",
+                        title: album.name,
+                        creator: album.artist,
+                        creators: album.artist ? [{ name: album.artist, role: "artist" }] : undefined,
+                        year: null,
+                        description: album.wiki?.summary || null,
+                        source: "lastfm",
+                        sourceId: albumSourceId,
+                        imageUrl: albumCaaUrl,
+                        metadata: {
+                            url: album.url,
+                            kind: "album",
+                            ...(lastFmMbid ? { mbid: lastFmMbid } : {}),
+                        },
+                    }
+
+                    const rawTracks = album.tracks?.track ?? []
+                    if (rawTracks.length > 0) {
+                        provider = "lastfm"
+                        tracks = rawTracks.map((t, idx) => {
+                            const rankVal = t["@attr"]?.rank
+                            const trackNumber = rankVal != null && !Number.isNaN(Number(rankVal)) ? Number(rankVal) : idx + 1
+                            const trackArtist = (typeof t.artist === "object" ? t.artist?.name : t.artist) || album.artist
+                            const sourceId = `lastfm:${albumSourceId}#${trackNumber}`
+                            const dur = t.duration != null && !Number.isNaN(Number(t.duration)) && Number(t.duration) > 0 ? Number(t.duration) : null
+
+                            return {
+                                mediaType: "music",
+                                title: t.name,
+                                creator: trackArtist,
+                                creators: trackArtist ? [{ name: trackArtist, role: "artist" }] : undefined,
+                                year: null,
+                                description: null,
+                                source: "lastfm",
+                                sourceId,
+                                imageUrl: albumResult?.imageUrl ?? null,
+                                metadata: {
+                                    kind: "track",
+                                    album: album.name,
+                                    albumSourceId,
+                                    trackNumber,
+                                    durationSec: dur,
+                                    url: t.url,
+                                },
+                            }
+                        })
+                    }
+                }
+            } catch (error) {
+                console.warn("Last.fm album.getInfo failed:", error)
+            }
         }
 
         // 2. MusicBrainz fallback if no tracks from Last.fm
@@ -302,6 +350,9 @@ export class LastFmSearchService implements ISearchService {
                 let release: MusicBrainzRelease | null = null
                 if (lastFmMbid) {
                     release = await musicBrainzService.getRelease(lastFmMbid)
+                    if (!release) {
+                        release = await musicBrainzService.getReleaseByReleaseGroup(lastFmMbid)
+                    }
                 }
                 if (!release && (albumName || artist)) {
                     const searchArtist = artist || albumResult?.creator || ""

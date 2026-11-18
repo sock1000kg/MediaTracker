@@ -1,5 +1,4 @@
 import { useState } from "react"
-import { useQuery } from "@tanstack/react-query"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import type { Log } from "@/types/mainTypes"
 import { formatLogMetadata } from "@/lib/logMetadata"
@@ -8,7 +7,7 @@ import { Cover } from "@/components/media-view/Cover"
 import { RowShell } from "@/components/media-view/RowShell"
 import { ClampText } from "@/components/media-view/ClampText"
 import { Button } from "@/components/ui/button"
-import { getMediaChildren } from "@/api/media"
+import { useExpandedChildren } from "@/hooks/useExpandedChildren"
 import { LogActions } from "./LogActions"
 
 interface LogRowProps {
@@ -42,10 +41,6 @@ export function LogRow({ log, onEdit, onDelete, onTagClick, leading, extraAction
   const summaryLine = childSummary != null && childSummary.rated > 0
     ? `${childSummary.rated} ${unit} rated · avg ${avgStr}`
     : null
-  // Albums and shows can always be expanded, even before any track or season is rated
-  const parentKind = media.kind ?? (typeof media.metadata?.kind === "string" ? media.metadata.kind : null)
-  const canExpand = parentKind === "album" || parentKind === "show" || childSummary != null
-
   const isChild = Boolean(media.parentId || media.kind === "track" || media.kind === "season" || media.metadata?.kind === "track" || media.metadata?.kind === "season")
   const parentTitle = (typeof media.parent?.title === "string" && media.parent.title.trim())
     || (typeof media.metadata?.album === "string" && media.metadata.album.trim())
@@ -53,24 +48,23 @@ export function LogRow({ log, onEdit, onDelete, onTagClick, leading, extraAction
     || null
   const fromSubtitle = isChild && parentTitle ? `from ${parentTitle}` : null
 
-  const { data: fetchedChildren = [], isLoading: queryLoading } = useQuery({
-    queryKey: ["mediaChildren", media.id],
-    queryFn: () => getMediaChildren(media.id),
-    enabled: expanded && !childrenLogs,
-  })
+  const {
+    items: children,
+    isLoading: childrenLoading,
+    errorNote,
+    emptyMessage,
+    handleEditItem,
+    dialog,
+    isMusicAlbum,
+    isTvShow,
+  } = useExpandedChildren({ log, expanded, childrenLogs })
 
-  const children = childrenLogs
-    ? childrenLogs.map((l) => ({
-        id: l.media.id,
-        title: l.media.title,
-        position: l.media.position,
-        log: l,
-      }))
-    : fetchedChildren
-  const childrenLoading = childrenLogs ? false : queryLoading
+  // Albums and shows can always be expanded, even before any track or season is rated
+  const canExpand = isMusicAlbum || isTvShow || childSummary != null
 
   return (
-    <RowShell
+    <>
+      <RowShell
       cover={
         leading ? (
           <div className="flex items-center gap-3">
@@ -124,38 +118,37 @@ export function LogRow({ log, onEdit, onDelete, onTagClick, leading, extraAction
       {expanded && canExpand && (
         <div className="mt-2 border-t border-border pt-2 flex flex-col gap-1">
           {childrenLoading && <p className="text-xs text-muted-foreground animate-pulse">Loading...</p>}
-          {!childrenLoading && children.every((c) => c.log == null) && (
-            <p className="text-xs text-muted-foreground">No {isMusic ? "tracks" : "seasons"} logged yet.</p>
+          {errorNote && <p className="text-xs text-muted-foreground">{errorNote}</p>}
+          {!childrenLoading && emptyMessage && (
+            <p className="text-xs text-muted-foreground">{emptyMessage}</p>
           )}
-          {!childrenLoading && (
+          {!childrenLoading && children.length > 0 && (
             <ul className="flex flex-col divide-y divide-border/40">
-              {children
-                .filter((c) => c.log != null)
-                .map((child) => {
-                  const childRating = displayRating(child.log?.rating)
-                  const pos = child.position != null ? `${child.position}. ` : ""
-                  return (
-                    <li key={child.id} className="flex items-center justify-between py-1 text-xs">
-                      <span className="font-medium truncate mr-2">
-                        {pos}{child.title}
+              {children.map((child) => {
+                const childRating = displayRating(child.log?.rating)
+                const pos = !isTvShow && child.position != null ? `${child.position}. ` : ""
+                return (
+                  <li key={child.id} className="flex items-center justify-between py-1 text-xs">
+                    <span className="font-medium truncate mr-2">
+                      {pos}{child.title}
+                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="tabular-nums text-muted-foreground" aria-label={childRating.label}>
+                        {childRating.text}
+                        {childRating.text !== "–" && <span className="text-[10px]">/100</span>}
                       </span>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="tabular-nums text-muted-foreground" aria-label={childRating.label}>
-                          {childRating.text}
-                          {childRating.text !== "–" && <span className="text-[10px]">/100</span>}
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-6 px-2 text-xs"
-                          onClick={() => child.log && onEdit(child.log)}
-                        >
-                          Edit
-                        </Button>
-                      </div>
-                    </li>
-                  )
-                })}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 px-2 text-xs"
+                        onClick={() => handleEditItem(child, onEdit)}
+                      >
+                        Edit
+                      </Button>
+                    </div>
+                  </li>
+                )
+              })}
             </ul>
           )}
         </div>
@@ -183,5 +176,7 @@ export function LogRow({ log, onEdit, onDelete, onTagClick, leading, extraAction
       )}
 
     </RowShell>
+    {dialog}
+  </>
   )
 }

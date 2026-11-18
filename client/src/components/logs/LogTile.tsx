@@ -1,12 +1,11 @@
 import { useState } from "react"
-import { useQuery } from "@tanstack/react-query"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import type { Log } from "@/types/mainTypes"
 import { coverAspect, displayRating, formatLogDate, statusLabel } from "@/lib/logView"
 import { Cover } from "@/components/media-view/Cover"
 import { TileShell } from "@/components/media-view/TileShell"
 import { Button } from "@/components/ui/button"
-import { getMediaChildren } from "@/api/media"
+import { useExpandedChildren } from "@/hooks/useExpandedChildren"
 import { LogActions } from "./LogActions"
 
 interface LogTileProps {
@@ -38,9 +37,6 @@ export function LogTile({ log, onEdit, onDelete, onTagClick, badge, extraActions
   const summaryLine = childSummary != null && childSummary.rated > 0
     ? `${childSummary.rated} ${unit} rated · avg ${avgStr}`
     : null
-  // Albums and shows can always be expanded, even before any track or season is rated
-  const parentKind = media.kind ?? (typeof media.metadata?.kind === "string" ? media.metadata.kind : null)
-  const canExpand = parentKind === "album" || parentKind === "show" || childSummary != null
 
   const isChild = Boolean(media.parentId || media.kind === "track" || media.kind === "season" || media.metadata?.kind === "track" || media.metadata?.kind === "season")
   const parentTitle = (typeof media.parent?.title === "string" && media.parent.title.trim())
@@ -49,23 +45,22 @@ export function LogTile({ log, onEdit, onDelete, onTagClick, badge, extraActions
     || null
   const fromSubtitle = isChild && parentTitle ? `from ${parentTitle}` : null
 
-  const { data: fetchedChildren = [], isLoading: queryLoading } = useQuery({
-    queryKey: ["mediaChildren", media.id],
-    queryFn: () => getMediaChildren(media.id),
-    enabled: expanded && !childrenLogs,
-  })
+  const {
+    items: children,
+    isLoading: childrenLoading,
+    errorNote,
+    emptyMessage,
+    handleEditItem,
+    dialog,
+    isMusicAlbum,
+    isTvShow,
+  } = useExpandedChildren({ log, expanded, childrenLogs })
 
-  const children = childrenLogs
-    ? childrenLogs.map((l) => ({
-        id: l.media.id,
-        title: l.media.title,
-        position: l.media.position,
-        log: l,
-      }))
-    : fetchedChildren
-  const childrenLoading = childrenLogs ? false : queryLoading
+  // Albums and shows can always be expanded, even before any track or season is rated
+  const canExpand = isMusicAlbum || isTvShow || childSummary != null
 
   return (
+    <>
     <TileShell
       cover={<Cover id={media.id} title={media.title} imageUrl={media.imageUrl} aspect={coverAspect(log)} size="tile" />}
       badge={badge !== undefined ? badge : (status || undefined)}
@@ -92,33 +87,32 @@ export function LogTile({ log, onEdit, onDelete, onTagClick, badge, extraActions
           {expanded && (
             <div className="mt-2 border-t border-border pt-1 flex flex-col gap-1">
               {childrenLoading && <p className="text-[11px] text-muted-foreground animate-pulse">Loading...</p>}
-              {!childrenLoading && children.every((c) => c.log == null) && (
-                <p className="text-[11px] text-muted-foreground">No {isMusic ? "tracks" : "seasons"} logged yet.</p>
+              {errorNote && <p className="text-[11px] text-muted-foreground">{errorNote}</p>}
+              {!childrenLoading && emptyMessage && (
+                <p className="text-[11px] text-muted-foreground">{emptyMessage}</p>
               )}
-              {!childrenLoading && (
+              {!childrenLoading && children.length > 0 && (
                 <ul className="flex flex-col divide-y divide-border/30">
-                  {children
-                    .filter((c) => c.log != null)
-                    .map((child) => {
-                      const childRating = displayRating(child.log?.rating)
-                      const pos = child.position != null ? `${child.position}. ` : ""
-                      return (
-                        <li key={child.id} className="flex items-center justify-between py-1 text-[11px]">
-                          <span className="truncate mr-1 font-medium">{pos}{child.title}</span>
-                          <div className="flex items-center gap-1 shrink-0">
-                            <span className="tabular-nums text-muted-foreground">{childRating.text}</span>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-5 px-1 text-[10px]"
-                              onClick={() => child.log && onEdit(child.log)}
-                            >
-                              Edit
-                            </Button>
-                          </div>
-                        </li>
-                      )
-                    })}
+                  {children.map((child) => {
+                    const childRating = displayRating(child.log?.rating)
+                    const pos = !isTvShow && child.position != null ? `${child.position}. ` : ""
+                    return (
+                      <li key={child.id} className="flex items-center justify-between py-1 text-[11px]">
+                        <span className="truncate mr-1 font-medium">{pos}{child.title}</span>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <span className="tabular-nums text-muted-foreground">{childRating.text}</span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-5 px-1 text-[10px]"
+                            onClick={() => handleEditItem(child, onEdit)}
+                          >
+                            Edit
+                          </Button>
+                        </div>
+                      </li>
+                    )
+                  })}
                 </ul>
               )}
             </div>
@@ -152,5 +146,7 @@ export function LogTile({ log, onEdit, onDelete, onTagClick, badge, extraActions
         </div>
       </div>
     </TileShell>
+    {dialog}
+  </>
   )
 }

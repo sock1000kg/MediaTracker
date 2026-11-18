@@ -248,4 +248,68 @@ describe('Tracklist Resolution and Fetching', () => {
         expect(res.tracks[1].inLibrary).toBe(false)
         expect(res.tracks[1].myLog).toBeNull()
     })
+
+    it('T1: accepts a release group and returns its tracks (MusicBrainz mocked)', async () => {
+        const mbRelease = {
+            id: 'mb-rel-early',
+            title: 'Loveless',
+            date: '1991-11-04',
+            'artist-credit': [{ name: 'my bloody valentine' }],
+            media: [
+                {
+                    position: 1,
+                    tracks: [
+                        { id: 'mb-trk-1', position: 1, title: 'Only Shallow', length: 257000 },
+                        { id: 'mb-trk-2', position: 2, title: 'Loomer', length: 158000 },
+                    ],
+                },
+            ],
+        }
+
+        jest.spyOn(musicBrainzService, 'getReleaseByReleaseGroup').mockResolvedValue(mbRelease)
+        jest.spyOn(prisma.media, 'findMany').mockResolvedValue([])
+
+        const res = await musicSearchService.fetchAlbumTracks('1', 'my bloody valentine', 'Loveless', undefined, 'rg-loveless-456')
+
+        expect(res.provider).toBe('musicbrainz')
+        expect(res.album.sourceId).toBe('rg-loveless-456')
+        expect((res.album.metadata as Record<string, unknown>)?.mbReleaseGroupId).toBe('rg-loveless-456')
+        expect(res.tracks).toHaveLength(2)
+        expect(res.tracks[0].title).toBe('Only Shallow')
+        expect(res.tracks[0].metadata).toMatchObject({
+            trackNumber: 1,
+            durationSec: 257,
+            mbReleaseGroupId: 'rg-loveless-456',
+        })
+    })
+
+    it('T1: getReleaseByReleaseGroup picks the earliest official release', async () => {
+        const mockReleasesData = {
+            releases: [
+                { id: 'rel-bootleg', status: 'Bootleg', date: '1990-01-01' },
+                { id: 'rel-late', status: 'Official', date: '2008-05-01' },
+                { id: 'rel-early', status: 'Official', date: '1991-11-04' },
+            ],
+        }
+
+        const mockReleaseDetail = {
+            id: 'rel-early',
+            title: 'Loveless',
+            date: '1991-11-04',
+            'artist-credit': [{ name: 'my bloody valentine' }],
+            media: [
+                {
+                    position: 1,
+                    tracks: [{ id: 'trk-1', position: 1, title: 'Only Shallow' }],
+                },
+            ],
+        }
+
+        jest.spyOn(musicBrainzService, 'fetchJson').mockResolvedValue(mockReleasesData)
+        jest.spyOn(musicBrainzService, 'getRelease').mockResolvedValue(mockReleaseDetail)
+
+        const chosen = await musicBrainzService.getReleaseByReleaseGroup('rg-pick-early')
+        expect(musicBrainzService.getRelease).toHaveBeenCalledWith('rel-early')
+        expect(chosen?.id).toBe('rel-early')
+    })
 })

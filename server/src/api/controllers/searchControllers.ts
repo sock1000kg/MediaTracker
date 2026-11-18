@@ -65,13 +65,16 @@ export const getAlbumTracks = async (req: Request, res: Response, next: NextFunc
     const artist = typeof req.query.artist === "string" ? req.query.artist.trim() : ""
     const album = typeof req.query.album === "string" ? req.query.album.trim() : ""
     const mbid = typeof req.query.mbid === "string" && req.query.mbid.trim() ? req.query.mbid.trim() : undefined
+    const releaseGroupId = typeof req.query.releaseGroupId === "string" && req.query.releaseGroupId.trim()
+        ? req.query.releaseGroupId.trim()
+        : (typeof req.query.mbReleaseGroupId === "string" && req.query.mbReleaseGroupId.trim() ? req.query.mbReleaseGroupId.trim() : undefined)
 
-    if (!mbid && (!artist || !album)) {
-        return res.status(400).json({ message: "Artist and album or mbid are required" })
+    if (!releaseGroupId && !mbid && (!artist || !album)) {
+        return res.status(400).json({ message: "Artist and album, mbid, or releaseGroupId are required" })
     }
 
     try {
-        const results = await searchService.getAlbumTracks(userId, artist, album, mbid)
+        const results = await searchService.getAlbumTracks(userId, artist, album, mbid, releaseGroupId)
         res.status(200).json(results)
     } catch (error) {
         next(error)
