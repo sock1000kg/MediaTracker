@@ -1,5 +1,3 @@
-import type { BoardGameResult } from "@/types/search"
-
 export const BGG_URL = "https://boardgamegeek.com"
 export const BGG_ATTRIBUTION_TEXT = "Board game data from BoardGameGeek"
 /** BGG's XML API terms require the "Powered by BGG" logo wherever its data is shown. Don't recolour or edit it. */
@@ -51,15 +49,31 @@ export function formatBggRating(score?: number | null): string | null {
   return `BGG ${score.toFixed(2)}`
 }
 
-/** Parts of the card's metadata line: players, playing time, BGG rating. */
-export function boardGameMetaParts(m?: BoardGameResult["metadata"] | null): string[] {
+/** Parts of the card's details line: players, playing time, BGG rating. */
+export function boardGameMetaParts(
+  m?: {
+    minPlayers?: number | null
+    maxPlayers?: number | null
+    playingTime?: number | null
+    playTimeMin?: number | null
+    minPlayTime?: number | null
+    minPlayTimeMin?: number | null
+    maxPlayTime?: number | null
+    maxPlayTimeMin?: number | null
+    bggRating?: number | null
+    score?: number | null
+  } | null
+): string[] {
   if (!m) return []
   const parts: string[] = []
   const players = formatBoardGamePlayers(m.minPlayers, m.maxPlayers)
   if (players) parts.push(players)
-  const time = formatBoardGamePlayingTime(m.playingTime, m.minPlayTime, m.maxPlayTime)
+  const playingTime = m.playTimeMin ?? m.playingTime
+  const minPlayTime = m.minPlayTimeMin ?? m.minPlayTime
+  const maxPlayTime = m.maxPlayTimeMin ?? m.maxPlayTime
+  const time = formatBoardGamePlayingTime(playingTime, minPlayTime, maxPlayTime)
   if (time) parts.push(time)
-  const rating = formatBggRating(m.bggRating)
+  const rating = formatBggRating(m.score ?? m.bggRating)
   if (rating) parts.push(rating)
   return parts
 }

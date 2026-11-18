@@ -1,15 +1,12 @@
 import { z } from "zod"
 import { LIMITS } from "@/config/limits.js"
 
-export const bookMetadataSchema = z.object({
+export const bookDetailsSchema = z.object({
     pageCount: z.number().nullable().optional(),
-    categories: z.array(z.string()).nullable().optional(), // 👈 Now TS knows this is an array!
     publisher: z.string().nullable().optional(),
-    url: z.string().nullable().optional(),
-    isbn: z.string().nullable().optional(),
-})
+}).strict()
 
-export type BookMetadata = z.infer<typeof bookMetadataSchema>
+export type BookDetails = z.infer<typeof bookDetailsSchema>
 
 //GOOGLE BOOKS SEARCH (DEPRECATED)
 //For info of each book fetched from GG Books

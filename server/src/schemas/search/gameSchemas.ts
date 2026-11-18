@@ -1,16 +1,16 @@
 import { z } from "zod"
 import { LIMITS } from "@/config/limits.js"
 
-export const gameMetadataSchema = z.object({
-    url: z.string().optional(),
-    kind: z.literal("game"),
+export const gameDetailsSchema = z.object({
     platforms: z.array(z.string()).nullable().optional(),
-    metacritic: z.number().nullable().optional(),
-    score: z.number().nullable().optional(), // RAWG rating, 0-5
     publishers: z.array(z.string()).nullable().optional(),
-    categories: z.array(z.string()).nullable().optional(),
-    playtimeHours: z.number().nullable().optional(),
+    score: z.number().nullable().optional(),
+    scoreScale: z.literal("rawg_5").optional(),
+    metacritic: z.number().nullable().optional(),
+    avgPlaytimeHours: z.number().nullable().optional(),
 }).strict()
+
+export type GameDetails = z.infer<typeof gameDetailsSchema>
 
 const nl = <T extends z.ZodTypeAny>(s: T) => s.nullable().optional()
 

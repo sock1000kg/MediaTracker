@@ -64,26 +64,24 @@ describe("TMDB Refresh and Purge Job (Integration)", () => {
         userWithoutKeyId = userB.id
     })
 
-    it("refreshes stale media with a key holder's key, updating provider fields and fetchedAt while preserving user logs", async () => {
-        const staleDate = new Date(Date.now() - 200 * 24 * 60 * 60 * 1000).toISOString()
+    it("refreshes stale media with a key holder's key, updating provider fields and syncedAt while preserving user logs", async () => {
+        const staleDate = new Date(Date.now() - 200 * 24 * 60 * 60 * 1000)
 
         // Create stale movie media
         const staleMovie = await prisma.media.create({
             data: {
                 title: "Old Alien Title",
-                source: "tmdb",
-                sourceId: "movie-348",
+                provider: "tmdb",
+                providerId: "movie-348",
                 year: 1978,
                 description: "Old description",
                 imageUrl: "https://image.tmdb.org/t/p/w342/old_poster.jpg",
                 mediaTypeId: movieTypeId,
                 userId: systemUserId,
-                metadata: {
-                    kind: "movie",
+                syncedAt: staleDate,
+                details: {
                     tmdbId: 348,
-                    url: "https://www.themoviedb.org/movie/348",
                     score: 7.0,
-                    fetchedAt: staleDate,
                 },
             },
         })
@@ -128,7 +126,7 @@ describe("TMDB Refresh and Purge Job (Integration)", () => {
         // Verify media updated
         const updated = await prisma.media.findUniqueOrThrow({
             where: { id: staleMovie.id },
-            include: { genres: { include: { genre: true } }, creators: { include: { creator: true } } },
+            include: { genres: { include: { genre: true } }, creators: { include: { creator: true } }, externalIds: true },
         })
 
         expect(updated.title).toBe("Alien")
@@ -138,14 +136,13 @@ describe("TMDB Refresh and Purge Job (Integration)", () => {
         expect(updated.imageUrl).toBe("https://image.tmdb.org/t/p/w342/fresh_alien_poster.jpg")
         expect(updated.creator).toBe("Ridley Scott")
 
-        const meta = updated.metadata as Record<string, unknown>
-        expect(meta.kind).toBe("movie")
-        expect(meta.tmdbId).toBe(348)
-        expect(meta.score).toBe(8.2)
-        expect(meta.runtime).toBe(117)
-        expect(meta.imdbId).toBe("tt0078748")
-        expect(meta.fetchedAt).toBeDefined()
-        expect(new Date(meta.fetchedAt as string).getTime()).toBeGreaterThan(Date.now() - 60_000)
+        const details = updated.details as Record<string, unknown>
+        expect(details.score).toBe(8.2)
+        expect(details.durationSec).toBe(117 * 60)
+        expect(updated.externalIds.some(e => e.provider === "tmdb" && e.externalId === "348")).toBe(true)
+        expect(updated.externalIds.some(e => e.provider === "imdb" && e.externalId === "tt0078748")).toBe(true)
+        expect(updated.syncedAt).toBeDefined()
+        expect(updated.syncedAt!.getTime()).toBeGreaterThan(Date.now() - 60_000)
 
         // Verify genres
         const genreNames = updated.genres.map(g => g.genre.name)
@@ -159,22 +156,21 @@ describe("TMDB Refresh and Purge Job (Integration)", () => {
     })
 
     it("skips fresh media whose data was fetched within 180 days", async () => {
-        const freshDate = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
+        const freshDate = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000)
 
         const freshMovie = await prisma.media.create({
             data: {
                 title: "Fresh Movie",
-                source: "tmdb",
-                sourceId: "movie-999",
+                provider: "tmdb",
+                providerId: "movie-999",
                 year: 2024,
                 description: "Fresh overview",
                 imageUrl: "https://image.tmdb.org/t/p/w342/fresh.jpg",
                 mediaTypeId: movieTypeId,
                 userId: systemUserId,
-                metadata: {
-                    kind: "movie",
+                syncedAt: freshDate,
+                details: {
                     tmdbId: 999,
-                    fetchedAt: freshDate,
                 },
             },
         })
@@ -200,29 +196,27 @@ describe("TMDB Refresh and Purge Job (Integration)", () => {
     })
 
     it("purges stale media with no key holder as described, keeping title/year and user logs intact", async () => {
-        const staleDate = new Date(Date.now() - 190 * 24 * 60 * 60 * 1000).toISOString()
+        const staleDate = new Date(Date.now() - 190 * 24 * 60 * 60 * 1000)
 
         // Create stale TV season
         const staleSeason = await prisma.media.create({
             data: {
                 title: "Rick and Morty: Season 1",
-                source: "tmdb",
-                sourceId: "tv:60625:s1",
+                provider: "tmdb",
+                providerId: "tv:60625:s1",
                 year: 2013,
                 description: "Season 1 description from TMDB",
                 imageUrl: "https://image.tmdb.org/t/p/w342/s1_poster.jpg",
                 originalTitle: "Rick and Morty: S1",
                 mediaTypeId: tvTypeId,
                 userId: systemUserId,
-                metadata: {
-                    kind: "season",
+                subtype: "season",
+                syncedAt: staleDate,
+                details: {
                     tmdbId: 60625,
-                    url: "https://www.themoviedb.org/tv/60625/season/1",
                     showTitle: "Rick and Morty",
                     seasonNumber: 1,
                     episodeCount: 11,
-                    categories: ["Animation", "Sci-Fi & Fantasy"],
-                    fetchedAt: staleDate,
                 },
             },
         })
@@ -255,19 +249,16 @@ describe("TMDB Refresh and Purge Job (Integration)", () => {
         // Keeps title and year
         expect(purgedMedia.title).toBe("Rick and Morty: Season 1")
         expect(purgedMedia.year).toBe(2013)
+        expect(purgedMedia.subtype).toBe("season")
+        expect(purgedMedia.purgedAt).toBeDefined()
+        expect(purgedMedia.syncedAt).toBeNull()
 
-        // Metadata keeps kind, tmdbId, url, season/episode structure, and fetchedAt is null
-        const meta = purgedMedia.metadata as Record<string, unknown>
-        expect(meta.kind).toBe("season")
-        expect(meta.tmdbId).toBe(60625)
-        expect(meta.url).toBe("https://www.themoviedb.org/tv/60625/season/1")
-        expect(meta.showTitle).toBe("Rick and Morty")
-        expect(meta.seasonNumber).toBe(1)
-        expect(meta.episodeCount).toBe(11)
-        expect(meta.fetchedAt).toBeNull()
-
-        // TMDB-only categories dropped
-        expect(meta.categories).toBeUndefined()
+        // Details keeps tmdbId, showTitle, seasonNumber, episodeCount
+        const details = purgedMedia.details as Record<string, unknown>
+        expect(details.tmdbId).toBe(60625)
+        expect(details.showTitle).toBe("Rick and Morty")
+        expect(details.seasonNumber).toBe(1)
+        expect(details.episodeCount).toBe(11)
 
         // User log completely intact
         const preservedLog = await prisma.userLogs.findUniqueOrThrow({ where: { id: userLog.id } })
@@ -277,19 +268,17 @@ describe("TMDB Refresh and Purge Job (Integration)", () => {
     })
 
     it("never calls TMDB for non-TMDB media", async () => {
-        // Create non-TMDB media (e.g. book and rawg game) with old or null fetchedAt
+        // Create non-TMDB media (e.g. book and rawg game) with old or null syncedAt
         const bookMedia = await prisma.media.create({
             data: {
                 title: "Dune",
-                source: "open_library",
-                sourceId: "OL12345M",
+                provider: "openlibrary",
+                providerId: "OL12345M",
                 year: 1965,
                 description: "Epic sci-fi book",
                 mediaTypeId: bookTypeId,
                 userId: systemUserId,
-                metadata: {
-                    fetchedAt: new Date(Date.now() - 300 * 24 * 60 * 60 * 1000).toISOString(),
-                },
+                syncedAt: new Date(Date.now() - 300 * 24 * 60 * 60 * 1000),
             },
         })
 
@@ -311,22 +300,21 @@ describe("TMDB Refresh and Purge Job (Integration)", () => {
     })
 
     it("leaves media row untouched when key holder exists but TMDB returns an error (500)", async () => {
-        const staleDate = new Date(Date.now() - 200 * 24 * 60 * 60 * 1000).toISOString()
+        const staleDate = new Date(Date.now() - 200 * 24 * 60 * 60 * 1000)
 
         const movie = await prisma.media.create({
             data: {
                 title: "Existing Title",
-                source: "tmdb",
-                sourceId: "movie-1234",
+                provider: "tmdb",
+                providerId: "movie-1234",
                 year: 2020,
                 description: "Keep this description",
                 imageUrl: "https://image.tmdb.org/t/p/w342/keep.jpg",
                 mediaTypeId: movieTypeId,
                 userId: systemUserId,
-                metadata: {
-                    kind: "movie",
+                syncedAt: staleDate,
+                details: {
                     tmdbId: 1234,
-                    fetchedAt: staleDate,
                 },
             },
         })
@@ -351,30 +339,28 @@ describe("TMDB Refresh and Purge Job (Integration)", () => {
         const untouched = await prisma.media.findUniqueOrThrow({ where: { id: movie.id } })
         expect(untouched.description).toBe("Keep this description")
         expect(untouched.imageUrl).toBe("https://image.tmdb.org/t/p/w342/keep.jpg")
-        const meta = untouched.metadata as Record<string, unknown>
-        expect(meta.fetchedAt).toBe(staleDate)
-        expect(meta.purgedAt).toBeUndefined()
-        expect(meta.refreshCheckedAt).toBeDefined()
-        expect(new Date(meta.refreshCheckedAt as string).getTime()).toBeGreaterThan(Date.now() - 60_000)
+        expect(untouched.syncedAt?.toISOString()).toBe(staleDate.toISOString())
+        expect(untouched.purgedAt).toBeNull()
+        expect(untouched.syncCheckedAt).toBeDefined()
+        expect(untouched.syncCheckedAt!.getTime()).toBeGreaterThan(Date.now() - 60_000)
     })
 
     it("purges stale media when key holder exists but TMDB returns 404", async () => {
-        const staleDate = new Date(Date.now() - 200 * 24 * 60 * 60 * 1000).toISOString()
+        const staleDate = new Date(Date.now() - 200 * 24 * 60 * 60 * 1000)
 
         const movie = await prisma.media.create({
             data: {
                 title: "Removed Movie",
-                source: "tmdb",
-                sourceId: "movie-404040",
+                provider: "tmdb",
+                providerId: "movie-404040",
                 year: 2019,
                 description: "Old overview to be purged",
                 imageUrl: "https://image.tmdb.org/t/p/w342/removed.jpg",
                 mediaTypeId: movieTypeId,
                 userId: systemUserId,
-                metadata: {
-                    kind: "movie",
+                syncedAt: staleDate,
+                details: {
                     tmdbId: 404040,
-                    fetchedAt: staleDate,
                 },
             },
         })
@@ -400,31 +386,29 @@ describe("TMDB Refresh and Purge Job (Integration)", () => {
         const purged = await prisma.media.findUniqueOrThrow({ where: { id: movie.id } })
         expect(purged.description).toBeNull()
         expect(purged.imageUrl).toBeNull()
-        const meta = purged.metadata as Record<string, unknown>
-        expect(meta.fetchedAt).toBeNull()
-        expect(meta.purgedAt).toBeDefined()
-        expect(meta.refreshCheckedAt).toBeDefined()
+        expect(purged.syncedAt).toBeNull()
+        expect(purged.purgedAt).toBeDefined()
+        expect(purged.syncCheckedAt).toBeDefined()
     })
 
-    it("rotates failing stale rows across consecutive runs based on refreshCheckedAt", async () => {
-        const staleDate = new Date(Date.now() - 200 * 24 * 60 * 60 * 1000).toISOString()
+    it("rotates failing stale rows across consecutive runs based on syncCheckedAt", async () => {
+        const staleDate = new Date(Date.now() - 200 * 24 * 60 * 60 * 1000)
         const createdMovies: Array<{ id: string }> = []
 
         for (let i = 1; i <= 4; i++) {
             const m = await prisma.media.create({
                 data: {
                     title: `Failing Movie ${i}`,
-                    source: "tmdb",
-                    sourceId: `movie-900${i}`,
+                    provider: "tmdb",
+                    providerId: `movie-900${i}`,
                     year: 2020,
                     description: `Overview ${i}`,
                     imageUrl: `https://image.tmdb.org/t/p/w342/${i}.jpg`,
                     mediaTypeId: movieTypeId,
                     userId: systemUserId,
-                    metadata: {
-                        kind: "movie",
+                    syncedAt: staleDate,
+                    details: {
                         tmdbId: 9000 + i,
-                        fetchedAt: staleDate,
                     },
                 },
             })
@@ -447,42 +431,39 @@ describe("TMDB Refresh and Purge Job (Integration)", () => {
         const afterRun1 = await prisma.media.findMany({
             where: { id: { in: createdMovies.map(m => m.id) } },
         })
-        const run1Checked = afterRun1.filter(m => (m.metadata as Record<string, unknown> | null)?.refreshCheckedAt)
-        const run1Unchecked = afterRun1.filter(m => !(m.metadata as Record<string, unknown> | null)?.refreshCheckedAt)
+        const run1Checked = afterRun1.filter(m => m.syncCheckedAt)
+        const run1Unchecked = afterRun1.filter(m => !m.syncCheckedAt)
         expect(run1Checked).toHaveLength(2)
         expect(run1Unchecked).toHaveLength(2)
 
         // Wait a tick so timestamps advance
         await new Promise(r => setTimeout(r, 20))
 
-        // Run 2: limit 2 -> should process the other 2 rows that still had null refreshCheckedAt
+        // Run 2: limit 2 -> should process the other 2 rows that still had null syncCheckedAt
         const run2 = await refreshStaleTmdbMedia(2, prisma)
         expect(run2.failed).toBe(2)
 
         const afterRun2 = await prisma.media.findMany({
             where: { id: { in: createdMovies.map(m => m.id) } },
         })
-        const run2Checked = afterRun2.filter(m => (m.metadata as Record<string, unknown> | null)?.refreshCheckedAt)
+        const run2Checked = afterRun2.filter(m => m.syncCheckedAt)
         expect(run2Checked).toHaveLength(4)
     })
 
-    it("skips and counts media with unknown kind without purging it", async () => {
-        const staleDate = new Date(Date.now() - 200 * 24 * 60 * 60 * 1000).toISOString()
+    it("skips and counts media with unresolvable show/movie without purging it", async () => {
+        const staleDate = new Date(Date.now() - 200 * 24 * 60 * 60 * 1000)
 
         const unknownMedia = await prisma.media.create({
             data: {
-                title: "Unknown Kind Media",
-                source: "tmdb",
-                sourceId: "custom-9999",
+                title: "Unknown Media",
+                provider: "tmdb",
+                providerId: "unknown-9999",
                 year: 2022,
-                description: "Preserved description for unknown kind",
+                description: "Preserved description for unknown",
                 imageUrl: "https://image.tmdb.org/t/p/w342/unknown.jpg",
                 mediaTypeId: movieTypeId,
                 userId: systemUserId,
-                metadata: {
-                    kind: "comic" as unknown as "movie",
-                    fetchedAt: staleDate,
-                },
+                syncedAt: staleDate,
             },
         })
 
@@ -504,33 +485,31 @@ describe("TMDB Refresh and Purge Job (Integration)", () => {
         expect(result.refreshed).toBe(0)
 
         const preserved = await prisma.media.findUniqueOrThrow({ where: { id: unknownMedia.id } })
-        expect(preserved.description).toBe("Preserved description for unknown kind")
+        expect(preserved.description).toBe("Preserved description for unknown")
         expect(preserved.imageUrl).toBe("https://image.tmdb.org/t/p/w342/unknown.jpg")
-        const meta = preserved.metadata as Record<string, unknown>
-        expect(meta.purgedAt).toBeUndefined()
-        expect(meta.refreshCheckedAt).toBeDefined()
+        expect(preserved.purgedAt).toBeNull()
+        expect(preserved.syncCheckedAt).toBeDefined()
     })
 
     it("does not starve batch when more purged rows than batch limit exist", async () => {
-        const staleDate = new Date(Date.now() - 200 * 24 * 60 * 60 * 1000).toISOString()
+        const staleDate = new Date(Date.now() - 200 * 24 * 60 * 60 * 1000)
 
         // Create 4 purged rows
         for (let i = 1; i <= 4; i++) {
             await prisma.media.create({
                 data: {
                     title: `Purged Item ${i}`,
-                    source: "tmdb",
-                    sourceId: `movie-purged-${i}`,
+                    provider: "tmdb",
+                    providerId: `movie-purged-${i}`,
                     year: 2010,
                     description: null,
                     imageUrl: null,
                     mediaTypeId: movieTypeId,
                     userId: systemUserId,
-                    metadata: {
-                        kind: "movie",
+                    syncedAt: null,
+                    purgedAt: staleDate,
+                    details: {
                         tmdbId: 5000 + i,
-                        fetchedAt: null,
-                        purgedAt: staleDate,
                     },
                 },
             })
@@ -540,17 +519,16 @@ describe("TMDB Refresh and Purge Job (Integration)", () => {
         const refreshableMovie = await prisma.media.create({
             data: {
                 title: "Needs Refresh",
-                source: "tmdb",
-                sourceId: "movie-7777",
+                provider: "tmdb",
+                providerId: "movie-7777",
                 year: 2021,
                 description: "Old overview",
                 imageUrl: "https://image.tmdb.org/t/p/w342/old.jpg",
                 mediaTypeId: movieTypeId,
                 userId: systemUserId,
-                metadata: {
-                    kind: "movie",
+                syncedAt: staleDate,
+                details: {
                     tmdbId: 7777,
-                    fetchedAt: staleDate,
                 },
             },
         })

@@ -36,7 +36,7 @@ describe("GameSearchSection", () => {
       sourceId: "game-1",
       title: "Hades",
       year: "2020",
-      metadata: { kind: "game", score: 4.5 },
+      details: { score: 4.5 },
     }
 
     const mockBoardGame: BoardGameResult = {
@@ -45,7 +45,7 @@ describe("GameSearchSection", () => {
       sourceId: "13",
       title: "Catan",
       year: "1995",
-      metadata: { kind: "boardgame", minPlayers: 3, maxPlayers: 4, bggRating: 7.12 },
+      details: { minPlayers: 3, maxPlayers: 4, score: 7.12 },
     }
 
     vi.mocked(searchApi.searchGames).mockResolvedValue({ results: [mockGame], nextStartIndex: null })

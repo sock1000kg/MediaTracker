@@ -98,8 +98,8 @@ export function sanitizeYear(year: number | string | undefined | null): number |
     return Number.isInteger(num) ? num : null
 }
 
-// Sanitize metadata: make sure it's valid JSON/object
-export function sanitizeMetadata(input: unknown): Prisma.JsonValue | null {
+// Sanitize details: make sure it's valid JSON/object
+export function sanitizeDetails(input: unknown): Prisma.JsonValue | null {
     if (input === null || input === undefined) return null
 
     // If it's a string, try to parse as JSON
@@ -125,21 +125,12 @@ export function sanitizeMetadata(input: unknown): Prisma.JsonValue | null {
 
     return null
 }
+export const sanitizeMetadata = sanitizeDetails
 
 // Sanitize description: trim whitespace, limit to 3000 chars
 export function sanitizeDescription(desc: string | undefined | null): string | null {
     if (!desc) return null
     return String(desc).trim().slice(0, 3000)
-}
-
-// Sanitize source: only allow known sources (e.g., "google_books")
-// Every search provider's `source` must be listed here, or logging its results fails with 400.
-const allowedSources = ["google_books", "lastfm", "goodreads", "open_library", "jikan", "anilist", "tmdb", "rawg", "mal", "bgg"] as const
-export type AllowedSource = (typeof allowedSources)[number]
-export function sanitizeSource(source: string | undefined | null): AllowedSource | null {
-    if (!source) return null
-    const clean = String(source).trim().toLowerCase()
-    return allowedSources.includes(clean as AllowedSource) ? (clean as AllowedSource) : null
 }
 
 // Sanitize image URL: require https, trim, allow null

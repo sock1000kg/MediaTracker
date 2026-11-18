@@ -38,12 +38,12 @@ function linkFor(href: unknown): ProviderLink | null {
 /**
  * The "View on …" links for a media item, for the actions menus.
  * Links are built dynamically from stored ids for every provider.
- * Falls back to stored metadata.url only when no id can be built.
+ * Falls back to stored details.url only when no id can be built.
  */
 export function providerLinks(media: LinkMedia): ProviderLink[] {
-  const meta = (media.metadata ?? {}) as Record<string, unknown>
+  const details = (media.details ?? {}) as Record<string, unknown>
   const mediaTypeName = typeof media.mediaType === "string" ? media.mediaType.toLowerCase() : media.mediaType?.name?.toLowerCase()
-  const source = media.source?.toLowerCase()
+  const source = media.provider?.toLowerCase()
   const isMusic = source === "musicbrainz" || source === "lastfm" || mediaTypeName === "music"
 
   if (isMusic) {
@@ -55,7 +55,7 @@ export function providerLinks(media: LinkMedia): ProviderLink[] {
     if (lastfmHref) links.push({ label: "View on Last.fm", href: lastfmHref })
 
     if (links.length === 0) {
-      const stored = linkFor(meta.url)
+      const stored = linkFor(details.url)
       if (stored) links.push(stored)
     }
     return links
@@ -83,7 +83,7 @@ export function providerLinks(media: LinkMedia): ProviderLink[] {
     if (href) links.push({ label: "View on AniList", href })
   }
 
-  if (source === "open_library" || source === "openlibrary") {
+  if (source === "openlibrary") {
     const href = CLIENT_PROVIDERS.openlibrary.buildLink(media)
     if (href) links.push({ label: "View on Open Library", href })
   }
@@ -117,7 +117,7 @@ export function providerLinks(media: LinkMedia): ProviderLink[] {
 
   // Fallback to stored url only when no id could be built
   if (links.length === 0) {
-    const stored = linkFor(meta.url)
+    const stored = linkFor(details.url)
     if (stored) links.push(stored)
   }
 

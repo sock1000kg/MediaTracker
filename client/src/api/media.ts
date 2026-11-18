@@ -19,10 +19,13 @@ export function createMedia(newMedia: Partial<Media>): Promise<Media> {
       },
       creator: newMedia.creator,
       year: newMedia.year,
-      source: newMedia.source, 
+      provider: newMedia.provider, 
+      providerId: newMedia.providerId, 
       description: newMedia.description, 
       imageUrl: newMedia.imageUrl,
-      metadata: newMedia.metadata
+      details: newMedia.details,
+      subtype: newMedia.subtype,
+      releaseDate: newMedia.releaseDate,
     })
   })
 }
@@ -49,11 +52,13 @@ export function editMedia(media: Partial<Media>): Promise<Media> {
       mediaType: media.mediaType,
       creator: media.creator,
       year: media.year,
-      source: media.source, 
-      sourceId: media.sourceId, 
+      provider: media.provider, 
+      providerId: media.providerId, 
       description: media.description, 
       imageUrl: media.imageUrl,
-      metadata: media.metadata
+      details: media.details,
+      subtype: media.subtype,
+      releaseDate: media.releaseDate,
     })
   })
 }

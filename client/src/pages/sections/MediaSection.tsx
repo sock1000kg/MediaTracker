@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import type { DialogName, Log } from "@/types/mainTypes"
-import type { Media, MediaMetadata } from "@/types/mainTypes"
+import type { Media } from "@/types/mainTypes"
 
 import { Button } from "@/components/ui/button"
 import { MediaRow } from "@/components/media/MediaRow"
@@ -40,9 +40,9 @@ const getMediaSortValue = (media: Media, field: SortField) => {
       case "title": return media.title
       case "creator": return media.creator
       case "date": return new Date(media.created_at).getTime()
-      case "pageCount": return Number((media.metadata as MediaMetadata)?.pageCount ?? 0)
+      case "pageCount": return Number((media.details as Record<string, unknown> | undefined)?.pageCount ?? 0)
       case "categories": {
-          const cats = media.genres ?? (media.metadata as MediaMetadata)?.categories
+          const cats = media.genres ?? (media.details as Record<string, unknown> | undefined)?.categories
           return Array.isArray(cats) ? cats.join(", ") : String(cats || "")
       }
       default: return ""

@@ -86,3 +86,21 @@ NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules npx jest --runInBand
 
 - **Never read, parse, or commit the user's original Letterboxd export files or personal data.**
 - Only test with sanitized, mock test fixtures located in `server/src/tests/fixtures/` or synthetic test inputs.
+
+---
+
+## 8. Data Model & Media Schema Rules
+
+- **Provider facts:** Stored in `Media.details`, validated strictly on write by per-subtype Zod schemas in `server/src/schemas/detailsSchemas.ts`. Unknown keys are rejected.
+- **Identifiers:** External identifiers live only in `MediaExternalId` (and `Media.provider`/`providerId` on the canonical row). Never store external IDs in `Media.details`.
+- **Subtypes:** Music tracks and albums, TV shows and seasons are identified by `Media.subtype` (`track`, `album`, `show`, `season`). Media types without subtypes leave `Media.subtype` null.
+- **Bookkeeping timestamps:** Provider fetch and sync attempts use typed columns (`Media.syncedAt`, `Media.syncCheckedAt`, `Media.purgedAt`).
+- **No sparse fact columns:** Never add individual sparse fact columns to `Media` or put IDs/duplicate columns into `Media.details`.
+
+---
+
+## 9. Authentication & Tokens
+
+- **Hashed Refresh Tokens:** Never store a raw refresh token; use the helper in `server/src/repositories/authRepository.ts` (`hashRefreshToken`) which stores and queries by SHA-256 hex (`tokenHash`).
+- **API Key Service Enum:** API keys are strictly constrained by the `ApiKeyService` enum (`lastfm`, `tmdb`, `rawg`, `bgg`, `google_books`).
+

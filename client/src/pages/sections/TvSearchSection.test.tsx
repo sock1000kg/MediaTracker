@@ -39,7 +39,8 @@ describe("TvSearchSection component", () => {
       year: "2013",
       imageUrl: "https://image.tmdb.org/t/p/w342/rick.jpg",
       description: "An animated sci-fi series",
-      metadata: { kind: "show", tmdbId: 60625, seasonCount: 2, episodeCount: 21 },
+      subtype: "show",
+      details: { seasonCount: 2, episodeCount: 21 },
       inLibrary: false,
     }
 
@@ -49,13 +50,12 @@ describe("TvSearchSection component", () => {
         {
           source: "tmdb",
           mediaType: "tv",
+          subtype: "season",
           sourceId: "tv:60625:s1",
           title: "Rick and Morty: Season 1",
           year: "2013",
           imageUrl: "https://image.tmdb.org/t/p/w342/s1.jpg",
-          metadata: {
-            kind: "season",
-            tmdbId: 60625,
+          details: {
             showTitle: "Rick and Morty",
             seasonNumber: 1,
             episodeCount: 11,
@@ -65,13 +65,12 @@ describe("TvSearchSection component", () => {
         {
           source: "tmdb",
           mediaType: "tv",
+          subtype: "season",
           sourceId: "tv:60625:s2",
           title: "Rick and Morty: Season 2",
           year: "2015",
           imageUrl: "https://image.tmdb.org/t/p/w342/s2.jpg",
-          metadata: {
-            kind: "season",
-            tmdbId: 60625,
+          details: {
             showTitle: "Rick and Morty",
             seasonNumber: 2,
             episodeCount: 10,
@@ -132,7 +131,8 @@ describe("TvSearchSection component", () => {
       title: "Regular Show",
       year: "2010",
       imageUrl: null,
-      metadata: { kind: "show", tmdbId: 1, seasonCount: 8, episodeCount: 261 },
+      subtype: "show",
+      details: { seasonCount: 8, episodeCount: 261 },
       inLibrary: false,
     }
     vi.mocked(searchApi.searchTv).mockResolvedValue({ results: [show], nextStartIndex: null })

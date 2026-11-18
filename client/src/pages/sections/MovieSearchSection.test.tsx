@@ -38,7 +38,7 @@ describe("MovieSearchSection component", () => {
       year: "1979",
       imageUrl: "https://image.tmdb.org/t/p/w342/alien.jpg",
       description: "In space no one can hear you scream.",
-      metadata: { kind: "movie", score: 8.1, originalLanguage: "en" },
+      details: { score: 8.1, language: "en" },
       inLibrary: false,
     }
 

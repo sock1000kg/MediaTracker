@@ -25,8 +25,8 @@ describe("Music cover backfill job", () => {
         await prisma.userLogs.deleteMany({ where: { userId } })
         await prisma.media.deleteMany({
             where: {
-                source: "lastfm",
-                sourceId: { startsWith: testPrefix },
+                provider: "lastfm",
+                providerId: { startsWith: testPrefix },
             },
         })
     })
@@ -40,14 +40,14 @@ describe("Music cover backfill job", () => {
         await prisma.userLogs.deleteMany({ where: { userId } })
         await prisma.media.deleteMany({
             where: {
-                source: "lastfm",
-                sourceId: { startsWith: testPrefix },
+                provider: "lastfm",
+                providerId: { startsWith: testPrefix },
             },
         })
         await prisma.user.deleteMany({ where: { username: "BackfillTestUser" } })
     })
 
-    test("converts stored release URLs to release-group URLs, fills track cover, skips rows with coverResolvedAt, and leaves logs untouched", async () => {
+    test("converts stored release URLs to release-group URLs, fills track cover, skips rows with syncCheckedAt, and leaves logs untouched", async () => {
         const musicType = await prisma.mediaType.findFirstOrThrow({ where: { name: "music" } })
 
         // 1. Album with old release URL
@@ -55,11 +55,11 @@ describe("Music cover backfill job", () => {
             data: {
                 title: "Album With Release URL",
                 creator: "Artist One",
-                source: "lastfm",
-                sourceId: `${testPrefix}album-1`,
+                provider: "lastfm",
+                providerId: `${testPrefix}album-1`,
                 imageUrl: "https://coverartarchive.org/release/rel-old-123/front-250",
                 mediaTypeId: musicType.id,
-                metadata: { kind: "album" },
+                subtype: "album",
             },
         })
         const albumLog = await prisma.userLogs.create({
@@ -77,11 +77,11 @@ describe("Music cover backfill job", () => {
             data: {
                 title: "Avril 14th",
                 creator: "Aphex Twin",
-                source: "lastfm",
-                sourceId: `${testPrefix}track-2`,
+                provider: "lastfm",
+                providerId: `${testPrefix}track-2`,
                 imageUrl: null,
                 mediaTypeId: musicType.id,
-                metadata: { kind: "track" },
+                subtype: "track",
             },
         })
         const trackLog = await prisma.userLogs.create({
@@ -99,14 +99,12 @@ describe("Music cover backfill job", () => {
             data: {
                 title: "Already Resolved Media",
                 creator: "Artist Three",
-                source: "lastfm",
-                sourceId: `${testPrefix}skipped-3`,
+                provider: "lastfm",
+                providerId: `${testPrefix}skipped-3`,
                 imageUrl: "https://coverartarchive.org/release/rel-preserve/front-250",
                 mediaTypeId: musicType.id,
-                metadata: {
-                    kind: "album",
-                    coverResolvedAt: "2026-01-01T12:00:00.000Z",
-                },
+                subtype: "album",
+                syncCheckedAt: new Date("2026-01-01T12:00:00.000Z"),
             },
         })
         const skippedLog = await prisma.userLogs.create({
@@ -138,17 +136,17 @@ describe("Music cover backfill job", () => {
         // 1. Verify Album 1 was converted to release-group URL
         const updatedAlbum = await prisma.media.findUniqueOrThrow({ where: { id: albumMedia.id } })
         expect(updatedAlbum.imageUrl).toBe("https://coverartarchive.org/release-group/rg-migrated-456/front-250")
-        expect((updatedAlbum.metadata as Record<string, unknown>).coverResolvedAt).toBeDefined()
+        expect(updatedAlbum.syncCheckedAt).toBeDefined()
 
         // 2. Verify Track 2 received the resolved cover
         const updatedTrack = await prisma.media.findUniqueOrThrow({ where: { id: trackMedia.id } })
         expect(updatedTrack.imageUrl).toBe("https://coverartarchive.org/release-group/rg-track-resolved/front-250")
-        expect((updatedTrack.metadata as Record<string, unknown>).coverResolvedAt).toBeDefined()
+        expect(updatedTrack.syncCheckedAt).toBeDefined()
 
         // 3. Verify Skipped Media was NOT modified
         const unchangedSkipped = await prisma.media.findUniqueOrThrow({ where: { id: skippedMedia.id } })
         expect(unchangedSkipped.imageUrl).toBe("https://coverartarchive.org/release/rel-preserve/front-250")
-        expect((unchangedSkipped.metadata as Record<string, unknown>).coverResolvedAt).toBe("2026-01-01T12:00:00.000Z")
+        expect(unchangedSkipped.syncCheckedAt).toEqual(new Date("2026-01-01T12:00:00.000Z"))
 
         // 4. Verify user logs remain completely untouched
         const freshAlbumLog = await prisma.userLogs.findUniqueOrThrow({ where: { id: albumLog.id } })
@@ -181,11 +179,11 @@ describe("Music cover backfill job", () => {
             data: {
                 title: "Album Found",
                 creator: "Artist Found",
-                source: "lastfm",
-                sourceId: `${testPrefix}batch-found`,
+                provider: "lastfm",
+                providerId: `${testPrefix}batch-found`,
                 imageUrl: relUrlFound,
                 mediaTypeId: musicType.id,
-                metadata: { kind: "album" },
+                subtype: "album",
             },
         })
 
@@ -193,11 +191,11 @@ describe("Music cover backfill job", () => {
             data: {
                 title: "Album None",
                 creator: "Artist None",
-                source: "lastfm",
-                sourceId: `${testPrefix}batch-none`,
+                provider: "lastfm",
+                providerId: `${testPrefix}batch-none`,
                 imageUrl: relUrlNone,
                 mediaTypeId: musicType.id,
-                metadata: { kind: "album" },
+                subtype: "album",
             },
         })
 
@@ -205,11 +203,11 @@ describe("Music cover backfill job", () => {
             data: {
                 title: "Album Failed",
                 creator: "Artist Failed",
-                source: "lastfm",
-                sourceId: `${testPrefix}batch-failed`,
+                provider: "lastfm",
+                providerId: `${testPrefix}batch-failed`,
                 imageUrl: relUrlFailed,
                 mediaTypeId: musicType.id,
-                metadata: { kind: "album" },
+                subtype: "album",
             },
         })
 
@@ -229,26 +227,23 @@ describe("Music cover backfill job", () => {
         expect(result.updated).toBe(1)   // only found was updated with a new URL
         expect(progressUpdates).toContain(100)
 
-        // 1. Found item gets new release-group URL and coverResolvedAt is stamped
+        // 1. Found item gets new release-group URL and syncCheckedAt is stamped
         const updatedFound = await prisma.media.findUniqueOrThrow({ where: { id: mediaFound.id } })
         expect(updatedFound.imageUrl).toBe("https://coverartarchive.org/release-group/rg-found-111/front-250")
-        const foundMeta = (updatedFound.metadata ?? {}) as Record<string, unknown>
-        expect(foundMeta.coverResolvedAt).toBeDefined()
+        expect(updatedFound.syncCheckedAt).toBeTruthy()
 
-        // 2. None item KEEPS old release URL and coverResolvedAt is stamped
+        // 2. None item KEEPS old release URL and syncCheckedAt is stamped
         const updatedNone = await prisma.media.findUniqueOrThrow({ where: { id: mediaNone.id } })
         expect(updatedNone.imageUrl).toBe(relUrlNone)
-        const noneMeta = (updatedNone.metadata ?? {}) as Record<string, unknown>
-        expect(noneMeta.coverResolvedAt).toBeDefined()
+        expect(updatedNone.syncCheckedAt).toBeTruthy()
 
-        // 3. Failed item is untouched: keeps old release URL and NO coverResolvedAt
+        // 3. Failed item is untouched: keeps old release URL and NO syncCheckedAt
         const updatedFailed = await prisma.media.findUniqueOrThrow({ where: { id: mediaFailed.id } })
         expect(updatedFailed.imageUrl).toBe(relUrlFailed)
-        const failedMeta = (updatedFailed.metadata ?? {}) as Record<string, unknown>
-        expect(failedMeta.coverResolvedAt).toBeUndefined()
+        expect(updatedFailed.syncCheckedAt).toBeNull()
     })
 
-    test("backfill with a network error/timeout preserves release URL without erasing cover or stamping coverResolvedAt, and job finishes", async () => {
+    test("backfill with a network error/timeout preserves release URL without erasing cover or stamping syncCheckedAt, and job finishes", async () => {
         const musicType = await prisma.mediaType.findFirstOrThrow({ where: { name: "music" } })
 
         const releaseUrl = "https://coverartarchive.org/release/rel-preserve-timeout/front-250"
@@ -256,11 +251,11 @@ describe("Music cover backfill job", () => {
             data: {
                 title: "Album During Network Error",
                 creator: "Artist Timeout",
-                source: "lastfm",
-                sourceId: `${testPrefix}album-timeout`,
+                provider: "lastfm",
+                providerId: `${testPrefix}album-timeout`,
                 imageUrl: releaseUrl,
                 mediaTypeId: musicType.id,
-                metadata: { kind: "album" },
+                subtype: "album",
             },
         })
 
@@ -268,11 +263,11 @@ describe("Music cover backfill job", () => {
             data: {
                 title: "Track During Network Error",
                 creator: "Artist Timeout",
-                source: "lastfm",
-                sourceId: `${testPrefix}track-timeout`,
+                provider: "lastfm",
+                providerId: `${testPrefix}track-timeout`,
                 imageUrl: null,
                 mediaTypeId: musicType.id,
-                metadata: { kind: "track" },
+                subtype: "track",
             },
         })
 
@@ -283,17 +278,15 @@ describe("Music cover backfill job", () => {
         const result = await backfillMusicCovers(prisma)
         expect(result).toBeDefined()
 
-        // 1. Verify Album retains its release URL and coverResolvedAt was NOT stamped
+        // 1. Verify Album retains its release URL and syncCheckedAt was NOT stamped
         const freshAlbum = await prisma.media.findUniqueOrThrow({ where: { id: albumMedia.id } })
         expect(freshAlbum.imageUrl).toBe(releaseUrl)
-        const albumMeta = (freshAlbum.metadata ?? {}) as Record<string, unknown>
-        expect(albumMeta.coverResolvedAt).toBeUndefined()
+        expect(freshAlbum.syncCheckedAt).toBeNull()
 
-        // 2. Verify Track retains null imageUrl and coverResolvedAt was NOT stamped
+        // 2. Verify Track retains null imageUrl and syncCheckedAt was NOT stamped
         const freshTrack = await prisma.media.findUniqueOrThrow({ where: { id: trackMedia.id } })
         expect(freshTrack.imageUrl).toBeNull()
-        const trackMeta = (freshTrack.metadata ?? {}) as Record<string, unknown>
-        expect(trackMeta.coverResolvedAt).toBeUndefined()
+        expect(freshTrack.syncCheckedAt).toBeNull()
     })
 
     test("early stop when more than half of a batch fails", async () => {
@@ -304,11 +297,11 @@ describe("Music cover backfill job", () => {
             data: {
                 title: "Fail Item 1",
                 creator: "Artist",
-                source: "lastfm",
-                sourceId: `${testPrefix}early-fail-1`,
+                provider: "lastfm",
+                providerId: `${testPrefix}early-fail-1`,
                 imageUrl: "https://coverartarchive.org/release/rel-early-1/front-250",
                 mediaTypeId: musicType.id,
-                metadata: { kind: "album" },
+                subtype: "album",
             },
         })
 
@@ -316,11 +309,11 @@ describe("Music cover backfill job", () => {
             data: {
                 title: "Fail Item 2",
                 creator: "Artist",
-                source: "lastfm",
-                sourceId: `${testPrefix}early-fail-2`,
+                provider: "lastfm",
+                providerId: `${testPrefix}early-fail-2`,
                 imageUrl: "https://coverartarchive.org/release/rel-early-2/front-250",
                 mediaTypeId: musicType.id,
-                metadata: { kind: "album" },
+                subtype: "album",
             },
         })
 
@@ -328,11 +321,11 @@ describe("Music cover backfill job", () => {
             data: {
                 title: "Success Item 3",
                 creator: "Artist",
-                source: "lastfm",
-                sourceId: `${testPrefix}early-ok-3`,
+                provider: "lastfm",
+                providerId: `${testPrefix}early-ok-3`,
                 imageUrl: "https://coverartarchive.org/release/rel-early-3/front-250",
                 mediaTypeId: musicType.id,
-                metadata: { kind: "album" },
+                subtype: "album",
             },
         })
 
@@ -351,13 +344,13 @@ describe("Music cover backfill job", () => {
 
         // Failed items are unstamped
         const fresh1 = await prisma.media.findUniqueOrThrow({ where: { id: item1.id } })
-        expect((fresh1.metadata as Record<string, unknown>)?.coverResolvedAt).toBeUndefined()
+        expect(fresh1.syncCheckedAt).toBeNull()
 
         const fresh2 = await prisma.media.findUniqueOrThrow({ where: { id: item2.id } })
-        expect((fresh2.metadata as Record<string, unknown>)?.coverResolvedAt).toBeUndefined()
+        expect(fresh2.syncCheckedAt).toBeNull()
 
         // Succeeded item is stamped
         const fresh3 = await prisma.media.findUniqueOrThrow({ where: { id: item3.id } })
-        expect((fresh3.metadata as Record<string, unknown>)?.coverResolvedAt).toBeDefined()
+        expect(fresh3.syncCheckedAt).toBeTruthy()
     })
 })

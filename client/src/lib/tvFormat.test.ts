@@ -10,7 +10,7 @@ describe("tvFormat", () => {
   it("formats show meta parts: ['TV', firstAirYear, 'N seasons', genres...]", () => {
     expect(
       tvMetaParts({
-        kind: "show",
+        subtype: "show",
         firstAirDate: "2013-12-02",
         seasonCount: 7,
         genres: ["Animation", "Comedy", "Sci-Fi & Fantasy"],
@@ -19,7 +19,7 @@ describe("tvFormat", () => {
 
     expect(
       tvMetaParts({
-        kind: "show",
+        subtype: "show",
         firstAirDate: "2020-01-01",
         seasonCount: 1,
         genres: [],
@@ -28,7 +28,7 @@ describe("tvFormat", () => {
 
     expect(
       tvMetaParts({
-        kind: "show",
+        subtype: "show",
       })
     ).toEqual(["TV"])
   })
@@ -36,7 +36,7 @@ describe("tvFormat", () => {
   it("formats season meta parts: ['Season N', 'N episodes', year]", () => {
     expect(
       tvMetaParts({
-        kind: "season",
+        subtype: "season",
         seasonNumber: 3,
         episodeCount: 10,
         airDate: "2017-07-30",
@@ -45,7 +45,7 @@ describe("tvFormat", () => {
 
     expect(
       tvMetaParts({
-        kind: "season",
+        subtype: "season",
         seasonNumber: 1,
         episodeCount: 1,
         airDate: null,

@@ -1,5 +1,5 @@
 import type { Log, Media } from "@/types/mainTypes"
-import { formatLogMetadata } from "@/lib/logMetadata"
+import { formatLogDetails } from "@/lib/logDetails"
 import { displayRating, formatLogDate, statusLabel } from "@/lib/logView"
 import { aspectForMedia } from "@/lib/mediaView"
 import { Button } from "@/components/ui/button"
@@ -18,8 +18,8 @@ interface MediaRowProps {
 }
 
 export function MediaRow({ media, log, onEdit, onDelete, onLog }: MediaRowProps) {
-  const categories = media.genres ?? (Array.isArray(media.metadata?.categories) ? (media.metadata.categories as string[]) : [])
-  const metaParts = formatLogMetadata(media)
+  const categories = media.genres ?? (Array.isArray(media.details?.categories) ? (media.details.categories as string[]) : [])
+  const metaParts = formatLogDetails(media)
   const byline = [media.creator, media.year].filter(Boolean).join(" · ")
   const rating = log ? displayRating(log.rating) : null
   const status = log ? [statusLabel(log.status), formatLogDate(log.logged_at)].filter(Boolean).join(" · ") : ""
@@ -57,7 +57,7 @@ export function MediaRow({ media, log, onEdit, onDelete, onLog }: MediaRowProps)
         {metaParts.length > 0 && <> · {metaParts.join(" · ")}</>}
       </p>
 
-      <ClampText text={media.source === "bgg" || media.mediaType?.name === "boardgame" ? formatBggDescription(media.description) : (media.description ?? "")} />
+      <ClampText text={media.provider === "bgg" || media.mediaType?.name === "boardgame" ? formatBggDescription(media.description) : (media.description ?? "")} />
 
       {categories.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1">

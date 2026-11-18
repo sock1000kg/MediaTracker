@@ -40,8 +40,7 @@ describe("Music album logging and built links (M1, M2, M3)", () => {
         await prisma.userLogs.deleteMany({ where: { userId } })
         await prisma.media.deleteMany({
             where: {
-                source: "lastfm",
-                sourceId: { startsWith: "test-m1-" },
+                provider: "lastfm", providerId: { startsWith: "test-m1-" },
             },
         })
         await prisma.user.deleteMany({ where: { username } })
@@ -75,10 +74,7 @@ describe("Music album logging and built links (M1, M2, M3)", () => {
                 source: "lastfm",
                 sourceId: "test-m1-release-mbid-1",
                 imageUrl: null,
-                metadata: {
-                    kind: "album",
-                    url: "https://www.last.fm/music/Lastfm+Artist/Lastfm+Title",
-                },
+                subtype: "album",
             },
             logData: {
                 status: "completed",
@@ -94,7 +90,7 @@ describe("Music album logging and built links (M1, M2, M3)", () => {
         expect(res.statusCode).toBe(201)
 
         const saved = await prisma.media.findFirst({
-            where: { source: "lastfm", sourceId: "test-m1-release-mbid-1" },
+            where: { provider: "lastfm", providerId: "test-m1-release-mbid-1" },
             include: {
                 externalIds: true,
                 genres: { include: { genre: true } },
@@ -116,15 +112,11 @@ describe("Music album logging and built links (M1, M2, M3)", () => {
         expect(mbExt).toBeDefined()
         expect(mbExt?.externalId).toBe(rgid)
 
-        // Metadata shape
-        const meta = saved?.metadata as Record<string, unknown>
-        expect(saved?.kind).toBe("album")
-        expect(meta.mbReleaseGroupId).toBe(rgid)
-        expect(meta.primaryType).toBe("Album")
-        expect(meta.firstReleaseDate).toBe("1994-03-08")
-        expect(meta.mbSyncedAt).toBeDefined()
-        // Last.fm URL stripped from newly created rows
-        expect(meta.url).toBeUndefined()
+        // Shape
+        expect(saved?.subtype).toBe("album")
+        expect(saved?.syncedAt).toBeTruthy()
+        const details = saved?.details as Record<string, unknown>
+        expect(details?.format).toBe("Album")
     })
 
     test("M1: with no MusicBrainz genres, falls back to Last.fm top tags", async () => {
@@ -155,10 +147,7 @@ describe("Music album logging and built links (M1, M2, M3)", () => {
                 source: "lastfm",
                 sourceId: "test-m1-release-mbid-2",
                 imageUrl: null,
-                metadata: {
-                    kind: "album",
-                    url: "https://www.last.fm/music/Some+Artist/Album+No+MB+Genres",
-                },
+                subtype: "album",
             },
             logData: {
                 status: "completed",
@@ -175,7 +164,7 @@ describe("Music album logging and built links (M1, M2, M3)", () => {
         expect(tagSpy).toHaveBeenCalled()
 
         const saved = await prisma.media.findFirst({
-            where: { source: "lastfm", sourceId: "test-m1-release-mbid-2" },
+            where: { provider: "lastfm", providerId: "test-m1-release-mbid-2" },
             include: { genres: { include: { genre: true } } },
         })
 
@@ -200,10 +189,7 @@ describe("Music album logging and built links (M1, M2, M3)", () => {
                 source: "lastfm",
                 sourceId: "test-m1-release-mbid-fail",
                 imageUrl: null,
-                metadata: {
-                    kind: "album",
-                    url: "https://www.last.fm/music/Fallback+Artist/Fallback+Album",
-                },
+                subtype: "album",
             },
             logData: {
                 status: "wishlist",
@@ -218,7 +204,7 @@ describe("Music album logging and built links (M1, M2, M3)", () => {
         expect(res.statusCode).toBe(201)
 
         const saved = await prisma.media.findFirst({
-            where: { source: "lastfm", sourceId: "test-m1-release-mbid-fail" },
+            where: { provider: "lastfm", providerId: "test-m1-release-mbid-fail" },
             include: { genres: { include: { genre: true } } },
         })
 
@@ -239,11 +225,11 @@ describe("Music album logging and built links (M1, M2, M3)", () => {
             data: {
                 title: "Parent Album",
                 creator: "Parent Artist",
-                source: "lastfm",
-                sourceId: "test-m1-parent-album",
+                provider: "lastfm",
+                providerId: "test-m1-parent-album",
                 userId: system.id,
                 mediaTypeId: musicType.id,
-                metadata: { kind: "album", mbReleaseGroupId: albumRgid },
+                subtype: "album",
                 externalIds: {
                     create: {
                         provider: "musicbrainz",
@@ -271,7 +257,7 @@ describe("Music album logging and built links (M1, M2, M3)", () => {
                 source: "lastfm",
                 sourceId: "test-m1-track-1",
                 imageUrl: null,
-                metadata: { kind: "track" },
+                subtype: "track",
             },
             logData: {
                 status: "completed",
@@ -287,7 +273,7 @@ describe("Music album logging and built links (M1, M2, M3)", () => {
         expect(res.statusCode).toBe(201)
 
         const savedTrack = await prisma.media.findFirst({
-            where: { source: "lastfm", sourceId: "test-m1-track-1" },
+            where: { provider: "lastfm", providerId: "test-m1-track-1" },
             include: { externalIds: true },
         })
 
@@ -296,11 +282,11 @@ describe("Music album logging and built links (M1, M2, M3)", () => {
         expect(savedTrack?.creator).toBe("MB Track Artist")
         expect(savedTrack?.imageUrl).toBe(`https://coverartarchive.org/release-group/${albumRgid}/front-250`)
         expect(savedTrack?.parentId).toBe(parentAlbum.id) // linked to parent album!
+        expect(savedTrack?.subtype).toBe("track")
 
-        const meta = savedTrack?.metadata as Record<string, unknown>
-        expect(meta.mbRecordingId).toBe("rec-track-1234")
-        expect(meta.durationSec).toBe(245)
-        expect(meta.mbSyncedAt).toBeDefined()
+        const details = savedTrack?.details as Record<string, unknown>
+        expect(details?.durationSec).toBe(245)
+        expect(savedTrack?.syncedAt).toBeTruthy()
 
         const mbExt = savedTrack?.externalIds.find(e => e.provider === "musicbrainz")
         expect(mbExt).toBeDefined()
@@ -312,9 +298,9 @@ describe("Music album logging and built links (M1, M2, M3)", () => {
         expect(buildMusicBrainzRecordingUrl("rec-456")).toBe("https://musicbrainz.org/recording/rec-456")
         expect(buildMusicBrainzUrl("rel-789", "release")).toBe("https://musicbrainz.org/release/rel-789")
 
-        expect(buildLastFmUrl({ artist: "Aphex Twin", title: "Drukqs", kind: "album" }))
+        expect(buildLastFmUrl({ artist: "Aphex Twin", title: "Drukqs", subtype: "album" }))
             .toBe("https://www.last.fm/music/Aphex%20Twin/Drukqs")
-        expect(buildLastFmUrl({ artist: "Slowdive", title: "Alison", kind: "track" }))
+        expect(buildLastFmUrl({ artist: "Slowdive", title: "Alison", subtype: "track" }))
             .toBe("https://www.last.fm/music/Slowdive/_/Alison")
     })
 })

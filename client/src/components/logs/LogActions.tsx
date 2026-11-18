@@ -30,7 +30,7 @@ export function LogActions({ log, onEdit, onDelete, extraMenuItems }: LogActions
   }, [errorToast])
 
   const links = providerLinks(log.media)
-  const isCustom = !log.media.source || log.media.source === "custom"
+  const isCustom = !log.media.provider
 
   const handleRefresh = async () => {
     if (isRefreshing) return

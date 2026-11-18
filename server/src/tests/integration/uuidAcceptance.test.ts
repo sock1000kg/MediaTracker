@@ -96,7 +96,6 @@ describe("UUID Acceptance Tests (S5)", () => {
                     title: "UUID v7 Test Book",
                     userId: userAId,
                     mediaTypeId: bookType!.id,
-                    source: "custom",
                 },
             })
             expect(media.id).toMatch(UUID_V7_REGEX)
@@ -132,7 +131,6 @@ describe("UUID Acceptance Tests (S5)", () => {
                     title: "Isolation Book",
                     userId: userAId,
                     mediaTypeId: bookType!.id,
-                    source: "custom",
                 },
             })
             const log = await prisma.userLogs.create({
@@ -158,7 +156,6 @@ describe("UUID Acceptance Tests (S5)", () => {
                     title: "Private Media A",
                     userId: userAId,
                     mediaTypeId: bookType!.id,
-                    source: "custom",
                 },
             })
 
@@ -211,10 +208,10 @@ describe("UUID Acceptance Tests (S5)", () => {
             const fixedDate = new Date("2026-06-15T12:00:00.000Z")
 
             const m1 = await prisma.media.create({
-                data: { title: "Order Book 1", userId: userAId, mediaTypeId: bookType!.id, source: "custom" },
+                data: { title: "Order Book 1", userId: userAId, mediaTypeId: bookType!.id },
             })
             const m2 = await prisma.media.create({
-                data: { title: "Order Book 2", userId: userAId, mediaTypeId: bookType!.id, source: "custom" },
+                data: { title: "Order Book 2", userId: userAId, mediaTypeId: bookType!.id },
             })
 
             const l1 = await prisma.userLogs.create({

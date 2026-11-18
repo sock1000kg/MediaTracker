@@ -3,13 +3,13 @@ import { uuidSchema } from "@/schemas/common.js"
 import { searchMediaSchema } from "@schemas/mediaSchemas.js"
 import { searchLogSchema } from "@/schemas/logSchemas.js"
 import { normalizeTypeName, sanitizeDescription } from "@/utilities.js"
-import { bookMetadataSchema } from "./bookSchemas.js"
-import { musicMetadataSchema } from "./musicSchemas.js"
-import { animeMetadataSchema } from "./animeSchemas.js"
-import { movieMetadataSchema } from "./movieSchemas.js"
-import { gameMetadataSchema } from "./gameSchemas.js"
-import { tvSeasonMetadataSchema, tvShowMetadataSchema } from "./tvSchemas.js"
-import { boardgameMetadataSchema } from "./bggSchemas.js"
+import { bookDetailsSchema } from "./bookSchemas.js"
+import { albumDetailsSchema, trackDetailsSchema } from "./musicSchemas.js"
+import { animeDetailsSchema, mangaDetailsSchema } from "./animeSchemas.js"
+import { movieDetailsSchema } from "./movieSchemas.js"
+import { gameDetailsSchema } from "./gameSchemas.js"
+import { tvSeasonDetailsSchema, tvShowDetailsSchema } from "./tvSchemas.js"
+import { boardgameDetailsSchema } from "./bggSchemas.js"
 
 const parentMediaSchema = searchMediaSchema.extend({
     mediaType: z
@@ -43,16 +43,18 @@ export const createMediaAndLogSchema = z.object({
     return data
 })
 
-// Music goes first and is strict: the book schema would otherwise match music results and strip `kind`
-const mediaMetadataSchema = z.union([
-  musicMetadataSchema.strict(),
-  boardgameMetadataSchema,
-  tvSeasonMetadataSchema,
-  tvShowMetadataSchema,
-  animeMetadataSchema,
-  movieMetadataSchema,
-  gameMetadataSchema,
-  bookMetadataSchema
+const mediaDetailsSchema = z.union([
+    albumDetailsSchema.strict(),
+    trackDetailsSchema.strict(),
+    boardgameDetailsSchema,
+    tvSeasonDetailsSchema,
+    tvShowDetailsSchema,
+    animeDetailsSchema,
+    mangaDetailsSchema,
+    movieDetailsSchema,
+    gameDetailsSchema,
+    bookDetailsSchema,
+    z.record(z.string(), z.unknown()),
 ])
 
 export const searchResultCreatorSchema = z.object({
@@ -96,7 +98,10 @@ export const searchResultSchema = z.object({
         rating: z.number().nullable(),
         status: z.string().nullable(),
     }).nullable().optional(),
-    metadata: mediaMetadataSchema.optional(), // raw Google volumeInfo
+    details: mediaDetailsSchema.nullable().optional(),
+    subtype: z.enum(["album", "track", "show", "season"]).nullable().optional(),
+    releaseDate: z.string().nullable().optional(),
+    originalTitle: z.string().nullable().optional(),
     externalIds: z.array(z.object({
         provider: z.string(),
         id: z.string(),

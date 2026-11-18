@@ -90,7 +90,7 @@ export function GameSearchSection() {
         <ResultList
           results={search.visibleResults}
           view={view}
-          kindOf={(item) => (item.metadata?.kind === "boardgame" || mode === "board" ? "boardgame" : "game")}
+          kindOf={(item) => (item.mediaType === "boardgame" || mode === "board" ? "boardgame" : "game")}
           isLogged={(item) => isResultLogged(search.logs, item)}
           onLog={(item) => openLog(item)}
         />

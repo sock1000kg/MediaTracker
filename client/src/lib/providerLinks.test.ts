@@ -6,8 +6,8 @@ describe("providerLinks (G5, T2)", () => {
   describe("URL generation from IDs alone for each provider", () => {
     it("generates TMDB movie link from IDs alone", () => {
       const links = providerLinks({
-        source: "tmdb",
-        sourceId: "550",
+        provider: "tmdb",
+        providerId: "550",
         mediaType: "movie",
       })
       expect(links).toEqual([
@@ -17,8 +17,8 @@ describe("providerLinks (G5, T2)", () => {
 
     it("generates TMDB show link from IDs alone", () => {
       const links = providerLinks({
-        source: "tmdb",
-        sourceId: "1399",
+        provider: "tmdb",
+        providerId: "1399",
         mediaType: "tv",
       })
       expect(links).toEqual([
@@ -28,59 +28,59 @@ describe("providerLinks (G5, T2)", () => {
 
     it("generates RAWG link using slug when available", () => {
       const links = providerLinks({
-        source: "rawg",
-        sourceId: "3498",
-        metadata: { slug: "grand-theft-auto-v" },
+        provider: "rawg",
+        providerId: "3498",
+        details: { slug: "grand-theft-auto-v" },
       })
       expect(links).toEqual([
         { label: "View on RAWG", href: "https://rawg.io/games/grand-theft-auto-v" },
       ])
     })
 
-    it("generates RAWG link falling back to sourceId when no slug", () => {
+    it("generates RAWG link falling back to providerId when no slug", () => {
       const links = providerLinks({
-        source: "rawg",
-        sourceId: "3498",
+        provider: "rawg",
+        providerId: "3498",
       })
       expect(links).toEqual([
         { label: "View on RAWG", href: "https://rawg.io/games/3498" },
       ])
     })
 
-    it("generates Open Library link from work key or sourceId", () => {
+    it("generates Open Library link from work key or providerId", () => {
       const links = providerLinks({
-        source: "openlibrary",
-        sourceId: "OL123W",
+        provider: "openlibrary",
+        providerId: "OL123W",
       })
       expect(links).toEqual([
         { label: "View on Open Library", href: "https://openlibrary.org/works/OL123W" },
       ])
     })
 
-    it("generates Goodreads link from sourceId alone", () => {
+    it("generates Goodreads link from providerId alone", () => {
       const links = providerLinks({
-        source: "goodreads",
-        sourceId: "2767052",
+        provider: "goodreads",
+        providerId: "2767052",
       })
       expect(links).toEqual([
         { label: "View on Goodreads", href: "https://www.goodreads.com/book/show/2767052" },
       ])
     })
 
-    it("generates BoardGameGeek link from sourceId alone", () => {
+    it("generates BoardGameGeek link from providerId alone", () => {
       const links = providerLinks({
-        source: "bgg",
-        sourceId: "13",
+        provider: "bgg",
+        providerId: "13",
       })
       expect(links).toEqual([
         { label: "View on BoardGameGeek", href: "https://boardgamegeek.com/boardgame/13" },
       ])
     })
 
-    it("generates AniList link from sourceId alone", () => {
+    it("generates AniList link from providerId alone", () => {
       const links = providerLinks({
-        source: "anilist",
-        sourceId: "1",
+        provider: "anilist",
+        providerId: "1",
       })
       expect(links).toEqual([
         { label: "View on AniList", href: "https://anilist.co/anime/1" },
@@ -89,28 +89,28 @@ describe("providerLinks (G5, T2)", () => {
 
     it("generates MusicBrainz release-group link when releaseGroupId is present", () => {
       const links = providerLinks({
-        source: "musicbrainz",
-        metadata: { releaseGroupId: "uuid-rg" },
+        provider: "musicbrainz",
+        details: { releaseGroupId: "uuid-rg" },
       })
       expect(links).toEqual([
         { label: "View on MusicBrainz", href: "https://musicbrainz.org/release-group/uuid-rg" },
       ])
     })
 
-    it("generates MusicBrainz recording link falling back to metadata.recordingId", () => {
+    it("generates MusicBrainz recording link falling back to details.recordingId", () => {
       const links = providerLinks({
-        source: "musicbrainz",
-        metadata: { recordingId: "uuid-rec" },
+        provider: "musicbrainz",
+        details: { recordingId: "uuid-rec" },
       })
       expect(links).toEqual([
         { label: "View on MusicBrainz", href: "https://musicbrainz.org/recording/uuid-rec" },
       ])
     })
 
-    it("generates MusicBrainz link falling back to sourceId as release-group", () => {
+    it("generates MusicBrainz link falling back to providerId as release-group", () => {
       const links = providerLinks({
-        source: "musicbrainz",
-        sourceId: "uuid-source",
+        provider: "musicbrainz",
+        providerId: "uuid-source",
       })
       expect(links).toEqual([
         { label: "View on MusicBrainz", href: "https://musicbrainz.org/release-group/uuid-source" },
@@ -118,23 +118,23 @@ describe("providerLinks (G5, T2)", () => {
     })
   })
 
-  describe("Fallback to metadata.url on legacy records", () => {
-    it("uses metadata.url ONLY if no id can be built", () => {
-      // With sourceId, dynamic URL is built even if legacy url is different
+  describe("Fallback to details.url on legacy records", () => {
+    it("uses details.url ONLY if no id can be built", () => {
+      // With providerId, dynamic URL is built even if legacy url is different
       const linksWithId = providerLinks({
-        source: "tmdb",
-        sourceId: "550",
+        provider: "tmdb",
+        providerId: "550",
         mediaType: "movie",
-        metadata: { url: "https://legacy.example.com/custom-tmdb-link" },
+        details: { url: "https://legacy.example.com/custom-tmdb-link" },
       })
       expect(linksWithId).toEqual([
         { label: "View on TMDB", href: "https://www.themoviedb.org/movie/550" },
       ])
 
-      // Without source or provider id builder, falls back to metadata.url
+      // Without source or provider id builder, falls back to details.url
       const linksLegacy = providerLinks({
-        source: "legacy-source",
-        metadata: { url: "https://legacy.example.com/item/42" },
+        provider: "legacy-source",
+        details: { url: "https://legacy.example.com/item/42" },
       })
       expect(linksLegacy).toEqual([
         { label: "View on legacy.example.com", href: "https://legacy.example.com/item/42" },
@@ -170,8 +170,8 @@ describe("providerLinks (G5, T2)", () => {
   describe("Existing Goodreads / Open Library sync links", () => {
     it("returns 'View on Goodreads' for an unsynced Goodreads book", () => {
       const links = providerLinks({
-        source: "goodreads",
-        sourceId: "12345",
+        provider: "goodreads",
+        providerId: "12345",
         title: "Test Book",
         creator: "Test Author",
       })
@@ -183,13 +183,12 @@ describe("providerLinks (G5, T2)", () => {
 
     it("returns both 'View on Goodreads' and 'View on Open Library' once synced via openLibraryWorkKey", () => {
       const links = providerLinks({
-        source: "goodreads",
-        sourceId: "12345",
+        provider: "goodreads",
+        providerId: "12345",
         title: "Test Book",
         creator: "Test Author",
-        metadata: {
+        details: {
           openLibraryWorkKey: "/works/OL45804W",
-          olSyncedAt: "2026-11-18T00:00:00.000Z",
         },
       })
 
@@ -201,8 +200,8 @@ describe("providerLinks (G5, T2)", () => {
 
     it("returns both 'View on Goodreads' and 'View on Open Library' when openlibrary is in externalIds", () => {
       const links = providerLinks({
-        source: "goodreads",
-        sourceId: "12345",
+        provider: "goodreads",
+        providerId: "12345",
         title: "Test Book",
         creator: "Test Author",
         externalIds: [
@@ -217,10 +216,10 @@ describe("providerLinks (G5, T2)", () => {
       ])
     })
 
-    it("does not duplicate 'View on Open Library' for standard open_library source", () => {
+    it("does not duplicate 'View on Open Library' for standard openlibrary provider", () => {
       const links = providerLinks({
-        source: "open_library",
-        sourceId: "/works/OL45804W",
+        provider: "openlibrary",
+        providerId: "/works/OL45804W",
         title: "Fantastic Mr Fox",
         creator: "Roald Dahl",
       })

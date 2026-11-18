@@ -4,6 +4,7 @@ import { Prisma } from "@/generated/prisma/client.js"
 import { decryptKey } from "@/utilities.js"
 import { AppError } from "@/api/domain/error.js"
 import { attachExternalIdsToMedia } from "@/repositories/mediaRepository.js"
+import { validateDetails } from "@/schemas/detailsSchemas.js"
 import {
     tmdbSearchService,
     tmdbAuth,
@@ -34,10 +35,12 @@ export interface RefreshTmdbItemInput {
     year: number | null
     description: string | null
     imageUrl: string | null
-    sourceId: string | null
-    kind?: string | null
-    metadata: unknown
+    providerId?: string | null
+    subtype?: string | null
+    position?: number | null
+    details?: unknown
     mediaType?: { name: string } | null
+    externalIds?: Array<{ provider: string; externalId: string }>
 }
 
 export async function refreshSingleTmdbItem(
@@ -46,12 +49,10 @@ export async function refreshSingleTmdbItem(
     db: DbClient = prisma,
     options?: { setRefreshedAt?: boolean; timestamp?: string }
 ): Promise<void> {
-    const now = options?.timestamp ?? new Date().toISOString()
-    const meta = (m.metadata && typeof m.metadata === "object" && !Array.isArray(m.metadata))
-        ? (m.metadata as Record<string, unknown>)
-        : null
+    const now = options?.timestamp ? new Date(options.timestamp) : new Date()
 
-    const rawKind = (meta?.kind as string) || m.kind || (m.mediaType?.name === "tv" ? "show" : (m.sourceId?.startsWith("tv:") ? (m.sourceId.includes(":s") ? "season" : "show") : (m.sourceId?.startsWith("movie-") ? "movie" : null)))
+    const effectiveId = m.providerId
+    const rawKind = m.subtype || (m.mediaType?.name === "tv" ? "show" : (m.mediaType?.name === "movie" ? "movie" : (effectiveId?.startsWith("tv:") ? (effectiveId.includes(":s") ? "season" : "show") : (effectiveId?.startsWith("movie-") ? "movie" : null))))
     const kind = rawKind === "tv" ? "show" : rawKind
 
     if (!kind || (kind !== "movie" && kind !== "show" && kind !== "season")) {
@@ -59,10 +60,10 @@ export async function refreshSingleTmdbItem(
     }
 
     let tmdbId: number | null = null
-    if (typeof meta?.tmdbId === "number") {
-        tmdbId = meta.tmdbId
-    } else if (m.sourceId) {
-        const match = /(?:movie-|tv:)?(\d+)/.exec(m.sourceId)
+    const tmdbExt = m.externalIds?.find(e => e.provider === "tmdb")?.externalId
+    const candidateId = effectiveId ?? tmdbExt
+    if (candidateId) {
+        const match = /(?:movie-|tv:)?(\d+)/.exec(candidateId)
         if (match) tmdbId = Number(match[1])
     }
 
@@ -91,9 +92,6 @@ export async function refreshSingleTmdbItem(
         throw new AppError("Provider is unavailable", 503)
     }
 
-    // Drop stale originalTitle from metadata
-    const { originalTitle: _staleOrig, ...cleanMeta } = (meta ?? {})
-
     if (kind === "movie") {
         const data = tmdbMovieDetailsSchema.parse(raw)
         const title = data.title?.trim() || data.original_title?.trim() || m.title
@@ -101,6 +99,7 @@ export async function refreshSingleTmdbItem(
         const originalTitle = original && title && original !== title ? original : null
         const yearStr = data.release_date?.slice(0, 4)
         const year = yearStr && /^\d{4}$/.test(yearStr) ? Number(yearStr) : m.year
+        const releaseDate = data.release_date ? new Date(data.release_date) : null
         // Feedback #4: Keep existing description when provider returns none
         const description = data.overview?.trim() || m.description
         const imageUrl = data.poster_path ? `${IMAGE_BASE}${data.poster_path}` : m.imageUrl
@@ -109,22 +108,14 @@ export async function refreshSingleTmdbItem(
             .map(c => c.name!.trim())
         const creator = directors.length > 0 ? directors.join(", ") : m.creator
         const genres = (data.genres ?? []).map(g => g.name?.trim() ?? "").filter(Boolean)
-        const categories = genres.length > 0 ? genres : ((cleanMeta.categories as string[]) ?? null)
 
-        const updatedMetadata: Record<string, unknown> = {
-            ...cleanMeta,
-            kind: "movie",
-            tmdbId,
-            ...(originalTitle ? { originalTitle } : {}),
-            originalLanguage: data.original_language ?? (cleanMeta.originalLanguage ?? null),
-            score: typeof data.vote_average === "number" ? data.vote_average : (cleanMeta.score ?? null),
-            runtime: data.runtime && data.runtime > 0 ? data.runtime : (cleanMeta.runtime ?? null),
-            imdbId: data.imdb_id || (cleanMeta.imdbId ?? null),
-            categories,
-            fetchedAt: now,
-            refreshCheckedAt: now,
-            ...(options?.setRefreshedAt ? { refreshedAt: now } : {}),
+        const rawDetails: Record<string, unknown> = {
+            durationSec: data.runtime && data.runtime > 0 ? data.runtime * 60 : undefined,
+            language: data.original_language ?? undefined,
+            score: typeof data.vote_average === "number" ? data.vote_average : undefined,
+            scoreScale: "tmdb_10",
         }
+        const validated = validateDetails(rawDetails, { subtype: null, mediaTypeName: "movie", hasProvider: true })
 
         await db.media.update({
             where: { id: m.id },
@@ -132,10 +123,13 @@ export async function refreshSingleTmdbItem(
                 title,
                 originalTitle: originalTitle ?? null,
                 year,
+                releaseDate,
                 description,
                 imageUrl,
                 creator,
-                metadata: updatedMetadata as Prisma.InputJsonValue,
+                details: (validated ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+                syncedAt: now,
+                syncCheckedAt: now,
             },
         })
         if (genres.length > 0) {
@@ -144,9 +138,11 @@ export async function refreshSingleTmdbItem(
         if (directors.length > 0) {
             await setMediaCreators(m.id, directors.map(name => ({ name, role: "director" })), "movie", creator, db)
         }
+        const extIds = [{ provider: "tmdb", externalId: String(tmdbId) }]
         if (data.imdb_id) {
-            await attachExternalIdsToMedia(m.id, [{ provider: "imdb", externalId: data.imdb_id }], db)
+            extIds.push({ provider: "imdb", externalId: data.imdb_id })
         }
+        await attachExternalIdsToMedia(m.id, extIds, db)
     } else if (kind === "show") {
         const data = tmdbTvShowDetailsSchema.parse(raw)
         const title = data.name?.trim() || data.original_name?.trim() || m.title
@@ -154,35 +150,25 @@ export async function refreshSingleTmdbItem(
         const originalTitle = original && title && original !== title ? original : null
         const firstAirStr = data.first_air_date?.slice(0, 4)
         const year = firstAirStr && /^\d{4}$/.test(firstAirStr) ? Number(firstAirStr) : m.year
+        const releaseDate = data.first_air_date ? new Date(data.first_air_date) : null
         // Feedback #4: Keep existing description when provider returns none
         const description = data.overview?.trim() || m.description
         const imageUrl = data.poster_path ? `${IMAGE_BASE}${data.poster_path}` : m.imageUrl
         const creators = (data.created_by ?? []).map(c => c.name?.trim() ?? "").filter(Boolean)
         const creator = creators.length > 0 ? creators.join(", ") : m.creator
         const genres = (data.genres ?? []).map(g => g.name?.trim() ?? "").filter(Boolean)
-        const categories = genres.length > 0 ? genres : ((cleanMeta.categories as string[]) ?? null)
         const networksList = (data.networks ?? []).map(n => n.name?.trim() ?? "").filter(Boolean)
-        const networks = networksList.length > 0 ? networksList : ((cleanMeta.networks as string[]) ?? null)
 
-        const updatedMetadata: Record<string, unknown> = {
-            ...cleanMeta,
-            kind: "show",
-            tmdbId,
-            ...(originalTitle ? { originalTitle } : {}),
-            originalLanguage: data.original_language ?? (cleanMeta.originalLanguage ?? null),
-            score: typeof data.vote_average === "number" ? data.vote_average : (cleanMeta.score ?? null),
-            firstAirDate: data.first_air_date ?? (cleanMeta.firstAirDate ?? null),
-            originCountry: data.origin_country ?? (cleanMeta.originCountry ?? null),
-            seasonCount: data.number_of_seasons ?? (cleanMeta.seasonCount ?? null),
-            episodeCount: data.number_of_episodes ?? (cleanMeta.episodeCount ?? null),
-            status: data.status ?? (cleanMeta.status ?? null),
-            networks,
-            categories,
-            creator,
-            fetchedAt: now,
-            refreshCheckedAt: now,
-            ...(options?.setRefreshedAt ? { refreshedAt: now } : {}),
+        const rawDetails: Record<string, unknown> = {
+            seasonCount: data.number_of_seasons ?? undefined,
+            networks: networksList.length > 0 ? networksList : undefined,
+            country: Array.isArray(data.origin_country) ? data.origin_country[0] : (data.origin_country ?? undefined),
+            airingStatus: data.status ?? undefined,
+            language: data.original_language ?? undefined,
+            score: typeof data.vote_average === "number" ? data.vote_average : undefined,
+            scoreScale: "tmdb_10",
         }
+        const validated = validateDetails(rawDetails, { subtype: "show", mediaTypeName: "tv", hasProvider: true })
 
         await db.media.update({
             where: { id: m.id },
@@ -190,10 +176,14 @@ export async function refreshSingleTmdbItem(
                 title,
                 originalTitle: originalTitle ?? null,
                 year,
+                releaseDate,
                 description,
                 imageUrl,
                 creator,
-                metadata: updatedMetadata as Prisma.InputJsonValue,
+                subtype: "show",
+                details: (validated ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+                syncedAt: now,
+                syncCheckedAt: now,
             },
         })
         if (genres.length > 0) {
@@ -202,115 +192,78 @@ export async function refreshSingleTmdbItem(
         if (creators.length > 0) {
             await setMediaCreators(m.id, creators.map(name => ({ name, role: "creator" })), "tv", creator, db)
         }
+        await attachExternalIdsToMedia(m.id, [{ provider: "tmdb", externalId: `tv:${tmdbId}` }], db)
     } else if (kind === "season") {
         const data = tmdbTvShowDetailsSchema.parse(raw)
-        const sNum = typeof meta?.seasonNumber === "number"
-            ? meta.seasonNumber
-            : Number(/tv:\d+:s(\d+)/.exec(m.sourceId ?? "")?.[1] ?? 1)
+        const sNum = m.position
+            ?? Number(/tv:\d+:s(\d+)/.exec(effectiveId ?? "")?.[1] ?? 1)
         const seasonItem = (data.seasons ?? []).find(s => s.season_number === sNum)
-        const showTitle = data.name?.trim() || (meta?.showTitle as string) || m.title
+        const showTitle = data.name?.trim() || m.title
         const seasonName = seasonItem?.name?.trim() || `Season ${sNum}`
         const title = `${showTitle}: ${seasonName}`
         const sYear = seasonItem?.air_date?.slice(0, 4)
         const year = sYear && /^\d{4}$/.test(sYear) ? Number(sYear) : m.year
+        const releaseDate = seasonItem?.air_date ? new Date(seasonItem.air_date) : null
         // Feedback #4: Keep existing description when provider returns none
         const description = seasonItem?.overview?.trim() || m.description
         const imageUrl = seasonItem?.poster_path
             ? `${IMAGE_BASE}${seasonItem.poster_path}`
             : (data.poster_path ? `${IMAGE_BASE}${data.poster_path}` : m.imageUrl)
         const genres = (data.genres ?? []).map(g => g.name?.trim() ?? "").filter(Boolean)
-        const categories = genres.length > 0 ? genres : ((cleanMeta.categories as string[]) ?? null)
-        const networksList = (data.networks ?? []).map(n => n.name?.trim() ?? "").filter(Boolean)
-        const networks = networksList.length > 0 ? networksList : ((cleanMeta.networks as string[]) ?? null)
 
-        const updatedMetadata: Record<string, unknown> = {
-            ...cleanMeta,
-            kind: "season",
-            tmdbId,
-            showTitle,
-            seasonNumber: sNum,
-            episodeCount: seasonItem?.episode_count ?? (cleanMeta.episodeCount ?? null),
-            airDate: seasonItem?.air_date ?? (cleanMeta.airDate ?? null),
-            networks,
-            categories,
-            fetchedAt: now,
-            refreshCheckedAt: now,
-            ...(options?.setRefreshedAt ? { refreshedAt: now } : {}),
+        const rawDetails: Record<string, unknown> = {
+            episodeCount: seasonItem?.episode_count ?? undefined,
         }
+        const validated = validateDetails(rawDetails, { subtype: "season", mediaTypeName: "tv", hasProvider: true })
 
         await db.media.update({
             where: { id: m.id },
             data: {
                 title,
                 year,
+                releaseDate,
                 description,
                 imageUrl,
-                metadata: updatedMetadata as Prisma.InputJsonValue,
+                subtype: "season",
+                details: (validated ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+                syncedAt: now,
+                syncCheckedAt: now,
             },
         })
-        if (categories && categories.length > 0) {
-            await setMediaGenres(m.id, categories, "tv", db)
+        if (genres && genres.length > 0) {
+            await setMediaGenres(m.id, genres, "tv", db)
         }
+        await attachExternalIdsToMedia(m.id, [{ provider: "tmdb", externalId: `tv:${tmdbId}:s${sNum}` }], db)
     }
 }
 
 async function recordRefreshChecked(
     id: string,
-    meta: Record<string, unknown> | null,
     db: DbClient,
-    checkedAt: string
+    checkedAt: Date = new Date()
 ): Promise<void> {
-    const updatedMeta = {
-        ...(meta ?? {}),
-        refreshCheckedAt: checkedAt,
-    }
     await db.media.update({
         where: { id },
         data: {
-            metadata: updatedMeta as Prisma.InputJsonValue,
+            syncCheckedAt: checkedAt,
         },
     })
 }
 
 async function purgeMedia(
-    m: { id: string; sourceId: string | null; kind: string | null },
-    meta: Record<string, unknown> | null,
+    m: { id: string },
     db: DbClient,
-    timestamp: string = new Date().toISOString()
+    timestamp: Date = new Date()
 ): Promise<void> {
-    const kind = (meta?.kind as string) || m.kind || "movie"
-    let tmdbId = meta?.tmdbId
-    if (tmdbId === undefined && m.sourceId) {
-        const match = /(?:movie-|tv:)?(\d+)/.exec(m.sourceId)
-        if (match) tmdbId = Number(match[1])
-    }
-
-    const cleanMeta: Record<string, unknown> = {
-        kind,
-        ...(tmdbId !== undefined ? { tmdbId } : {}),
-        ...(meta?.url ? { url: meta.url } : {}),
-        // Idempotency stamps:
-        // - purgedAt: marks deleted/unlinked TMDB items without hard-deleting media (which preserves user logs)
-        // - refreshCheckedAt: rotates failing stale rows so other rows get a turn in consecutive runs
-        // - fetchedAt: timestamp of successful TMDB fetch (cleared to null when purged so item is inactive)
-        fetchedAt: null,
-        purgedAt: timestamp,
-        refreshCheckedAt: timestamp,
-    }
-
-    if (kind === "season") {
-        if (meta?.showTitle) cleanMeta.showTitle = meta.showTitle
-        if (meta?.seasonNumber !== undefined) cleanMeta.seasonNumber = meta.seasonNumber
-        if (meta?.episodeCount !== undefined) cleanMeta.episodeCount = meta.episodeCount
-    }
-
     await db.media.update({
         where: { id: m.id },
         data: {
             description: null,
             imageUrl: null,
             originalTitle: null,
-            metadata: cleanMeta as Prisma.InputJsonValue,
+            syncedAt: null,
+            purgedAt: timestamp,
+            syncCheckedAt: timestamp,
         },
     })
 }
@@ -319,28 +272,24 @@ export async function refreshStaleTmdbMedia(
     limit = MAX_BATCH_SIZE,
     db: DbClient = prisma
 ): Promise<RefreshResult> {
-    const cutoff = new Date(Date.now() - STALE_DAYS * 24 * 60 * 60 * 1000).toISOString()
+    const cutoff = new Date(Date.now() - STALE_DAYS * 24 * 60 * 60 * 1000)
     const batchLimit = Math.min(limit, MAX_BATCH_SIZE)
 
     const rawIds = await db.$queryRaw<Array<{ id: string }>>(Prisma.sql`
         SELECT id
         FROM "Media"
-        WHERE source = 'tmdb'
-          AND (metadata->>'purgedAt' IS NULL)
+        WHERE provider = 'tmdb'
+          AND "purgedAt" IS NULL
           AND (
-            metadata IS NULL
-            OR metadata->>'fetchedAt' IS NULL
-            OR metadata->>'fetchedAt' <= ${cutoff}
+            "syncedAt" IS NULL
+            OR "syncedAt" <= ${cutoff}
           )
           AND NOT (
             description IS NULL
             AND "imageUrl" IS NULL
-            AND (metadata IS NULL OR metadata->>'fetchedAt' IS NULL)
+            AND "syncedAt" IS NULL
           )
-        -- Candidate ordering: NULLS FIRST prioritizes rows never checked.
-        -- Ordering by refreshCheckedAt ASC ensures failing stale items rotate so a persistent failure does not starve other rows.
-        -- id ASC provides a stable tie-breaker for deterministic pagination across runs.
-        ORDER BY metadata->>'refreshCheckedAt' ASC NULLS FIRST, id ASC
+        ORDER BY "syncCheckedAt" ASC NULLS FIRST, id ASC
         LIMIT ${batchLimit}
     `)
 
@@ -355,6 +304,7 @@ export async function refreshStaleTmdbMedia(
             logs: { select: { userId: true } },
             parent: { select: { id: true, logs: { select: { userId: true } } } },
             children: { select: { id: true, logs: { select: { userId: true } } } },
+            externalIds: true,
         },
     })
 
@@ -368,36 +318,33 @@ export async function refreshStaleTmdbMedia(
     let failed = 0
 
     for (const m of staleCandidates) {
-        const now = new Date().toISOString()
-        const meta = (m.metadata && typeof m.metadata === "object" && !Array.isArray(m.metadata))
-            ? (m.metadata as Record<string, unknown>)
-            : null
+        const now = new Date()
 
         // In-memory check: skip if already purged
-        if (meta?.purgedAt) {
+        if (m.purgedAt) {
             skipped++
-            await recordRefreshChecked(m.id, meta, db, now)
+            await recordRefreshChecked(m.id, db, now)
             continue
         }
 
         // In-memory check: skip if fresh
-        if (meta && typeof meta.fetchedAt === "string") {
-            const fetchedTime = new Date(meta.fetchedAt).getTime()
+        if (m.syncedAt) {
+            const fetchedTime = m.syncedAt.getTime()
             if (!Number.isNaN(fetchedTime) && fetchedTime > Date.now() - STALE_DAYS * 24 * 60 * 60 * 1000) {
                 skipped++
-                await recordRefreshChecked(m.id, meta, db, now)
+                await recordRefreshChecked(m.id, db, now)
                 continue
             }
         }
 
-        const kind = (meta?.kind as string)
-            || (m.sourceId?.startsWith("tv:")
-                ? (m.sourceId.includes(":s") ? "season" : "show")
-                : (m.sourceId?.startsWith("movie-") ? "movie" : null))
+        const kind = m.subtype
+            || (m.providerId?.startsWith("tv:")
+                ? (m.providerId.includes(":s") ? "season" : "show")
+                : (m.providerId?.startsWith("movie-") ? "movie" : null))
 
         if (!kind || (kind !== "movie" && kind !== "show" && kind !== "season")) {
             skipped++
-            await recordRefreshChecked(m.id, meta, db, now)
+            await recordRefreshChecked(m.id, db, now)
             continue
         }
 
@@ -430,14 +377,31 @@ export async function refreshStaleTmdbMedia(
 
         if (!userApiKey) {
             // No user who logged this media has a TMDB key -> purge
-            await purgeMedia(m, meta, db, now)
+            await purgeMedia(m, db, now)
             purged++
             continue
         }
 
         const auth = tmdbAuth(userApiKey)
         try {
-            await refreshSingleTmdbItem(m, auth, db, { timestamp: now })
+            await refreshSingleTmdbItem(
+                {
+                    id: m.id,
+                    title: m.title,
+                    creator: m.creator,
+                    year: m.year,
+                    description: m.description,
+                    imageUrl: m.imageUrl,
+                    providerId: m.providerId,
+                    subtype: m.subtype,
+                    position: m.position,
+                    details: m.details,
+                    externalIds: m.externalIds,
+                },
+                auth,
+                db,
+                { timestamp: now.toISOString() }
+            )
             refreshed++
         } catch (err: unknown) {
             const status = (err as { status?: number; statusCode?: number })?.status
@@ -448,13 +412,13 @@ export async function refreshStaleTmdbMedia(
 
             if (is404) {
                 console.warn(`TMDB returned 404 for media ${m.id}, purging:`, err)
-                await purgeMedia(m, meta, db, now)
+                await purgeMedia(m, db, now)
                 purged++
             } else {
                 console.warn(`Failed to re-fetch TMDB details for media ${m.id}:`, err)
                 failed++
-                // Leave the row untouched so the next daily run retries, but mark refreshCheckedAt
-                await recordRefreshChecked(m.id, meta, db, now)
+                // Leave the row untouched so the next daily run retries, but mark syncCheckedAt
+                await recordRefreshChecked(m.id, db, now)
             }
         }
     }

@@ -136,3 +136,41 @@ This document records deliberate design decisions, constraints, and provider qui
 - **Code:** `client/src/lib/providers.ts`, `client/src/lib/providerLinks.ts`, `server/src/api/domain/media.ts`.
 - **Context & Why:** Outbound links to external provider web pages (TMDB, RAWG, Open Library, MusicBrainz, Last.fm, BoardGameGeek, AniList, Goodreads) are dynamically synthesized on the client from provider IDs (e.g. `sourceId`, `metadata.imdbId`, `metadata.workKey`, `metadata.releaseGroupId`, etc.). New media records do not persist `metadata.url` in the database. Building links from IDs guarantees that URL scheme changes or domain migrations don't require database migrations, and removes redundant URL data from stored metadata. Older records with stored URLs continue to use them as a fallback if IDs are missing.
 
+---
+
+## 18. Media Identity: `provider`/`providerId` and External-ID-Only Lookups
+
+- **Code:** `server/src/prisma/schema.prisma`, `server/src/repositories/mediaRepository.ts`, `server/src/services/mediaService.ts`, `server/src/schemas/mediaSchemas.ts`.
+- **Context & Why:** Previously, `Media` used ambiguous string columns `source` and `sourceId`. This allowed user-created custom media to mimic provider IDs or collide with external identities, and lookup routines used fallbacks that risked matching non-canonical or user-owned rows.
+  To establish strict media identity:
+  - `Media.source` and `Media.sourceId` were renamed to `Media.provider` and `Media.providerId`, typed to the `IdSource` enum (`tmdb`, `open_library`, `musicbrainz`, `lastfm`, `rawg`, `bgg`, `anilist`, `goodreads`, `mal`, `spotify`).
+  - User-created custom media (`POST /media`, `PUT /media/:id`) strictly forbids setting `provider` or `providerId` (`400 "Custom media cannot specify a provider or providerId"`).
+  - All shared media deduplication queries (`findMediaByProviderId`, `findMediaByExternalIds`) query `MediaExternalId` exclusively, with all direct table fallbacks removed.
+  - External IDs attach strictly to system-owned media (`user.username === 'system'`).
+  - A partial unique index `media_system_provider_providerId_key` enforces uniqueness of `(provider, provider_id)` across system media where neither is null.
+  - Search results remain transient objects containing `source` and `sourceId`, while stored `Media` models expose `provider` and `providerId`.
+
+---
+
+## 19. Schema Cleanliness: Media Details, Subtype, Typed Timestamps & UserLogs Progress
+
+- **Code:** `server/src/prisma/schema.prisma`, `server/src/schemas/detailsSchemas.ts`, `server/src/repositories/mediaRepository.ts`, `server/src/repositories/logsRepository.ts`, `client/src/lib/logDetails.ts`.
+- **Context & Why:**
+  - `Media.metadata` was an untyped catch-all JSON column holding disparate provider data, duplicate identity keys, and ad-hoc sync flags. It has been replaced by `Media.details Json?`, validated by strict per-subtype Zod schemas (`bookDetailsSchema`, `albumDetailsSchema`, `trackDetailsSchema`, `showDetailsSchema`, `seasonDetailsSchema`, `animeDetailsSchema`, `mangaDetailsSchema`, `movieDetailsSchema`, `gameDetailsSchema`, `boardgameDetailsSchema`, `customDetailsSchema`) using `.strict()` without unknown keys.
+  - `Media.kind` (string) was replaced with `Media.subtype MediaSubtype?` (`enum MediaSubtype { album, track, show, season }`).
+  - Provider timestamps (`fetchedAt`, `refreshCheckedAt`, `olSyncedAt`, `mbSyncedAt`, `coverResolvedAt`) were replaced by typed top-level columns on `Media`: `syncedAt DateTime?`, `syncCheckedAt DateTime?`, `purgedAt DateTime?`, alongside `releaseDate DateTime? @db.Date`.
+  - `UserLogs.progress` JSON was replaced by typed columns: `progressEpisodes Int?`, `progressChapters Int?`, `progressVolumes Int?`.
+  - `UserLogs.status` was converted to enum `LogStatus { wishlist, completed, in_progress, dropped }`.
+
+---
+
+## 20. Auth and Keys: Hashed Refresh Tokens & API Key Service Enum
+
+- **Code:** `server/src/prisma/schema.prisma`, `server/src/repositories/authRepository.ts`, `server/src/repositories/apiKeyRepository.ts`, `server/src/schemas/apiKeySchemas.ts`, `server/src/providers/registry.ts`.
+- **Context & Why:**
+  - **Hashed Refresh Tokens:** Refresh tokens were previously stored in plain text in the `RefreshToken.token` column. If the database were compromised, valid refresh tokens could be directly stolen to hijack active sessions. Under task 51c, `RefreshToken.token` is replaced by `RefreshToken.tokenHash` (`sha256(token)` stored as hex). The raw token is sent to the client via HttpOnly cookie and verified/stored exclusively by its hash using a central helper (`hashRefreshToken`).
+  - **One-time Sign-in:** The migration truncates the `RefreshToken` table cleanly rather than attempting to hash existing tokens. Consequently, **everyone signs in once more after upgrading**.
+  - **ApiKeyService Enum:** The `UserAPIKey.service` column was previously an unconstrained string, and its schema validation improperly used `toIdSource`, which allowed adding API keys for non-key services (such as `goodreads`). It is now strictly typed as `ApiKeyService` (`lastfm`, `tmdb`, `rawg`, `bgg`, `google_books`). Unknown or unkeyed services are rejected with `400`. Keyed providers in `server/src/providers/registry.ts` are typed to `ApiKeyService | null` to guarantee compile-time alignment.
+
+
+

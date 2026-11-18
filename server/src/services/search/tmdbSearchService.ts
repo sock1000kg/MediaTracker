@@ -9,7 +9,7 @@ import { createUserAgentHeader, decryptKey, validateSchema } from "@/utilities.j
 import { findUserById } from "@/repositories/authRepository.js"
 import { AppError } from "@/api/domain/error.js"
 import prisma from "@/prismaClient.js"
-import { findMediaBySource, attachExternalIdsToMedia } from "@/repositories/mediaRepository.js"
+import { findMediaByProviderId, attachExternalIdsToMedia } from "@/repositories/mediaRepository.js"
 import { tmdbLimiter, parseRetryAfter } from "./rateLimiter.js"
 import { unexpectedShape } from "./providerErrors.js"
 import { providerFetch } from "@/providers/providerFetch.js"
@@ -116,25 +116,27 @@ export function mapTmdbShow(item: TmdbTvItem): SearchResult {
         .map(id => TMDB_TV_GENRES[id])
         .filter((g): g is string => !!g)
 
+    const country = Array.isArray(item.origin_country) && item.origin_country.length > 0 ? item.origin_country[0] : (typeof item.origin_country === "string" ? item.origin_country : undefined)
+
     return {
         mediaType: "tv",
+        subtype: "show",
         title: title as string,
+        originalTitle: originalTitle || undefined,
         creator: null,
         year: yearStr && /^\d{4}$/.test(yearStr) ? yearStr : null,
+        releaseDate: item.first_air_date ?? null,
         description: item.overview?.trim() || null,
         source: "tmdb",
         sourceId: `tv:${item.id}`,
         imageUrl: item.poster_path ? `${IMAGE_BASE}${item.poster_path}` : null,
-        metadata: {
-            url: `https://www.themoviedb.org/tv/${item.id}`,
-            kind: "show",
-            tmdbId: item.id!,
-            ...(originalTitle ? { originalTitle } : {}),
-            firstAirDate: item.first_air_date ?? null,
-            categories: genres.length ? genres : null,
-            originCountry: item.origin_country ?? null,
-            fetchedAt: new Date().toISOString(),
+        genres: genres.length ? genres : undefined,
+        details: {
+            country,
+            score: typeof item.vote_average === "number" ? item.vote_average : undefined,
+            scoreScale: typeof item.vote_average === "number" ? "tmdb_10" as const : undefined,
         },
+        externalIds: item.id ? [{ provider: "tmdb", id: String(item.id) }] : undefined,
     }
 }
 
@@ -150,22 +152,21 @@ export function mapTmdbMovie(item: TmdbMovieItem): SearchResult {
     return {
         mediaType: "movie",
         title: title as string, // undefined falls back to "Unknown title" in searchResultSchema
+        originalTitle: originalTitle || undefined,
         creator: null,
         year: yearStr && /^\d{4}$/.test(yearStr) ? yearStr : null,
+        releaseDate: item.release_date ?? null,
         description: item.overview?.trim() || null,
         source: "tmdb",
         sourceId: `movie-${item.id}`,
         imageUrl: item.poster_path ? `${IMAGE_BASE}${item.poster_path}` : null,
-        metadata: {
-            url: `https://www.themoviedb.org/movie/${item.id}`,
-            kind: "movie",
-            tmdbId: item.id!,
-            ...(originalTitle ? { originalTitle } : {}),
-            originalLanguage: item.original_language ?? null,
-            score: item.vote_average ?? null,
-            categories: categories.length ? categories : null,
-            fetchedAt: new Date().toISOString(),
+        genres: categories.length ? categories : undefined,
+        details: {
+            language: item.original_language ?? undefined,
+            score: typeof item.vote_average === "number" ? item.vote_average : undefined,
+            scoreScale: typeof item.vote_average === "number" ? "tmdb_10" as const : undefined,
         },
+        externalIds: item.id ? [{ provider: "tmdb", id: String(item.id) }] : undefined,
     }
 }
 
@@ -320,26 +321,32 @@ export class TmdbSearchService {
             .filter(c => c.job === "Director" && c.name?.trim())
             .map(c => c.name!.trim())
         const creator = directors.length > 0 ? directors.join(", ") : null
+        const directorsStructured = directors.map(name => ({ name, role: "director" }))
         const genres = (data.genres ?? []).map(g => g.name?.trim() ?? "").filter(Boolean)
+
+        const extIds: { provider: string; id: string }[] = [{ provider: "tmdb", id: String(id) }]
+        if (data.imdb_id) extIds.push({ provider: "imdb", id: data.imdb_id })
 
         return {
             mediaType: "movie",
             title,
+            originalTitle: originalTitle || undefined,
             creator,
+            creators: directorsStructured,
+            genres: genres.length ? genres : undefined,
             year,
+            releaseDate: data.release_date ?? null,
             description: data.overview?.trim() || "",
             source: "tmdb",
             sourceId: `movie-${id}`,
             imageUrl,
-            metadata: {
-                kind: "movie",
-                tmdbId: id,
-                ...(originalTitle ? { originalTitle } : {}),
-                ...(genres.length ? { categories: genres } : {}),
-                runtime: data.runtime && data.runtime > 0 ? data.runtime : null,
-                imdbId: data.imdb_id || null,
-                fetchedAt: new Date().toISOString(),
+            details: {
+                durationSec: data.runtime && data.runtime > 0 ? data.runtime * 60 : undefined,
+                language: data.original_language || undefined,
+                score: typeof data.vote_average === "number" ? data.vote_average : undefined,
+                scoreScale: typeof data.vote_average === "number" ? "tmdb_10" as const : undefined,
             },
+            externalIds: extIds,
         }
     }
 
@@ -365,29 +372,38 @@ export class TmdbSearchService {
         const createdByNames = (data.created_by ?? []).map(c => c.name?.trim()).filter(Boolean) as string[]
         const firstNetwork = data.networks?.[0]?.name?.trim() || null
         const creator = createdByNames.length > 0 ? createdByNames.join(", ") : firstNetwork
+        const showCreatorsStructured = (data.created_by ?? [])
+            .filter(c => c.name?.trim())
+            .map(c => ({ name: c.name!.trim(), role: "creator" }))
         const networks = (data.networks ?? []).map(n => n.name?.trim()).filter(Boolean) as string[]
         const genres = (data.genres ?? []).map(g => g.name?.trim()).filter(Boolean) as string[]
         const showImageUrl = data.poster_path ? `${IMAGE_BASE}${data.poster_path}` : null
+        const country = Array.isArray(data.origin_country) && data.origin_country.length > 0 ? data.origin_country[0] : (typeof data.origin_country === "string" ? data.origin_country : undefined)
 
         return {
             mediaType: "tv",
+            subtype: "show",
             title: showTitle,
+            originalTitle: originalTitle || undefined,
             creator,
+            creators: showCreatorsStructured.length > 0 ? showCreatorsStructured : undefined,
+            genres: genres.length ? genres : undefined,
             year: validShowYear,
+            releaseDate: data.first_air_date ?? null,
             description: data.overview?.trim() || "",
             source: "tmdb",
             sourceId: `tv:${id}`,
             imageUrl: showImageUrl,
-            metadata: {
-                kind: "show",
-                tmdbId: id,
-                ...(originalTitle ? { originalTitle } : {}),
-                categories: genres.length ? genres : null,
-                networks: networks.length ? networks : null,
-                seasonCount: data.number_of_seasons ?? null,
-                episodeCount: data.number_of_episodes ?? null,
-                fetchedAt: new Date().toISOString(),
+            details: {
+                seasonCount: data.number_of_seasons ?? undefined,
+                networks: networks.length ? networks : undefined,
+                country,
+                airingStatus: data.status || undefined,
+                language: data.original_language || undefined,
+                score: typeof data.vote_average === "number" ? data.vote_average : undefined,
+                scoreScale: typeof data.vote_average === "number" ? "tmdb_10" as const : undefined,
             },
+            externalIds: [{ provider: "tmdb", id: String(id) }],
         }
     }
 
@@ -425,24 +441,19 @@ export class TmdbSearchService {
 
         return {
             mediaType: "tv",
+            subtype: "season",
             title,
             creator,
             year,
+            releaseDate: seasonItem.air_date ?? null,
             description: seasonItem.overview?.trim() || "",
             source: "tmdb",
             sourceId: `tv:${id}:s${n}`,
             imageUrl,
-            metadata: {
-                kind: "season",
-                tmdbId: id,
-                showTitle,
-                seasonNumber: n,
-                episodeCount: seasonItem.episode_count ?? null,
-                airDate: seasonItem.air_date ?? null,
-                networks: networks.length ? networks : null,
-                categories: genres.length ? genres : null,
-                fetchedAt: new Date().toISOString(),
+            details: {
+                episodeCount: seasonItem.episode_count ?? undefined,
             },
+            externalIds: [{ provider: "tmdb", id: String(id) }],
         }
     }
 
@@ -484,18 +495,18 @@ export class TmdbSearchService {
 
         if (userId && mapped.length > 0) {
             const loggedSourceIds = new Set<string>()
-            const logs = await prisma.userLogs.findMany({
+            const extIds = await prisma.mediaExternalId.findMany({
                 where: {
-                    userId,
+                    provider: "tmdb",
+                    externalId: { in: mapped.map(r => r.sourceId) },
                     media: {
-                        source: "tmdb",
-                        sourceId: { in: mapped.map(r => r.sourceId) },
+                        logs: { some: { userId } },
                     },
                 },
-                include: { media: true },
+                select: { externalId: true },
             })
-            for (const l of logs) {
-                if (l.media?.sourceId) loggedSourceIds.add(l.media.sourceId)
+            for (const e of extIds) {
+                loggedSourceIds.add(e.externalId)
             }
             for (const r of mapped) {
                 r.inLibrary = loggedSourceIds.has(r.sourceId)
@@ -533,29 +544,28 @@ export class TmdbSearchService {
 
         const showResult: SearchResult = {
             mediaType: "tv",
+            subtype: "show",
             title: showTitle,
+            originalTitle: originalTitle || undefined,
             creator,
             creators: showCreators,
+            genres: genres.length ? genres : undefined,
             year: validShowYear,
+            releaseDate: d.first_air_date ?? null,
             description: d.overview?.trim() || null,
             source: "tmdb",
             sourceId: `tv:${d.id}`,
             imageUrl: showImageUrl,
-            metadata: {
-                url: `https://www.themoviedb.org/tv/${d.id}`,
-                kind: "show",
-                tmdbId: d.id!,
-                ...(originalTitle ? { originalTitle } : {}),
-                firstAirDate: d.first_air_date ?? null,
-                categories: genres.length ? genres : null,
-                originCountry: d.origin_country ?? null,
-                seasonCount: d.number_of_seasons ?? null,
-                episodeCount: d.number_of_episodes ?? null,
-                status: d.status ?? null,
-                networks: networks.length ? networks : null,
-                creator,
-                fetchedAt: new Date().toISOString(),
+            details: {
+                seasonCount: d.number_of_seasons ?? undefined,
+                networks: networks.length ? networks : undefined,
+                country: Array.isArray(d.origin_country) && d.origin_country.length > 0 ? d.origin_country[0] : (typeof d.origin_country === "string" ? d.origin_country : undefined),
+                airingStatus: d.status || undefined,
+                language: d.original_language || undefined,
+                score: typeof d.vote_average === "number" ? d.vote_average : undefined,
+                scoreScale: typeof d.vote_average === "number" ? "tmdb_10" as const : undefined,
             },
+            externalIds: [{ provider: "tmdb", id: String(d.id) }],
         }
 
         const filteredSeasons = (d.seasons ?? []).filter(s => {
@@ -582,42 +592,38 @@ export class TmdbSearchService {
 
             return {
                 mediaType: "tv",
+                subtype: "season",
                 title,
                 creator,
+                genres: genres.length ? genres : undefined,
                 year,
+                releaseDate: s.air_date ?? null,
                 description: s.overview?.trim() || "",
                 source: "tmdb",
                 sourceId: `tv:${d.id}:s${s.season_number}`,
                 imageUrl,
-                metadata: {
-                    url: `https://www.themoviedb.org/tv/${d.id}/season/${s.season_number}`,
-                    kind: "season",
-                    tmdbId: d.id!,
-                    showTitle,
-                    seasonNumber: s.season_number!,
-                    episodeCount: s.episode_count ?? null,
-                    airDate: s.air_date ?? null,
-                    networks: networks.length ? networks : null,
-                    categories: genres.length ? genres : null,
-                    fetchedAt: new Date().toISOString(),
+                details: {
+                    episodeCount: s.episode_count ?? undefined,
                 },
+                externalIds: [{ provider: "tmdb", id: String(d.id) }],
             }
         })
 
         if (userId) {
             const loggedSourceIds = new Set<string>()
-            const logs = await prisma.userLogs.findMany({
+            const allSourceIds = [showResult.sourceId, ...mappedSeasons.map(s => s.sourceId)]
+            const extIds = await prisma.mediaExternalId.findMany({
                 where: {
-                    userId,
+                    provider: "tmdb",
+                    externalId: { in: allSourceIds },
                     media: {
-                        source: "tmdb",
-                        sourceId: { in: [showResult.sourceId, ...mappedSeasons.map(s => s.sourceId)] },
+                        logs: { some: { userId } },
                     },
                 },
-                include: { media: true },
+                select: { externalId: true },
             })
-            for (const l of logs) {
-                if (l.media?.sourceId) loggedSourceIds.add(l.media.sourceId)
+            for (const e of extIds) {
+                loggedSourceIds.add(e.externalId)
             }
             showResult.inLibrary = loggedSourceIds.has(showResult.sourceId)
             for (const s of mappedSeasons) {
@@ -639,22 +645,22 @@ export type TmdbEnrichment = {
     creator: string | null
     creators: { name: string; role: string }[]
     genres: string[] | null
-    patch: { runtime: number | null, imdbId: string | null }
+    patch: { durationSec: number | null }
 }
 
-// Log-time enrichment (runtime: undefined = never tried, null = tried and TMDB has none).
+// Log-time enrichment (durationSec: undefined = never tried, null = tried and TMDB has none).
 // For a new media, mutates mediaData; for an existing un-enriched row, returns what to merge afterwards.
 // Never throws: failures (incl. missing/invalid key) are warned about and the log still succeeds.
 export async function enrichTmdbOnLog(
     userId: string,
-    mediaData: { source: string, sourceId: string | null, creator?: string | null, metadata?: unknown }
+    mediaData: { source: string, sourceId: string | null, creator?: string | null, details?: unknown }
 ): Promise<TmdbEnrichment | null> {
     try {
-        const existing = await findMediaBySource(mediaData.sourceId, mediaData.source, prisma)
-        const existingMeta = existing?.metadata && typeof existing.metadata === "object" && !Array.isArray(existing.metadata)
-            ? existing.metadata as Record<string, unknown>
+        const existing = await findMediaByProviderId(mediaData.source, mediaData.sourceId, prisma)
+        const existingDetails = existing?.details && typeof existing.details === "object" && !Array.isArray(existing.details)
+            ? existing.details as Record<string, unknown>
             : null
-        if (existing && existingMeta && existingMeta.runtime !== undefined) return null
+        if (existing && existingDetails && existingDetails.durationSec !== undefined) return null
 
         const tmdbId = Number(/^movie-(\d+)$/.exec(mediaData.sourceId ?? "")?.[1])
         if (!Number.isInteger(tmdbId)) return null
@@ -662,10 +668,9 @@ export async function enrichTmdbOnLog(
         const details = await tmdbSearchService.fetchMovieDetails(userId, tmdbId)
         const directors = details.directors.length ? details.directors.join(", ") : null
         const directorsStructured = details.directors.map(name => ({ name, role: "director" }))
+        const durationSec = typeof details.runtime === "number" && details.runtime > 0 ? details.runtime * 60 : null
         const patch = {
-            runtime: details.runtime,
-            imdbId: details.imdbId,
-            fetchedAt: new Date().toISOString(),
+            durationSec,
         }
 
         if (existing) {
@@ -676,14 +681,23 @@ export async function enrichTmdbOnLog(
                 existingId: existing.id,
                 creator: existing.creator ? null : directors,
                 creators: directorsStructured,
-                genres: details.genres,
+                genres: details.genres && details.genres.length > 0 ? details.genres : null,
                 patch,
             }
         }
         mediaData.creator = mediaData.creator ?? directors
-        ;(mediaData as Record<string, unknown>).creators = directorsStructured
-        ;(mediaData as Record<string, unknown>).genres = details.genres
-        mediaData.metadata = { ...(mediaData.metadata as object ?? {}), ...patch, fetchedAt: new Date().toISOString() }
+        if (directorsStructured.length > 0) {
+            ;(mediaData as Record<string, unknown>).creators = directorsStructured
+        }
+        if (details.genres && details.genres.length > 0) {
+            ;(mediaData as Record<string, unknown>).genres = details.genres
+        }
+        if (details.imdbId) {
+            const extIds = (((mediaData as Record<string, unknown>).externalIds ?? []) as Array<{ provider: string, id: string }>).slice()
+            extIds.push({ provider: "imdb", id: details.imdbId })
+            ;(mediaData as Record<string, unknown>).externalIds = extIds
+        }
+        mediaData.details = { ...(mediaData.details as object ?? {}), ...patch }
         return null
     } catch (error: unknown) {
         console.warn("Failed to enrich TMDB movie, logging without details:", error)

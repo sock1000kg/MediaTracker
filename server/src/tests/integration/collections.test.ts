@@ -56,7 +56,6 @@ describe("Collection Endpoints and Features", () => {
                 imageUrl: "https://example.com/cover1.jpg",
                 mediaTypeId: mediaTypeA.id,
                 userId: userAId,
-                source: "custom",
             },
         })
         media2 = await prisma.media.create({
@@ -65,7 +64,6 @@ describe("Collection Endpoints and Features", () => {
                 imageUrl: "https://example.com/cover2.jpg",
                 mediaTypeId: mediaTypeA.id,
                 userId: userAId,
-                source: "custom",
             },
         })
         media3 = await prisma.media.create({
@@ -74,22 +72,21 @@ describe("Collection Endpoints and Features", () => {
                 imageUrl: "https://example.com/cover3.jpg",
                 mediaTypeId: mediaTypeA.id,
                 userId: userAId,
-                source: "custom",
             },
         })
 
         const l1 = await prisma.userLogs.create({
-            data: { userId: userAId, mediaId: media1.id, status: "Completed", rating: 90 },
+            data: { userId: userAId, mediaId: media1.id, status: "completed", rating: 90 },
         })
         log1Id = l1.id
 
         const l2 = await prisma.userLogs.create({
-            data: { userId: userAId, mediaId: media2.id, status: "In progress", rating: 80 },
+            data: { userId: userAId, mediaId: media2.id, status: "in_progress", rating: 80 },
         })
         log2Id = l2.id
 
         const l3 = await prisma.userLogs.create({
-            data: { userId: userAId, mediaId: media3.id, status: "Wishlist", rating: null },
+            data: { userId: userAId, mediaId: media3.id, status: "wishlist", rating: null },
         })
         log3Id = l3.id
 
@@ -98,11 +95,10 @@ describe("Collection Endpoints and Features", () => {
                 title: "Col Book B",
                 mediaTypeId: mediaTypeA.id,
                 userId: userBId,
-                source: "custom",
             },
         })
         const lB = await prisma.userLogs.create({
-            data: { userId: userBId, mediaId: mediaB.id, status: "Completed" },
+            data: { userId: userBId, mediaId: mediaB.id, status: "completed" },
         })
         logBId = lB.id
     })
@@ -442,13 +438,13 @@ describe("Collection Endpoints and Features", () => {
             const colId = col.body.id
 
             // Create 3 temporary logs
-            const m1 = await prisma.media.create({ data: { title: "Del M1", userId: userAId, source: "custom" } })
-            const m2 = await prisma.media.create({ data: { title: "Del M2", userId: userAId, source: "custom" } })
-            const m3 = await prisma.media.create({ data: { title: "Del M3", userId: userAId, source: "custom" } })
+            const m1 = await prisma.media.create({ data: { title: "Del M1", userId: userAId } })
+            const m2 = await prisma.media.create({ data: { title: "Del M2", userId: userAId } })
+            const m3 = await prisma.media.create({ data: { title: "Del M3", userId: userAId } })
 
-            const l1 = await prisma.userLogs.create({ data: { userId: userAId, mediaId: m1.id, status: "Wishlist" } })
-            const l2 = await prisma.userLogs.create({ data: { userId: userAId, mediaId: m2.id, status: "Wishlist" } })
-            const l3 = await prisma.userLogs.create({ data: { userId: userAId, mediaId: m3.id, status: "Wishlist" } })
+            const l1 = await prisma.userLogs.create({ data: { userId: userAId, mediaId: m1.id, status: "wishlist" } })
+            const l2 = await prisma.userLogs.create({ data: { userId: userAId, mediaId: m2.id, status: "wishlist" } })
+            const l3 = await prisma.userLogs.create({ data: { userId: userAId, mediaId: m3.id, status: "wishlist" } })
 
             await request(app).post(`/collections/${colId}/items`).set(auth(tokenA)).send({ logId: l1.id })
             await request(app).post(`/collections/${colId}/items`).set(auth(tokenA)).send({ logId: l2.id })
@@ -469,8 +465,8 @@ describe("Collection Endpoints and Features", () => {
         test("deleting user removes collections and items", async () => {
             const u = await registerAndLogin("ColUserDel")
             const col = await request(app).post("/collections").set(auth(u.token)).send({ name: "User Del Col" })
-            const m = await prisma.media.create({ data: { title: "DelUser M", userId: u.userId, source: "custom" } })
-            const l = await prisma.userLogs.create({ data: { userId: u.userId, mediaId: m.id, status: "Wishlist" } })
+            const m = await prisma.media.create({ data: { title: "DelUser M", userId: u.userId } })
+            const l = await prisma.userLogs.create({ data: { userId: u.userId, mediaId: m.id, status: "wishlist" } })
             await request(app).post(`/collections/${col.body.id}/items`).set(auth(u.token)).send({ logId: l.id })
 
             await prisma.user.delete({ where: { id: u.userId } })
@@ -570,10 +566,10 @@ describe("Collection Endpoints and Features", () => {
             const logs: { id: string }[] = []
             for (let i = 0; i < 10; i++) {
                 const med = await prisma.media.create({
-                    data: { title: `P-Log Media ${i}`, userId: userAId, mediaTypeId: mediaTypeA.id, source: "custom" }
+                    data: { title: `P-Log Media ${i}`, userId: userAId, mediaTypeId: mediaTypeA.id }
                 })
                 const l = await prisma.userLogs.create({
-                    data: { userId: userAId, mediaId: med.id, status: "Completed" }
+                    data: { userId: userAId, mediaId: med.id, status: "completed" }
                 })
                 logs.push(l)
             }

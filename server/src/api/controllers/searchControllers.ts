@@ -106,7 +106,7 @@ export const searchTracks = async (req: Request, res: Response, next: NextFuncti
     }
 }
 
-const jikanSearch = (mode: "anime" | "manga") => async (req: Request, res: Response, next: NextFunction) => {
+const animeMangaSearch = (mode: "anime" | "manga") => async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId
     if (!userId) {
         return res.status(401).json({ message: "Unauthorized: missing userId" })
@@ -130,8 +130,8 @@ const jikanSearch = (mode: "anime" | "manga") => async (req: Request, res: Respo
     }
 }
 
-export const searchAnime = jikanSearch("anime")
-export const searchManga = jikanSearch("manga")
+export const searchAnime = animeMangaSearch("anime")
+export const searchManga = animeMangaSearch("manga")
 
 export const searchMovies = async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId

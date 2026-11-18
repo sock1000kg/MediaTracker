@@ -26,15 +26,15 @@ describe("MediaActions component (T2)", () => {
     title: "Catan",
     creator: "Klaus Teuber",
     year: 1995,
-    source: "bgg",
-    sourceId: "13",
+    provider: "bgg",
+    providerId: "13",
     imageUrl: "https://cf.geekdo-images.com/test.jpg",
     description: "In Catan...",
     created_at: "2024-01-01T00:00:00.000Z",
     parentId: null,
     position: null,
     mediaType: { id: "mt-2", name: "boardgame", created_at: "2024-01-01T00:00:00.000Z", userId: "user-1" },
-    metadata: { kind: "boardgame" },
+    details: {},
   }
 
   const customMedia: Media = {
@@ -43,15 +43,15 @@ describe("MediaActions component (T2)", () => {
     title: "My DIY Game",
     creator: "Me",
     year: 2024,
-    source: "custom",
-    sourceId: "custom-2",
+    provider: null,
+    providerId: null,
     imageUrl: null,
     description: null,
     created_at: "2024-01-01T00:00:00.000Z",
     parentId: null,
     position: null,
     mediaType: { id: "mt-2", name: "boardgame", created_at: "2024-01-01T00:00:00.000Z", userId: "user-1" },
-    metadata: undefined,
+    details: undefined,
   }
 
   beforeEach(() => {

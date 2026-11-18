@@ -7,10 +7,14 @@ import { encryptKey } from "@/utilities.js"
 
 describe("Media refresh for unresolved letterboxd and mal (P9, T1)", () => {
     let testUserId: string
+    let systemUserId: string
     let movieTypeId: string
     let animeTypeId: string
 
     beforeAll(async () => {
+        const sysUser = await prisma.user.findUniqueOrThrow({ where: { username: "system" } })
+        systemUserId = sysUser.id
+
         const user = await prisma.user.create({
             data: {
                 username: "RefreshResolverUser",
@@ -51,10 +55,10 @@ describe("Media refresh for unresolved letterboxd and mal (P9, T1)", () => {
             data: {
                 title: "Spirited Away",
                 year: 2001,
-                userId: testUserId,
+                userId: systemUserId,
                 mediaTypeId: movieTypeId,
-                source: "letterboxd",
-                sourceId: null,
+                provider: "letterboxd",
+                providerId: null,
             },
         })
 
@@ -76,37 +80,34 @@ describe("Media refresh for unresolved letterboxd and mal (P9, T1)", () => {
             imageUrl: "https://image.tmdb.org/t/p/w500/spirited.jpg",
             description: "A young girl wandering into a world ruled by gods and spirits.",
             mediaType: "movie",
-            metadata: {
-                tmdbId: 129,
-                imdbId: "tt0245429",
-                runtime: 125,
-                genres: ["Animation", "Family", "Fantasy"],
+            details: {
+                durationSec: 125 * 60,
             },
         } as any)
 
         const refreshed = await mediaRefreshService.refreshMedia(testUserId, media.id)
 
-        expect(refreshed.source).toBe("tmdb")
-        expect(refreshed.sourceId).toBe("129")
+        expect(refreshed.provider).toBe("tmdb")
+        expect(refreshed.providerId).toBe("129")
         expect(refreshed.creator).toBe("Hayao Miyazaki")
         expect(refreshed.imageUrl).toBe("https://image.tmdb.org/t/p/w500/spirited.jpg")
 
         // Check persisted in database
         const fromDb = await prisma.media.findUniqueOrThrow({ where: { id: media.id } })
-        expect(fromDb.source).toBe("tmdb")
-        expect(fromDb.sourceId).toBe("129")
+        expect(fromDb.provider).toBe("tmdb")
+        expect(fromDb.providerId).toBe("129")
     })
 
     test("refreshing an unresolved mal row with no AniList match throws 404", async () => {
         const media = await prisma.media.create({
             data: {
                 title: "Unmatched Anime",
-                userId: testUserId,
+                userId: systemUserId,
                 mediaTypeId: animeTypeId,
-                source: "mal",
-                sourceId: "99999999",
-                metadata: {
-                    malId: 99999999,
+                provider: "mal",
+                providerId: "99999999",
+                externalIds: {
+                    create: [{ provider: "mal", externalId: "99999999" }],
                 },
             },
         })

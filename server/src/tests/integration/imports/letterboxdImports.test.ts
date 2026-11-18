@@ -76,10 +76,8 @@ describe("Media Import Routes (Letterboxd)", () => {
                     source: "tmdb",
                     sourceId: "movie-27205",
                     imageUrl: "https://image.tmdb.org/t/p/w342/inception.jpg",
-                    metadata: {
-                        kind: "movie",
-                        categories: ["Action", "Science Fiction"],
-                    },
+                    genres: ["Action", "Science Fiction"],
+                    details: null,
                 })
             } else if (f.name.toLowerCase() === "dune: part two") {
                 map.set(key, {
@@ -92,10 +90,8 @@ describe("Media Import Routes (Letterboxd)", () => {
                     source: "tmdb",
                     sourceId: "movie-693134",
                     imageUrl: "https://image.tmdb.org/t/p/w342/dune2.jpg",
-                    metadata: {
-                        kind: "movie",
-                        categories: ["Science Fiction", "Adventure"],
-                    },
+                    genres: ["Science Fiction", "Adventure"],
+                    details: null,
                 })
             } else if (f.name.toLowerCase() === "fight club") {
                 map.set(key, {
@@ -107,10 +103,8 @@ describe("Media Import Routes (Letterboxd)", () => {
                     source: "tmdb",
                     sourceId: "movie-550",
                     imageUrl: "https://image.tmdb.org/t/p/w342/fightclub.jpg",
-                    metadata: {
-                        kind: "movie",
-                        categories: ["Drama"],
-                    },
+                    genres: ["Drama"],
+                    details: null,
                 })
             } else if (f.name.toLowerCase() === "interstellar") {
                 map.set(key, {
@@ -122,10 +116,8 @@ describe("Media Import Routes (Letterboxd)", () => {
                     source: "tmdb",
                     sourceId: "movie-157336",
                     imageUrl: "https://image.tmdb.org/t/p/w342/interstellar.jpg",
-                    metadata: {
-                        kind: "movie",
-                        categories: ["Adventure", "Drama", "Science Fiction"],
-                    },
+                    genres: ["Adventure", "Drama", "Science Fiction"],
+                    details: null,
                 })
             } else if (f.name.toLowerCase() === "spirited away") {
                 map.set(key, {
@@ -137,10 +129,8 @@ describe("Media Import Routes (Letterboxd)", () => {
                     source: "tmdb",
                     sourceId: "movie-129",
                     imageUrl: "https://image.tmdb.org/t/p/w342/spiritedaway.jpg",
-                    metadata: {
-                        kind: "movie",
-                        categories: ["Animation", "Family", "Fantasy"],
-                    },
+                    genres: ["Animation", "Family", "Fantasy"],
+                    details: null,
                 })
             } else {
                 map.set(key, null)
@@ -188,7 +178,7 @@ describe("Media Import Routes (Letterboxd)", () => {
 
         // Verify Inception log
         const inceptionMedia = await prisma.media.findFirst({
-            where: { source: "tmdb", sourceId: "movie-27205" },
+            where: { provider: "tmdb", providerId: "movie-27205" },
         })
         expect(inceptionMedia).not.toBeNull()
 
@@ -202,7 +192,7 @@ describe("Media Import Routes (Letterboxd)", () => {
 
         // Verify Dune log (watchlist-only -> wishlist, no rating, no finished_at)
         const duneMedia = await prisma.media.findFirst({
-            where: { source: "tmdb", sourceId: "movie-693134" },
+            where: { provider: "tmdb", providerId: "movie-693134" },
         })
         expect(duneMedia).not.toBeNull()
 
@@ -273,8 +263,8 @@ describe("Media Import Routes (Letterboxd)", () => {
             data: {
                 title: "Fight Club",
                 year: 1999,
-                source: "tmdb",
-                sourceId: "movie-550",
+                provider: "tmdb",
+                providerId: "movie-550",
                 mediaTypeId: movieTypeId,
                 userId: systemUserId,
             },
@@ -342,10 +332,10 @@ describe("Media Import Routes (Letterboxd)", () => {
         )
 
         const unmatchedMedia = await prisma.media.findFirst({
-            where: { title: "Unmatched Film", source: "letterboxd" },
+            where: { title: "Unmatched Film", provider: "letterboxd" },
         })
         expect(unmatchedMedia).not.toBeNull()
-        expect(unmatchedMedia!.sourceId).toBe("boxd.it/unm1")
+        expect(unmatchedMedia!.providerId).toBe("boxd.it/unm1")
     })
 
     it("calls resolver with [] when re-importing a diary-only export", async () => {
@@ -462,8 +452,7 @@ describe("Media Import Routes (Letterboxd)", () => {
             data: {
                 title: "Existing Film",
                 mediaTypeId: movieTypeId,
-                source: "custom",
-                sourceId: "custom-1",
+                
             },
         })
         const existingLog = await prisma.userLogs.create({

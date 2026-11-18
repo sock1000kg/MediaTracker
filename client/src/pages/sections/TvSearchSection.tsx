@@ -44,7 +44,8 @@ function TvShowItem({ show, view, logs, onLog }: TvShowItemProps) {
   const parts = tvMetaParts(show)
   const categories = resultCategories(show)
   const url = resultUrl(show)
-  const tmdbId = show.metadata?.tmdbId ?? Number(show.sourceId.replace(/^tv:/, ""))
+  const tmdbExt = show.externalIds?.find((e) => e.provider === "tmdb")?.id
+  const tmdbId = tmdbExt ? Number(tmdbExt) : ((show.details as Record<string, unknown> | undefined)?.tmdbId as number | undefined ?? Number(show.sourceId.replace(/^tv:/, "")))
   const seasonsId = `tv-seasons-${tmdbId}`
 
   const {
@@ -82,8 +83,8 @@ function TvShowItem({ show, view, logs, onLog }: TvShowItemProps) {
           const inMedia = season.inLibrary || isResultLogged(logs, season)
           const seasonByline = [
             season.year,
-            season.metadata?.episodeCount != null
-              ? `${season.metadata.episodeCount} episode${season.metadata.episodeCount === 1 ? "" : "s"}`
+            season.details?.episodeCount != null
+              ? `${season.details.episodeCount} episode${season.details.episodeCount === 1 ? "" : "s"}`
               : null,
           ]
             .filter(Boolean)

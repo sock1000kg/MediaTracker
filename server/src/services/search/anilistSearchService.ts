@@ -361,36 +361,38 @@ export function mapAniListMedia(mode: AniListMode, item: AniListMedia): SearchRe
 
     const year = item.startDate?.year != null ? String(item.startDate.year) : null
     const categories = extractCategories(item.genres, item.tags)
+    const releaseDate = item.startDate?.year != null
+        ? `${item.startDate.year}`
+        : null
+
+    const details: Record<string, unknown> = {}
+    if (item.format) details.format = item.format
+    if (typeof item.averageScore === "number") {
+        details.score = item.averageScore
+        details.scoreScale = "anilist_100"
+    }
+    if (mode === "anime") {
+        if (typeof item.episodes === "number") details.episodeCount = item.episodes
+        if (typeof item.duration === "number" && item.duration > 0) details.durationSec = item.duration * 60
+    } else {
+        if (typeof item.chapters === "number") details.chapterCount = item.chapters
+        if (typeof item.volumes === "number") details.volumeCount = item.volumes
+    }
 
     return {
         mediaType: mode,
         title: title as string,
+        originalTitle: originalTitle ?? undefined,
         creator,
         creators,
+        genres: categories ?? undefined,
         year,
+        releaseDate,
         description: cleanDescription(item.description),
         source: "anilist",
         sourceId: `${mode}-${item.id}`,
         imageUrl: getHttpsUrl(item.coverImage?.extraLarge ?? item.coverImage?.large),
-        metadata: {
-            ...(item.siteUrl ? { url: item.siteUrl } : {}),
-            kind: mode,
-            format: item.format ?? null,
-            ...(mode === "anime"
-                ? {
-                    episodes: item.episodes ?? null,
-                    episodeMinutes: typeof item.duration === "number" && item.duration > 0 ? item.duration : null,
-                }
-                : {
-                    chapters: item.chapters ?? null,
-                    volumes: item.volumes ?? null,
-                }),
-            score: typeof item.averageScore === "number" ? item.averageScore : null,
-            scoreScale: "anilist",
-            originalTitle,
-            categories,
-            idMal: item.idMal ?? null,
-        },
+        details,
         ...(item.idMal != null ? { externalIds: [{ provider: "mal", id: String(item.idMal) }] } : {}),
     }
 }

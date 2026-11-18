@@ -24,15 +24,18 @@ export function buildMusicBrainzRecordingUrl(recordingId: string): string {
 export function buildLastFmUrl({
   artist,
   title,
-  kind = "album",
+  subtype = "album",
+  kind,
 }: {
   artist: string
   title: string
+  subtype?: "album" | "track"
   kind?: "album" | "track"
 }): string {
   const encArtist = encodeURIComponent(artist)
   const encTitle = encodeURIComponent(title)
-  if (kind === "track") {
+  const targetSubtype = subtype ?? kind ?? "album"
+  if (targetSubtype === "track") {
     return `https://www.last.fm/music/${encArtist}/_/${encTitle}`
   }
   return `https://www.last.fm/music/${encArtist}/${encTitle}`

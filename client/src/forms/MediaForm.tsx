@@ -12,8 +12,7 @@ import { fetchMediaTypes } from "@/api/mediaType"
 
 import type { Media, MediaType } from "@/types/mainTypes"
 
-
-const AVAILABLE_METADATA_FIELDS = ["duration", "edition", "categories", "language", "pageCount", "url"]
+const AVAILABLE_DETAILS_FIELDS = ["duration", "edition", "categories", "language", "pageCount", "url"]
 
 interface MediaFormProps {
     formData: Partial<Media>,
@@ -24,7 +23,7 @@ export function MediaForm({
     formData,
     setFormData
 }: MediaFormProps) {
-    const [selectedMetadata, setSelectedMetadata] = useState<string>("")
+    const [selectedDetails, setSelectedDetails] = useState<string>("")
     const [mediaTypes, setMediaTypes] = useState<MediaType[]>([])
 
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -33,7 +32,6 @@ export function MediaForm({
         const loadMediaTypes = async () => {
             try {
                 const data = await fetchMediaTypes()
-                console.log("Fetched media types:", data)
                 setMediaTypes(data)
             } catch (error: unknown) {
                 const msg = error instanceof Error ? error.message : "Failed to load MediaTypes"
@@ -45,47 +43,47 @@ export function MediaForm({
     }, [])
 
     useEffect(() => {
-        if (formData.genres && formData.genres.length > 0 && formData.metadata?.categories === undefined) {
+        if (formData.genres && formData.genres.length > 0 && formData.details?.categories === undefined) {
             setFormData(prev => ({
                 ...prev,
-                metadata: {
-                    ...(prev.metadata ?? {}),
+                details: {
+                    ...(prev.details ?? {}),
                     categories: formData.genres!.join(", "),
                 }
             }))
         }
-    }, [formData.genres, formData.metadata?.categories, setFormData])
+    }, [formData.genres, formData.details?.categories, setFormData])
 
-    const addMetadataField = () => {
-        if (!selectedMetadata) return
+    const addDetailsField = () => {
+        if (!selectedDetails) return
         setFormData(prev => ({
             ...prev,
-            metadata: {
-                ...(prev.metadata ?? {}),
-                [selectedMetadata]: ""
+            details: {
+                ...(prev.details ?? {}),
+                [selectedDetails]: ""
             }
         }))
-        setSelectedMetadata("") // reset dropdown
+        setSelectedDetails("") // reset dropdown
     }
 
-    const updateMetadataValue = (key: string, value: string) => {
+    const updateDetailsValue = (key: string, value: string) => {
         setFormData(prev => ({
             ...prev,
-            metadata: {
-                ...(prev.metadata ?? {}),
+            details: {
+                ...(prev.details ?? {}),
                 [key]: value
             }
         }))
     }
 
-    const removeMetadataField = (key: string) => {
+    const removeDetailsField = (key: string) => {
         setFormData(prev => {
-            const newMetadata = { ...(prev.metadata ?? {}) }
-            delete newMetadata[key]
+            const newDetails = { ...(prev.details ?? {}) }
+            delete newDetails[key]
             // Clearing genres too stops the seeding effect above from re-adding "categories".
             return key === "categories"
-                ? { ...prev, metadata: newMetadata, genres: [] }
-                : { ...prev, metadata: newMetadata }
+                ? { ...prev, details: newDetails, genres: [] }
+                : { ...prev, details: newDetails }
         })
     }
 
@@ -194,24 +192,24 @@ export function MediaForm({
                     />
             </label>
 
-            {/* Metadata */}
+            {/* Details */}
             <div>
-                <span className="text-sm">Metadata</span>
+                <span className="text-sm">Details</span>
 
                 {/* Dropdown */}
                 <div className="flex gap-2 mt-1">
                     <Select
-                    value={selectedMetadata}
-                    onValueChange={(val) => setSelectedMetadata(val)}
+                    value={selectedDetails}
+                    onValueChange={(val) => setSelectedDetails(val)}
                     >
                     <SelectTrigger
                         className="w-[280px] flex rounded-md border border-input bg-card px-3 py-2 text-sm focus:ring-2 focus:outline-none "
                     >
-                        <SelectValue placeholder="Select metadata field" />
+                        <SelectValue placeholder="Select details field" />
                     </SelectTrigger>
 
                     <SelectContent className="rounded-md border border-border bg-card shadow-md">
-                        {AVAILABLE_METADATA_FIELDS.map((field) => (
+                        {AVAILABLE_DETAILS_FIELDS.map((field) => (
                         <SelectItem
                             key={field}
                             value={field}
@@ -225,29 +223,29 @@ export function MediaForm({
 
                     <button
                     type="button"
-                    onClick={addMetadataField}
+                    onClick={addDetailsField}
                     className="px-3 py-2 rounded-md bg-secondary text-sm text-secondary-foreground hover:bg-muted border border-border-strong focus:ring-2 focus:outline-none"
                     >
                     Add
                     </button>
                 </div>
 
-                {/* Render added metadata fields */}
+                {/* Render added details fields */}
                 <div className="mt-3 space-y-2">
-                    {formData.metadata &&
-                    Object.entries(formData.metadata).map(([key, value]) => (
+                    {formData.details &&
+                    Object.entries(formData.details).map(([key, value]) => (
                         <div key={key} className="flex items-center gap-2">
                         <span className="w-24 text-sm">{key}</span>
                         <input
                             type="text"
                             value={value as string}
-                            onChange={(e) => updateMetadataValue(key, e.target.value)}
+                            onChange={(e) => updateDetailsValue(key, e.target.value)}
                             className="flex-1 rounded-md border border-input bg-card px-2 py-1 text-sm focus:ring-2 "
                             placeholder={`Enter ${key}`}
                         />
                         <button
                             type="button"
-                            onClick={() => removeMetadataField(key)}
+                            onClick={() => removeDetailsField(key)}
                             aria-label={`Remove ${key}`}
                             className="px-2 py-1 rounded-md bg-destructive text-primary-foreground text-xs hover:bg-destructive/90"
                         >

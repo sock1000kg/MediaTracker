@@ -14,6 +14,45 @@ datasource db {
   provider = "postgresql"
 }
 
+enum IdSource {
+  openlibrary
+  goodreads
+  isbn
+  isbn13
+  lastfm
+  musicbrainz
+  anilist
+  mal
+  tmdb
+  imdb
+  letterboxd
+  rawg
+  bgg
+  google_books
+}
+
+enum MediaSubtype {
+  album
+  track
+  show
+  season
+}
+
+enum LogStatus {
+  wishlist
+  completed
+  in_progress @map("in progress")
+  dropped
+}
+
+enum ApiKeyService {
+  lastfm
+  tmdb
+  rawg
+  bgg
+  google_books
+}
+
 model User {
   id              String        @id @default(uuid(7)) @db.Uuid
   username        String        @unique
@@ -40,11 +79,16 @@ model Media {
                                                 //book    music
   creator         String?                      //author  artist
   year            Int?
-  metadata        Json?
+  subtype         MediaSubtype?
+  releaseDate     DateTime?     @db.Date
+  details         Json?           // strict per-subtype schema
+  syncedAt        DateTime?       // last successful provider fetch (log, refresh, any job)
+  syncCheckedAt   DateTime?       // last finished attempt, including "provider has no match"
+  purgedAt        DateTime?       // TMDB 6-month purge
   created_at      DateTime      @default(now())
 
-  source          String?
-  sourceId        String?
+  provider        IdSource?   // IdSource; null = custom media
+  providerId      String?     // external id from provider
   description     String?
   imageUrl        String?
 
@@ -61,15 +105,14 @@ model Media {
   children        Media[]       @relation("MediaChildren")
   position        Int?          // track number / season number
   externalIds     MediaExternalId[]
-  kind            String?
   originalTitle   String?
   genres          MediaGenre[]
   creators        MediaCreator[]
 
   @@index([parentId])
-  @@index([kind])
-  @@unique([source, sourceId], where: { sourceId: { not: null } })
-  @@unique([userId, creator, title, year, mediaTypeId, source], where: { sourceId: null })
+  @@index([provider, syncCheckedAt])
+  @@unique([provider, providerId])
+  @@unique([userId, creator, title, year, mediaTypeId], where: { provider: null })   // custom media
 }
 
 model Genre {
@@ -113,7 +156,7 @@ model MediaExternalId {
   id         String   @id @default(uuid(7)) @db.Uuid
   mediaId    String   @db.Uuid
   media      Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-  provider   String   // lower-case provider key, e.g. "anilist", "mal", "tmdb", "goodreads", "isbn13", "letterboxd", "lastfm", "musicbrainz"
+  provider   IdSource // IdSource; external ids are only attached to system-owned rows
   externalId String
   created_at DateTime @default(now())
 
@@ -139,13 +182,15 @@ model UserLogs {
   id              String    @id @default(uuid(7)) @db.Uuid
 
 
-  status          String?   //"Completed" "In progress" "Wishlist" "Dropped"
+  status          LogStatus?   // LogStatus enum: wishlist, completed, in_progress, dropped
   rating          Float?    //scale 100
   notes           String?
   started_at      DateTime?
   finished_at     DateTime?
   logged_at       DateTime  @default(now())
-  progress        Json?
+  progressEpisodes Int?
+  progressChapters Int?
+  progressVolumes  Int?
 
   userId          String    @db.Uuid
   user            User      @relation(fields: [userId], references: [id], name: "UserLogsToUser", onDelete: Cascade)
@@ -210,20 +255,20 @@ model CollectionItem {
 }
 
 model UserAPIKey {
-  id              String    @id @default(uuid(7)) @db.Uuid
-  key             String    // store encrypted or plain (if it's safe)
-  service         String    //"google_books"
-  created_at      DateTime  @default(now())
+  id              String         @id @default(uuid(7)) @db.Uuid
+  key             String         // encrypted with encryptKey in server/src/utilities.ts
+  service         ApiKeyService  // one of ApiKeyService; one key per user per service
+  created_at      DateTime       @default(now())
 
-  userId          String    @db.Uuid
-  user            User      @relation(fields: [userId], references: [id], name: "APIToUser", onDelete: Cascade)
+  userId          String         @db.Uuid
+  user            User           @relation(fields: [userId], references: [id], name: "APIToUser", onDelete: Cascade)
 
   @@unique([userId, service]) // one key per user per service
 }
 
 model RefreshToken {
   id        String   @id @default(uuid(7)) @db.Uuid
-  token     String   @unique
+  tokenHash String   @unique // sha256 hex of the refresh token; the raw token is never stored
   userId    String   @db.Uuid
   user      User     @relation(fields: [userId], references: [id], name: "RefreshTokenToUser", onDelete: Cascade)
   expiresAt DateTime

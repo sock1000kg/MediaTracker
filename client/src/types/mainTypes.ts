@@ -8,7 +8,7 @@ export type AllowedSource = (typeof allowedSources)[number]
 // MAIN TYPES
 type JsonPrimitive = string | number | boolean | null
 type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue }
-export interface MediaMetadata {
+export interface MediaDetails {
   [key: string]: JsonValue | undefined
 }
 export interface ChildSummary {
@@ -28,16 +28,20 @@ export interface Media {
   mediaType: MediaType
   creator?: string | null
   year?: number | null
-  source?: string | null
-  sourceId: string | null
+  provider?: string | null
+  providerId?: string | null
   description: string | null
-  metadata?: MediaMetadata
+  details?: MediaDetails | null
   imageUrl?: string | null
   created_at: string
   parentId?: string | null
   position?: number | null
-  kind?: string | null
+  subtype?: "album" | "track" | "show" | "season" | null
   originalTitle?: string | null
+  releaseDate?: string | null
+  syncedAt?: string | null
+  syncCheckedAt?: string | null
+  purgedAt?: string | null
   genres?: string[]
   creators?: MediaCreatorItem[]
   externalIds?: Array<{ provider: string; externalId: string }>
@@ -71,7 +75,9 @@ export interface Log {
   started_at?: string | null
   finished_at?: string | null
   logged_at: string
-  progress?: Record<string, unknown> | null
+  progressEpisodes?: number | null
+  progressChapters?: number | null
+  progressVolumes?: number | null
   media: Media
   genres?: string[]
   creators?: MediaCreatorItem[]

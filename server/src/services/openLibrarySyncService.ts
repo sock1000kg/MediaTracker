@@ -7,6 +7,7 @@ import { openLibraryResponseSchema, OpenLibraryBook } from "@/schemas/search/boo
 import { openLibraryService } from "@/services/search/openLibrarySearchService.js"
 import { setMediaGenres, setMediaCreators, isJunkGenre } from "./genreService.js"
 import { attachExternalIdsToMedia } from "@/repositories/mediaRepository.js"
+import { validateDetails } from "@/schemas/detailsSchemas.js"
 
 export interface OpenLibrarySyncResult {
     processed: number
@@ -35,8 +36,8 @@ export async function syncOpenLibraryBooks(
     const totalRaw = await db.$queryRaw<Array<{ count: bigint | number }>>(Prisma.sql`
         SELECT COUNT(*)::int AS count
         FROM "Media"
-        WHERE source = 'goodreads'
-          AND (metadata IS NULL OR metadata->>'olSyncedAt' IS NULL)
+        WHERE provider = 'goodreads'
+          AND "syncCheckedAt" IS NULL
     `)
     const total = Number(totalRaw[0]?.count ?? 0)
 
@@ -56,13 +57,13 @@ export async function syncOpenLibraryBooks(
             creator: string | null
             year: number | null
             imageUrl: string | null
-            sourceId: string | null
-            metadata: unknown
+            providerId: string | null
+            details: unknown
         }>>(Prisma.sql`
-            SELECT id, title, creator, year, "imageUrl", "sourceId", metadata
+            SELECT id, title, creator, year, "imageUrl", "providerId", details
             FROM "Media"
-            WHERE source = 'goodreads'
-              AND (metadata IS NULL OR metadata->>'olSyncedAt' IS NULL)
+            WHERE provider = 'goodreads'
+              AND "syncCheckedAt" IS NULL
               ${excludeClause}
             ORDER BY id ASC
             LIMIT ${OL_BATCH_SIZE}
@@ -88,21 +89,21 @@ export async function syncOpenLibraryBooks(
             }
         }
 
-        const candidateMetaMap = new Map<string, Record<string, unknown>>()
+        const candidateDetailsMap = new Map<string, Record<string, unknown>>()
         const rowIsbnMap = new Map<string, string>()
         const isbnsToQuery: string[] = []
 
         for (const c of candidates) {
-            const rawMeta = c.metadata
-            let meta: Record<string, unknown> = {}
-            if (rawMeta && typeof rawMeta === "object" && !Array.isArray(rawMeta)) {
-                meta = rawMeta as Record<string, unknown>
-            } else if (typeof rawMeta === "string") {
-                try { meta = JSON.parse(rawMeta) } catch { meta = {} }
+            const rawDetails = c.details
+            let det: Record<string, unknown> = {}
+            if (rawDetails && typeof rawDetails === "object" && !Array.isArray(rawDetails)) {
+                det = rawDetails as Record<string, unknown>
+            } else if (typeof rawDetails === "string") {
+                try { det = JSON.parse(rawDetails) } catch { det = {} }
             }
-            candidateMetaMap.set(c.id, meta)
+            candidateDetailsMap.set(c.id, det)
 
-            const isbn = cleanIsbn(meta.isbn13) ?? cleanIsbn(meta.isbn) ?? extIdByMedia.get(c.id) ?? null
+            const isbn = extIdByMedia.get(c.id) ?? null
             if (isbn) {
                 rowIsbnMap.set(c.id, isbn)
                 if (!isbnsToQuery.includes(isbn)) {
@@ -141,7 +142,7 @@ export async function syncOpenLibraryBooks(
         for (const item of candidates) {
             if (failedMediaIds.has(item.id)) continue
 
-            const meta = candidateMetaMap.get(item.id) ?? {}
+            const existingDetails = candidateDetailsMap.get(item.id) ?? {}
             const isbn = rowIsbnMap.get(item.id)
             let matchedDoc: OpenLibraryBook | null = isbn ? (docByIsbn.get(isbn) ?? null) : null
 
@@ -166,33 +167,39 @@ export async function syncOpenLibraryBooks(
                 }
             }
 
-            const now = new Date().toISOString()
+            const now = new Date()
 
             if (matchedDoc) {
                 const coverUrl = matchedDoc.cover_i
                     ? `https://covers.openlibrary.org/b/id/${matchedDoc.cover_i}-M.jpg`
                     : item.imageUrl
 
-                const pageCount = matchedDoc.number_of_pages_median ?? (typeof meta.pageCount === "number" ? meta.pageCount : null)
-                const publisher = matchedDoc.publisher?.[0] ?? (typeof meta.publisher === "string" ? meta.publisher : null)
+                const pageCount = matchedDoc.number_of_pages_median ?? (typeof existingDetails.pageCount === "number" ? existingDetails.pageCount : undefined)
+                const publisher = matchedDoc.publisher?.[0] ?? (typeof existingDetails.publisher === "string" ? existingDetails.publisher : undefined)
                 const year = item.year ?? matchedDoc.first_publish_year ?? null
 
-                const updatedMeta = {
-                    ...meta,
+                const updatedDetails = {
                     ...(pageCount != null ? { pageCount } : {}),
                     ...(publisher != null ? { publisher } : {}),
-                    openLibraryWorkKey: matchedDoc.key,
-                    olSyncedAt: now,
                 }
+                const validated = validateDetails(updatedDetails, { subtype: null, mediaTypeName: "book", hasProvider: true })
 
                 await db.media.update({
                     where: { id: item.id },
                     data: {
                         imageUrl: coverUrl,
                         year,
-                        metadata: updatedMeta,
+                        details: (validated ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+                        provider: "openlibrary",
+                        providerId: matchedDoc.key,
+                        syncedAt: now,
+                        syncCheckedAt: now,
                     },
                 })
+
+                if (item.providerId) {
+                    await attachExternalIdsToMedia(item.id, [{ provider: "goodreads", externalId: item.providerId }], db)
+                }
 
                 const categories = (matchedDoc.subject ?? []).filter(s => !isJunkGenre(s, "book")).slice(0, 3)
                 if (categories.length > 0) {
@@ -210,14 +217,10 @@ export async function syncOpenLibraryBooks(
 
                 totalUpdated++
             } else {
-                // Open Library has no match: stamp olSyncedAt so row isn't retried every start
-                const updatedMeta = {
-                    ...meta,
-                    olSyncedAt: now,
-                }
+                // Open Library has no match: stamp syncCheckedAt so row isn't retried every start
                 await db.media.update({
                     where: { id: item.id },
-                    data: { metadata: updatedMeta },
+                    data: { syncCheckedAt: now },
                 })
             }
 

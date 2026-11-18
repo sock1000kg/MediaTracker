@@ -10,7 +10,7 @@ import { getUserApiKey as getRegistryUserApiKey } from "@/providers/registry.js"
 import { findUserById } from "@/repositories/authRepository.js"
 import { AppError } from "@/api/domain/error.js"
 import prisma from "@/prismaClient.js"
-import { findMediaBySource } from "@/repositories/mediaRepository.js"
+import { findMediaByProviderId } from "@/repositories/mediaRepository.js"
 
 const BASE_URL = "https://api.rawg.io/api/games"
 const PAGE_SIZE = 20
@@ -87,23 +87,24 @@ export function mapRawgGame(item: RawgGameItem): SearchResult {
     const platforms = [...new Set(
         (item.platforms ?? []).map(p => p.platform?.name?.trim() ?? "").filter(Boolean)
     )]
+    const categories = cleanRawgCategories(item.genres, item.tags)
     return {
         mediaType: "game",
         title: item.name?.trim() as string, // undefined falls back to "Unknown title" in searchResultSchema
         creator: null,
         year: yearStr && /^\d{4}$/.test(yearStr) ? yearStr : null,
+        releaseDate: item.released ?? null,
         description: null,
         source: "rawg",
         sourceId: `game-${item.id}`,
         imageUrl: image && image.startsWith("https://") ? image : null,
-        metadata: {
-            url: `https://rawg.io/games/${item.slug || item.id}`,
-            kind: "game",
-            platforms: platforms.length ? platforms : null,
-            metacritic: item.metacritic ?? null,
-            score: item.rating ? item.rating : null,
-            categories: cleanRawgCategories(item.genres, item.tags),
-            playtimeHours: typeof item.playtime === "number" && item.playtime > 0 ? item.playtime : null,
+        genres: categories && categories.length ? categories : undefined,
+        details: {
+            platforms: platforms.length ? platforms : undefined,
+            metacritic: item.metacritic ?? undefined,
+            score: item.rating ? item.rating : undefined,
+            scoreScale: item.rating ? "rawg_5" as const : undefined,
+            avgPlaytimeHours: typeof item.playtime === "number" && item.playtime > 0 ? item.playtime : undefined,
         },
     } as SearchResult
 }
@@ -218,14 +219,14 @@ export type RawgEnrichment = {
 // Never throws: failures (incl. missing/invalid key) are warned about (message only) and the log still succeeds.
 export async function enrichRawgOnLog(
     userId: string,
-    mediaData: { source: string, sourceId: string | null, creator?: string | null, description?: string | null, metadata?: unknown }
+    mediaData: { source: string, sourceId: string | null, creator?: string | null, description?: string | null, details?: unknown }
 ): Promise<RawgEnrichment | null> {
     try {
-        const existing = await findMediaBySource(mediaData.sourceId, mediaData.source, prisma)
-        const existingMeta = existing?.metadata && typeof existing.metadata === "object" && !Array.isArray(existing.metadata)
-            ? existing.metadata as Record<string, unknown>
+        const existing = await findMediaByProviderId(mediaData.source, mediaData.sourceId, prisma)
+        const existingDetails = existing?.details && typeof existing.details === "object" && !Array.isArray(existing.details)
+            ? existing.details as Record<string, unknown>
             : null
-        if (existing && existingMeta && existingMeta.publishers !== undefined) return null
+        if (existing && existingDetails && existingDetails.publishers !== undefined) return null
 
         const gameId = Number(/^game-(\d+)$/.exec(mediaData.sourceId ?? "")?.[1])
         if (!Number.isInteger(gameId)) return null
@@ -242,16 +243,20 @@ export async function enrichRawgOnLog(
                 existingId: existing.id,
                 creator: existing.creator ? null : developers,
                 creators: developersStructured,
-                genres: details.categories,
+                genres: details.categories && details.categories.length > 0 ? details.categories : null,
                 description: existing.description ? null : details.description,
                 patch,
             }
         }
         mediaData.creator = mediaData.creator ?? developers
         mediaData.description = mediaData.description ?? details.description
-        ;(mediaData as Record<string, unknown>).creators = developersStructured
-        ;(mediaData as Record<string, unknown>).genres = details.categories
-        mediaData.metadata = { ...(mediaData.metadata as object ?? {}), ...patch }
+        if (developersStructured.length > 0) {
+            ;(mediaData as Record<string, unknown>).creators = developersStructured
+        }
+        if (details.categories && details.categories.length > 0) {
+            ;(mediaData as Record<string, unknown>).genres = details.categories
+        }
+        mediaData.details = { ...(mediaData.details as object ?? {}), ...patch }
         return null
     } catch (error: unknown) {
         const reason = error instanceof AppError ? error.message : "unexpected error"

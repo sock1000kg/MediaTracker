@@ -12,13 +12,14 @@ import {
 import * as repo from "@/repositories/userRepository.js"
 
 type MediaLike = {
-    title: string; creator: string | null; year: number | null; source: string | null; sourceId: string | null
-    description: string | null; imageUrl: string | null; metadata: unknown; mediaType: { name: string } | null
+    title: string; creator: string | null; year: number | null; provider: string | null; providerId: string | null
+    description: string | null; imageUrl: string | null; details: unknown; subtype?: string | null; releaseDate?: Date | null; mediaType: { name: string } | null
 }
 
 const mediaJson = (m: MediaLike) => ({
     title: m.title, creator: m.creator, year: m.year, type: m.mediaType?.name ?? null,
-    source: m.source, sourceId: m.sourceId, description: m.description, imageUrl: m.imageUrl, metadata: m.metadata,
+    provider: m.provider, providerId: m.providerId, description: m.description, imageUrl: m.imageUrl,
+    details: m.details, subtype: m.subtype ?? null, releaseDate: m.releaseDate ?? null,
 })
 
 export class UserService {
@@ -82,22 +83,22 @@ export class UserService {
         const disposition = (ext: string) => attachmentHeader(`${base}.${ext}`, `${realBase}.${ext}`)
 
         if (format === "csv") {
-            const header = ["title", "creator", "year", "type", "source", "source_id", "status", "rating", "notes", "logged_at", "started_at", "finished_at", "categories", "tags", "collections", "url"]
+            const header = ["title", "creator", "year", "type", "provider", "provider_id", "status", "rating", "notes", "logged_at", "started_at", "finished_at", "categories", "tags", "collections", "url"]
             const rows = data.logs.map((l) => {
-                const meta = (l.media.metadata && typeof l.media.metadata === "object" ? l.media.metadata : {}) as Record<string, unknown>
+                const details = (l.media.details && typeof l.media.details === "object" ? l.media.details : {}) as Record<string, unknown>
                 const mediaGenres = (l.media as { genres?: string[] }).genres
                 const cats = Array.isArray(mediaGenres) && mediaGenres.length > 0
                     ? mediaGenres.join("; ")
-                    : (Array.isArray(meta.categories) ? meta.categories.filter((c) => typeof c === "string").join("; ") : "")
+                    : (Array.isArray(details.categories) ? details.categories.filter((c) => typeof c === "string").join("; ") : "")
                 const logObj = l as { tags?: { tag?: { name: string }; name?: string }[]; collectionItems?: { collection?: { name: string } }[] }
                 const rawTags = logObj.tags ?? []
                 const tagsStr = rawTags.map((t) => t.tag?.name ?? t.name ?? "").filter(Boolean).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })).join("; ")
                 const rawCols = logObj.collectionItems ?? []
                 const colsStr = rawCols.map((c) => c.collection?.name ?? "").filter(Boolean).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })).join("; ")
-                const url = typeof meta.url === "string" ? meta.url : ""
+                const url = typeof details.url === "string" ? details.url : ""
                 return [
                     l.media.title, l.media.creator, l.media.year, l.media.mediaType?.name ?? null,
-                    l.media.source, l.media.sourceId, l.status, l.rating, l.notes,
+                    l.media.provider, l.media.providerId, l.status, l.rating, l.notes,
                     l.logged_at.toISOString(),
                     l.started_at ? l.started_at.toISOString() : null,
                     l.finished_at ? l.finished_at.toISOString() : null,

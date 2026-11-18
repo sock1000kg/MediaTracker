@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import type { Log } from "@/types/mainTypes"
-import { formatLogMetadata } from "@/lib/logMetadata"
+import { formatLogDetails } from "@/lib/logDetails"
 import { displayRating, coverAspect, logDateLine } from "@/lib/logView"
 import { Cover } from "@/components/media-view/Cover"
 import { RowShell } from "@/components/media-view/RowShell"
@@ -25,9 +25,9 @@ export function LogRow({ log, onEdit, onDelete, onTagClick, leading, extraAction
   const [expanded, setExpanded] = useState(false)
   const { media } = log
   const userTags = log.tags ?? []
-  const categories = media.genres ?? (Array.isArray(media.metadata?.categories) ? (media.metadata.categories as string[]) : [])
-  const metaParts = formatLogMetadata(media, log)
-  const originalTitle = media.originalTitle ?? (typeof media.metadata?.originalTitle === "string" ? media.metadata.originalTitle : null)
+  const categories = media.genres ?? (Array.isArray(media.details?.categories) ? (media.details.categories as string[]) : [])
+  const metaParts = formatLogDetails(media, log)
+  const originalTitle = media.originalTitle ?? (typeof media.details?.originalTitle === "string" ? (media.details.originalTitle as string) : null)
   const isMusic = media.mediaType?.name?.toLowerCase() === "music"
   const byline = [media.creator, media.year].filter(Boolean).join(" · ")
   const rating = displayRating(log.rating)
@@ -41,10 +41,10 @@ export function LogRow({ log, onEdit, onDelete, onTagClick, leading, extraAction
   const summaryLine = childSummary != null && childSummary.rated > 0
     ? `${childSummary.rated} ${unit} rated · avg ${avgStr}`
     : null
-  const isChild = Boolean(media.parentId || media.kind === "track" || media.kind === "season" || media.metadata?.kind === "track" || media.metadata?.kind === "season")
+  const isChild = Boolean(media.parentId || media.subtype === "track" || media.subtype === "season")
   const parentTitle = (typeof media.parent?.title === "string" && media.parent.title.trim())
-    || (typeof media.metadata?.album === "string" && media.metadata.album.trim())
-    || (typeof media.metadata?.showTitle === "string" && media.metadata.showTitle.trim())
+    || (typeof media.details?.album === "string" && (media.details.album as string).trim())
+    || (typeof media.details?.showTitle === "string" && (media.details.showTitle as string).trim())
     || null
   const fromSubtitle = isChild && parentTitle ? `from ${parentTitle}` : null
 

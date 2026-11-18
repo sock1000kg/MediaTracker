@@ -59,7 +59,6 @@ describe("Letterboxd parser and unzipper", () => {
             expect(film.loggedAt).toEqual(new Date(Date.UTC(2024, 0, 10, 12))) // earliest Date: 2024-01-10
             expect(film.notes).toBe("Mind-bending masterpiece.")
             expect(film.tags).toEqual(["cinema", "2024"])
-            expect(film.progress).toEqual({ watches: 2 })
             expect(film.filmUri).toBe("boxd.it/1sXg")
         })
 
@@ -82,7 +81,6 @@ describe("Letterboxd parser and unzipper", () => {
             expect(film.finishedAt).toBeNull()
             expect(film.loggedAt).toEqual(new Date(Date.UTC(2024, 2, 1, 12)))
             expect(film.filmUri).toBe("boxd.it/n0sC")
-            expect(film.progress).toBeNull()
         })
 
         it("handles diary-only film (no film URI) coming through with no letterboxd id", () => {
@@ -104,7 +102,6 @@ describe("Letterboxd parser and unzipper", () => {
             expect(film.finishedAt).toEqual(new Date(Date.UTC(2024, 3, 5, 12)))
             expect(film.filmUri).toBeNull()
             expect(film.tags).toEqual(["festival", "indies"])
-            expect(film.progress).toBeNull()
         })
 
         it("a likes-only film comes through as completed", () => {
@@ -329,7 +326,7 @@ describe("Letterboxd parser and unzipper", () => {
             expect(res.list.films[0].year).toBe(1979)
         })
 
-        it("ignores extra/unknown columns in both metadata and film headers", () => {
+        it("ignores extra/unknown columns in both header and film rows", () => {
             const csv = [
                 "ExtraCol1,Date,Name,ExtraCol2,Tags,URL,Description,ExtraCol3",
                 "foo,2024-05-01,Extra Cols List,bar,,https://boxd.it/ec,Desc,baz",

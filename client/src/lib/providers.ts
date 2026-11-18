@@ -5,10 +5,10 @@ import { buildLastFmUrl, buildMusicBrainzRecordingUrl, buildMusicBrainzReleaseGr
 export type LinkMedia = {
   title?: string | null
   creator?: string | null
-  sourceId?: string | null
-  metadata?: Record<string, unknown> | null
-  source?: string | null
-  kind?: string | null
+  provider?: string | null
+  providerId?: string | null
+  details?: Record<string, unknown> | null
+  subtype?: string | null
   mediaType?: { name?: string | null } | string | null
   externalIds?: Array<{ provider: string; externalId: string }> | null
 }
@@ -46,10 +46,10 @@ export const CLIENT_PROVIDERS = {
     },
     buildLink: (media: LinkMedia): string | null => {
       const mediaTypeName = typeof media.mediaType === "string" ? media.mediaType.toLowerCase() : media.mediaType?.name?.toLowerCase()
-      const meta = (media.metadata ?? {}) as Record<string, unknown>
-      const kind = (typeof meta.kind === "string" ? meta.kind : null) ?? media.kind ?? mediaTypeName
+      const details = (media.details ?? {}) as Record<string, unknown>
+      const subtype = media.subtype ?? mediaTypeName
 
-      const sourceId = media.sourceId ?? ""
+      const sourceId = media.providerId ?? ""
       const seasonMatch = /^tv:(\d+):s(\d+)$/.exec(sourceId)
       if (seasonMatch) {
         return `https://www.themoviedb.org/tv/${seasonMatch[1]}/season/${seasonMatch[2]}`
@@ -64,18 +64,20 @@ export const CLIENT_PROVIDERS = {
       }
       const numMatch = /^(\d+)$/.exec(sourceId)
       if (numMatch) {
-        const type = kind === "tv" || kind === "show" ? "tv" : "movie"
+        const type = subtype === "tv" || subtype === "show" || subtype === "season" ? "tv" : "movie"
         return `https://www.themoviedb.org/${type}/${numMatch[1]}`
       }
 
-      if (typeof meta.tmdbId === "number" || typeof meta.tmdbId === "string") {
-        if (kind === "season" && typeof meta.seasonNumber === "number") {
-          return `https://www.themoviedb.org/tv/${meta.tmdbId}/season/${meta.seasonNumber}`
+      const tmdbExt = media.externalIds?.find(e => e.provider === "tmdb")?.externalId
+      const tmdbId = tmdbExt ?? (typeof details.tmdbId === "number" || typeof details.tmdbId === "string" ? String(details.tmdbId) : null)
+      if (tmdbId) {
+        if (subtype === "season" && typeof details.seasonNumber === "number") {
+          return `https://www.themoviedb.org/tv/${tmdbId}/season/${details.seasonNumber}`
         }
-        if (kind === "show" || kind === "tv") {
-          return `https://www.themoviedb.org/tv/${meta.tmdbId}`
+        if (subtype === "show" || subtype === "tv") {
+          return `https://www.themoviedb.org/tv/${tmdbId}`
         }
-        return `https://www.themoviedb.org/movie/${meta.tmdbId}`
+        return `https://www.themoviedb.org/movie/${tmdbId}`
       }
       return null
     },
@@ -91,11 +93,11 @@ export const CLIENT_PROVIDERS = {
       text: "Data from RAWG",
     },
     buildLink: (media: LinkMedia): string | null => {
-      const meta = (media.metadata ?? {}) as Record<string, unknown>
-      if (typeof meta.slug === "string" && meta.slug.trim()) {
-        return `https://rawg.io/games/${meta.slug.trim()}`
+      const details = (media.details ?? {}) as Record<string, unknown>
+      if (typeof details.slug === "string" && details.slug.trim()) {
+        return `https://rawg.io/games/${details.slug.trim()}`
       }
-      const sourceId = media.sourceId ?? ""
+      const sourceId = media.providerId ?? ""
       const match = /^(?:game-)?([a-zA-Z0-9_-]+)$/.exec(sourceId)
       if (match) {
         return `https://rawg.io/games/${match[1]}`
@@ -112,7 +114,7 @@ export const CLIENT_PROVIDERS = {
       text: "Data from AniList",
     },
     buildLink: (media: LinkMedia): string | null => {
-      const sourceId = media.sourceId ?? ""
+      const sourceId = media.providerId ?? ""
       const m = /^(anime|manga)-(\d+)$/.exec(sourceId)
       if (m) {
         return `https://anilist.co/${m[1]}/${m[2]}`
@@ -120,18 +122,14 @@ export const CLIENT_PROVIDERS = {
       const numMatch = /^(\d+)$/.exec(sourceId)
       if (numMatch) {
         const mediaTypeName = typeof media.mediaType === "string" ? media.mediaType.toLowerCase() : media.mediaType?.name?.toLowerCase()
-        const meta = (media.metadata ?? {}) as Record<string, unknown>
-        const kind = (typeof meta.kind === "string" ? meta.kind : null) ?? media.kind ?? mediaTypeName
-        const type = kind === "manga" ? "manga" : "anime"
+        const type = mediaTypeName === "manga" ? "manga" : "anime"
         return `https://anilist.co/${type}/${numMatch[1]}`
       }
-      const meta = (media.metadata ?? {}) as Record<string, unknown>
-      if (typeof meta.anilistId === "number" || typeof meta.anilistId === "string") {
+      const details = (media.details ?? {}) as Record<string, unknown>
+      if (typeof details.anilistId === "number" || typeof details.anilistId === "string") {
         const mediaTypeName = typeof media.mediaType === "string" ? media.mediaType.toLowerCase() : media.mediaType?.name?.toLowerCase()
-        const kind = (typeof meta.kind === "string" ? meta.kind : null)
-          ?? media.kind
-          ?? (mediaTypeName === "manga" ? "manga" : "anime")
-        return `https://anilist.co/${kind}/${meta.anilistId}`
+        const type = mediaTypeName === "manga" ? "manga" : "anime"
+        return `https://anilist.co/${type}/${details.anilistId}`
       }
       return null
     },
@@ -145,11 +143,11 @@ export const CLIENT_PROVIDERS = {
       text: "Data from Open Library",
     },
     buildLink: (media: LinkMedia): string | null => {
-      const meta = (media.metadata ?? {}) as Record<string, unknown>
-      const olWorkKey = (typeof meta.openLibraryWorkKey === "string" ? meta.openLibraryWorkKey : null)
-        ?? (typeof meta.olWorkKey === "string" ? meta.olWorkKey : null)
+      const details = (media.details ?? {}) as Record<string, unknown>
+      const olWorkKey = (typeof details.openLibraryWorkKey === "string" ? details.openLibraryWorkKey : null)
+        ?? (typeof details.olWorkKey === "string" ? details.olWorkKey : null)
         ?? (media.externalIds?.find((e) => e.provider === "openlibrary")?.externalId)
-        ?? (media.source === "open_library" || media.source === "openlibrary" ? media.sourceId : null)
+        ?? (media.provider === "openlibrary" ? media.providerId : null)
 
       if (!olWorkKey) return null
       const keyPath = olWorkKey.startsWith("/works/")
@@ -169,9 +167,9 @@ export const CLIENT_PROVIDERS = {
       text: "Data from Goodreads",
     },
     buildLink: (media: LinkMedia): string | null => {
-      const meta = (media.metadata ?? {}) as Record<string, unknown>
-      const sourceId = media.sourceId ?? ""
-      const grId = (typeof meta.goodreadsId === "string" ? meta.goodreadsId : null)
+      const details = (media.details ?? {}) as Record<string, unknown>
+      const sourceId = media.providerId ?? ""
+      const grId = (typeof details.goodreadsId === "string" ? details.goodreadsId : null)
         ?? (media.externalIds?.find((e) => e.provider === "goodreads")?.externalId)
         ?? (/^(?:gr-)?(\d+)/.exec(sourceId)?.[1])
       if (grId) {
@@ -190,10 +188,10 @@ export const CLIENT_PROVIDERS = {
       logo: { src: BGG_LOGO_URL, alt: "Powered by BGG", plate: true },
     },
     buildLink: (media: LinkMedia): string | null => {
-      const meta = (media.metadata ?? {}) as Record<string, unknown>
-      const sourceId = media.sourceId ?? ""
-      const bggId = (typeof meta.bggId === "number" ? String(meta.bggId) : null)
-        ?? (typeof meta.bggId === "string" ? meta.bggId : null)
+      const details = (media.details ?? {}) as Record<string, unknown>
+      const sourceId = media.providerId ?? ""
+      const bggId = (typeof details.bggId === "number" ? String(details.bggId) : null)
+        ?? (typeof details.bggId === "string" ? details.bggId : null)
         ?? (media.externalIds?.find((e) => e.provider === "bgg")?.externalId)
         ?? (/^(?:bgg-)?(\d+)$/.exec(sourceId)?.[1])
       if (bggId) {
@@ -211,19 +209,19 @@ export const CLIENT_PROVIDERS = {
       text: "Tracklist from MusicBrainz",
     },
     buildLink: (media: LinkMedia): string | null => {
-      const meta = (media.metadata ?? {}) as Record<string, unknown>
-      const rgid = (typeof meta.releaseGroupId === "string" ? meta.releaseGroupId : null)
-        ?? (typeof meta.mbReleaseGroupId === "string" ? meta.mbReleaseGroupId : null)
-      if (rgid && meta.kind !== "track") {
+      const details = (media.details ?? {}) as Record<string, unknown>
+      const rgid = (typeof details.releaseGroupId === "string" ? details.releaseGroupId : null)
+        ?? (typeof details.mbReleaseGroupId === "string" ? details.mbReleaseGroupId : null)
+      if (rgid && media.subtype !== "track") {
         return buildMusicBrainzReleaseGroupUrl(rgid)
       }
-      const recid = (typeof meta.recordingId === "string" ? meta.recordingId : null)
-        ?? (typeof meta.mbRecordingId === "string" ? meta.mbRecordingId : null)
+      const recid = (typeof details.recordingId === "string" ? details.recordingId : null)
+        ?? (typeof details.mbRecordingId === "string" ? details.mbRecordingId : null)
       if (recid) {
         return buildMusicBrainzRecordingUrl(recid)
       }
-      if (media.source === "musicbrainz" && media.sourceId) {
-        return buildMusicBrainzReleaseGroupUrl(media.sourceId)
+      if (media.provider === "musicbrainz" && media.providerId) {
+        return buildMusicBrainzReleaseGroupUrl(media.providerId)
       }
       return null
     },
@@ -241,14 +239,12 @@ export const CLIENT_PROVIDERS = {
       },
     },
     buildLink: (media: LinkMedia): string | null => {
-      const meta = (media.metadata ?? {}) as Record<string, unknown>
       if (media.creator && media.title) {
-        const kind = (typeof meta.kind === "string" ? meta.kind : null) ?? media.kind
-        const isTrack = kind === "track" || (typeof meta.url === "string" && meta.url.includes("/_/"))
+        const isTrack = media.subtype === "track"
         return buildLastFmUrl({
           artist: media.creator,
           title: media.title,
-          kind: isTrack ? "track" : "album",
+          subtype: isTrack ? "track" : "album",
         })
       }
       return null

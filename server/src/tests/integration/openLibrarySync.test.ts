@@ -25,12 +25,12 @@ describe("Open Library background sync job (G2, G3, T1)", () => {
                 title: "Book One",
                 creator: "Author One",
                 year: null, // to verify first_publish_year fills in
-                source: "goodreads",
-                sourceId: "gr-101",
+                provider: "goodreads",
+                providerId: "gr-101",
                 imageUrl: null,
                 mediaTypeId: bookTypeId,
                 userId: systemUserId,
-                metadata: {
+                details: {
                     url: "https://www.goodreads.com/book/show/gr-101",
                     isbn13: "9781111111111",
                     pageCount: 150, // CSV fallback
@@ -49,12 +49,12 @@ describe("Open Library background sync job (G2, G3, T1)", () => {
                 title: "Book Two",
                 creator: "Author Two",
                 year: 2020,
-                source: "goodreads",
-                sourceId: "gr-102",
+                provider: "goodreads",
+                providerId: "gr-102",
                 imageUrl: null,
                 mediaTypeId: bookTypeId,
                 userId: systemUserId,
-                metadata: {
+                details: {
                     url: "https://www.goodreads.com/book/show/gr-102",
                     isbn: "0222222222",
                 },
@@ -117,12 +117,11 @@ describe("Open Library background sync job (G2, G3, T1)", () => {
         })
         expect(updated1.imageUrl).toBe("https://covers.openlibrary.org/b/id/10101-M.jpg")
         expect(updated1.year).toBe(2015) // filled in because it was null
-        const meta1 = updated1.metadata as Record<string, unknown>
-        expect(meta1.openLibraryWorkKey).toBe("/works/OL101W")
-        expect(meta1.pageCount).toBe(220) // OL median pages won over CSV 150
-        expect(meta1.publisher).toBe("Publisher One")
-        expect(meta1.url).toBe("https://www.goodreads.com/book/show/gr-101") // kept Goodreads URL
-        expect(meta1.olSyncedAt).toBeDefined()
+        const details1 = updated1.details as Record<string, unknown>
+        expect(details1.pageCount).toBe(220) // OL median pages won over CSV 150
+        expect(details1.publisher).toBe("Publisher One")
+        expect(updated1.syncedAt).toBeTruthy()
+        expect(updated1.syncCheckedAt).toBeTruthy()
         expect(updated1.externalIds.some(e => e.provider === "openlibrary" && e.externalId === "/works/OL101W")).toBe(true)
         expect(updated1.genres.map(g => g.genre.name)).toEqual(["Fiction", "Adventure", "Fantasy"])
 
@@ -133,13 +132,13 @@ describe("Open Library background sync job (G2, G3, T1)", () => {
         })
         expect(updated2.imageUrl).toBe("https://covers.openlibrary.org/b/id/10202-M.jpg")
         expect(updated2.year).toBe(2020) // unchanged
-        const meta2 = updated2.metadata as Record<string, unknown>
-        expect(meta2.openLibraryWorkKey).toBe("/works/OL102W")
-        expect(meta2.pageCount).toBe(310)
-        expect(meta2.olSyncedAt).toBeDefined()
+        const details2 = updated2.details as Record<string, unknown>
+        expect(details2.pageCount).toBe(310)
+        expect(updated2.syncedAt).toBeTruthy()
+        expect(updated2.syncCheckedAt).toBeTruthy()
         expect(updated2.externalIds.some(e => e.provider === "openlibrary" && e.externalId === "/works/OL102W")).toBe(true)
 
-        // A second run makes no requests because olSyncedAt is stamped on both
+        // A second run makes no requests because syncCheckedAt is stamped on both
         requestsMade.length = 0
         const secondRun = await syncOpenLibraryBooks(prisma)
         expect(secondRun.processed).toBe(0)
@@ -154,13 +153,10 @@ describe("Open Library background sync job (G2, G3, T1)", () => {
                 title: "Unknown Odyssey",
                 creator: "Homer Simpson",
                 year: 1990,
-                source: "goodreads",
-                sourceId: "gr-no-isbn-1",
+                provider: "goodreads",
+                providerId: "gr-no-isbn-1",
                 mediaTypeId: bookTypeId,
                 userId: systemUserId,
-                metadata: {
-                    url: "https://www.goodreads.com/book/show/gr-no-isbn-1",
-                },
             },
         })
 
@@ -190,8 +186,7 @@ describe("Open Library background sync job (G2, G3, T1)", () => {
         expect(req).not.toContain("inauthor:")
 
         const updated = await prisma.media.findUniqueOrThrow({ where: { id: bNoIsbn.id } })
-        const meta = updated.metadata as Record<string, unknown>
-        expect(meta.olSyncedAt).toBeDefined() // stamped on "no match" so it won't retry
+        expect(updated.syncCheckedAt).toBeTruthy() // stamped on "no match" so it won't retry
 
         fetchSpy.mockRestore()
     })
@@ -202,12 +197,12 @@ describe("Open Library background sync job (G2, G3, T1)", () => {
                 title: "Failed Book",
                 creator: "Author Fail",
                 year: 1999,
-                source: "goodreads",
-                sourceId: "gr-fail-1",
+                provider: "goodreads",
+                providerId: "gr-fail-1",
                 imageUrl: "https://existing-cover.com/img.jpg",
                 mediaTypeId: bookTypeId,
                 userId: systemUserId,
-                metadata: {
+                details: {
                     url: "https://www.goodreads.com/book/show/gr-fail-1",
                     isbn13: "9789999999999",
                 },
@@ -224,8 +219,7 @@ describe("Open Library background sync job (G2, G3, T1)", () => {
 
         const unupdated = await prisma.media.findUniqueOrThrow({ where: { id: bFail.id } })
         expect(unupdated.imageUrl).toBe("https://existing-cover.com/img.jpg") // not erased
-        const meta = unupdated.metadata as Record<string, unknown>
-        expect(meta.olSyncedAt).toBeUndefined() // not stamped
+        expect(unupdated.syncCheckedAt).toBeNull() // not stamped
 
         fetchSpy.mockRestore()
     })

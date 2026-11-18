@@ -1,19 +1,17 @@
 import { z } from "zod"
 import { LIMITS } from "@/config/limits.js"
 
-export const boardgameMetadataSchema = z.object({
-    kind: z.literal("boardgame"),
-    url: z.string().optional(),
+export const boardgameDetailsSchema = z.object({
     minPlayers: z.number().nullable().optional(),
     maxPlayers: z.number().nullable().optional(),
-    playingTime: z.number().nullable().optional(),
-    minPlayTime: z.number().nullable().optional(),
-    maxPlayTime: z.number().nullable().optional(),
-    bggRating: z.number().nullable().optional(),
-    categories: z.array(z.string()).nullable().optional(),
+    playTimeMin: z.number().nullable().optional(),
+    minPlayTimeMin: z.number().nullable().optional(),
+    maxPlayTimeMin: z.number().nullable().optional(),
+    score: z.number().nullable().optional(),
+    scoreScale: z.literal("bgg_10").optional(),
 }).strict()
 
-export type BoardgameMetadata = z.infer<typeof boardgameMetadataSchema>
+export type BoardgameDetails = z.infer<typeof boardgameDetailsSchema>
 
 const nl = <T extends z.ZodTypeAny>(s: T) => s.nullable().optional()
 

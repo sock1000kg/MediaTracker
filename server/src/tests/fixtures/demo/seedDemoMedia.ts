@@ -98,18 +98,25 @@ export async function seedDemoMedia(
                         sourceId: item.media.sourceId,
                         description: item.media.description ?? null,
                         imageUrl: item.media.imageUrl ?? null,
-                        metadata: item.media.source === "tmdb"
-                            ? { ...(item.media.metadata as object ?? {}), fetchedAt: new Date().toISOString() }
-                            : (item.media.metadata ?? null),
-                    },
+                        subtype: item.media.subtype ?? null,
+                        releaseDate: item.media.releaseDate ? new Date(item.media.releaseDate) : null,
+                        genres: item.media.genres ?? undefined,
+                        externalIds: item.media.externalIds ?? [],
+                        details: (item.media as any).details ?? null,
+                        syncedAt: item.media.source === "tmdb" ? new Date() : undefined,
+                        syncCheckedAt: item.media.source === "tmdb" ? new Date() : undefined,
+                    } as any,
                     parent: item.parent
                         ? {
                               ...item.parent,
+                              subtype: item.parent.subtype ?? null,
                               year: item.parent.year ? Number(item.parent.year) : null,
-                              metadata: item.parent.source === "tmdb"
-                                  ? { ...(item.parent.metadata as object ?? {}), fetchedAt: new Date().toISOString() }
-                                  : (item.parent.metadata ?? null),
-                          }
+                              releaseDate: item.parent.releaseDate ? new Date(item.parent.releaseDate) : null,
+                              genres: item.parent.genres ?? undefined,
+                              details: (item.parent as any).details ?? null,
+                              syncedAt: item.parent.source === "tmdb" ? new Date() : undefined,
+                              syncCheckedAt: item.parent.source === "tmdb" ? new Date() : undefined,
+                          } as any
                         : undefined,
                     logData: {
                         status: item.log.status,

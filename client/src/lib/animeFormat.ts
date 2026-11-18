@@ -1,5 +1,3 @@
-import type { AnimeResult } from "@/types/search"
-
 export const ANILIST_URL = "https://anilist.co"
 export const ANILIST_ATTRIBUTION_TEXT = "Data from AniList"
 
@@ -15,20 +13,38 @@ export function formatAnimeScore(
   return `MAL ${score.toFixed(2)}`
 }
 
-// Parts of the card's metadata line, e.g. ["TV", "12 eps", "AniList 86%"] or ["TV", "12 eps", "MAL 8.61"]. Empty parts are skipped.
-export function animeMetaParts(m: AnimeResult["metadata"] | undefined, source?: string): string[] {
+// Parts of the card's details line, e.g. ["TV", "12 eps", "AniList 86%"] or ["TV", "12 eps", "MAL 8.61"]. Empty parts are skipped.
+export function animeMetaParts(
+  m?: {
+    format?: string | null
+    episodeCount?: number | null
+    episodes?: number | null
+    chapterCount?: number | null
+    chapters?: number | null
+    volumeCount?: number | null
+    volumes?: number | null
+    score?: number | null
+    scoreScale?: string | null
+  } | null,
+  source?: string,
+  mode?: "anime" | "manga"
+): string[] {
   if (!m) return []
   const parts: string[] = []
   if (m.format) parts.push(m.format)
-  if (m.kind === "anime") {
-    if (m.episodes) parts.push(`${m.episodes} eps`)
-  } else {
-    const ch = m.chapters ? `${m.chapters} ch` : null
-    const vol = m.volumes ? `${m.volumes} vol` : null
+  const episodes = m.episodeCount ?? m.episodes
+  const chapters = m.chapterCount ?? m.chapters
+  const volumes = m.volumeCount ?? m.volumes
+
+  if (mode === "manga" || (chapters != null || volumes != null)) {
+    const ch = chapters ? `${chapters} ch` : null
+    const vol = volumes ? `${volumes} vol` : null
     const both = [ch, vol].filter(Boolean).join(" · ")
     if (both) parts.push(both)
+  } else if (episodes) {
+    parts.push(`${episodes} eps`)
   }
-  const score = formatAnimeScore(m.score, m.scoreScale, source)
+  const score = formatAnimeScore(m.score, m.scoreScale === "mal" || m.scoreScale === "anilist" ? m.scoreScale : null, source)
   if (score != null) parts.push(score)
   return parts
 }

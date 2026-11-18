@@ -61,7 +61,6 @@ export interface LetterboxdMergedFilm {
     loggedAt: Date | null
     notes: string | null
     tags: string[]
-    progress: { watches: number } | null
     liked: boolean
     inLists?: boolean
     onlyInLists?: boolean
@@ -530,14 +529,6 @@ export function mergeLetterboxdFiles(files: LetterboxdExportFiles): LetterboxdMe
             }
         }
 
-        // rewatches: if any diary row has Rewatch = Yes, progress: { watches: N }
-        let progress: { watches: number } | null = null
-        const diaryEntries = acc.diary
-        const hasRewatch = diaryEntries.some(r => r.rewatchStr?.toLowerCase() === "yes")
-        if (hasRewatch) {
-            progress = { watches: diaryEntries.length }
-        }
-
         merged.push({
             name: acc.name,
             year: acc.year,
@@ -548,7 +539,6 @@ export function mergeLetterboxdFiles(files: LetterboxdExportFiles): LetterboxdMe
             loggedAt,
             notes,
             tags: cleanTags,
-            progress,
             liked: acc.likes.length > 0,
             inLists: acc.inLists,
             onlyInLists: isOnlyInLists,
@@ -736,18 +726,18 @@ export class LetterboxdImportService {
                     title: existing.title,
                     creator: existing.creator ?? null,
                     year: existing.year ?? null,
-                    source: existing.source ?? (f.filmUri ? "letterboxd" : "tmdb"),
-                    sourceId: existing.sourceId ?? f.filmUri ?? null,
+                    provider: existing.provider ?? (f.filmUri ? "letterboxd" : "tmdb"),
+                    providerId: existing.providerId ?? f.filmUri ?? null,
                     description: existing.description ?? null,
                     imageUrl: existing.imageUrl ?? null,
-                    metadata: existing.metadata ?? null,
+                    details: existing.details ?? null,
                 }
                 externalIds = []
                 if (f.filmUri) {
                     externalIds.push({ provider: "letterboxd", id: f.filmUri })
                 }
-                if (existing.source && existing.sourceId) {
-                    externalIds.push({ provider: existing.source, id: existing.sourceId })
+                if (existing.provider && existing.providerId) {
+                    externalIds.push({ provider: existing.provider, id: existing.providerId })
                 }
             } else {
                 const key = letterboxdFilmKey(f.name, f.year)
@@ -761,30 +751,30 @@ export class LetterboxdImportService {
                             title: existingTmdb.title,
                             creator: existingTmdb.creator ?? null,
                             year: existingTmdb.year ?? null,
-                            source: existingTmdb.source ?? "tmdb",
-                            sourceId: existingTmdb.sourceId ?? res.sourceId,
+                            provider: existingTmdb.provider ?? "tmdb",
+                            providerId: existingTmdb.providerId ?? res.sourceId,
                             description: existingTmdb.description ?? null,
                             imageUrl: existingTmdb.imageUrl ?? null,
-                            metadata: existingTmdb.metadata ?? null,
+                            details: existingTmdb.details ?? null,
                         }
                     } else {
                         mediaData = {
                             title: res.title,
                             creator: res.creator ?? null,
                             year: res.year ? Number(res.year) : null,
-                            source: "tmdb",
-                            sourceId: res.sourceId,
+                            provider: "tmdb",
+                            providerId: res.sourceId,
                             description: res.description ?? null,
                             imageUrl: res.imageUrl ?? null,
-                            metadata: res.metadata ?? null,
+                            details: (res.details as Prisma.InputJsonValue) ?? null,
+                            releaseDate: res.releaseDate ? new Date(res.releaseDate) : null,
                         }
                     }
                     externalIds = [
                         { provider: "tmdb", id: res.sourceId },
                         ...(f.filmUri ? [{ provider: "letterboxd", id: f.filmUri }] : []),
                     ]
-                    const meta = res.metadata as Record<string, unknown> | null
-                    genres = (meta?.categories as string[] | undefined) ?? null
+                    genres = res.genres ?? null
                     creators = res.creators ?? null
                 } else {
                     // Miss with no TMDB match or no TMDB key
@@ -795,11 +785,11 @@ export class LetterboxdImportService {
                         title: f.name,
                         creator: null,
                         year: f.year,
-                        source: "letterboxd",
-                        sourceId: f.filmUri ?? null,
+                        provider: "letterboxd",
+                        providerId: f.filmUri ?? null,
                         description: null,
                         imageUrl: null,
-                        metadata: null,
+                        details: null,
                     }
                     externalIds = f.filmUri ? [{ provider: "letterboxd", id: f.filmUri }] : []
                 }
@@ -808,7 +798,6 @@ export class LetterboxdImportService {
             validItems.push({
                 rowNum: i + 1,
                 title: f.name,
-                kind: "movie",
                 genres,
                 creators: creators ?? null,
                 externalIds,
@@ -822,7 +811,6 @@ export class LetterboxdImportService {
                     startedAt: f.finishedAt,
                     finishedAt: f.finishedAt,
                     tags: f.tags,
-                    progress: f.progress ?? null,
                 },
             })
         }
@@ -847,12 +835,14 @@ export class LetterboxdImportService {
                         if (m) return m
                     }
                 }
-                if (item.mediaData.source && item.mediaData.sourceId) {
-                    const m = bySourceKey.get(`${item.mediaData.source.toLowerCase()}:${item.mediaData.sourceId}`)
+                const prov = item.mediaData.provider ?? item.mediaData.source
+                const provId = item.mediaData.providerId ?? item.mediaData.sourceId
+                if (prov && provId) {
+                    const m = bySourceKey.get(`${prov.toLowerCase()}:${provId}`)
                     if (m) return m
                 }
-                if (!item.mediaData.sourceId && item.mediaData.source && item.mediaData.title) {
-                    const key = `null-source:${item.mediaData.source.toLowerCase()}:${item.mediaData.title.toLowerCase()}:${item.mediaData.year ?? ""}`
+                if (!provId && prov && item.mediaData.title) {
+                    const key = `null-source:${prov.toLowerCase()}:${item.mediaData.title.toLowerCase()}:${item.mediaData.year ?? ""}`
                     const m = bySourceKey.get(key)
                     if (m) return m
                 }
@@ -866,7 +856,6 @@ export class LetterboxdImportService {
                     started_at?: Date | null
                     notes?: string | null
                     status?: string | null
-                    progress?: Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput
                 } = {}
                 let newTags: string[] | undefined
 
@@ -892,11 +881,6 @@ export class LetterboxdImportService {
 
                 if ((log.notes === null || log.notes.trim() === "") && (item.logData.notes && item.logData.notes.trim() !== "")) {
                     logUpdates.notes = item.logData.notes
-                    filled = true
-                }
-
-                if (log.progress === null && item.logData.progress !== null) {
-                    logUpdates.progress = item.logData.progress as Prisma.InputJsonValue
                     filled = true
                 }
 
@@ -942,8 +926,8 @@ export class LetterboxdImportService {
                         id: true,
                         title: true,
                         year: true,
-                        source: true,
-                        sourceId: true,
+                        provider: true,
+                        providerId: true,
                         externalIds: {
                             select: {
                                 provider: true,
@@ -967,11 +951,11 @@ export class LetterboxdImportService {
                     logByExtId.set(`${ext.provider.toLowerCase()}:${ext.externalId}`, ul)
                 }
             }
-            if (m.source && m.sourceId) {
-                logBySourceId.set(`${m.source.toLowerCase()}:${m.sourceId}`, ul)
+            if (m.provider && m.providerId) {
+                logBySourceId.set(`${m.provider.toLowerCase()}:${m.providerId}`, ul)
             }
-            if (m.source && !m.sourceId && m.title) {
-                const k = `null-source:${m.source.toLowerCase()}:${m.title.toLowerCase()}:${m.year ?? ""}`
+            if (m.provider && !m.providerId && m.title) {
+                const k = `null-source:${m.provider.toLowerCase()}:${m.title.toLowerCase()}:${m.year ?? ""}`
                 logByNullSource.set(k, ul)
             }
             if (m.title) {
@@ -997,11 +981,13 @@ export class LetterboxdImportService {
                     }
                 }
             }
-            if (!matchedLog && item.mediaData.source && item.mediaData.sourceId) {
-                matchedLog = logBySourceId.get(`${item.mediaData.source.toLowerCase()}:${item.mediaData.sourceId}`) ?? null
+            const prov = item.mediaData.provider ?? item.mediaData.source
+            const provId = item.mediaData.providerId ?? item.mediaData.sourceId
+            if (!matchedLog && prov && provId) {
+                matchedLog = logBySourceId.get(`${prov.toLowerCase()}:${provId}`) ?? null
             }
-            if (!matchedLog && !item.mediaData.sourceId && item.mediaData.source && item.mediaData.title) {
-                const nullKey = `null-source:${item.mediaData.source.toLowerCase()}:${item.mediaData.title.toLowerCase()}:${item.mediaData.year ?? ""}`
+            if (!matchedLog && !provId && prov && item.mediaData.title) {
+                const nullKey = `null-source:${prov.toLowerCase()}:${item.mediaData.title.toLowerCase()}:${item.mediaData.year ?? ""}`
                 matchedLog = logByNullSource.get(nullKey) ?? null
             }
             if (!matchedLog && item.mediaData.title) {

@@ -124,7 +124,7 @@ describe("User settings routes", () => {
         const me = await prisma.user.findUniqueOrThrow({ where: { username: "UserExpE" } })
         const type = await prisma.mediaType.findFirst({ where: { name: "book" } })
         for (const [title, notes] of [["=HYPERLINK(\"http://x\",\"y\")", "line1, with comma\nline2"], ["Plain Title", "ok"]]) {
-            const m = await prisma.media.create({ data: { title, creator: "Someone", userId: me.id, mediaTypeId: type?.id ?? null, source: "custom" } })
+            const m = await prisma.media.create({ data: { title, creator: "Someone", userId: me.id, mediaTypeId: type?.id ?? null } })
             await prisma.userLogs.create({ data: { userId: me.id, mediaId: m.id, status: "completed", rating: 80, notes } })
         }
         const logCount = await prisma.userLogs.count({ where: { userId: me.id } })
@@ -153,7 +153,7 @@ describe("User settings routes", () => {
         expect(c.headers["content-type"]).toMatch(/text\/csv; charset=utf-8/)
         expect(c.headers["content-disposition"]).toMatch(/\.csv"; filename\*=UTF-8''/)
         const rows = parse(c.text.replace(/^\uFEFF/, ""), { columns: true }) as Record<string, string>[]
-        expect(Object.keys(rows[0])).toEqual(["title", "creator", "year", "type", "source", "source_id", "status", "rating", "notes", "logged_at", "started_at", "finished_at", "categories", "tags", "collections", "url"])
+        expect(Object.keys(rows[0])).toEqual(["title", "creator", "year", "type", "provider", "provider_id", "status", "rating", "notes", "logged_at", "started_at", "finished_at", "categories", "tags", "collections", "url"])
         expect(rows).toHaveLength(logCount)
         expect(rows.some((r) => r.title.startsWith("'=HYPERLINK"))).toBe(true)
         expect(rows.some((r) => r.tags === "'=cmd")).toBe(true)
@@ -180,10 +180,10 @@ describe("User settings routes", () => {
         const me = await prisma.user.findUniqueOrThrow({ where: { id: userId } })
         await prisma.userAPIKey.create({ data: { userId, service: "google_books", key: "enc" } })
         const type = await prisma.mediaType.create({ data: { name: "mytype", userId } })
-        const mine = await prisma.media.create({ data: { title: "Mine", userId, mediaTypeId: type.id, source: "custom" } })
+        const mine = await prisma.media.create({ data: { title: "Mine", userId, mediaTypeId: type.id } })
         await prisma.userLogs.create({ data: { userId, mediaId: mine.id } })
         const sys = await prisma.user.findUniqueOrThrow({ where: { username: "system" } })
-        const shared = await prisma.media.create({ data: { title: "Shared for delete test", userId: sys.id, source: "custom" } })
+        const shared = await prisma.media.create({ data: { title: "Shared for delete test", userId: sys.id } })
         await prisma.userLogs.create({ data: { userId, mediaId: shared.id } })
 
         const wrong = await request(app).delete("/users/me").set(auth(token)).send({ password: "WrongPass1!", confirmUsername: me.username })

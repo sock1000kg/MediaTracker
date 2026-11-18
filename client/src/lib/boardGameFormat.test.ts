@@ -43,7 +43,6 @@ describe("boardGameFormat", () => {
     expect(boardGameMetaParts(undefined)).toEqual([])
     expect(
       boardGameMetaParts({
-        kind: "boardgame",
         minPlayers: 2,
         maxPlayers: 4,
         minPlayTime: 60,
@@ -54,7 +53,6 @@ describe("boardGameFormat", () => {
 
     expect(
       boardGameMetaParts({
-        kind: "boardgame",
         minPlayers: 1,
         maxPlayers: 1,
         playingTime: 30,

@@ -30,11 +30,11 @@ describe("Music track cover logging", () => {
         await prisma.media.deleteMany({
             where: {
                 OR: [
-                    { sourceId: { startsWith: "test-track-standalone-" } },
-                    { sourceId: { startsWith: "test-track-nomatch-" } },
-                    { sourceId: { startsWith: "test-track-tracklist-" } },
-                    { sourceId: { startsWith: "test-album-tracklist-" } },
-                    { sourceId: { startsWith: "test-track-fail-" } },
+                    { providerId: { startsWith: "test-track-standalone-" } },
+                    { providerId: { startsWith: "test-track-nomatch-" } },
+                    { providerId: { startsWith: "test-track-tracklist-" } },
+                    { providerId: { startsWith: "test-album-tracklist-" } },
+                    { providerId: { startsWith: "test-track-fail-" } },
                 ],
             },
         })
@@ -59,7 +59,7 @@ describe("Music track cover logging", () => {
                 source: "lastfm",
                 sourceId: "test-track-standalone-avril",
                 imageUrl: null,
-                metadata: { kind: "track" },
+                subtype: "track",
             },
             logData: {
                 status: "completed",
@@ -76,13 +76,12 @@ describe("Music track cover logging", () => {
         expect(resolveSpy).toHaveBeenCalledWith("Aphex Twin", "Avril 14th")
 
         const savedTrack = await prisma.media.findFirst({
-            where: { source: "lastfm", sourceId: "test-track-standalone-avril" },
+            where: { provider: "lastfm", providerId: "test-track-standalone-avril" },
         })
 
         expect(savedTrack).not.toBeNull()
         expect(savedTrack?.imageUrl).toBe("https://coverartarchive.org/release-group/rg-standalone-cover/front-250")
-        const meta = savedTrack?.metadata as Record<string, unknown>
-        expect(meta?.coverResolvedAt).toBeDefined()
+        expect(savedTrack?.syncCheckedAt).toBeTruthy()
     })
 
     test("a track with no MusicBrainz match stays null", async () => {
@@ -98,7 +97,7 @@ describe("Music track cover logging", () => {
                 source: "lastfm",
                 sourceId: "test-track-nomatch-obscure",
                 imageUrl: null,
-                metadata: { kind: "track" },
+                subtype: "track",
             },
             logData: {
                 status: "completed",
@@ -115,13 +114,12 @@ describe("Music track cover logging", () => {
         expect(resolveSpy).toHaveBeenCalledWith("Obscure Band", "Obscure B-Side")
 
         const savedTrack = await prisma.media.findFirst({
-            where: { source: "lastfm", sourceId: "test-track-nomatch-obscure" },
+            where: { provider: "lastfm", providerId: "test-track-nomatch-obscure" },
         })
 
         expect(savedTrack).not.toBeNull()
         expect(savedTrack?.imageUrl).toBeNull()
-        const meta = savedTrack?.metadata as Record<string, unknown>
-        expect(meta?.coverResolvedAt).toBeDefined()
+        expect(savedTrack?.syncCheckedAt).toBeTruthy()
     })
 
     test("a track logged from a tracklist keeps the album cover without recording search", async () => {
@@ -136,7 +134,8 @@ describe("Music track cover logging", () => {
                 source: "lastfm",
                 sourceId: "test-track-tracklist-1",
                 imageUrl: null,
-                metadata: { kind: "track", trackNumber: 1 },
+                subtype: "track",
+                details: { trackNumber: 1 },
             },
             parent: {
                 title: "Parent Album",
@@ -144,7 +143,7 @@ describe("Music track cover logging", () => {
                 source: "lastfm",
                 sourceId: "test-album-tracklist-1",
                 imageUrl: albumCoverUrl,
-                metadata: { kind: "album" },
+                subtype: "album",
             },
             logData: {
                 status: "completed",
@@ -163,14 +162,14 @@ describe("Music track cover logging", () => {
         expect(resolveSpy).not.toHaveBeenCalled()
 
         const savedTrack = await prisma.media.findFirst({
-            where: { source: "lastfm", sourceId: "test-track-tracklist-1" },
+            where: { provider: "lastfm", providerId: "test-track-tracklist-1" },
         })
 
         expect(savedTrack).not.toBeNull()
         expect(savedTrack?.imageUrl).toBe(albumCoverUrl)
     })
 
-    test("logging a track while MusicBrainz fails leaves imageUrl null and no coverResolvedAt; later successful log fills it", async () => {
+    test("logging a track while MusicBrainz fails leaves imageUrl null and no syncCheckedAt; later successful log fills it", async () => {
         // Step 1: MusicBrainz fails with status: "failed" (e.g. timeout / network error / 500)
         jest.spyOn(musicBrainzClient, "resolveTrackCover").mockResolvedValue({
             status: "failed",
@@ -184,7 +183,7 @@ describe("Music track cover logging", () => {
                 source: "lastfm",
                 sourceId: "test-track-fail-retry-1",
                 imageUrl: null,
-                metadata: { kind: "track" },
+                subtype: "track",
             },
             logData: {
                 status: "completed",
@@ -200,15 +199,14 @@ describe("Music track cover logging", () => {
         expect(res1.statusCode).toBe(201)
 
         const savedTrackAfterFail = await prisma.media.findFirst({
-            where: { source: "lastfm", sourceId: "test-track-fail-retry-1" },
+            where: { provider: "lastfm", providerId: "test-track-fail-retry-1" },
         })
 
         expect(savedTrackAfterFail).not.toBeNull()
         expect(savedTrackAfterFail?.imageUrl).toBeNull()
-        const metaAfterFail = (savedTrackAfterFail?.metadata ?? {}) as Record<string, unknown>
-        expect(metaAfterFail.coverResolvedAt).toBeUndefined()
+        expect(savedTrackAfterFail?.syncCheckedAt).toBeNull()
 
-        // Step 2: Later successful log (or retry) fills the cover and stamps coverResolvedAt
+        // Step 2: Later successful log (or retry) fills the cover and stamps syncCheckedAt
         jest.spyOn(musicBrainzClient, "resolveTrackCover").mockResolvedValue({
             status: "found",
             imageUrl: "https://coverartarchive.org/release-group/rg-resolved-later/front-250",
@@ -228,12 +226,11 @@ describe("Music track cover logging", () => {
         expect(res2.statusCode).toBe(201)
 
         const savedTrackAfterSuccess = await prisma.media.findFirst({
-            where: { source: "lastfm", sourceId: "test-track-fail-retry-1" },
+            where: { provider: "lastfm", providerId: "test-track-fail-retry-1" },
         })
 
         expect(savedTrackAfterSuccess).not.toBeNull()
         expect(savedTrackAfterSuccess?.imageUrl).toBe("https://coverartarchive.org/release-group/rg-resolved-later/front-250")
-        const metaAfterSuccess = (savedTrackAfterSuccess?.metadata ?? {}) as Record<string, unknown>
-        expect(metaAfterSuccess.coverResolvedAt).toBeDefined()
+        expect(savedTrackAfterSuccess?.syncCheckedAt).toBeTruthy()
     })
 })

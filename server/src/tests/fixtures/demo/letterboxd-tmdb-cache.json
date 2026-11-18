@@ -7,17 +7,22 @@
     "source": "tmdb",
     "sourceId": "movie-244786",
     "imageUrl": "https://image.tmdb.org/t/p/w342/7fn624j5lj3xTme2SgiLCeuedmO.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/244786",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Drama",
+      "Music",
+      "Thriller"
+    ],
+    "details": {
+      "language": "en",
       "score": 8.376,
-      "categories": [
-        "Drama",
-        "Music",
-        "Thriller"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-244786"
+      }
+    ]
   },
   "oppenheimer:::2023": {
     "title": "Oppenheimer",
@@ -27,17 +32,22 @@
     "source": "tmdb",
     "sourceId": "movie-872585",
     "imageUrl": "https://image.tmdb.org/t/p/w342/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/872585",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Drama",
+      "History",
+      "War"
+    ],
+    "details": {
+      "language": "en",
       "score": 8.023,
-      "categories": [
-        "Drama",
-        "History",
-        "War"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-872585"
+      }
+    ]
   },
   "the truman show:::1998": {
     "title": "The Truman Show",
@@ -47,16 +57,21 @@
     "source": "tmdb",
     "sourceId": "movie-37165",
     "imageUrl": "https://image.tmdb.org/t/p/w342/vuza0WqY239yBXOadKlGwJsZJFE.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/37165",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Comedy",
+      "Drama"
+    ],
+    "details": {
+      "language": "en",
       "score": 8.161,
-      "categories": [
-        "Comedy",
-        "Drama"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-37165"
+      }
+    ]
   },
   "midsommar:::2019": {
     "title": "Midsommar",
@@ -66,17 +81,22 @@
     "source": "tmdb",
     "sourceId": "movie-530385",
     "imageUrl": "https://image.tmdb.org/t/p/w342/7LEI8ulZzO5gy9Ww2NVCrKmHeDZ.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/530385",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Horror",
+      "Drama",
+      "Mystery"
+    ],
+    "details": {
+      "language": "en",
       "score": 7.138,
-      "categories": [
-        "Horror",
-        "Drama",
-        "Mystery"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-530385"
+      }
+    ]
   },
   "spider-man: across the spider-verse:::2023": {
     "title": "Spider-Man: Across the Spider-Verse",
@@ -86,18 +106,23 @@
     "source": "tmdb",
     "sourceId": "movie-569094",
     "imageUrl": "https://image.tmdb.org/t/p/w342/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/569094",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Animation",
+      "Action",
+      "Adventure",
+      "Science Fiction"
+    ],
+    "details": {
+      "language": "en",
       "score": 8.345,
-      "categories": [
-        "Animation",
-        "Action",
-        "Adventure",
-        "Science Fiction"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-569094"
+      }
+    ]
   },
   "hereditary:::2018": {
     "title": "Hereditary",
@@ -107,17 +132,22 @@
     "source": "tmdb",
     "sourceId": "movie-493922",
     "imageUrl": "https://image.tmdb.org/t/p/w342/4GFPuL14eXi66V96xBWY73Y9PfR.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/493922",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Horror",
+      "Mystery",
+      "Thriller"
+    ],
+    "details": {
+      "language": "en",
       "score": 7.296,
-      "categories": [
-        "Horror",
-        "Mystery",
-        "Thriller"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-493922"
+      }
+    ]
   },
   "ju-on: the grudge:::2002": {
     "title": "Ju-on: The Grudge",
@@ -127,16 +157,21 @@
     "source": "tmdb",
     "sourceId": "movie-11838",
     "imageUrl": "https://image.tmdb.org/t/p/w342/6q1hlBC6rudc3mHwXsbMBR2xAT6.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/11838",
-      "kind": "movie",
-      "originalTitle": "呪怨",
-      "originalLanguage": "ja",
+    "genres": [
+      "Horror"
+    ],
+    "details": {
+      "language": "ja",
       "score": 6.755,
-      "categories": [
-        "Horror"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "originalTitle": "呪怨",
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-11838"
+      }
+    ]
   },
   "salò, or the 120 days of sodom:::1975": {
     "title": "Salò, or the 120 Days of Sodom",
@@ -146,17 +181,22 @@
     "source": "tmdb",
     "sourceId": "movie-5336",
     "imageUrl": "https://image.tmdb.org/t/p/w342/xnaDdiRfZlJaTf6JRc4in40eaeI.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/5336",
-      "kind": "movie",
-      "originalTitle": "Salò o le 120 giornate di Sodoma",
-      "originalLanguage": "it",
+    "genres": [
+      "Horror",
+      "Drama"
+    ],
+    "details": {
+      "language": "it",
       "score": 6.3,
-      "categories": [
-        "Horror",
-        "Drama"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "originalTitle": "Salò o le 120 giornate di Sodoma",
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-5336"
+      }
+    ]
   },
   "creep:::2014": {
     "title": "Creep",
@@ -166,16 +206,21 @@
     "source": "tmdb",
     "sourceId": "movie-250574",
     "imageUrl": "https://image.tmdb.org/t/p/w342/qn53D574tT0YRyLgirEFHQwGUXw.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/250574",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Horror",
+      "Thriller"
+    ],
+    "details": {
+      "language": "en",
       "score": 6.41,
-      "categories": [
-        "Horror",
-        "Thriller"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-250574"
+      }
+    ]
   },
   "the ritual:::2017": {
     "title": "The Ritual",
@@ -185,16 +230,21 @@
     "source": "tmdb",
     "sourceId": "movie-433808",
     "imageUrl": "https://image.tmdb.org/t/p/w342/9022CYEGqYETCeXN1oE3uwYJWub.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/433808",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Horror",
+      "Mystery"
+    ],
+    "details": {
+      "language": "en",
       "score": 6.3,
-      "categories": [
-        "Horror",
-        "Mystery"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-433808"
+      }
+    ]
   },
   "the substance:::2024": {
     "title": "The Substance",
@@ -204,16 +254,21 @@
     "source": "tmdb",
     "sourceId": "movie-933260",
     "imageUrl": "https://image.tmdb.org/t/p/w342/lqoMzCcZYEFK729d6qzt349fB4o.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/933260",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Horror",
+      "Science Fiction"
+    ],
+    "details": {
+      "language": "en",
       "score": 7.131,
-      "categories": [
-        "Horror",
-        "Science Fiction"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-933260"
+      }
+    ]
   },
   "a minecraft movie:::2025": {
     "title": "A Minecraft Movie",
@@ -223,18 +278,23 @@
     "source": "tmdb",
     "sourceId": "movie-950387",
     "imageUrl": "https://image.tmdb.org/t/p/w342/yFHHfHcUgGAxziP1C3lLt0q2T4s.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/950387",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Family",
+      "Fantasy",
+      "Comedy",
+      "Adventure"
+    ],
+    "details": {
+      "language": "en",
       "score": 6.189,
-      "categories": [
-        "Family",
-        "Fantasy",
-        "Comedy",
-        "Adventure"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-950387"
+      }
+    ]
   },
   "everything everywhere all at once:::2022": {
     "title": "Everything Everywhere All at Once",
@@ -244,17 +304,22 @@
     "source": "tmdb",
     "sourceId": "movie-545611",
     "imageUrl": "https://image.tmdb.org/t/p/w342/u68AjlvlutfEIcpmbYpKcdi09ut.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/545611",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Science Fiction"
+    ],
+    "details": {
+      "language": "en",
       "score": 7.71,
-      "categories": [
-        "Action",
-        "Adventure",
-        "Science Fiction"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-545611"
+      }
+    ]
   },
   "before sunset:::2004": {
     "title": "Before Sunset",
@@ -264,16 +329,21 @@
     "source": "tmdb",
     "sourceId": "movie-80",
     "imageUrl": "https://image.tmdb.org/t/p/w342/gycdE1ARByGQcK4fYR2mgpU6OO.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/80",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Drama",
+      "Romance"
+    ],
+    "details": {
+      "language": "en",
       "score": 7.8,
-      "categories": [
-        "Drama",
-        "Romance"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-80"
+      }
+    ]
   },
   "before sunrise:::1995": {
     "title": "Before Sunrise",
@@ -283,16 +353,21 @@
     "source": "tmdb",
     "sourceId": "movie-76",
     "imageUrl": "https://image.tmdb.org/t/p/w342/kf1Jb1c2JAOqjuzA3H4oDM263uB.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/76",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Drama",
+      "Romance"
+    ],
+    "details": {
+      "language": "en",
       "score": 7.968,
-      "categories": [
-        "Drama",
-        "Romance"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-76"
+      }
+    ]
   },
   "before midnight:::2013": {
     "title": "Before Midnight",
@@ -302,16 +377,21 @@
     "source": "tmdb",
     "sourceId": "movie-132344",
     "imageUrl": "https://image.tmdb.org/t/p/w342/qbGKJmNUroDz75kh5Oafoall89e.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/132344",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Romance",
+      "Drama"
+    ],
+    "details": {
+      "language": "en",
       "score": 7.5,
-      "categories": [
-        "Romance",
-        "Drama"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-132344"
+      }
+    ]
   },
   "the maze runner:::2014": {
     "title": "The Maze Runner",
@@ -321,18 +401,23 @@
     "source": "tmdb",
     "sourceId": "movie-198663",
     "imageUrl": "https://image.tmdb.org/t/p/w342/ode14q7WtDugFDp78fo9lCsmay9.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/198663",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Action",
+      "Mystery",
+      "Science Fiction",
+      "Thriller"
+    ],
+    "details": {
+      "language": "en",
       "score": 7.188,
-      "categories": [
-        "Action",
-        "Mystery",
-        "Science Fiction",
-        "Thriller"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-198663"
+      }
+    ]
   },
   "maze runner: the scorch trials:::2015": {
     "title": "Maze Runner: The Scorch Trials",
@@ -342,18 +427,23 @@
     "source": "tmdb",
     "sourceId": "movie-294254",
     "imageUrl": "https://image.tmdb.org/t/p/w342/mYw7ZyejqSCPFlrT2jHZOESZDU3.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/294254",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Science Fiction",
+      "Action",
+      "Thriller",
+      "Adventure"
+    ],
+    "details": {
+      "language": "en",
       "score": 6.728,
-      "categories": [
-        "Science Fiction",
-        "Action",
-        "Thriller",
-        "Adventure"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-294254"
+      }
+    ]
   },
   "maze runner: the death cure:::2018": {
     "title": "Maze Runner: The Death Cure",
@@ -363,18 +453,23 @@
     "source": "tmdb",
     "sourceId": "movie-336843",
     "imageUrl": "https://image.tmdb.org/t/p/w342/s8K0US4tUEoOrQ1LDh0eppuwGDx.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/336843",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Science Fiction",
+      "Action",
+      "Adventure",
+      "Thriller"
+    ],
+    "details": {
+      "language": "en",
       "score": 7.1,
-      "categories": [
-        "Science Fiction",
-        "Action",
-        "Adventure",
-        "Thriller"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-336843"
+      }
+    ]
   },
   "zombieland:::2009": {
     "title": "Zombieland",
@@ -384,16 +479,21 @@
     "source": "tmdb",
     "sourceId": "movie-19908",
     "imageUrl": "https://image.tmdb.org/t/p/w342/dUkAmAyPVqubSBNRjRqCgHggZcK.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/19908",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Comedy",
+      "Horror"
+    ],
+    "details": {
+      "language": "en",
       "score": 7.259,
-      "categories": [
-        "Comedy",
-        "Horror"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-19908"
+      }
+    ]
   },
   "the cabin in the woods:::2011": {
     "title": "The Cabin in the Woods",
@@ -403,16 +503,21 @@
     "source": "tmdb",
     "sourceId": "movie-22970",
     "imageUrl": "https://image.tmdb.org/t/p/w342/zZZe5wn0udlhMtdlDjN4NB72R6e.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/22970",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Horror",
+      "Mystery"
+    ],
+    "details": {
+      "language": "en",
       "score": 6.668,
-      "categories": [
-        "Horror",
-        "Mystery"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-22970"
+      }
+    ]
   },
   "bo burnham: inside:::2021": {
     "title": "Bo Burnham: Inside",
@@ -422,15 +527,20 @@
     "source": "tmdb",
     "sourceId": "movie-823754",
     "imageUrl": "https://image.tmdb.org/t/p/w342/ku1UvTWYvhFQbSesOD6zteY7bXT.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/823754",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Comedy"
+    ],
+    "details": {
+      "language": "en",
       "score": 7.965,
-      "categories": [
-        "Comedy"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-823754"
+      }
+    ]
   },
   "as above, so below:::2014": {
     "title": "As Above, So Below",
@@ -440,16 +550,21 @@
     "source": "tmdb",
     "sourceId": "movie-256274",
     "imageUrl": "https://image.tmdb.org/t/p/w342/oJZSajKLJkoTOzSZQN2ZwRnPwHZ.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/256274",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Horror",
+      "Thriller"
+    ],
+    "details": {
+      "language": "en",
       "score": 6.758,
-      "categories": [
-        "Horror",
-        "Thriller"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-256274"
+      }
+    ]
   },
   "the first omen:::2024": {
     "title": "The First Omen",
@@ -459,15 +574,20 @@
     "source": "tmdb",
     "sourceId": "movie-437342",
     "imageUrl": "https://image.tmdb.org/t/p/w342/tnsDyNNkOxYUyjD8CNJoAla6YvY.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/437342",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Horror"
+    ],
+    "details": {
+      "language": "en",
       "score": 6.789,
-      "categories": [
-        "Horror"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-437342"
+      }
+    ]
   },
   "incantation:::2022": {
     "title": "Incantation",
@@ -477,16 +597,21 @@
     "source": "tmdb",
     "sourceId": "movie-864370",
     "imageUrl": "https://image.tmdb.org/t/p/w342/cWz28oGV3cSajWdziVQbqrYCmnX.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/864370",
-      "kind": "movie",
-      "originalTitle": "咒",
-      "originalLanguage": "zh",
+    "genres": [
+      "Horror"
+    ],
+    "details": {
+      "language": "zh",
       "score": 6.9,
-      "categories": [
-        "Horror"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "originalTitle": "咒",
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-864370"
+      }
+    ]
   },
   "grave encounters:::2011": {
     "title": "Grave Encounters",
@@ -496,16 +621,21 @@
     "source": "tmdb",
     "sourceId": "movie-50698",
     "imageUrl": "https://image.tmdb.org/t/p/w342/nctQM0luxJV4MaZyupzmP4epFIF.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/50698",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Thriller",
+      "Horror"
+    ],
+    "details": {
+      "language": "en",
       "score": 6.341,
-      "categories": [
-        "Thriller",
-        "Horror"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-50698"
+      }
+    ]
   },
   "the medium:::2021": {
     "title": "The Medium",
@@ -515,17 +645,22 @@
     "source": "tmdb",
     "sourceId": "movie-745881",
     "imageUrl": "https://image.tmdb.org/t/p/w342/wOJbWVMqdKIerkvOegeHfORxWqV.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/745881",
-      "kind": "movie",
-      "originalTitle": "ร่างทรง",
-      "originalLanguage": "th",
+    "genres": [
+      "Horror",
+      "Mystery"
+    ],
+    "details": {
+      "language": "th",
       "score": 6.998,
-      "categories": [
-        "Horror",
-        "Mystery"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "originalTitle": "ร่างทรง",
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-745881"
+      }
+    ]
   },
   "wall·e:::2008": {
     "title": "WALL·E",
@@ -535,17 +670,22 @@
     "source": "tmdb",
     "sourceId": "movie-10681",
     "imageUrl": "https://image.tmdb.org/t/p/w342/hbhFnRzzg6ZDmm8YAmxBnQpQIPh.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/10681",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Animation",
+      "Family",
+      "Science Fiction"
+    ],
+    "details": {
+      "language": "en",
       "score": 8.128,
-      "categories": [
-        "Animation",
-        "Family",
-        "Science Fiction"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-10681"
+      }
+    ]
   },
   "groundhog day:::1993": {
     "title": "Groundhog Day",
@@ -555,17 +695,22 @@
     "source": "tmdb",
     "sourceId": "movie-137",
     "imageUrl": "https://image.tmdb.org/t/p/w342/gCgt1WARPZaXnq523ySQEUKinCs.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/137",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Romance",
+      "Fantasy",
+      "Comedy"
+    ],
+    "details": {
+      "language": "en",
       "score": 7.638,
-      "categories": [
-        "Romance",
-        "Fantasy",
-        "Comedy"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-137"
+      }
+    ]
   },
   "noise:::2024": {
     "title": "Noise",
@@ -575,16 +720,21 @@
     "source": "tmdb",
     "sourceId": "movie-1145674",
     "imageUrl": "https://image.tmdb.org/t/p/w342/8bOqhpPyTcL8DI9W6wQQBMuHHeU.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/1145674",
-      "kind": "movie",
-      "originalTitle": "Zarata",
-      "originalLanguage": "eu",
+    "genres": [
+      "Drama"
+    ],
+    "details": {
+      "language": "eu",
       "score": 0,
-      "categories": [
-        "Drama"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "originalTitle": "Zarata",
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-1145674"
+      }
+    ]
   },
   "insidious: chapter 2:::2013": {
     "title": "Insidious: Chapter 2",
@@ -594,16 +744,21 @@
     "source": "tmdb",
     "sourceId": "movie-91586",
     "imageUrl": "https://image.tmdb.org/t/p/w342/w5JjiB3O1CLDXbTJe1QpU5RHmlU.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/91586",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Horror",
+      "Thriller"
+    ],
+    "details": {
+      "language": "en",
       "score": 6.7,
-      "categories": [
-        "Horror",
-        "Thriller"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-91586"
+      }
+    ]
   },
   "gerald's game:::2017": {
     "title": "Gerald's Game",
@@ -613,17 +768,22 @@
     "source": "tmdb",
     "sourceId": "movie-343674",
     "imageUrl": "https://image.tmdb.org/t/p/w342/32dippiypDdaKv7XFEfUlQ7kPup.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/343674",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Horror",
+      "Thriller",
+      "Drama"
+    ],
+    "details": {
+      "language": "en",
       "score": 6.397,
-      "categories": [
-        "Horror",
-        "Thriller",
-        "Drama"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-343674"
+      }
+    ]
   },
   "game night:::2018": {
     "title": "Game Night",
@@ -633,17 +793,22 @@
     "source": "tmdb",
     "sourceId": "movie-445571",
     "imageUrl": "https://image.tmdb.org/t/p/w342/85R8LMyn9f2Lev2YPBF8Nughrkv.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/445571",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Mystery",
+      "Comedy",
+      "Crime"
+    ],
+    "details": {
+      "language": "en",
       "score": 6.849,
-      "categories": [
-        "Mystery",
-        "Comedy",
-        "Crime"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-445571"
+      }
+    ]
   },
   "pelé: birth of a legend:::2016": {
     "title": "Pelé: Birth of a Legend",
@@ -653,15 +818,20 @@
     "source": "tmdb",
     "sourceId": "movie-245913",
     "imageUrl": "https://image.tmdb.org/t/p/w342/aJoDgK9PUClJOlpA1xUixj8dvsN.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/245913",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Drama"
+    ],
+    "details": {
+      "language": "en",
       "score": 7.343,
-      "categories": [
-        "Drama"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-245913"
+      }
+    ]
   },
   "locked:::2025": {
     "title": "Locked",
@@ -671,16 +841,21 @@
     "source": "tmdb",
     "sourceId": "movie-1083968",
     "imageUrl": "https://image.tmdb.org/t/p/w342/hhkiqXpfpufwxVrdSftzeKIANl3.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/1083968",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Horror",
+      "Thriller"
+    ],
+    "details": {
+      "language": "en",
       "score": 6.202,
-      "categories": [
-        "Horror",
-        "Thriller"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-1083968"
+      }
+    ]
   },
   "inception:::2010": {
     "title": "Inception",
@@ -690,17 +865,22 @@
     "source": "tmdb",
     "sourceId": "movie-27205",
     "imageUrl": "https://image.tmdb.org/t/p/w342/xlaY2zyzMfkhk0HSC5VUwzoZPU1.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/27205",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Action",
+      "Science Fiction",
+      "Crime"
+    ],
+    "details": {
+      "language": "en",
       "score": 8.373,
-      "categories": [
-        "Action",
-        "Science Fiction",
-        "Crime"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-27205"
+      }
+    ]
   },
   "hardcore henry:::2015": {
     "title": "Hardcore Henry",
@@ -710,17 +890,22 @@
     "source": "tmdb",
     "sourceId": "movie-325348",
     "imageUrl": "https://image.tmdb.org/t/p/w342/ik1uZyiMSxF9HqrgRKUNfMCfr3z.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/325348",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Science Fiction"
+    ],
+    "details": {
+      "language": "en",
       "score": 6.4,
-      "categories": [
-        "Action",
-        "Adventure",
-        "Science Fiction"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-325348"
+      }
+    ]
   },
   "interstellar:::2014": {
     "title": "Interstellar",
@@ -730,17 +915,22 @@
     "source": "tmdb",
     "sourceId": "movie-157336",
     "imageUrl": "https://image.tmdb.org/t/p/w342/yQvGrMoipbRoddT0ZR8tPoR7NfX.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/157336",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Adventure",
+      "Drama",
+      "Science Fiction"
+    ],
+    "details": {
+      "language": "en",
       "score": 8.493,
-      "categories": [
-        "Adventure",
-        "Drama",
-        "Science Fiction"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-157336"
+      }
+    ]
   },
   "project hail mary:::2026": {
     "title": "Project Hail Mary",
@@ -750,16 +940,21 @@
     "source": "tmdb",
     "sourceId": "movie-687163",
     "imageUrl": "https://image.tmdb.org/t/p/w342/iOb2fjXLbpJgyQXe46n1WtGCnaa.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/687163",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Science Fiction",
+      "Adventure"
+    ],
+    "details": {
+      "language": "en",
       "score": 8.626,
-      "categories": [
-        "Science Fiction",
-        "Adventure"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-687163"
+      }
+    ]
   },
   "backrooms:::2026": {
     "title": "Backrooms",
@@ -769,17 +964,22 @@
     "source": "tmdb",
     "sourceId": "movie-1083381",
     "imageUrl": "https://image.tmdb.org/t/p/w342/rhGx6E3qRNMgj3i5su2oukNHwIQ.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/1083381",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Horror",
+      "Mystery",
+      "Science Fiction"
+    ],
+    "details": {
+      "language": "en",
       "score": 6.986,
-      "categories": [
-        "Horror",
-        "Mystery",
-        "Science Fiction"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-1083381"
+      }
+    ]
   },
   "the odyssey:::2026": {
     "title": "The Odyssey",
@@ -789,16 +989,21 @@
     "source": "tmdb",
     "sourceId": "movie-1368337",
     "imageUrl": "https://image.tmdb.org/t/p/w342/5rhTDKUhPYvpdQIijFIs5VoWsON.jpg",
-    "metadata": {
-      "url": "https://www.themoviedb.org/movie/1368337",
-      "kind": "movie",
-      "originalLanguage": "en",
+    "genres": [
+      "Adventure",
+      "Action",
+      "Fantasy"
+    ],
+    "details": {
+      "language": "en",
       "score": 8.023,
-      "categories": [
-        "Adventure",
-        "Action",
-        "Fantasy"
-      ]
-    }
+      "scoreScale": "tmdb_10"
+    },
+    "externalIds": [
+      {
+        "provider": "tmdb",
+        "externalId": "movie-1368337"
+      }
+    ]
   }
 }

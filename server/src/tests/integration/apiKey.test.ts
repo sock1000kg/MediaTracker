@@ -90,6 +90,39 @@ describe("API Key Routes", () => {
         expect(res.body.message).toMatch(/must exist/i)
     })
 
+    test("POST /apikeys rejects non-enum service providers (goodreads, nonsense) with 400", async () => {
+        const resGoodreads = await request(app)
+            .post(API)
+            .send({ service: "goodreads", key: "gr-key-123" })
+            .set("Authorization", `Bearer ${token}`)
+        expect(resGoodreads.statusCode).toBe(400)
+        expect(resGoodreads.body.message).toMatch(/must exist/i)
+
+        const resNonsense = await request(app)
+            .post(API)
+            .send({ service: "nonsense", key: "nonsense-key-123" })
+            .set("Authorization", `Bearer ${token}`)
+        expect(resNonsense.statusCode).toBe(400)
+        expect(resNonsense.body.message).toMatch(/must exist/i)
+    })
+
+    test("POST /apikeys succeeds for all valid ApiKeyService services (lastfm, tmdb, rawg, bgg)", async () => {
+        for (const svc of ["lastfm", "tmdb", "rawg", "bgg"] as const) {
+            const res = await request(app)
+                .post(API)
+                .send({ service: svc, key: `key-${svc}-123` })
+                .set("Authorization", `Bearer ${token}`)
+            expect(res.statusCode).toBe(201)
+            expect(res.body).toHaveProperty("service", svc)
+
+            // clean up
+            await request(app)
+                .delete(API)
+                .send({ service: svc })
+                .set("Authorization", `Bearer ${token}`)
+        }
+    })
+
     test("POST /apikeys with missing fields fails (Zod error)", async () => {
         const res = await request(app)
             .post(API)

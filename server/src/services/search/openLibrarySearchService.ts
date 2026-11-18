@@ -46,16 +46,17 @@ export class OpenLibraryService implements ISearchService {
                 year: item.first_publish_year ? item.first_publish_year.toString() : null,
                 description: null, // Open Library Search API rarely returns descriptions in the list view
                 imageUrl: imageUrl,
-                source: "open_library",
+                source: "openlibrary",
                 // The 'key' usually comes as "/works/OL123W", we can keep it as is or strip "/works/"
                 sourceId: item.key, 
-                metadata: {
-                    pageCount: item.number_of_pages_median ?? null,
-                    categories: categories.length ? categories : null,
-                    publisher: item.publisher ? item.publisher[0] : null,
-                    url: `https://openlibrary.org${item.key}`,
-                    isbn: item.isbn ? item.isbn[0] : null
-                }
+                genres: categories.length ? categories : undefined,
+                details: {
+                    pageCount: typeof item.number_of_pages_median === "number" && item.number_of_pages_median > 0
+                        ? item.number_of_pages_median
+                        : undefined,
+                    publisher: item.publisher && item.publisher[0] ? item.publisher[0] : undefined,
+                },
+                ...(item.isbn && item.isbn[0] ? { externalIds: [{ provider: "isbn", id: item.isbn[0] }] } : {}),
             }
         })
     }

@@ -7,22 +7,25 @@ export const ANIME_SORTS = ["relevance", "score", "popularity", "newest"] as con
 
 export type AniListMode = "anime" | "manga"
 
-export const animeMetadataSchema = z.object({
-    url: z.string().optional(),
-    kind: z.enum(["anime", "manga"]),
+export const animeDetailsSchema = z.object({
     format: z.string().nullable().optional(),
-    episodes: z.number().nullable().optional(),
-    chapters: z.number().nullable().optional(),
-    volumes: z.number().nullable().optional(),
+    episodeCount: z.number().nullable().optional(),
+    durationSec: z.number().nullable().optional(),
+    country: z.string().nullable().optional(),
+    airingStatus: z.string().nullable().optional(),
+    language: z.string().nullable().optional(),
     score: z.number().nullable().optional(),
-    scoreScale: z.enum(["mal", "anilist"]).optional(),
-    originalTitle: z.string().nullable().optional(),
-    categories: z.array(z.string()).nullable().optional(),
-    episodeMinutes: z.number().nullable().optional(),
-    idMal: z.number().nullable().optional(),
-    watchedEpisodes: z.number().nullable().optional(),
-    readChapters: z.number().nullable().optional(),
-    readVolumes: z.number().nullable().optional(),
+    scoreScale: z.literal("anilist_100").optional(),
+}).strict()
+
+export const mangaDetailsSchema = z.object({
+    format: z.string().nullable().optional(),
+    chapterCount: z.number().nullable().optional(),
+    volumeCount: z.number().nullable().optional(),
+    country: z.string().nullable().optional(),
+    publishingStatus: z.string().nullable().optional(),
+    score: z.number().nullable().optional(),
+    scoreScale: z.literal("anilist_100").optional(),
 }).strict()
 
 const nl = <T extends z.ZodTypeAny>(s: T) => s.nullable().optional()

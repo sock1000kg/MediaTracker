@@ -3,38 +3,24 @@ import { LIMITS } from "@/config/limits.js"
 
 const nl = <T extends z.ZodTypeAny>(s: T) => s.nullable().optional()
 
-export const tvShowMetadataSchema = z.object({
-    url: z.string().optional(),
-    kind: z.literal("show"),
-    tmdbId: z.number(),
-    originalTitle: z.string().nullable().optional(),
-    firstAirDate: z.string().nullable().optional(),
-    categories: z.array(z.string()).nullable().optional(),
-    originCountry: z.union([z.array(z.string()), z.string()]).nullable().optional(),
+export const tvShowDetailsSchema = z.object({
     seasonCount: z.number().nullable().optional(),
     episodeCount: z.number().nullable().optional(),
-    status: z.string().nullable().optional(),
     networks: z.array(z.string()).nullable().optional(),
-    creator: z.string().nullable().optional(),
-    fetchedAt: z.string().nullable().optional(),
-    purgedAt: z.string().nullable().optional(),
-    refreshCheckedAt: z.string().nullable().optional(),
+    country: z.union([z.string(), z.array(z.string())]).nullable().optional(),
+    airingStatus: z.string().nullable().optional(),
+    language: z.string().nullable().optional(),
+    score: z.number().nullable().optional(),
+    scoreScale: z.literal("tmdb_10").optional(),
 }).strict()
 
-export const tvSeasonMetadataSchema = z.object({
-    url: z.string().optional(),
-    kind: z.literal("season"),
-    tmdbId: z.number(),
-    showTitle: z.string(),
-    seasonNumber: z.number(),
+export type TvShowDetails = z.infer<typeof tvShowDetailsSchema>
+
+export const tvSeasonDetailsSchema = z.object({
     episodeCount: z.number().nullable().optional(),
-    airDate: z.string().nullable().optional(),
-    networks: z.array(z.string()).nullable().optional(),
-    categories: z.array(z.string()).nullable().optional(),
-    fetchedAt: z.string().nullable().optional(),
-    purgedAt: z.string().nullable().optional(),
-    refreshCheckedAt: z.string().nullable().optional(),
 }).strict()
+
+export type TvSeasonDetails = z.infer<typeof tvSeasonDetailsSchema>
 
 // TMDB /3/search/tv
 export const tmdbTvItemSchema = z.object({

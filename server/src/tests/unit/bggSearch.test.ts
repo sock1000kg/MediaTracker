@@ -74,16 +74,14 @@ describe('BGG XML Parsing and Mapping', () => {
             imageUrl: 'https://cf.geekdo-images.com/image.jpg',
             description: "In Catan, players trade and build.\n\nIt's a classic & fun game.",
             genres: ['Economic', 'Negotiation'],
-            metadata: {
-                kind: 'boardgame',
-                url: 'https://boardgamegeek.com/boardgame/13',
+            details: {
                 minPlayers: 3,
                 maxPlayers: 4,
-                playingTime: 120,
-                minPlayTime: 60,
-                maxPlayTime: 120,
-                bggRating: 7.1234,
-                categories: ['Economic', 'Negotiation'],
+                playTimeMin: 120,
+                minPlayTimeMin: 60,
+                maxPlayTimeMin: 120,
+                score: 7.1234,
+                scoreScale: 'bgg_10',
             },
         })
     })
@@ -107,7 +105,7 @@ describe('BGG XML Parsing and Mapping', () => {
         const raw = parseBggXml(xml)
         const parsed = bggThingResponseSchema.parse(raw)
         const mapped = mapBggThing(parsed.items!.item[0])
-        expect((mapped.metadata as Record<string, unknown> | null)?.bggRating).toBeNull()
+        expect((mapped.details as Record<string, unknown> | null)?.score).toBeUndefined()
         expect(mapped.imageUrl).toBe('https://cf.geekdo-images.com/thumb.jpg')
         expect(mapped.creator).toBeNull()
     })
@@ -137,7 +135,7 @@ describe('BGG XML Parsing and Mapping', () => {
             source: 'bgg',
             sourceId: mapped.sourceId,
             description: mapped.description,
-            metadata: mapped.metadata,
+            details: mapped.details,
         })
         expect(parsedMedia.description).toBe(mapped.description)
         expect(parsedMedia.description?.length).toBeGreaterThan(4000)

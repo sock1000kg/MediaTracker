@@ -31,7 +31,7 @@ export function MediaActions({ media, logged, logInMenu = false, onEdit, onDelet
   }, [errorToast])
 
   const links = providerLinks(media)
-  const isCustom = !media.source || media.source === "custom"
+  const isCustom = !media.provider
 
   const handleRefresh = async () => {
     if (isRefreshing) return

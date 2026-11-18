@@ -4,7 +4,6 @@ import {
     LruCache,
     MusicBrainzClient,
     MusicBrainzHttpError,
-    isMusicTrack,
 } from "@/services/search/musicBrainzClient.js"
 
 describe("MusicBrainzClient unit tests", () => {
@@ -176,16 +175,6 @@ describe("MusicBrainzClient unit tests", () => {
 
         const cover = await client.resolveTrackCover("Artist", "Track")
         expect(cover).toEqual({ status: "failed" })
-    })
-
-    test("isMusicTrack: older track rows with only the Media.kind column (or a /_/ Last.fm URL) count as tracks", () => {
-        // Avril 14th: logged before metadata.kind existed
-        expect(isMusicTrack({ kind: "track", sourceId: "076205ee-7f45-3325-a5a4-38d27ceabd61" }, {})).toBe(true)
-        expect(isMusicTrack({ kind: null, sourceId: "https://www.last.fm/music/Radiohead/_/15+Steps" }, {})).toBe(true)
-        expect(isMusicTrack({ kind: null, sourceId: "abc" }, { url: "https://www.last.fm/music/Aphex+Twin/_/Avril+14th" })).toBe(true)
-        expect(isMusicTrack({ kind: "album", sourceId: "503c4a0f" }, {})).toBe(false)
-        expect(isMusicTrack({ kind: null, sourceId: "lastfm:07d02411#3" }, {})).toBe(true)
-        expect(isMusicTrack({ kind: null, sourceId: "09a09037" }, { kind: "album" })).toBe(false)
     })
 
     test("track lookup: finds the studio recording despite spelling drift, preferring a studio album over a compilation", async () => {

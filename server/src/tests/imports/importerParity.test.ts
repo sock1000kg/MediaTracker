@@ -18,8 +18,7 @@ describe("Importer parity (P8, T1)", () => {
             imageUrl: "https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
             description: "An ticking-time-bomb insomniac...",
             mediaType: "movie" as const,
-            metadata: {
-                kind: "movie" as const,
+            details: {
                 tmdbId: 550,
                 imdbId: "tt0137523",
                 runtime: 139,
@@ -51,13 +50,13 @@ describe("Importer parity (P8, T1)", () => {
         expect(letterboxdResult).toBeDefined()
         expect(searchResult).toBeDefined()
 
-        // Assert provider identity and metadata fields are strictly identical
+        // Assert provider identity and details fields are strictly identical
         expect(letterboxdResult?.source).toBe(searchResult?.source)
         expect(letterboxdResult?.sourceId).toBe(searchResult?.sourceId)
         expect(letterboxdResult?.title).toBe(searchResult?.title)
         expect(letterboxdResult?.year).toBe(searchResult?.year)
         expect(letterboxdResult?.creator).toBe(searchResult?.creator)
         expect(letterboxdResult?.imageUrl).toBe(searchResult?.imageUrl)
-        expect(letterboxdResult?.metadata).toEqual(searchResult?.metadata)
+        expect(letterboxdResult?.details).toEqual(searchResult?.details)
     })
 })

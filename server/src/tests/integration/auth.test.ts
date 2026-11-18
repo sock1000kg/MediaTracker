@@ -1,3 +1,4 @@
+import crypto from 'crypto'
 import request from 'supertest' 
 import app from '@/app.js' 
 import { prisma } from '@/tests/jest.setup.js' 
@@ -167,5 +168,118 @@ describe('Auth Routes', () => {
         const res = await request(app).post('/auth/refresh').set('Cookie', ['refreshToken=not-a-real-token'])
         expect(res.statusCode).toBe(401)
         expect(typeof res.body.message).toBe('string')
+    })
+
+    test('Refresh tokens are stored hashed (sha256 hex), rotated on refresh, and deleted on logout', async () => {
+        const username = 'HashedTokenUser'
+        const reg = await request(app)
+            .post('/auth/register')
+            .send({ username, password: 'StrongPass1!', displayName: 'Hasher', registerKey: process.env.REGISTER_KEY })
+            .set('Content-Type', 'application/json')
+        expect(reg.statusCode).toBe(201)
+        const userId = reg.body.user.id
+
+        const cookie = reg.headers['set-cookie'] as unknown as string[]
+        const cookieStr = cookie.join(';')
+        const match = cookieStr.match(/refreshToken=([^;]+)/)
+        expect(match).toBeTruthy()
+        const rawToken = match![1]
+
+        // 1. No raw token stored: table holds no row whose tokenHash equals rawToken
+        const rawMatch = await prisma.refreshToken.findFirst({
+            where: { tokenHash: rawToken }
+        })
+        expect(rawMatch).toBeNull()
+
+        // 2. The stored value is its sha256 hex
+        const expectedHash = crypto.createHash('sha256').update(rawToken).digest('hex')
+        const hashedRow = await prisma.refreshToken.findUnique({
+            where: { tokenHash: expectedHash }
+        })
+        expect(hashedRow).not.toBeNull()
+        expect(hashedRow!.userId).toBe(userId)
+
+        // 3. Refresh works with cookie token and rotates token (old one no longer works)
+        const refreshRes = await request(app)
+            .post('/auth/refresh')
+            .set('Cookie', cookie)
+        expect(refreshRes.statusCode).toBe(200)
+        expect(refreshRes.body).toHaveProperty('accessToken')
+
+        const newCookie = refreshRes.headers['set-cookie'] as unknown as string[]
+        const newMatch = newCookie.join(';').match(/refreshToken=([^;]+)/)
+        expect(newMatch).toBeTruthy()
+        const newRawToken = newMatch![1]
+        expect(newRawToken).not.toBe(rawToken)
+
+        // Old token hash should now be deleted from DB
+        const oldHashedRow = await prisma.refreshToken.findUnique({
+            where: { tokenHash: expectedHash }
+        })
+        expect(oldHashedRow).toBeNull()
+
+        // Old cookie token fails on subsequent refresh
+        const oldRefreshRes = await request(app)
+            .post('/auth/refresh')
+            .set('Cookie', cookie)
+        expect(oldRefreshRes.statusCode).toBe(401)
+
+        // New token hash is present
+        const expectedNewHash = crypto.createHash('sha256').update(newRawToken).digest('hex')
+        const newHashedRow = await prisma.refreshToken.findUnique({
+            where: { tokenHash: expectedNewHash }
+        })
+        expect(newHashedRow).not.toBeNull()
+
+        // 4. Logout deletes the token found by its hash
+        const logoutRes = await request(app)
+            .post('/auth/logout')
+            .set('Cookie', newCookie)
+        expect(logoutRes.statusCode).toBe(204)
+
+        const afterLogoutRow = await prisma.refreshToken.findUnique({
+            where: { tokenHash: expectedNewHash }
+        })
+        expect(afterLogoutRow).toBeNull()
+
+        // Clean up user
+        await prisma.user.deleteMany({ where: { username } })
+    })
+
+    test('Old raw rows in tokenHash do not authenticate', async () => {
+        const username = 'OldRawRowUser'
+        const reg = await request(app)
+            .post('/auth/register')
+            .send({ username, password: 'StrongPass1!', displayName: 'OldRaw', registerKey: process.env.REGISTER_KEY })
+            .set('Content-Type', 'application/json')
+        expect(reg.statusCode).toBe(201)
+        const userId = reg.body.user.id
+
+        // Create a real signed JWT refresh token as the raw value
+        const cookie = reg.headers['set-cookie'] as unknown as string[]
+        const match = cookie.join(';').match(/refreshToken=([^;]+)/)
+        const rawJwtToken = match![1]
+
+        // Clear tokens
+        await prisma.refreshToken.deleteMany({ where: { userId } })
+
+        // Insert the raw token directly into tokenHash column (simulating an un-hashed old row)
+        const expiresAt = new Date()
+        expiresAt.setDate(expiresAt.getDate() + 7)
+        await prisma.refreshToken.create({
+            data: {
+                userId,
+                tokenHash: rawJwtToken, // RAW token inserted into tokenHash
+                expiresAt,
+            }
+        })
+
+        // Attempting to refresh with the raw cookie token fails because server looks up sha256(rawJwtToken)
+        const res = await request(app)
+            .post('/auth/refresh')
+            .set('Cookie', [`refreshToken=${rawJwtToken}`])
+        expect(res.statusCode).toBe(401)
+
+        await prisma.user.deleteMany({ where: { username } })
     })
 })

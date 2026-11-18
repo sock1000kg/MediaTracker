@@ -65,11 +65,13 @@ describe("Media Import Routes (MyAnimeList)", () => {
                 sourceId: `${kind}-${id * 10}`,
                 imageUrl: "https://example.com/cover.jpg",
                 description: "Resolved description",
-                metadata: {
-                    kind,
-                    idMal: id,
-                    episodes: 24,
+                details: kind === "anime" ? {
+                    episodeCount: 24,
                     format: "TV",
+                } : {
+                    chapterCount: 50,
+                    volumeCount: 5,
+                    format: "MANGA",
                 },
             })
         }
@@ -138,7 +140,7 @@ describe("Media Import Routes (MyAnimeList)", () => {
 
         // Verify media in DB
         const media = await prisma.media.findFirst({
-            where: { source: "anilist", sourceId: "anime-5010" },
+            where: { provider: "anilist", providerId: "anime-5010" },
         })
         expect(media).not.toBeNull()
         expect(media!.imageUrl).toBe("https://example.com/cover.jpg")
@@ -189,7 +191,7 @@ describe("Media Import Routes (MyAnimeList)", () => {
 
     test("An app-set rating is not overwritten on re-import", async () => {
         const media = await prisma.media.findFirst({
-            where: { source: "anilist", sourceId: "anime-5010" },
+            where: { provider: "anilist", providerId: "anime-5010" },
         })
         expect(media).not.toBeNull()
 
@@ -232,7 +234,7 @@ describe("Media Import Routes (MyAnimeList)", () => {
     test("Gap-filling updates null fields and unions tags", async () => {
         // Clear finished_at and notes on log
         const media = await prisma.media.findFirst({
-            where: { source: "anilist", sourceId: "anime-5010" },
+            where: { provider: "anilist", providerId: "anime-5010" },
         })
         await prisma.userLogs.updateMany({
             where: { userId, mediaId: media!.id },
@@ -307,14 +309,14 @@ describe("Media Import Routes (MyAnimeList)", () => {
         expect(job.result.notes).toContain("1 entries had no AniList match and were imported without covers.")
 
         const bare = await prisma.media.findFirst({
-            where: { source: "mal", sourceId: "99999" },
+            where: { provider: "mal", providerId: "99999" },
         })
         expect(bare).not.toBeNull()
         expect(bare!.title).toBe("Obscure Unresolved Anime")
         expect(bare!.imageUrl).toBeNull()
         expect(bare!.creator).toBeNull()
-        expect(bare!.kind).toBe("anime")
-        expect((bare!.metadata as Record<string, unknown>)?.kind).toBeUndefined()
+        expect(bare!.subtype).toBeNull()
+        expect((bare!.details as Record<string, unknown> | null)?.subtype).toBeUndefined()
     })
 
     test("An anime already added from search with matching idMal is not duplicated", async () => {
@@ -324,14 +326,20 @@ describe("Media Import Routes (MyAnimeList)", () => {
             data: {
                 title: "Existing Search Anime",
                 mediaTypeId: animeType!.id,
-                source: "anilist",
-                sourceId: "anime-8888",
+                provider: "anilist",
+                providerId: "anime-8888",
                 userId: systemUserId,
-                metadata: { kind: "anime", idMal: 888 },
+                details: { idMal: 888 },
+                externalIds: {
+                    create: [
+                        { provider: "anilist", externalId: "anime-8888" },
+                        { provider: "mal", externalId: "888" },
+                    ],
+                },
             },
         })
 
-        const mediaCountBefore = await prisma.media.count({ where: { source: "anilist" } })
+        const mediaCountBefore = await prisma.media.count({ where: { provider: "anilist" } })
 
         const xml = `<?xml version="1.0" encoding="UTF-8" ?>
 <myanimelist>
@@ -356,7 +364,7 @@ describe("Media Import Routes (MyAnimeList)", () => {
         const { job } = await importAndWait(token, xml)
         expect(job.result.imported).toBe(1)
 
-        const mediaCountAfter = await prisma.media.count({ where: { source: "anilist" } })
+        const mediaCountAfter = await prisma.media.count({ where: { provider: "anilist" } })
         expect(mediaCountAfter).toBe(mediaCountBefore) // No duplicate media created
 
         const log = await prisma.userLogs.findFirst({

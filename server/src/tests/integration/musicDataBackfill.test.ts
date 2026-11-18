@@ -6,8 +6,12 @@ import { musicBrainzClient } from "@/services/search/musicBrainzClient.js"
 describe("Music data backfill (M4)", () => {
     const testPrefix = "test-mb-backfill-"
     let userId: string
+    let systemUserId: string
 
     beforeAll(async () => {
+        const system = await prisma.user.findFirstOrThrow({ where: { username: "system" } })
+        systemUserId = system.id
+
         const user = await prisma.user.upsert({
             where: { username: "MbBackfillTestUser" },
             update: {},
@@ -24,8 +28,8 @@ describe("Music data backfill (M4)", () => {
         await prisma.userLogs.deleteMany({ where: { userId } })
         await prisma.media.deleteMany({
             where: {
-                source: "lastfm",
-                sourceId: { startsWith: testPrefix },
+                provider: "lastfm",
+                providerId: { startsWith: testPrefix },
             },
         })
     })
@@ -39,14 +43,14 @@ describe("Music data backfill (M4)", () => {
         await prisma.userLogs.deleteMany({ where: { userId } })
         await prisma.media.deleteMany({
             where: {
-                source: "lastfm",
-                sourceId: { startsWith: testPrefix },
+                provider: "lastfm",
+                providerId: { startsWith: testPrefix },
             },
         })
         await prisma.user.deleteMany({ where: { username: "MbBackfillTestUser" } })
     })
 
-    test("converts an existing Last.fm album and track to M1/M2 shape and stamps mbSyncedAt", async () => {
+    test("converts an existing Last.fm album and track to M1/M2 shape and stamps syncedAt/syncCheckedAt", async () => {
         const musicType = await prisma.mediaType.findFirstOrThrow({ where: { name: "music" } })
 
         // Existing album with old shape and Last.fm URL
@@ -54,13 +58,14 @@ describe("Music data backfill (M4)", () => {
             data: {
                 title: "Old Lastfm Album",
                 creator: "Old Artist",
-                source: "lastfm",
-                sourceId: `${testPrefix}album-rel-1`,
+                provider: "lastfm",
+                providerId: `${testPrefix}album-rel-1`,
                 imageUrl: "https://coverartarchive.org/release/rel-1/front-250",
                 mediaTypeId: musicType.id,
-                userId,
-                metadata: {
-                    kind: "album",
+                subtype: "album",
+                userId: systemUserId,
+                details: {
+                    mbid: "rel-1",
                     url: "https://www.last.fm/music/Old+Artist/Old+Lastfm+Album",
                 },
             },
@@ -71,14 +76,12 @@ describe("Music data backfill (M4)", () => {
             data: {
                 title: "Old Lastfm Track",
                 creator: "Old Track Artist",
-                source: "lastfm",
-                sourceId: `${testPrefix}album-rel-1#1`,
+                provider: "lastfm",
+                providerId: `${testPrefix}album-rel-1#1`,
                 imageUrl: null,
                 mediaTypeId: musicType.id,
-                userId,
-                metadata: {
-                    kind: "track",
-                },
+                subtype: "track",
+                userId: systemUserId,
             },
         })
 
@@ -119,11 +122,9 @@ describe("Music data backfill (M4)", () => {
         expect(updatedAlbum.creator).toBe("New MB Artist")
         expect(updatedAlbum.year).toBe(1997)
         expect(updatedAlbum.imageUrl).toBe("https://coverartarchive.org/release-group/rg-backfilled-123/front-250")
-        const albumMeta = updatedAlbum.metadata as Record<string, unknown>
-        expect(albumMeta.mbReleaseGroupId).toBe("rg-backfilled-123")
-        expect(albumMeta.mbSyncedAt).toBeDefined()
-        // Existing rows keep their Last.fm url
-        expect(albumMeta.url).toBe("https://www.last.fm/music/Old+Artist/Old+Lastfm+Album")
+        expect(updatedAlbum.subtype).toBe("album")
+        expect(updatedAlbum.syncedAt).toBeTruthy()
+        expect(updatedAlbum.syncCheckedAt).toBeTruthy()
         expect(updatedAlbum.genres.map(g => g.genre.name)).toEqual(["post-rock"])
         expect(updatedAlbum.externalIds.some(e => e.provider === "musicbrainz" && e.externalId === "rg-backfilled-123")).toBe(true)
 
@@ -135,10 +136,11 @@ describe("Music data backfill (M4)", () => {
         expect(updatedTrack.title).toBe("New MB Track Title")
         expect(updatedTrack.creator).toBe("New MB Track Artist")
         expect(updatedTrack.imageUrl).toBe("https://coverartarchive.org/release-group/rg-backfilled-123/front-250")
-        const trackMeta = updatedTrack.metadata as Record<string, unknown>
-        expect(trackMeta.mbRecordingId).toBe("rec-backfilled-456")
-        expect(trackMeta.durationSec).toBe(180)
-        expect(trackMeta.mbSyncedAt).toBeDefined()
+        expect(updatedTrack.subtype).toBe("track")
+        const trackDetails = updatedTrack.details as Record<string, unknown>
+        expect(trackDetails.durationSec).toBe(180)
+        expect(updatedTrack.syncedAt).toBeTruthy()
+        expect(updatedTrack.syncCheckedAt).toBeTruthy()
         expect(updatedTrack.externalIds.some(e => e.provider === "musicbrainz" && e.externalId === "rec-backfilled-456")).toBe(true)
     })
 
@@ -150,14 +152,14 @@ describe("Music data backfill (M4)", () => {
                 title: "Resilient Album",
                 creator: "Original Artist",
                 year: 1999,
-                source: "lastfm",
-                sourceId: `${testPrefix}album-fail-1`,
+                provider: "lastfm",
+                providerId: `${testPrefix}album-fail-1`,
                 imageUrl: "https://coverartarchive.org/release/rel-old/front-250",
                 mediaTypeId: musicType.id,
-                userId,
-                metadata: {
-                    kind: "album",
-                    preservedData: "stays intact",
+                subtype: "album",
+                userId: systemUserId,
+                details: {
+                    format: "Album",
                 },
             },
         })
@@ -177,8 +179,8 @@ describe("Music data backfill (M4)", () => {
         expect(untouchedAlbum.creator).toBe("Original Artist")
         expect(untouchedAlbum.year).toBe(1999)
         expect(untouchedAlbum.imageUrl).toBe("https://coverartarchive.org/release/rel-old/front-250")
-        const meta = untouchedAlbum.metadata as Record<string, unknown>
-        expect(meta.preservedData).toBe("stays intact")
-        expect(meta.mbSyncedAt).toBeUndefined() // not stamped on failure so it can retry later
+        const details = untouchedAlbum.details as Record<string, unknown>
+        expect(details.format).toBe("Album")
+        expect(untouchedAlbum.syncCheckedAt).toBeNull() // not stamped on failure so it can retry later
     })
 })

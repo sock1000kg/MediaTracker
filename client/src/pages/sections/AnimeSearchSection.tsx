@@ -66,7 +66,7 @@ export function AnimeSearchSection() {
         <ResultList
           results={search.visibleResults}
           view={view}
-          kindOf={(item) => item.metadata.kind}
+          kindOf={(item) => (item.mediaType === "manga" ? "manga" : "anime")}
           isLogged={(item) => isResultLogged(search.logs, item)}
           onLog={(item) => openLog(item)}
         />

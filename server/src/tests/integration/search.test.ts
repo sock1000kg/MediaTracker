@@ -55,8 +55,8 @@ describe('Search Routes - books', () => {
         const res = await get('q=dune')
         expect(res.statusCode).toBe(200)
         expect(res.body.results[0].mediaType).toBe('book')
-        expect(res.body.results[0].metadata.categories).toEqual(['Science fiction', 'Space opera'])
-        expect(res.body.results[1].metadata.categories).toBeNull()
+        expect(res.body.results[0].genres).toEqual(['Science fiction', 'Space opera'])
+        expect(res.body.results[1].genres).toBeUndefined()
         const url = new URL(fetchSpy.mock.calls[0][0] as string)
         expect(url.searchParams.get('q')).toBe('dune')
         expect(url.searchParams.get('page')).toBe('1')
@@ -170,7 +170,7 @@ describe('Search Routes - anime & manga (AniList)', () => {
     afterEach(() => fetchSpy.mockRestore())
 
     afterAll(async () => {
-        await prisma.media.deleteMany({ where: { source: { in: ['anilist', 'jikan'] }, sourceId: { in: ['anime-154587', 'manga-105398', 'anime-777', 'anime-778', 'anime-99999'] } } })
+        await prisma.media.deleteMany({ where: { provider: { in: ['anilist', 'mal'] }, providerId: { in: ['anime-154587', 'manga-105398', 'anime-777', 'anime-778', 'anime-99999'] } } })
         await prisma.user.deleteMany({ where: { username } })
     })
 
@@ -188,17 +188,15 @@ describe('Search Routes - anime & manga (AniList)', () => {
             description: 'The adventure is over.',
             source: 'anilist',
             sourceId: 'anime-154587',
-            metadata: {
-                kind: 'anime',
+            details: {
                 format: 'TV',
-                episodes: 28,
-                episodeMinutes: 24,
+                episodeCount: 28,
+                durationSec: 1440,
                 score: 90,
-                scoreScale: 'anilist',
-                originalTitle: 'Sousou no Frieren',
-                categories: ['Adventure', 'Fantasy', 'Magic'],
-                idMal: 52991,
+                scoreScale: 'anilist_100',
             },
+            originalTitle: 'Sousou no Frieren',
+            genres: ['Adventure', 'Fantasy', 'Magic'],
         })
 
         expect(fetchSpy).toHaveBeenCalledTimes(1)
@@ -224,7 +222,7 @@ describe('Search Routes - anime & manga (AniList)', () => {
             mediaType: 'manga',
             creator: 'Chugong',
             sourceId: 'manga-105398',
-            metadata: { kind: 'manga', chapters: 200, volumes: 14, scoreScale: 'anilist' },
+            details: { chapterCount: 200, volumeCount: 14, scoreScale: 'anilist_100' },
         })
     })
 
@@ -267,39 +265,45 @@ describe('Search Routes - anime & manga (AniList)', () => {
         const rm = await log(m)
         expect(ra.statusCode).toBeLessThan(300)
         expect(rm.statusCode).toBeLessThan(300)
-        const rows = await prisma.media.findMany({ where: { source: 'anilist', sourceId: { in: ['anime-154587', 'manga-105398'] } }, include: { mediaType: true } })
-        expect(rows.map(r => [r.sourceId, r.mediaType?.name]).sort()).toEqual([['anime-154587', 'anime'], ['manga-105398', 'manga']])
-        const animeRow = rows.find(r => r.sourceId === 'anime-154587')!
+        const rows = await prisma.media.findMany({ where: { provider: 'anilist', providerId: { in: ['anime-154587', 'manga-105398'] } }, include: { mediaType: true } })
+        expect(rows.map(r => [r.providerId, r.mediaType?.name]).sort()).toEqual([['anime-154587', 'anime'], ['manga-105398', 'manga']])
+        const animeRow = rows.find(r => r.providerId === 'anime-154587')!
         const genres = (await prisma.mediaGenre.findMany({ where: { mediaId: animeRow.id }, include: { genre: true }, orderBy: { position: 'asc' } })).map(mg => mg.genre.name)
         expect(genres).toEqual(['Adventure', 'Fantasy', 'Magic'])
     })
 
-    it('Jikan dedupe: anilist result with idMal reuses existing jikan media and marks already logged', async () => {
-        // 1. Create a pre-existing Jikan media in DB (system user)
+    it('MAL dedupe: anilist result with idMal reuses existing mal media and marks already logged', async () => {
+        // 1. Create a pre-existing MAL media in DB (system user)
         const systemUser = await prisma.user.findFirstOrThrow({ where: { username: 'system' } })
         const animeType = await prisma.mediaType.findFirstOrThrow({ where: { name: 'anime' } })
 
-        const jikanMedia = await prisma.media.create({
+        const malMedia = await prisma.media.create({
             data: {
-                title: 'Existing Jikan Anime',
+                title: 'Existing MAL Anime',
                 creator: 'Old Studio',
                 year: 2020,
-                source: 'jikan',
-                sourceId: 'anime-777',
+                provider: 'mal',
+                providerId: 'anime-777',
                 userId: systemUser!.id,
                 mediaTypeId: animeType!.id,
-                metadata: { kind: 'anime', score: 8.5, scoreScale: 'mal' },
+                details: { score: 8.5, scoreScale: 'mal_10' },
             },
         })
+        await prisma.mediaExternalId.createMany({
+            data: [
+                { mediaId: malMedia.id, provider: 'mal', externalId: 'anime-777' },
+                { mediaId: malMedia.id, provider: 'mal', externalId: '777' },
+            ],
+        })
 
-        // 2. User logs this Jikan media
+        // 2. User logs this MAL media
         const initialLogRes = await request(app).put('/media/media-log')
             .set('Authorization', `Bearer ${token}`)
             .send({
                 mediaData: {
                     title: 'Existing Jikan Anime',
                     creator: 'Old Studio',
-                    source: 'jikan',
+                    source: 'mal',
                     sourceId: 'anime-777',
                     mediaType: 'anime',
                 },
@@ -319,7 +323,7 @@ describe('Search Routes - anime & manga (AniList)', () => {
                     source: 'anilist',
                     sourceId: 'anime-99999',
                     mediaType: 'anime',
-                    metadata: { kind: 'anime', idMal: 777, score: 90, scoreScale: 'anilist' },
+                    details: { idMal: 777, score: 90, scoreScale: 'anilist_100' },
                 },
                 logData: { status: 'completed', rating: 95 },
             })
@@ -329,35 +333,38 @@ describe('Search Routes - anime & manga (AniList)', () => {
         const countAfter = await prisma.media.count()
         expect(countAfter).toBe(countBefore)
 
-        // The media returned is the existing Jikan media
-        expect(anilistLogRes.body.media.id).toBe(jikanMedia.id)
-        expect(anilistLogRes.body.media.source).toBe('jikan')
-        expect(anilistLogRes.body.media.sourceId).toBe('anime-777')
+        // The media returned is the existing MAL media
+        expect(anilistLogRes.body.media.id).toBe(malMedia.id)
+        expect(anilistLogRes.body.media.provider).toBe('mal')
+        expect(anilistLogRes.body.media.providerId).toBe('anime-777')
         expect(anilistLogRes.body.logCreated).toBe(false)
     })
 
-    it('existing Jikan media still loads and displays', async () => {
+    it('existing MAL media still loads and displays', async () => {
         const systemUser = await prisma.user.findFirstOrThrow({ where: { username: 'system' } })
         const animeType = await prisma.mediaType.findFirstOrThrow({ where: { name: 'anime' } })
-        const jikanMedia = await prisma.media.create({
+        const malMedia = await prisma.media.create({
             data: {
-                title: 'Standalone Jikan Anime',
+                title: 'Standalone MAL Anime',
                 creator: 'Old Studio',
                 year: 2019,
-                source: 'jikan',
-                sourceId: 'anime-778',
+                provider: 'mal',
+                providerId: 'anime-778',
                 userId: systemUser.id,
                 mediaTypeId: animeType.id,
-                metadata: { kind: 'anime', score: 8.2, scoreScale: 'mal' },
+                details: { score: 8.2, scoreScale: 'mal_10' },
             },
+        })
+        await prisma.mediaExternalId.create({
+            data: { mediaId: malMedia.id, provider: 'mal', externalId: 'anime-778' }
         })
         await request(app).put('/media/media-log')
             .set('Authorization', `Bearer ${token}`)
             .send({
                 mediaData: {
-                    title: 'Standalone Jikan Anime',
+                    title: 'Standalone MAL Anime',
                     creator: 'Old Studio',
-                    source: 'jikan',
+                    source: 'mal',
                     sourceId: 'anime-778',
                     mediaType: 'anime',
                 },
@@ -365,17 +372,17 @@ describe('Search Routes - anime & manga (AniList)', () => {
             })
         const res = await request(app).get('/logs').set('Authorization', `Bearer ${token}`)
         expect(res.statusCode).toBe(200)
-        const jikanLog = res.body.find((l: { media: { source: string; sourceId: string } }) => l.media.source === 'jikan' && l.media.sourceId === 'anime-778')
-        expect(jikanLog).toBeTruthy()
-        expect(jikanLog.media.id).toBe(jikanMedia.id)
+        const malLog = res.body.find((l: { media: { provider?: string; providerId?: string; id?: string } }) => l.media.provider === 'mal' && l.media.providerId === 'anime-778')
+        expect(malLog).toBeTruthy()
+        expect(malLog.media.id).toBe(malMedia.id)
     })
 
-    it('music results still keep kind through the metadata union', async () => {
+    it('music results still keep subtype through the details union', async () => {
         const { searchResultsSchema } = await import('@/schemas/search/searchSchemas.js')
-        const [r] = searchResultsSchema.parse([{ mediaType: 'music', source: 'lastfm', sourceId: 'a', metadata: { url: 'u', kind: 'album' } }])
-        expect(r.metadata).toMatchObject({ kind: 'album' })
-        const [b] = searchResultsSchema.parse([{ mediaType: 'book', source: 'openlibrary', sourceId: 'b', metadata: { categories: ['x'] } }])
-        expect(b.metadata).toMatchObject({ categories: ['x'] })
+        const [r] = searchResultsSchema.parse([{ mediaType: 'music', source: 'lastfm', sourceId: 'a', subtype: 'album' }])
+        expect(r.subtype).toBe('album')
+        const [b] = searchResultsSchema.parse([{ mediaType: 'book', source: 'openlibrary', sourceId: 'b', genres: ['x'] }])
+        expect(b.genres).toEqual(['x'])
     })
 })
 
@@ -416,7 +423,7 @@ describe('Search Routes - movies (TMDB)', () => {
     const get = (i: number, qs: string) => request(app).get(`/search/movies?${qs}`).set('Authorization', `Bearer ${tokens[i]}`)
     const logMovie = (i: number, mediaData: object) => request(app).put('/media/media-log')
         .set('Authorization', `Bearer ${tokens[i]}`).send({ mediaData, logData: { status: 'completed' } })
-    const findMedia = (sourceId: string) => prisma.media.findFirst({ where: { source: 'tmdb', sourceId } })
+    const findMedia = (sourceId: string) => prisma.media.findFirst({ where: { provider: 'tmdb', providerId: sourceId } })
 
     beforeAll(async () => {
         for (const username of users) {
@@ -433,7 +440,7 @@ describe('Search Routes - movies (TMDB)', () => {
     })
     afterEach(() => fetchSpy.mockRestore())
     afterAll(async () => {
-        await prisma.media.deleteMany({ where: { source: 'tmdb', sourceId: { startsWith: 'movie-9000' } } })
+        await prisma.media.deleteMany({ where: { provider: 'tmdb', providerId: { startsWith: 'movie-9000' } } })
         await prisma.user.deleteMany({ where: { username: { in: users } } })
     })
 
@@ -453,7 +460,9 @@ describe('Search Routes - movies (TMDB)', () => {
             mediaType: 'movie',
             title: 'Test Movie', creator: null, year: '2001', description: 'Plot.', source: 'tmdb', sourceId: 'movie-90001',
             imageUrl: 'https://image.tmdb.org/t/p/w342/t.jpg',
-            metadata: { kind: 'movie', originalTitle: 'Test Film', originalLanguage: 'fr', score: 7.8, categories: ['Drama'] },
+            details: { language: 'fr', score: 7.8, scoreScale: 'tmdb_10' },
+            originalTitle: 'Test Film',
+            genres: ['Drama'],
         })
         const url = new URL(String(fetchSpy.mock.calls[0][0]))
         expect(url.pathname).toBe('/3/search/movie')
@@ -537,9 +546,11 @@ describe('Search Routes - movies (TMDB)', () => {
             expect(String(detailsCalls()[0][0])).toContain('append_to_response=credits')
 
             const row = await findMedia('movie-90001')
-            expect(row).toMatchObject({ creator: 'Dir One, Dir Two', source: 'tmdb' })
-            expect(row!.kind).toBe('movie')
-            expect(row!.metadata).toMatchObject({ runtime: 101, imdbId: 'tt0000001' })
+            expect(row).toMatchObject({ creator: 'Dir One, Dir Two', provider: 'tmdb' })
+            expect(row!.subtype).toBeNull()
+            expect(row!.details).toMatchObject({ durationSec: 6060 })
+            const extImdb = await prisma.mediaExternalId.findFirst({ where: { mediaId: row!.id, provider: 'imdb' } })
+            expect(extImdb?.externalId).toBe('tt0000001')
             const genres = (await prisma.mediaGenre.findMany({ where: { mediaId: row!.id }, include: { genre: true }, orderBy: { position: 'asc' } })).map(mg => mg.genre.name)
             expect(genres).toEqual(['Drama', 'Comedy'])
             const type = await prisma.media.findFirst({ where: { id: row!.id }, include: { mediaType: true } })
@@ -560,7 +571,7 @@ describe('Search Routes - movies (TMDB)', () => {
             expect(res.statusCode).toBeLessThan(300)
             const row = await findMedia('movie-90002')
             expect(row).not.toBeNull()
-            expect((row!.metadata as { runtime?: number }).runtime).toBeUndefined()
+            expect((row!.details as { durationSec?: number } | null)?.durationSec).toBeUndefined()
             expect(row!.creator).toBeNull()
 
             fetchSpy.mockImplementation(async (i) => isDetails(i) ? json(detailsBody) : json(searchBody))
@@ -570,7 +581,7 @@ describe('Search Routes - movies (TMDB)', () => {
             expect(detailsCalls()).toHaveLength(1)
             const after = await findMedia('movie-90002')
             expect(after!.creator).toBe('Dir One, Dir Two')
-            expect(after!.metadata).toMatchObject({ runtime: 101 })
+            expect(after!.details).toMatchObject({ durationSec: 6060 })
             const afterGenres = (await prisma.mediaGenre.findMany({ where: { mediaId: after!.id }, include: { genre: true }, orderBy: { position: 'asc' } })).map(mg => mg.genre.name)
             expect(afterGenres).toEqual(['Drama', 'Comedy'])
         })
@@ -580,7 +591,7 @@ describe('Search Routes - movies (TMDB)', () => {
             fetchSpy.mockImplementation(async (i) => isDetails(i) ? json({ credits: { crew: [] } }) : json(searchBody))
             expect((await logMovie(0, data)).statusCode).toBeLessThan(300)
             const row = await findMedia('movie-90003')
-            expect(row!.metadata).toMatchObject({ runtime: null })
+            expect(row!.details).toMatchObject({ durationSec: null })
             const genres3 = (await prisma.mediaGenre.findMany({ where: { mediaId: row!.id }, include: { genre: true }, orderBy: { position: 'asc' } })).map(mg => mg.genre.name)
             expect(genres3).toEqual(['Drama'])
             expect(row!.creator).toBeNull()
@@ -592,7 +603,7 @@ describe('Search Routes - movies (TMDB)', () => {
         it('logging without a TMDB key still succeeds', async () => {
             await prisma.userAPIKey.deleteMany({ where: { service: 'tmdb', user: { username: { in: users } } } })
             const data = await mapped(90004).catch(() => null)
-            const payload = data ?? { title: 'No Key', creator: null, year: '2001', description: null, source: 'tmdb', sourceId: 'movie-90004', imageUrl: null, metadata: { kind: 'movie' }, mediaType: 'movie' }
+            const payload = data ?? { title: 'No Key', creator: null, year: '2001', description: null, source: 'tmdb', sourceId: 'movie-90004', imageUrl: null, details: null, mediaType: 'movie' }
             const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
             const res = await logMovie(0, { ...payload, sourceId: 'movie-90004' })
             warn.mockRestore()
@@ -601,10 +612,10 @@ describe('Search Routes - movies (TMDB)', () => {
         })
     })
 
-    it('movie results keep kind through the metadata union', async () => {
+    it('movie results keep details through the schema', async () => {
         const { searchResultsSchema } = await import('@/schemas/search/searchSchemas.js')
-        const [r] = searchResultsSchema.parse([{ mediaType: 'movie', source: 'tmdb', sourceId: 'movie-1', metadata: { kind: 'movie', runtime: 90 } }])
-        expect(r.metadata).toMatchObject({ kind: 'movie', runtime: 90 })
+        const [r] = searchResultsSchema.parse([{ mediaType: 'movie', source: 'tmdb', sourceId: 'movie-1', details: { runtime: 90 } }])
+        expect(r.details).toMatchObject({ runtime: 90 })
     })
 })
 
@@ -640,7 +651,7 @@ describe('Search Routes - games (RAWG)', () => {
     const get = (i: number, qs: string) => request(app).get(`/search/games?${qs}`).set('Authorization', `Bearer ${tokens[i]}`)
     const logGame = (i: number, mediaData: object) => request(app).put('/media/media-log')
         .set('Authorization', `Bearer ${tokens[i]}`).send({ mediaData, logData: { status: 'completed' } })
-    const findMedia = (sourceId: string) => prisma.media.findFirst({ where: { source: 'rawg', sourceId } })
+    const findMedia = (sourceId: string) => prisma.media.findFirst({ where: { provider: 'rawg', providerId: sourceId } })
 
     beforeAll(async () => {
         for (const username of users) {
@@ -657,7 +668,7 @@ describe('Search Routes - games (RAWG)', () => {
     })
     afterEach(() => fetchSpy.mockRestore())
     afterAll(async () => {
-        await prisma.media.deleteMany({ where: { source: 'rawg', sourceId: { startsWith: 'game-9100' } } })
+        await prisma.media.deleteMany({ where: { provider: 'rawg', providerId: { startsWith: 'game-9100' } } })
         await prisma.user.deleteMany({ where: { username: { in: users } } })
     })
 
@@ -677,10 +688,11 @@ describe('Search Routes - games (RAWG)', () => {
             mediaType: 'game',
             title: 'Test Game', creator: null, year: '2020', description: null, source: 'rawg', sourceId: 'game-91001',
             imageUrl: 'https://media.rawg.io/t.jpg',
-            metadata: {
-                kind: 'game', url: 'https://rawg.io/games/test-game', platforms: ['PC', 'PlayStation 5'],
-                metacritic: 85, score: 4.2, categories: ['Action', 'Souls-like'],
+            details: {
+                platforms: ['PC', 'PlayStation 5'],
+                metacritic: 85, score: 4.2,
             },
+            genres: ['Action', 'Souls-like'],
         })
         const url = new URL(String(fetchSpy.mock.calls[0][0]))
         expect(url.pathname).toBe('/api/games')
@@ -741,9 +753,9 @@ describe('Search Routes - games (RAWG)', () => {
             expect(detailsCalls()).toHaveLength(1)
 
             const row = await findMedia('game-91001')
-            expect(row).toMatchObject({ creator: 'Dev One, Dev Two', source: 'rawg', sourceId: 'game-91001', description: 'A fine game.' })
-            expect(row!.kind).toBe('game')
-            expect(row!.metadata).toMatchObject({ publishers: ['Pub One'] })
+            expect(row).toMatchObject({ creator: 'Dev One, Dev Two', provider: 'rawg', providerId: 'game-91001', description: 'A fine game.' })
+            expect(row!.subtype).toBeNull()
+            expect(row!.details).toMatchObject({ publishers: ['Pub One'] })
             const genres = (await prisma.mediaGenre.findMany({ where: { mediaId: row!.id }, include: { genre: true }, orderBy: { position: 'asc' } })).map(mg => mg.genre.name)
             expect(genres).toEqual(['Action', 'Adventure', 'Co-op'])
             const type = await prisma.media.findFirst({ where: { id: row!.id }, include: { mediaType: true } })
@@ -765,7 +777,7 @@ describe('Search Routes - games (RAWG)', () => {
             expect(res.statusCode).toBeLessThan(300)
             const row = await findMedia('game-91002')
             expect(row).not.toBeNull()
-            expect((row!.metadata as { publishers?: unknown }).publishers).toBeUndefined()
+            expect((row!.details as { publishers?: unknown } | null)?.publishers).toBeUndefined()
             expect(row!.creator).toBeNull()
 
             fetchSpy.mockImplementation(async (i) => isDetails(i) ? json(detailsBody) : json(searchBody))
@@ -774,7 +786,7 @@ describe('Search Routes - games (RAWG)', () => {
             expect(detailsCalls()).toHaveLength(1)
             const after = await findMedia('game-91002')
             expect(after).toMatchObject({ creator: 'Dev One, Dev Two', description: 'A fine game.' })
-            expect(after!.metadata).toMatchObject({ publishers: ['Pub One'] })
+            expect(after!.details).toMatchObject({ publishers: ['Pub One'] })
             const afterGenres = (await prisma.mediaGenre.findMany({ where: { mediaId: after!.id }, include: { genre: true }, orderBy: { position: 'asc' } })).map(mg => mg.genre.name)
             expect(afterGenres).toEqual(['Action', 'Adventure', 'Co-op'])
         })
@@ -784,7 +796,7 @@ describe('Search Routes - games (RAWG)', () => {
             fetchSpy.mockImplementation(async (i) => isDetails(i) ? json({}) : json(searchBody))
             expect((await logGame(0, data)).statusCode).toBeLessThan(300)
             const row = await findMedia('game-91003')
-            expect(row!.metadata).toMatchObject({ publishers: null })
+            expect(row!.details).toMatchObject({ publishers: null })
             const genres3 = (await prisma.mediaGenre.findMany({ where: { mediaId: row!.id }, include: { genre: true }, orderBy: { position: 'asc' } })).map(mg => mg.genre.name)
             expect(genres3).toEqual(['Action', 'Souls-like'])
             expect(row!.creator).toBeNull()
@@ -795,7 +807,7 @@ describe('Search Routes - games (RAWG)', () => {
 
         it('logging without a RAWG key still succeeds', async () => {
             await prisma.userAPIKey.deleteMany({ where: { service: 'rawg', user: { username: { in: users } } } })
-            const payload = { title: 'No Key', creator: null, year: '2020', description: null, source: 'rawg', sourceId: 'game-91004', imageUrl: null, metadata: { kind: 'game' }, mediaType: 'game' }
+            const payload = { title: 'No Key', creator: null, year: '2020', description: null, source: 'rawg', sourceId: 'game-91004', imageUrl: null, details: null, mediaType: 'game' }
             const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
             const res = await logGame(0, payload)
             warn.mockRestore()
@@ -887,7 +899,7 @@ describe('Search Routes - TV (TMDB)', () => {
     afterEach(() => fetchSpy.mockRestore())
 
     afterAll(async () => {
-        await prisma.media.deleteMany({ where: { source: 'tmdb', sourceId: { startsWith: 'tv:60625' } } })
+        await prisma.media.deleteMany({ where: { provider: 'tmdb', providerId: { startsWith: 'tv:60625' } } })
         await prisma.user.deleteMany({ where: { username: { in: users } } })
     })
 
@@ -922,7 +934,7 @@ describe('Search Routes - TV (TMDB)', () => {
             source: 'tmdb',
             sourceId: 'tv:60625',
             year: '2013',
-            metadata: { kind: 'show', tmdbId: 60625 },
+            subtype: 'show',
         })
     })
 
@@ -958,7 +970,7 @@ describe('Search Routes - TV (TMDB)', () => {
 
         // TMDB genres become the season's genres
         const saved = await prisma.media.findFirst({
-            where: { source: 'tmdb', sourceId: 'tv:60625:s1' },
+            where: { provider: 'tmdb', providerId: 'tv:60625:s1' },
             include: { genres: { include: { genre: true }, orderBy: { position: 'asc' } } },
         })
         expect(saved?.genres.map(g => g.genre.name)).toEqual(['Animation', 'Comedy'])
@@ -1024,7 +1036,7 @@ describe('Search Routes - board games (BoardGameGeek)', () => {
     const get = (i: number, qs: string) => request(app).get(`/search/boardgames?${qs}`).set('Authorization', `Bearer ${tokens[i]}`)
     const logItem = (i: number, mediaData: object) => request(app).put('/media/media-log')
         .set('Authorization', `Bearer ${tokens[i]}`).send({ mediaData, logData: { status: 'completed' } })
-    const findMedia = (sourceId: string) => prisma.media.findFirst({ where: { source: 'bgg', sourceId } })
+    const findMedia = (sourceId: string) => prisma.media.findFirst({ where: { provider: 'bgg', providerId: sourceId } })
 
     beforeAll(async () => {
         for (const username of users) {
@@ -1051,7 +1063,7 @@ describe('Search Routes - board games (BoardGameGeek)', () => {
     afterEach(() => fetchSpy.mockRestore())
 
     afterAll(async () => {
-        await prisma.media.deleteMany({ where: { source: 'bgg' } })
+        await prisma.media.deleteMany({ where: { provider: 'bgg' } })
         await prisma.user.deleteMany({ where: { username: { in: users } } })
     })
 
@@ -1080,16 +1092,14 @@ describe('Search Routes - board games (BoardGameGeek)', () => {
             imageUrl: 'https://cf.geekdo-images.com/i_1.jpg',
             description: 'Description for game 1\nMore details & fun.',
             genres: ['Strategy'],
-            metadata: {
-                kind: 'boardgame',
-                url: 'https://boardgamegeek.com/boardgame/1',
+            details: {
                 minPlayers: 2,
                 maxPlayers: 4,
-                playingTime: 90,
-                minPlayTime: 60,
-                maxPlayTime: 90,
-                bggRating: 7.1234,
-                categories: ['Strategy'],
+                playTimeMin: 90,
+                minPlayTimeMin: 60,
+                maxPlayTimeMin: 90,
+                score: 7.1234,
+                scoreScale: 'bgg_10',
             },
         })
 
@@ -1181,8 +1191,8 @@ describe('Search Routes - board games (BoardGameGeek)', () => {
 
         const media = await findMedia(sourceId)
         expect(media).not.toBeNull()
-        expect(media!.source).toBe('bgg')
-        expect(media!.sourceId).toBe(sourceId)
+        expect(media!.provider).toBe('bgg')
+        expect(media!.providerId).toBe(sourceId)
         expect(media!.creator).toBe('Designer One')
 
         const type = await prisma.media.findFirst({
@@ -1203,7 +1213,7 @@ describe('Search Routes - board games (BoardGameGeek)', () => {
         const logRes2 = await logItem(1, itemData)
         expect(logRes2.statusCode).toBeLessThan(300)
 
-        const totalMedias = await prisma.media.count({ where: { source: 'bgg', sourceId } })
+        const totalMedias = await prisma.media.count({ where: { provider: 'bgg', providerId: sourceId } })
         expect(totalMedias).toBe(1)
     })
 })

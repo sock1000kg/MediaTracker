@@ -108,16 +108,14 @@ export function mapBggThing(item: BggThingItem): SearchResult {
         sourceId: id,
         imageUrl,
         genres: categories.length > 0 ? categories : undefined,
-        metadata: {
-            kind: "boardgame",
-            url: `https://boardgamegeek.com/boardgame/${id}`,
-            minPlayers,
-            maxPlayers,
-            playingTime,
-            minPlayTime,
-            maxPlayTime,
-            bggRating,
-            categories: categories.length > 0 ? categories : null,
+        details: {
+            minPlayers: minPlayers ?? undefined,
+            maxPlayers: maxPlayers ?? undefined,
+            playTimeMin: playingTime ?? undefined,
+            minPlayTimeMin: minPlayTime ?? undefined,
+            maxPlayTimeMin: maxPlayTime ?? undefined,
+            score: bggRating ?? undefined,
+            scoreScale: bggRating != null ? "bgg_10" as const : undefined,
         },
     }
 }

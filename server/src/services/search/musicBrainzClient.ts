@@ -469,21 +469,6 @@ export class MusicBrainzClient {
 
 export const musicBrainzClient = new MusicBrainzClient()
 
-/**
- * Track or album? Older rows (logged before metadata.kind existed, e.g. a track logged from track search) only
- * have the Media.kind column, and their sourceId is a bare Last.fm mbid or URL, so check every marker we have.
- * Treating a track as an album looks its recording id up as a release, which "doesn't exist".
- */
-export function isMusicTrack(
-    media: { kind?: string | null; sourceId?: string | null },
-    meta: Record<string, unknown>
-): boolean {
-    const kind = (typeof meta.kind === "string" && meta.kind) || media.kind
-    if (kind) return kind === "track"
-    const url = typeof meta.url === "string" ? meta.url : media.sourceId ?? ""
-    return Boolean(media.sourceId?.includes("#")) || url.includes("/_/")
-}
-
 export function buildMusicBrainzUrl(id: string, type: "release-group" | "recording" | "release" = "release-group"): string {
     return `https://musicbrainz.org/${type}/${encodeURIComponent(id)}`
 }
@@ -499,15 +484,18 @@ export function buildMusicBrainzRecordingUrl(recordingId: string): string {
 export function buildLastFmUrl({
     artist,
     title,
-    kind = "album",
+    subtype = "album",
+    kind,
 }: {
     artist: string
     title: string
+    subtype?: "album" | "track"
     kind?: "album" | "track"
 }): string {
     const encArtist = encodeURIComponent(artist)
     const encTitle = encodeURIComponent(title)
-    if (kind === "track") {
+    const targetSubtype = subtype ?? kind ?? "album"
+    if (targetSubtype === "track") {
         return `https://www.last.fm/music/${encArtist}/_/${encTitle}`
     }
     return `https://www.last.fm/music/${encArtist}/${encTitle}`

@@ -18,6 +18,7 @@ import { AppError } from "@/api/domain/error.js"
 import { musicBrainzService, MusicBrainzRelease } from "./musicBrainzService.js"
 import { musicBrainzClient } from "./musicBrainzClient.js"
 import prisma from "@/prismaClient.js"
+import type { IdSource } from "@/db.js"
 
 import { isJunkGenre, JUNK_MUSIC_TAGS } from "@/services/genreService.js"
 
@@ -119,8 +120,15 @@ export class LastFmSearchService implements ISearchService {
                 }
             }
 
+            const externalIds: { provider: string; id: string }[] = []
+            if (mbid) externalIds.push({ provider: "musicbrainz", id: mbid })
+            if (mbReleaseGroupId && mbReleaseGroupId !== mbid) {
+                externalIds.push({ provider: "musicbrainz", id: mbReleaseGroupId })
+            }
+
             return {
                 mediaType: "music",
+                subtype: kind,
                 title: i.name,
                 creator: i.artist,
                 creators: i.artist ? [{ name: i.artist, role: "artist" }] : undefined,
@@ -129,12 +137,8 @@ export class LastFmSearchService implements ISearchService {
                 source: "lastfm",
                 sourceId: mbid || i.url,
                 imageUrl,
-                metadata: {
-                    url: i.url,
-                    kind,
-                    ...(mbid ? { mbid } : {}),
-                    ...(mbReleaseGroupId ? { mbReleaseGroupId } : {}),
-                },
+                details: {},
+                ...(externalIds.length > 0 ? { externalIds } : {}),
             }
         })
     }
@@ -248,22 +252,18 @@ export class LastFmSearchService implements ISearchService {
                             description: null,
                             source: "musicbrainz",
                             sourceId: releaseGroupId,
+                            subtype: "album",
                             imageUrl: caaUrl,
-                            metadata: {
-                                url: `https://musicbrainz.org/release-group/${releaseGroupId}`,
-                                kind: "album",
-                                mbid: release.id,
-                                mbReleaseGroupId: releaseGroupId,
-                            },
+                            details: {},
+                            externalIds: [
+                                { provider: "musicbrainz", id: releaseGroupId },
+                                ...(release.id ? [{ provider: "musicbrainz", id: release.id }] : []),
+                            ],
                         }
 
                         tracks = mbTracks.map(t => ({
                             ...t,
                             imageUrl: albumResult?.imageUrl ?? caaUrl,
-                            metadata: {
-                                ...t.metadata,
-                                mbReleaseGroupId: releaseGroupId,
-                            },
                         }))
                     }
                 }
@@ -287,6 +287,7 @@ export class LastFmSearchService implements ISearchService {
 
                     albumResult = {
                         mediaType: "music",
+                        subtype: "album",
                         title: album.name,
                         creator: album.artist,
                         creators: album.artist ? [{ name: album.artist, role: "artist" }] : undefined,
@@ -295,11 +296,8 @@ export class LastFmSearchService implements ISearchService {
                         source: "lastfm",
                         sourceId: albumSourceId,
                         imageUrl: albumCaaUrl,
-                        metadata: {
-                            url: album.url,
-                            kind: "album",
-                            ...(lastFmMbid ? { mbid: lastFmMbid } : {}),
-                        },
+                        details: {},
+                        ...(lastFmMbid ? { externalIds: [{ provider: "musicbrainz", id: lastFmMbid }] } : {}),
                     }
 
                     const rawTracks = album.tracks?.track ?? []
@@ -314,6 +312,7 @@ export class LastFmSearchService implements ISearchService {
 
                             return {
                                 mediaType: "music",
+                                subtype: "track",
                                 title: t.name,
                                 creator: trackArtist,
                                 creators: trackArtist ? [{ name: trackArtist, role: "artist" }] : undefined,
@@ -322,13 +321,8 @@ export class LastFmSearchService implements ISearchService {
                                 source: "lastfm",
                                 sourceId,
                                 imageUrl: albumResult?.imageUrl ?? null,
-                                metadata: {
-                                    kind: "track",
-                                    album: album.name,
-                                    albumSourceId,
-                                    trackNumber,
-                                    durationSec: dur,
-                                    url: t.url,
+                                details: {
+                                    ...(dur != null ? { durationSec: dur } : {}),
                                 },
                             }
                         })
@@ -375,6 +369,7 @@ export class LastFmSearchService implements ISearchService {
                             const albumYear = release.date && /^\d{4}/.test(release.date) ? release.date.slice(0, 4) : null
                             albumResult = {
                                 mediaType: "music",
+                                subtype: "album",
                                 title: release.title,
                                 creator: albumArtist,
                                 creators: albumArtist ? [{ name: albumArtist, role: "artist" }] : undefined,
@@ -383,11 +378,8 @@ export class LastFmSearchService implements ISearchService {
                                 source: "musicbrainz",
                                 sourceId: release.id,
                                 imageUrl: caaUrl,
-                                metadata: {
-                                    url: `https://musicbrainz.org/release/${release.id}`,
-                                    kind: "album",
-                                    mbid: release.id,
-                                },
+                                details: {},
+                                externalIds: [{ provider: "musicbrainz", id: release.id }],
                             }
                         }
 
@@ -406,6 +398,7 @@ export class LastFmSearchService implements ISearchService {
         if (!albumResult) {
             albumResult = {
                 mediaType: "music",
+                subtype: "album",
                 title: albumName || "Unknown album",
                 creator: artist || null,
                 creators: artist ? [{ name: artist, role: "artist" }] : undefined,
@@ -414,30 +407,35 @@ export class LastFmSearchService implements ISearchService {
                 source: provider || "lastfm",
                 sourceId: mbid || `${artist}:${albumName}`,
                 imageUrl: null,
-                metadata: {
-                    kind: "album",
-                },
+                details: {},
+                ...(mbid ? { externalIds: [{ provider: "musicbrainz", id: mbid }] } : {}),
             }
         }
 
         // 3. Attach myLog and inLibrary for tracks and album
+        const isValidUuid = (id: string | null | undefined): id is string =>
+            Boolean(id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))
+
         if (tracks.length > 0 && provider) {
             const trackSourceIds = tracks.map(t => t.sourceId)
-            const trackMedias = await prisma.media.findMany({
+            const extIds = await prisma.mediaExternalId.findMany({
                 where: {
-                    source: provider,
-                    sourceId: { in: trackSourceIds },
+                    provider: provider === "lastfm" ? "lastfm" : "musicbrainz",
+                    externalId: { in: trackSourceIds },
+                    media: {
+                        user: { username: "system" },
+                    },
                 },
-                select: { id: true, sourceId: true },
+                select: { mediaId: true, externalId: true },
             })
 
             const mediaIdBySourceId = new Map<string, string>()
-            for (const m of trackMedias) {
-                if (m.sourceId) mediaIdBySourceId.set(m.sourceId, m.id)
+            for (const e of extIds) {
+                if (e.externalId) mediaIdBySourceId.set(e.externalId, e.mediaId)
             }
 
             const mediaIds = Array.from(mediaIdBySourceId.values())
-            const userLogs = (userId && mediaIds.length > 0) ? await prisma.userLogs.findMany({
+            const userLogs = (isValidUuid(userId) && mediaIds.length > 0) ? await prisma.userLogs.findMany({
                 where: {
                     userId,
                     mediaId: { in: mediaIds },
@@ -458,18 +456,24 @@ export class LastFmSearchService implements ISearchService {
             }
         }
 
-        if (userId && albumResult.sourceId) {
-            const albumLog = await prisma.userLogs.findFirst({
+        if (isValidUuid(userId) && albumResult.sourceId) {
+            const extConditions: Array<{ provider: IdSource; externalId: string }> = [
+                { provider: "lastfm", externalId: albumResult.sourceId },
+            ]
+            const mbExt = albumResult.externalIds?.find(e => e.provider === "musicbrainz")
+            if (mbExt?.id) {
+                extConditions.push({ provider: "musicbrainz", externalId: mbExt.id })
+            }
+            const albumExt = await prisma.mediaExternalId.findFirst({
                 where: {
-                    userId,
+                    OR: extConditions,
                     media: {
-                        source: albumResult.source,
-                        sourceId: albumResult.sourceId,
+                        logs: { some: { userId } },
                     },
                 },
-                select: { id: true },
+                select: { mediaId: true },
             })
-            albumResult.inLibrary = Boolean(albumLog)
+            albumResult.inLibrary = Boolean(albumExt)
         }
 
         return {

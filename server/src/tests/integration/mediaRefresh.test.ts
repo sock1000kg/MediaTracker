@@ -12,8 +12,12 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
     let userAId: string
     let tokenB: string
     let userBId: string
+    let systemUserId: string
 
     beforeAll(async () => {
+        const system = await prisma.user.findFirstOrThrow({ where: { username: "system" } })
+        systemUserId = system.id
+
         await prisma.user.deleteMany({ where: { username: { in: ["RefreshUserA", "RefreshUserB"] } } })
 
         // User A
@@ -58,21 +62,20 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
         await prisma.userLogs.deleteMany({ where: { userId: { in: [userAId, userBId] } } })
         await prisma.media.deleteMany({
             where: {
-                sourceId: { startsWith: "test-ref-" },
+                providerId: { startsWith: "test-ref-" },
             },
         })
         await prisma.user.deleteMany({ where: { username: { in: ["RefreshUserA", "RefreshUserB"] } } })
     })
 
-    test("custom media (no source or custom) returns 400 'Nothing to refresh'", async () => {
+    test("custom media (no provider) returns 400 'Nothing to refresh'", async () => {
         const movieType = await prisma.mediaType.findFirstOrThrow({ where: { name: "movie" } })
         const media = await prisma.media.create({
             data: {
                 title: "My Home Movie",
                 userId: userAId,
                 mediaTypeId: movieType.id,
-                source: "custom",
-                sourceId: "test-ref-custom-1",
+                
             },
         })
         await prisma.userLogs.create({
@@ -98,9 +101,8 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
                 title: "Alien",
                 userId: userAId,
                 mediaTypeId: movieType.id,
-                source: "tmdb",
-                sourceId: "test-ref-tmdb-unlogged",
-                metadata: { kind: "movie", tmdbId: 348 },
+                provider: "tmdb",
+                providerId: "movie-34811",
             },
         })
         // Only User A logs it
@@ -127,23 +129,29 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
             data: {
                 title: "Parent Album",
                 creator: "Artist",
-                source: "lastfm",
-                sourceId: "test-ref-album-childlog",
+                provider: "lastfm",
+                providerId: "test-ref-album-childlog",
                 mediaTypeId: musicType.id,
                 userId: userAId,
-                metadata: { kind: "album", mbReleaseGroupId: "rg-parent-childlog" },
+                subtype: "album",
+                externalIds: {
+                    create: {
+                        provider: "musicbrainz",
+                        externalId: "rg-parent-childlog",
+                    },
+                },
             },
         })
         const track = await prisma.media.create({
             data: {
                 title: "Child Track",
                 creator: "Artist",
-                source: "lastfm",
-                sourceId: "test-ref-track-childlog",
+                provider: "lastfm",
+                providerId: "test-ref-track-childlog",
                 parentId: album.id,
                 mediaTypeId: musicType.id,
                 userId: userAId,
-                metadata: { kind: "track" },
+                subtype: "track",
             },
         })
         // User A only logs the track (child), not the album!
@@ -179,11 +187,17 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
             data: {
                 title: "Rate Limited Album",
                 creator: "Artist",
-                source: "lastfm",
-                sourceId: "test-ref-album-ratelimit",
+                provider: "lastfm",
+                providerId: "test-ref-album-ratelimit",
                 mediaTypeId: musicType.id,
                 userId: userAId,
-                metadata: { kind: "album", mbReleaseGroupId: "rg-ratelimit" },
+                subtype: "album",
+                externalIds: {
+                    create: {
+                        provider: "musicbrainz",
+                        externalId: "rg-ratelimit",
+                    },
+                },
             },
         })
         await prisma.userLogs.create({
@@ -221,11 +235,10 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
         const media = await prisma.media.create({
             data: {
                 title: "Movie Without Key",
-                source: "tmdb",
-                sourceId: "test-ref-tmdb-nokey",
+                provider: "tmdb",
+                providerId: "movie-100",
                 mediaTypeId: movieType.id,
                 userId: userBId,
-                metadata: { kind: "movie", tmdbId: 100 },
             },
         })
         await prisma.userLogs.create({
@@ -249,11 +262,10 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
         const media = await prisma.media.create({
             data: {
                 title: "Deleted Movie",
-                source: "tmdb",
-                sourceId: "test-ref-tmdb-deleted",
+                provider: "tmdb",
+                providerId: "movie-99999999",
                 mediaTypeId: movieType.id,
                 userId: userAId,
-                metadata: { kind: "movie", tmdbId: 99999999 },
             },
         })
         await prisma.userLogs.create({
@@ -286,11 +298,10 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
         const media = await prisma.media.create({
             data: {
                 title: "Down Provider Movie",
-                source: "tmdb",
-                sourceId: "test-ref-tmdb-down",
+                provider: "tmdb",
+                providerId: "movie-200",
                 mediaTypeId: movieType.id,
                 userId: userAId,
-                metadata: { kind: "movie", tmdbId: 200 },
             },
         })
         await prisma.userLogs.create({
@@ -323,11 +334,10 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
                 title: "Old TMDB Title",
                 year: 1980,
                 creator: "Old Director",
-                source: "tmdb",
-                sourceId: "test-ref-tmdb-success",
+                provider: "tmdb",
+                providerId: "movie-34822",
                 mediaTypeId: movieType.id,
-                userId: userAId,
-                metadata: { kind: "movie", tmdbId: 348 },
+                userId: systemUserId,
             },
         })
         const log = await prisma.userLogs.create({
@@ -373,10 +383,10 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
         expect(updated.genres.map(g => g.genre.name)).toEqual(["Horror", "Science Fiction"])
         expect(updated.externalIds.some(e => e.provider === "imdb" && e.externalId === "tt0078748")).toBe(true)
 
-        const meta = updated.metadata as Record<string, unknown>
-        expect(meta.runtime).toBe(117)
-        expect(meta.fetchedAt).toBeDefined()
-        expect(meta.refreshedAt).toBeDefined()
+        const details = updated.details as Record<string, unknown>
+        expect(details.durationSec).toBe(117 * 60)
+        expect(updated.syncedAt).toBeDefined()
+        expect(updated.syncCheckedAt).toBeDefined()
 
         // User log completely untouched!
         const logAfter = await prisma.userLogs.findUniqueOrThrow({ where: { id: log.id } })
@@ -390,18 +400,17 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
         const media = await prisma.media.create({
             data: {
                 title: "Old Game",
-                source: "rawg",
-                sourceId: "game-3498",
+                provider: "rawg",
+                providerId: "game-3498",
                 mediaTypeId: gameType.id,
                 userId: userAId,
-                metadata: { kind: "game" },
             },
         })
         const log = await prisma.userLogs.create({
             data: {
                 userId: userAId,
                 mediaId: media.id,
-                status: "in progress",
+                status: "in_progress",
                 rating: 92,
             },
         })
@@ -443,13 +452,13 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
         expect(updated.description).toBe("Rockstar Games classic...")
         expect(updated.genres.map(g => g.genre.name)).toEqual(["Action", "Open World"])
 
-        const meta = updated.metadata as Record<string, unknown>
-        expect(meta.publishers).toEqual(["Rockstar Games"])
-        expect(meta.refreshedAt).toBeDefined()
+        const details = updated.details as Record<string, unknown>
+        expect(details.publishers).toEqual(["Rockstar Games"])
+        expect(updated.syncedAt).toBeDefined()
 
         // Log untouched
         const logAfter = await prisma.userLogs.findUniqueOrThrow({ where: { id: log.id } })
-        expect(logAfter.status).toBe("in progress")
+        expect(logAfter.status).toBe("in_progress")
         expect(logAfter.rating).toBe(92)
     })
 
@@ -462,14 +471,12 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
                 imageUrl: "https://media.rawg.io/media/games/existing.jpg",
                 creator: "Original Dev",
                 year: 2018,
-                source: "rawg",
-                sourceId: "game-99123",
+                provider: "rawg",
+                providerId: "game-99123",
                 mediaTypeId: gameType.id,
                 userId: userAId,
-                metadata: {
-                    kind: "game",
+                details: {
                     publishers: ["Original Publisher"],
-                    categories: ["RPG"],
                 },
             },
         })
@@ -516,11 +523,10 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
         // Stored description preserved!
         expect(updated.description).toBe("Preserved original game description")
 
-        const meta = updated.metadata as Record<string, unknown>
-        expect(meta.refreshedAt).toBeDefined()
-        // Stored publishers and categories preserved!
-        expect(meta.publishers).toEqual(["Original Publisher"])
-        expect(meta.categories).toEqual(["RPG"])
+        const detailsAfter = updated.details as Record<string, unknown>
+        expect(updated.syncedAt).toBeDefined()
+        // Stored publishers preserved!
+        expect(detailsAfter.publishers).toEqual(["Original Publisher"])
 
         // User log untouched
         const logAfter = await prisma.userLogs.findUniqueOrThrow({ where: { id: log.id } })
@@ -534,11 +540,10 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
         const media = await prisma.media.create({
             data: {
                 title: "Old Catan",
-                source: "bgg",
-                sourceId: "13",
+                provider: "bgg",
+                providerId: "13",
                 mediaTypeId: bggType.id,
                 userId: userAId,
-                metadata: { kind: "boardgame" },
             },
         })
         await prisma.userLogs.create({
@@ -592,9 +597,9 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
         expect(updated.description).toContain("In Catan")
         expect(updated.genres.map(g => g.genre.name)).toEqual(["Economic"])
 
-        const meta = updated.metadata as Record<string, unknown>
-        expect(meta.bggRating).toBeCloseTo(7.135)
-        expect(meta.refreshedAt).toBeDefined()
+        const details = updated.details as Record<string, unknown>
+        expect(details.score).toBeCloseTo(7.135)
+        expect(updated.syncedAt).toBeDefined()
     })
 
     test("TMDB refresh: empty overview keeps existing description and drops stale originalTitle", async () => {
@@ -605,15 +610,10 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
                 originalTitle: "Stale Japanese Title",
                 description: "Preserved original description",
                 year: 2020,
-                source: "tmdb",
-                sourceId: "movie-777",
+                provider: "tmdb",
+                providerId: "movie-777",
                 mediaTypeId: movieType.id,
                 userId: userAId,
-                metadata: {
-                    kind: "movie",
-                    tmdbId: 777,
-                    originalTitle: "Stale Japanese Title",
-                },
             },
         })
         await prisma.userLogs.create({
@@ -646,10 +646,10 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
         expect(updated.title).toBe("Updated Movie Title")
         // Description preserved!
         expect(updated.description).toBe("Preserved original description")
-        // Stale originalTitle dropped on media row and metadata!
+        // Stale originalTitle dropped on media row!
         expect(updated.originalTitle).toBeNull()
-        const meta = updated.metadata as Record<string, unknown>
-        expect(meta.originalTitle).toBeUndefined()
+        const details = updated.details as Record<string, unknown>
+        expect(details.originalTitle).toBeUndefined()
     })
 
     test("Music refresh (album): updates provider fields, uses MB genres, leaves log untouched", async () => {
@@ -660,13 +660,16 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
                 title: "Old Lastfm Album",
                 creator: "Old Artist",
                 year: 1990,
-                source: "lastfm",
-                sourceId: "test-lastfm-refresh-album",
+                provider: "lastfm",
+                providerId: "test-lastfm-refresh-album",
                 mediaTypeId: musicType.id,
                 userId: userAId,
-                metadata: {
-                    kind: "album",
-                    mbReleaseGroupId: rgid,
+                subtype: "album",
+                externalIds: {
+                    create: {
+                        provider: "musicbrainz",
+                        externalId: rgid,
+                    },
                 },
             },
         })
@@ -709,10 +712,9 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
         expect(updated.imageUrl).toBe(`https://coverartarchive.org/release-group/${rgid}/front-250`)
         expect(updated.genres.map(g => g.genre.name).sort()).toEqual(["ambient", "post-rock"])
 
-        const meta = updated.metadata as Record<string, unknown>
-        expect(meta.mbReleaseGroupId).toBe(rgid)
-        expect(meta.mbSyncedAt).toBeDefined()
-        expect(meta.refreshedAt).toBeDefined()
+        expect(updated.subtype).toBe("album")
+        expect(updated.syncedAt).toBeDefined()
+        expect(updated.syncCheckedAt).toBeDefined()
 
         // User's log is untouched
         const logAfter = await prisma.userLogs.findUniqueOrThrow({ where: { id: log.id } })
@@ -729,13 +731,16 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
                 title: "No MB Tags Album",
                 creator: "Artist Without Tags",
                 year: 2005,
-                source: "lastfm",
-                sourceId: "test-lastfm-refresh-notags",
+                provider: "lastfm",
+                providerId: "test-lastfm-refresh-notags",
                 mediaTypeId: musicType.id,
                 userId: userAId,
-                metadata: {
-                    kind: "album",
-                    mbReleaseGroupId: rgid,
+                subtype: "album",
+                externalIds: {
+                    create: {
+                        provider: "musicbrainz",
+                        externalId: rgid,
+                    },
                 },
             },
         })
@@ -784,13 +789,16 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
                 title: "Unchanged Album Title",
                 creator: "Unchanged Artist",
                 year: 2001,
-                source: "lastfm",
-                sourceId: "test-lastfm-refresh-fail",
+                provider: "lastfm",
+                providerId: "test-lastfm-refresh-fail",
                 mediaTypeId: musicType.id,
                 userId: userAId,
-                metadata: {
-                    kind: "album",
-                    mbReleaseGroupId: rgid,
+                subtype: "album",
+                externalIds: {
+                    create: {
+                        provider: "musicbrainz",
+                        externalId: rgid,
+                    },
                 },
             },
         })
@@ -823,14 +831,11 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
                 title: "Orphan Release Title",
                 creator: "Orphan Artist",
                 year: 2002,
-                source: "lastfm",
-                sourceId: "test-lastfm-orphan-release-mbid",
+                provider: "lastfm",
+                providerId: "test-lastfm-orphan-release-mbid",
                 mediaTypeId: musicType.id,
                 userId: userAId,
-                metadata: {
-                    kind: "album",
-                    // No mbReleaseGroupId, release mbid cannot be resolved:
-                },
+                subtype: "album",
             },
         })
         await prisma.userLogs.create({
@@ -859,13 +864,11 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
             data: {
                 title: "Old Track Title",
                 creator: "Old Track Artist",
-                source: "lastfm",
-                sourceId: "test-lastfm-track-refresh-1",
+                provider: "lastfm",
+                providerId: "test-lastfm-track-refresh-1",
                 mediaTypeId: musicType.id,
-                userId: userAId,
-                metadata: {
-                    kind: "track",
-                },
+                userId: systemUserId,
+                subtype: "track",
             },
         })
         const log = await prisma.userLogs.create({
@@ -901,11 +904,10 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
         expect(updated.creator).toBe("Refreshed MB Track Artist")
         expect(updated.imageUrl).toBe("https://coverartarchive.org/release-group/rg-parent-track-999/front-250")
 
-        const meta = updated.metadata as Record<string, unknown>
-        expect(meta.mbRecordingId).toBe("rec-refresh-999")
-        expect(meta.durationSec).toBe(215)
-        expect(meta.mbSyncedAt).toBeDefined()
-        expect(meta.refreshedAt).toBeDefined()
+        const details = updated.details as Record<string, unknown>
+        expect(details.durationSec).toBe(215)
+        expect(updated.syncedAt).toBeDefined()
+        expect(updated.syncCheckedAt).toBeDefined()
 
         const mbExt = updated.externalIds.find(e => e.provider === "musicbrainz")
         expect(mbExt?.externalId).toBe("rec-refresh-999")
@@ -914,21 +916,23 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
         expect(logAfter.rating).toBe(88)
     })
 
-    test("Music refresh (track): an older row with only Media.kind is refreshed as a track and joins its album", async () => {
+    test("Music refresh (track): an older row with only Media.subtype is refreshed as a track and joins its album", async () => {
         const musicType = await prisma.mediaType.findFirstOrThrow({ where: { name: "music" } })
         const album = await prisma.media.create({
             data: {
-                title: "In Rainbows", creator: "Radiohead", source: "lastfm", sourceId: "test-album-in-rainbows",
-                kind: "album", mediaTypeId: musicType.id, userId: userAId,
-                metadata: { kind: "album", mbReleaseGroupId: "rg-in-rainbows-test" },
+                title: "In Rainbows", creator: "Radiohead", provider: "lastfm", providerId: "test-album-in-rainbows",
+                subtype: "album", mediaTypeId: musicType.id, userId: systemUserId,
             },
         })
-        // Like "15 Steps": logged before metadata.kind existed, sourceId is a Last.fm URL
+        await prisma.mediaExternalId.create({
+            data: { mediaId: album.id, provider: "musicbrainz", externalId: "rg-in-rainbows-test" },
+        })
+        // Like "15 Steps": logged before subtype existed, sourceId is a Last.fm URL
         const track = await prisma.media.create({
             data: {
-                title: "15 Steps", creator: "Radiohead", source: "lastfm",
-                sourceId: "https://www.last.fm/music/Radiohead/_/15+Steps-test",
-                kind: "track", mediaTypeId: musicType.id, userId: userAId, metadata: {},
+                title: "15 Steps", creator: "Radiohead", provider: "lastfm",
+                providerId: "https://www.last.fm/music/Radiohead/_/15+Steps-test",
+                subtype: "track", mediaTypeId: musicType.id, userId: systemUserId,
             },
         })
         await prisma.userLogs.create({ data: { userId: userAId, mediaId: track.id, status: "completed" } })
@@ -946,7 +950,7 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
         const updated = await prisma.media.findUniqueOrThrow({ where: { id: track.id } })
         expect(updated.parentId).toBe(album.id)
         expect(updated.imageUrl).toBe("https://coverartarchive.org/release-group/rg-in-rainbows-test/front-250")
-        expect((updated.metadata as Record<string, unknown>).kind).toBe("track")
+        expect(updated.subtype).toBe("track")
     })
 
     test("Music refresh (track): unresolvable track returns 404 'The provider no longer has this item'", async () => {
@@ -955,13 +959,11 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
             data: {
                 title: "Ghost Track",
                 creator: "Ghost Artist",
-                source: "lastfm",
-                sourceId: "test-lastfm-ghost-track",
+                provider: "lastfm",
+                providerId: "test-lastfm-ghost-track",
                 mediaTypeId: musicType.id,
                 userId: userAId,
-                metadata: {
-                    kind: "track",
-                },
+                subtype: "track",
             },
         })
         await prisma.userLogs.create({
@@ -989,12 +991,11 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
         const media = await prisma.media.create({
             data: {
                 title: "Cowboy Bebop Old",
-                source: "anilist",
-                sourceId: "anime-1",
+                provider: "anilist",
+                providerId: "anime-1",
                 mediaTypeId: animeType.id,
                 userId: userAId,
-                metadata: {
-                    kind: "anime",
+                details: {
                     idMal: 1,
                 },
             },
@@ -1061,8 +1062,7 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
         expect(updated.imageUrl).toBe("https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx1-1.jpg")
         expect(updated.genres.map(g => g.genre.name).sort()).toEqual(["Action", "Sci-Fi", "Space"].sort())
 
-        const meta = updated.metadata as Record<string, unknown>
-        expect(meta.refreshedAt).toBeDefined()
+        expect(updated.syncedAt).toBeDefined()
 
         const logAfter = await prisma.userLogs.findUniqueOrThrow({ where: { id: log.id } })
         expect(logAfter.rating).toBe(100)
@@ -1073,13 +1073,10 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
         const media = await prisma.media.create({
             data: {
                 title: "Missing Anime",
-                source: "anilist",
-                sourceId: "anime-9999999",
+                provider: "anilist",
+                providerId: "anime-9999999",
                 mediaTypeId: animeType.id,
                 userId: userAId,
-                metadata: {
-                    kind: "anime",
-                },
             },
         })
         await prisma.userLogs.create({
@@ -1117,20 +1114,17 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
         const media = await prisma.media.create({
             data: {
                 title: "Dune Old",
-                source: "open_library",
-                sourceId: "OL893415W",
+                provider: "openlibrary",
+                providerId: "OL893415W",
                 mediaTypeId: bookType.id,
                 userId: userAId,
-                metadata: {
-                    kind: "book",
-                },
             },
         })
         const log = await prisma.userLogs.create({
             data: {
                 userId: userAId,
                 mediaId: media.id,
-                status: "in progress",
+                status: "in_progress",
                 rating: 96,
             },
         })
@@ -1169,8 +1163,7 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
         expect(updated.imageUrl).toBe("https://covers.openlibrary.org/b/id/123456-M.jpg")
         expect(updated.genres.map(g => g.genre.name).sort()).toEqual(["Science Fiction", "Space Opera"].sort())
 
-        const meta = updated.metadata as Record<string, unknown>
-        expect(meta.refreshedAt).toBeDefined()
+        expect(updated.syncedAt).toBeDefined()
 
         const logAfter = await prisma.userLogs.findUniqueOrThrow({ where: { id: log.id } })
         expect(logAfter.rating).toBe(96)
@@ -1185,20 +1178,17 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
                 description: "Preserved book description",
                 imageUrl: "https://covers.openlibrary.org/b/id/999999-M.jpg",
                 year: 1970,
-                source: "open_library",
-                sourceId: "/works/OL777777W",
+                provider: "openlibrary",
+                providerId: "/works/OL777777W",
                 mediaTypeId: bookType.id,
                 userId: userAId,
-                metadata: {
-                    kind: "book",
-                },
             },
         })
         const log = await prisma.userLogs.create({
             data: {
                 userId: userAId,
                 mediaId: media.id,
-                status: "reading",
+                status: "in_progress",
                 rating: 85,
             },
         })
@@ -1237,7 +1227,7 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
         expect(updated.description).toBe("Preserved book description")
 
         const logAfter = await prisma.userLogs.findUniqueOrThrow({ where: { id: log.id } })
-        expect(logAfter.status).toBe("reading")
+        expect(logAfter.status).toBe("in_progress")
         expect(logAfter.rating).toBe(85)
     })
 
@@ -1246,13 +1236,10 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
         const media = await prisma.media.create({
             data: {
                 title: "Ghost Book",
-                source: "open_library",
-                sourceId: "OL99999999W",
+                provider: "openlibrary",
+                providerId: "OL99999999W",
                 mediaTypeId: bookType.id,
                 userId: userAId,
-                metadata: {
-                    kind: "book",
-                },
             },
         })
         await prisma.userLogs.create({
@@ -1292,12 +1279,12 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
                 title: "Old Title",
                 creator: "Old Author",
                 year: 1980,
-                source: "goodreads",
-                sourceId: "gr-ref-1",
+                provider: "goodreads",
+                providerId: "gr-ref-1",
                 imageUrl: "https://old-cover.com/old.jpg",
                 mediaTypeId: bookType.id,
-                userId: userAId,
-                metadata: {
+                userId: systemUserId,
+                details: {
                     url: "https://www.goodreads.com/book/show/gr-ref-1",
                     isbn13: "9781234567890",
                     pageCount: 200,
@@ -1350,12 +1337,10 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
         })
         expect(updated.imageUrl).toBe("https://covers.openlibrary.org/b/id/99999-M.jpg")
         expect(updated.year).toBe(1985)
-        const meta = updated.metadata as Record<string, unknown>
-        expect(meta.pageCount).toBe(350)
-        expect(meta.publisher).toBe("Refreshed Publisher")
-        expect(meta.openLibraryWorkKey).toBe("/works/OLREF1W")
-        expect(meta.url).toBe("https://www.goodreads.com/book/show/gr-ref-1") // kept Goodreads URL
-        expect(meta.refreshedAt).toBeDefined()
+        const details = updated.details as Record<string, unknown>
+        expect(details.pageCount).toBe(350)
+        expect(details.publisher).toBe("Refreshed Publisher")
+        expect(updated.syncedAt).toBeDefined()
         expect(updated.externalIds.some(e => e.provider === "openlibrary" && e.externalId === "/works/OLREF1W")).toBe(true)
         expect(updated.genres.map(g => g.genre.name)).toEqual(["Sci-Fi", "Space"])
 
@@ -1372,11 +1357,11 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
             data: {
                 title: "No Match Book",
                 creator: "Author Nobody",
-                source: "goodreads",
-                sourceId: "gr-ref-404",
+                provider: "goodreads",
+                providerId: "gr-ref-404",
                 mediaTypeId: bookType.id,
-                userId: userAId,
-                metadata: { url: "https://www.goodreads.com/book/show/gr-ref-404", isbn: "0000000000" },
+                userId: systemUserId,
+                details: { url: "https://www.goodreads.com/book/show/gr-ref-404", isbn: "0000000000" },
             },
         })
         await prisma.userLogs.create({ data: { userId: userAId, mediaId: media.id, status: "wishlist" } })
@@ -1406,12 +1391,12 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
             data: {
                 title: "Book With Stored Cover",
                 creator: "Cover Author",
-                source: "goodreads",
-                sourceId: "gr-ref-cover",
+                provider: "goodreads",
+                providerId: "gr-ref-cover",
                 imageUrl: "https://stored-cover.com/kept.jpg",
                 mediaTypeId: bookType.id,
-                userId: userAId,
-                metadata: { url: "https://www.goodreads.com/book/show/gr-ref-cover", isbn13: "9781112223334" },
+                userId: systemUserId,
+                details: { url: "https://www.goodreads.com/book/show/gr-ref-cover", isbn13: "9781112223334" },
             },
         })
         await prisma.userLogs.create({ data: { userId: userAId, mediaId: media.id, status: "wishlist" } })

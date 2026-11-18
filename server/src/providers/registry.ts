@@ -1,8 +1,7 @@
-import { DbClient } from "@/db.js"
-import prisma from "@/prismaClient.js"
 import { findUserById } from "@/repositories/authRepository.js"
 import { AppError } from "@/api/domain/error.js"
 import { decryptKey } from "@/utilities.js"
+import { ApiKeyService } from "@/db.js"
 import {
     RateLimiter,
     musicBrainzLimiter,
@@ -33,7 +32,7 @@ export interface ProviderEntry {
     batchSize: number | null
     timeoutMs: number
     retryPolicy: RetryPolicy | null
-    keyService: string | null
+    keyService: ApiKeyService | null
     missingKeyMessage: string | null
     storageRule: StorageRule
     refreshAfterDays?: number
@@ -183,8 +182,6 @@ export function getStorageProviderForSource(source: string | null | undefined): 
     if (lower in IMPORT_STORAGE_PROVIDERS) {
         return IMPORT_STORAGE_PROVIDERS[lower]
     }
-    if (lower === "open_library" || lower === "openlibrary") return "openlibrary"
-    if (lower === "jikan") return "anilist"
     if (lower in PROVIDER_REGISTRY) {
         return lower as ProviderName
     }

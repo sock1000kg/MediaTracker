@@ -1,11 +1,11 @@
 import fs from "fs"
 import path from "path"
 import { fileURLToPath } from "url"
-import { animeMetadataSchema } from "@/schemas/search/animeSchemas.js"
-import { movieMetadataSchema } from "@/schemas/search/movieSchemas.js"
-import { gameMetadataSchema } from "@/schemas/search/gameSchemas.js"
-import { musicMetadataSchema } from "@/schemas/search/musicSchemas.js"
-import { tvShowMetadataSchema, tvSeasonMetadataSchema } from "@/schemas/search/tvSchemas.js"
+import { animeDetailsSchema, mangaDetailsSchema } from "@/schemas/search/animeSchemas.js"
+import { movieDetailsSchema } from "@/schemas/search/movieSchemas.js"
+import { gameDetailsSchema } from "@/schemas/search/gameSchemas.js"
+import { albumDetailsSchema, trackDetailsSchema } from "@/schemas/search/musicSchemas.js"
+import { tvShowDetailsSchema, tvSeasonDetailsSchema } from "@/schemas/search/tvSchemas.js"
 import { loadDemoFixture, DemoFixture } from "@/tests/fixtures/demo/seedDemoMedia.js"
 import { loadMalCache } from "@/services/imports/malImportService.js"
 import { loadLetterboxdCache } from "@/services/imports/letterboxdImportService.js"
@@ -107,7 +107,7 @@ describe("Demo Media Fixture (Unit)", () => {
                 expect(item.media.title).toBeTruthy()
                 expect(item.media.source).toBeTruthy()
                 expect(item.media.sourceId).toBeTruthy()
-                if (item.mediaTypeName === "music" && (item.media.metadata as Record<string, unknown> | null)?.kind === "track" && !item.parent) {
+                if (item.mediaTypeName === "music" && item.media.subtype === "track" && !item.parent) {
                     expect(item.media.imageUrl).toBeNull()
                 } else {
                     expect(item.media.imageUrl).toBeTruthy()
@@ -117,81 +117,73 @@ describe("Demo Media Fixture (Unit)", () => {
         })
     })
 
-    describe("Strict metadata schema validation", () => {
-        it("validates anime metadata against animeMetadataSchema.strict()", () => {
+    describe("Strict details schema validation", () => {
+        it("validates anime details against animeDetailsSchema.strict()", () => {
             const cache = loadMalCache()
             const animes = Object.values(cache.anime)
             expect(animes.length).toBeGreaterThan(0)
             for (const a of animes) {
-                const item = a as { metadata?: unknown }
-                const parsed = animeMetadataSchema.safeParse(item.metadata)
+                const item = a as { details?: unknown }
+                const parsed = animeDetailsSchema.safeParse(item.details)
                 expect(parsed.success).toBe(true)
-                if (parsed.success) {
-                    expect(parsed.data.kind).toBe("anime")
-                }
             }
         })
 
-        it("validates manga metadata against animeMetadataSchema.strict()", () => {
+        it("validates manga details against mangaDetailsSchema.strict()", () => {
             const cache = loadMalCache()
             const mangas = Object.values(cache.manga)
             expect(mangas.length).toBeGreaterThan(0)
             for (const m of mangas) {
-                const item = m as { metadata?: unknown }
-                const parsed = animeMetadataSchema.safeParse(item.metadata)
+                const item = m as { details?: unknown }
+                const parsed = mangaDetailsSchema.safeParse(item.details)
                 expect(parsed.success).toBe(true)
-                if (parsed.success) {
-                    expect(parsed.data.kind).toBe("manga")
-                }
             }
         })
 
-        it("validates movie metadata against movieMetadataSchema.strict()", () => {
+        it("validates movie details against movieDetailsSchema.strict()", () => {
             const cache = loadLetterboxdCache()
             const movies = Object.values(cache)
             expect(movies.length).toBeGreaterThan(0)
             for (const m of movies) {
-                const parsed = movieMetadataSchema.safeParse(m.metadata)
+                const parsed = movieDetailsSchema.safeParse(m.details)
                 expect(parsed.success).toBe(true)
-                if (parsed.success) {
-                    expect(parsed.data.kind).toBe("movie")
-                }
                 expect(m.year).toBeDefined()
             }
         })
 
-        it("validates game metadata against gameMetadataSchema.strict()", () => {
+        it("validates game details against gameDetailsSchema.strict()", () => {
             const games = fixture.items.filter(i => i.mediaTypeName === "game")
             for (const g of games) {
-                const parsed = gameMetadataSchema.safeParse(g.media.metadata)
+                const parsed = gameDetailsSchema.safeParse(g.media.details)
                 expect(parsed.success).toBe(true)
-                if (parsed.success) {
-                    expect(parsed.data.kind).toBe("game")
-                }
             }
         })
 
-        it("validates music metadata against musicMetadataSchema.strict()", () => {
+        it("validates music details against album/track schemas", () => {
             const music = fixture.items.filter(i => i.mediaTypeName === "music")
             for (const m of music) {
-                const parsed = musicMetadataSchema.strict().safeParse(m.media.metadata)
-                expect(parsed.success).toBe(true)
-                if (parsed.success) {
-                    expect(["album", "track"]).toContain(parsed.data.kind)
+                if (m.media.details != null) {
+                    if (m.media.subtype === "album") {
+                        const parsed = albumDetailsSchema.safeParse(m.media.details)
+                        expect(parsed.success).toBe(true)
+                    } else {
+                        const parsed = trackDetailsSchema.safeParse(m.media.details)
+                        expect(parsed.success).toBe(true)
+                    }
                 }
             }
         })
 
-        it("validates tv metadata against tv schemas", () => {
+        it("validates tv details against tv schemas", () => {
             const tvItems = fixture.items.filter(i => i.mediaTypeName === "tv")
             expect(tvItems.length).toBeGreaterThan(0)
             for (const t of tvItems) {
-                const kind = (t.media.metadata as { kind?: string })?.kind
-                if (kind === "season") {
-                    const parsed = tvSeasonMetadataSchema.safeParse(t.media.metadata)
+                const subtype = t.media.subtype
+                if (subtype === "season") {
+                    const parsed = tvSeasonDetailsSchema.safeParse(t.media.details)
                     expect(parsed.success).toBe(true)
                 } else {
-                    const parsed = tvShowMetadataSchema.safeParse(t.media.metadata)
+                    const parsed = tvShowDetailsSchema.safeParse(t.media.details)
                     expect(parsed.success).toBe(true)
                 }
             }

@@ -3,10 +3,10 @@ import { AppError } from "@/api/domain/error.js"
 import { MEDIA_INCLUDE, formatMedia } from "@/repositories/mediaFormat.js"
 import { setMediaGenres, setMediaCreators, isJunkGenre } from "@/services/genreService.js"
 import { attachExternalIdsToMedia } from "@/repositories/mediaRepository.js"
-import { createUserAgentHeader, sanitizeDescription } from "@/utilities.js"
-import { openLibraryLimiter, anilistLimiter, parseRetryAfter } from "@/services/search/rateLimiter.js"
+import { sanitizeDescription } from "@/utilities.js"
 import { providerFetch } from "@/providers/providerFetch.js"
-import { getStorageProviderForSource, getProviderEntry } from "@/providers/registry.js"
+import { validateDetails } from "@/schemas/detailsSchemas.js"
+import { Prisma } from "@/generated/prisma/client.js"
 
 // TMDB
 import {
@@ -43,7 +43,8 @@ import { bggThingResponseSchema } from "@/schemas/search/bggSchemas.js"
 import {
     musicBrainzClient,
     extractReleaseGroupGenres,
-    MbReleaseGroupDetail, isMusicTrack } from "@/services/search/musicBrainzClient.js"
+    MbReleaseGroupDetail,
+} from "@/services/search/musicBrainzClient.js"
 import { musicSearchService } from "@/services/search/lastFmSearchService.js"
 
 const TEN_MINUTES_MS = 10 * 60 * 1000
@@ -78,8 +79,8 @@ export class MediaRefreshService {
             throw new AppError("Media not found", 404)
         }
 
-        // Custom media (no source): 400 "Nothing to refresh"
-        if (!media.source || media.source === "custom") {
+        // Custom media (no provider): 400 "Nothing to refresh"
+        if (!media.provider) {
             throw new AppError("Nothing to refresh", 400)
         }
 
@@ -101,11 +102,9 @@ export class MediaRefreshService {
             throw new AppError("You can only refresh media you have logged", 403)
         }
 
-        // Rate limit: refreshedAt stamp enforces at most one manual refresh per 10 minutes per item across all users,
-        // preventing abuse and upstream provider quota exhaustion.
-        const meta = (media.metadata ?? {}) as Record<string, unknown>
-        if (typeof meta.refreshedAt === "string") {
-            const lastTime = new Date(meta.refreshedAt).getTime()
+        // Rate limit: 10-minute limit reads syncedAt column
+        if (media.syncedAt) {
+            const lastTime = media.syncedAt.getTime()
             const elapsed = Date.now() - lastTime
             if (elapsed < TEN_MINUTES_MS) {
                 const remainingMinutes = Math.ceil((TEN_MINUTES_MS - elapsed) / 60000)
@@ -116,32 +115,22 @@ export class MediaRefreshService {
             }
         }
 
-        const storageProvider = getStorageProviderForSource(media.source)
-        if (!storageProvider) {
-            throw new AppError("Nothing to refresh", 400)
-        }
+        const details = (media.details ?? {}) as Record<string, unknown>
 
-        const entry = getProviderEntry(storageProvider)
-        if (entry.storageRule === "never") {
-            throw new AppError("Nothing to refresh", 400)
-        }
-
-        if (storageProvider === "tmdb") {
-            await this.refreshTmdb(userId, media, meta)
-        } else if (storageProvider === "rawg") {
-            await this.refreshRawg(userId, media, meta)
-        } else if (storageProvider === "anilist") {
-            await this.refreshAniList(userId, media, meta)
-        } else if (storageProvider === "openlibrary") {
-            if (media.source.toLowerCase() === "goodreads") {
-                await this.refreshGoodreads(userId, media, meta)
-            } else {
-                await this.refreshOpenLibrary(userId, media, meta)
-            }
-        } else if (storageProvider === "bgg") {
-            await this.refreshBgg(userId, media, meta)
-        } else if (storageProvider === "lastfm" || storageProvider === "musicbrainz") {
-            await this.refreshMusic(userId, media, meta)
+        if (media.provider === "tmdb" || media.provider === "letterboxd") {
+            await this.refreshTmdb(userId, media, details)
+        } else if (media.provider === "rawg") {
+            await this.refreshRawg(userId, media, details)
+        } else if (media.provider === "anilist" || media.provider === "mal") {
+            await this.refreshAniList(userId, media, details)
+        } else if (media.provider === "goodreads") {
+            await this.refreshGoodreads(userId, media, details)
+        } else if (media.provider === "openlibrary") {
+            await this.refreshOpenLibrary(userId, media, details)
+        } else if (media.provider === "bgg") {
+            await this.refreshBgg(userId, media, details)
+        } else if (media.provider === "lastfm" || media.provider === "musicbrainz") {
+            await this.refreshMusic(userId, media, details)
         } else {
             throw new AppError("Nothing to refresh", 400)
         }
@@ -154,43 +143,54 @@ export class MediaRefreshService {
         return formatMedia(updated)
     }
 
-    private async refreshTmdb(userId: string, media: RefreshableMedia, meta: Record<string, unknown>) {
-        if (media.source?.toLowerCase() === "letterboxd") {
+    private async refreshTmdb(userId: string, media: RefreshableMedia, details: Record<string, unknown>) {
+        if (media.provider === "letterboxd") {
             const match = await tmdbSearchService.findMovie(media.title, media.year, { userId })
             if (!match) {
                 throw new AppError("The provider no longer has this item", 404)
             }
-            const now = new Date().toISOString()
-            const matchMeta = (match.metadata as Record<string, unknown>) ?? {}
-            const { url: _unusedUrl, ...cleanMatchMeta } = matchMeta
-            const updatedMetadata = {
-                ...cleanMatchMeta,
-                refreshedAt: now,
-                fetchedAt: now,
-            }
+            const now = new Date()
+            const matchDetails = ((match as { details?: Record<string, unknown> }).details ?? {}) as Record<string, unknown>
+            const movieDetails: Record<string, unknown> = {}
+            if (matchDetails.durationSec != null) movieDetails.durationSec = matchDetails.durationSec
+            else if (typeof matchDetails.runtime === "number") movieDetails.durationSec = matchDetails.runtime * 60
+            if (matchDetails.language != null) movieDetails.language = matchDetails.language
+            if (matchDetails.score != null) movieDetails.score = matchDetails.score
+            if (matchDetails.scoreScale != null) movieDetails.scoreScale = matchDetails.scoreScale
+            const validated = validateDetails(movieDetails, { subtype: null, mediaTypeName: "movie", hasProvider: true })
+
             await prisma.media.update({
                 where: { id: media.id },
                 data: {
                     title: match.title,
-                    originalTitle: (cleanMatchMeta.originalTitle as string) ?? null,
+                    originalTitle: match.originalTitle ?? null,
                     creator: match.creator,
                     year: match.year ? Number(match.year) : media.year,
+                    releaseDate: match.releaseDate ? new Date(match.releaseDate) : null,
                     description: match.description || media.description,
                     imageUrl: match.imageUrl || media.imageUrl,
-                    source: "tmdb",
-                    sourceId: match.sourceId,
-                    metadata: updatedMetadata,
+                    provider: "tmdb",
+                    providerId: match.sourceId,
+                    details: (validated ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+                    syncedAt: now,
+                    syncCheckedAt: now,
                 },
             })
+            if (media.providerId) {
+                await attachExternalIdsToMedia(media.id, [{ provider: "letterboxd", externalId: media.providerId }], prisma)
+            }
+            if (match.sourceId) {
+                await attachExternalIdsToMedia(media.id, [{ provider: "tmdb", externalId: match.sourceId }], prisma)
+            }
             if (match.creators && match.creators.length > 0) {
                 await setMediaCreators(media.id, match.creators, "movie", match.creator, prisma)
             }
-            const categories = (cleanMatchMeta.categories as string[]) ?? []
+            const categories = (match as { genres?: string[] }).genres ?? []
             if (categories.length > 0) {
                 await setMediaGenres(media.id, categories, "movie", prisma)
             }
-            const tmdbId = typeof cleanMatchMeta.tmdbId === "number"
-                ? cleanMatchMeta.tmdbId
+            const tmdbId = typeof matchDetails.tmdbId === "number"
+                ? matchDetails.tmdbId
                 : Number(/^movie-(\d+)$/.exec(match.sourceId ?? "")?.[1])
             if (tmdbId) {
                 await attachExternalIdsToMedia(media.id, [{ provider: "tmdb", externalId: String(tmdbId) }], prisma)
@@ -203,9 +203,9 @@ export class MediaRefreshService {
         await refreshSingleTmdbItem(media, auth, prisma, { setRefreshedAt: true })
     }
 
-    private async refreshRawg(userId: string, media: RefreshableMedia, meta: Record<string, unknown>) {
+    private async refreshRawg(userId: string, media: RefreshableMedia, details: Record<string, unknown>) {
         const userApiKey = await rawgSearchService.getUserApiKey(userId)
-        const match = /^game-(\d+)$/.exec(media.sourceId ?? "") || /^(\d+)$/.exec(media.sourceId ?? "")
+        const match = /^game-(\d+)$/.exec(media.providerId ?? "") || /^(\d+)$/.exec(media.providerId ?? "")
         const gameId = match ? Number(match[1]) : null
         if (!gameId) throw new AppError("The provider no longer has this item", 404)
 
@@ -235,35 +235,32 @@ export class MediaRefreshService {
             throw new AppError("Provider is unavailable", 503)
         }
         const d = checked.data
-        // Refresh rule: keep stored values whenever the provider returns null/empty or omits fields.
-        // Refreshes should enrich or update metadata, never erase existing user or previously fetched data.
         const title = d.name?.trim() || media.title
         const yearStr = d.released?.slice(0, 4)
         const year = yearStr && /^\d{4}$/.test(yearStr) ? Number(yearStr) : media.year
+        const releaseDate = d.released ? new Date(d.released) : null
         const description = sanitizeDescription(d.description_raw) || media.description
         const imageUrl = d.background_image || media.imageUrl
         const devNames = (d.developers ?? []).map(x => x.name?.trim() ?? "").filter(Boolean)
         const creator = devNames.length ? devNames.join(", ") : media.creator
         const creators = devNames.map(name => ({ name, role: "developer" }))
         const pubNames = (d.publishers ?? []).map(x => x.name?.trim() ?? "").filter(Boolean)
-        const storedPublishers = (meta.publishers as string[]) ?? null
+        const storedPublishers = (details.publishers as string[]) ?? null
         const publishers = pubNames.length ? pubNames : storedPublishers
         const rawCategories = cleanRawgCategories(d.genres, d.tags)
-        const storedCategories = (meta.categories as string[]) ?? []
+        const storedCategories = media.genres ? media.genres.map(g => g.genre.name) : []
         const categories = (rawCategories && rawCategories.length > 0) ? rawCategories : storedCategories
 
-        const now = new Date().toISOString()
-        const { originalTitle: _staleOrig, ...cleanMeta } = meta
-        const updatedMetadata = {
-            ...cleanMeta,
-            kind: "game",
-            score: typeof d.rating === "number" ? d.rating : meta.score ?? null,
-            metacritic: typeof d.metacritic === "number" ? d.metacritic : meta.metacritic ?? null,
-            playtimeHours: typeof d.playtime === "number" ? d.playtime : meta.playtimeHours ?? null,
-            publishers,
-            categories: categories.length ? categories : null,
-            refreshedAt: now,
+        const now = new Date()
+        const rawDetails: Record<string, unknown> = {
+            score: typeof d.rating === "number" ? d.rating : details.score ?? undefined,
+            scoreScale: "rawg_5",
+            metacritic: typeof d.metacritic === "number" ? d.metacritic : details.metacritic ?? undefined,
+            avgPlaytimeHours: typeof d.playtime === "number" ? d.playtime : details.avgPlaytimeHours ?? undefined,
+            publishers: publishers ?? undefined,
+            platforms: (details.platforms as string[]) ?? undefined,
         }
+        const validated = validateDetails(rawDetails, { subtype: null, mediaTypeName: "game", hasProvider: true })
 
         await prisma.media.update({
             where: { id: media.id },
@@ -271,10 +268,13 @@ export class MediaRefreshService {
                 title,
                 originalTitle: null,
                 year,
+                releaseDate,
                 description,
                 imageUrl,
                 creator,
-                metadata: updatedMetadata,
+                details: (validated ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+                syncedAt: now,
+                syncCheckedAt: now,
             },
         })
         if (categories.length > 0) {
@@ -285,60 +285,64 @@ export class MediaRefreshService {
         }
     }
 
-    private async refreshAniList(userId: string, media: RefreshableMedia, meta: Record<string, unknown>) {
-        if (media.source?.toLowerCase() === "mal") {
-            const rawMalId = typeof meta?.idMal === "number" ? meta.idMal : Number(media.sourceId)
+    private async refreshAniList(userId: string, media: RefreshableMedia, details: Record<string, unknown>) {
+        if (media.provider === "mal") {
+            const rawMalId = typeof details?.idMal === "number" ? details.idMal : Number(media.providerId)
             if (!rawMalId || Number.isNaN(rawMalId)) {
                 throw new AppError("The provider no longer has this item", 404)
             }
-            const kind = (meta?.kind as "anime" | "manga") || (media.mediaType?.name === "manga" ? "manga" : "anime")
+            const kind = (media.mediaType?.name === "manga" ? "manga" : "anime")
             const matches = await anilistSearchService.getByMalIds([rawMalId], kind)
             const match = matches.get(rawMalId)
             if (!match) {
                 throw new AppError("The provider no longer has this item", 404)
             }
-            const now = new Date().toISOString()
-            const matchMeta = (match.metadata as Record<string, unknown>) ?? {}
-            const { url: _unusedUrl, ...cleanMatchMeta } = matchMeta
-            const updatedMetadata = {
-                ...cleanMatchMeta,
-                refreshedAt: now,
-                fetchedAt: now,
-            }
+            const now = new Date()
+            const matchDetails = ((match as { details?: Record<string, unknown> }).details ?? {}) as Record<string, unknown>
+            const validated = validateDetails(matchDetails, { subtype: null, mediaTypeName: kind, hasProvider: true })
+
             await prisma.media.update({
                 where: { id: media.id },
                 data: {
                     title: match.title,
-                    originalTitle: (cleanMatchMeta.originalTitle as string) ?? null,
+                    originalTitle: match.originalTitle ?? null,
                     creator: match.creator,
                     year: match.year ? Number(match.year) : media.year,
+                    releaseDate: match.releaseDate ? new Date(match.releaseDate) : null,
                     description: match.description || media.description,
                     imageUrl: match.imageUrl || media.imageUrl,
-                    source: "anilist",
-                    sourceId: match.sourceId,
-                    metadata: updatedMetadata,
+                    provider: "anilist",
+                    providerId: match.sourceId,
+                    details: (validated ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+                    syncedAt: now,
+                    syncCheckedAt: now,
                 },
             })
-            const categories = (cleanMatchMeta.categories as string[]) ?? []
+            if (media.providerId) {
+                await attachExternalIdsToMedia(media.id, [{ provider: "mal", externalId: media.providerId }], prisma)
+            }
+            if (match.sourceId) {
+                await attachExternalIdsToMedia(media.id, [{ provider: "anilist", externalId: match.sourceId }], prisma)
+            }
+            const categories = (match as { genres?: string[] }).genres ?? []
             if (categories.length > 0) {
                 await setMediaGenres(media.id, categories, kind, prisma)
             }
-            const anilistId = typeof cleanMatchMeta.anilistId === "number"
-                ? cleanMatchMeta.anilistId
-                : Number(/^(?:anime|manga)-(\d+)$/.exec(match.sourceId ?? "")?.[1])
+            const anilistId = Number(/^(?:anime|manga)-(\d+)$/.exec(match.sourceId ?? "")?.[1])
             if (anilistId) {
                 await attachExternalIdsToMedia(media.id, [{ provider: "anilist", externalId: String(anilistId) }], prisma)
             }
             return
         }
 
-        const kind = (meta.kind as string) || (media.mediaType?.name === "manga" ? "manga" : "anime")
+        const kind = (media.mediaType?.name === "manga" ? "manga" : "anime")
         let anilistId: number | null = null
-        const match = /^(?:anime|manga)-(\d+)$/.exec(media.sourceId ?? "") || /^(\d+)$/.exec(media.sourceId ?? "")
+        const match = /^(?:anime|manga)-(\d+)$/.exec(media.providerId ?? "") || /^(\d+)$/.exec(media.providerId ?? "")
         if (match) {
             anilistId = Number(match[1])
-        } else if (typeof meta.idMal === "number") {
-            anilistId = meta.idMal
+        } else {
+            const ext = media.externalIds?.find(e => e.provider === "anilist" || e.provider === "mal")
+            if (ext) anilistId = Number(ext.externalId)
         }
         if (!anilistId) throw new AppError("The provider no longer has this item", 404)
 
@@ -425,26 +429,11 @@ export class MediaRefreshService {
 
         const item = rawData.data.Media
         const mapped = mapAniListMedia(kind === "manga" ? "manga" : "anime", item)
-        const now = new Date().toISOString()
-        const mappedMeta = (mapped.metadata as Record<string, unknown>) ?? {}
-        const origTitle = (mappedMeta.originalTitle as string) ?? null
-        const { originalTitle: _staleOrig, ...cleanMeta } = meta
+        const now = new Date()
+        const mappedDetails = ((mapped as { details?: Record<string, unknown> }).details ?? {}) as Record<string, unknown>
+        const origTitle = mapped.originalTitle ?? null
 
-        const cleanMappedMeta: Record<string, unknown> = {}
-        for (const [k, v] of Object.entries(mappedMeta)) {
-            if (v !== null && v !== undefined) {
-                cleanMappedMeta[k] = v
-            }
-        }
-        if (origTitle) {
-            cleanMappedMeta.originalTitle = origTitle
-        }
-
-        const updatedMetadata = {
-            ...cleanMeta,
-            ...cleanMappedMeta,
-            refreshedAt: now,
-        }
+        const validated = validateDetails(mappedDetails, { subtype: null, mediaTypeName: kind, hasProvider: true })
 
         const yearVal = mapped.year ? Number(mapped.year) : media.year
         const description = mapped.description || media.description
@@ -460,10 +449,12 @@ export class MediaRefreshService {
                 description,
                 imageUrl,
                 creator,
-                metadata: updatedMetadata,
+                details: (validated ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+                syncedAt: now,
+                syncCheckedAt: now,
             },
         })
-        const genres = (mappedMeta.categories as string[]) ?? []
+        const genres = (mapped as { genres?: string[] }).genres ?? []
         if (genres.length > 0) {
             await setMediaGenres(media.id, genres, kind, prisma)
         }
@@ -475,8 +466,8 @@ export class MediaRefreshService {
         }
     }
 
-    private async refreshOpenLibrary(userId: string, media: RefreshableMedia, meta: Record<string, unknown>) {
-        const sourceId = media.sourceId
+    private async refreshOpenLibrary(userId: string, media: RefreshableMedia, details: Record<string, unknown>) {
+        const sourceId = media.providerId
         if (!sourceId) throw new AppError("The provider no longer has this item", 404)
 
         let raw: unknown
@@ -508,22 +499,10 @@ export class MediaRefreshService {
 
         const mappedResults = openLibraryService.mapResults(checked.data.docs)
         const mapped = mappedResults[0]
-        const now = new Date().toISOString()
-        const { originalTitle: _staleOrig, ...cleanMeta } = meta
-        const mappedMeta = (mapped.metadata as Record<string, unknown>) ?? {}
+        const now = new Date()
+        const mappedDetails = ((mapped as { details?: Record<string, unknown> }).details ?? {}) as Record<string, unknown>
+        const validated = validateDetails(mappedDetails, { subtype: null, mediaTypeName: "book", hasProvider: true })
 
-        const cleanMappedMeta: Record<string, unknown> = {}
-        for (const [k, v] of Object.entries(mappedMeta)) {
-            if (v !== null && v !== undefined) {
-                cleanMappedMeta[k] = v
-            }
-        }
-
-        const updatedMetadata = {
-            ...cleanMeta,
-            ...cleanMappedMeta,
-            refreshedAt: now,
-        }
         const yearVal = mapped.year ? Number(mapped.year) : media.year
         const description = mapped.description || media.description
         const imageUrl = mapped.imageUrl ?? media.imageUrl
@@ -538,27 +517,24 @@ export class MediaRefreshService {
                 description,
                 imageUrl,
                 creator,
-                metadata: updatedMetadata,
+                details: (validated ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+                syncedAt: now,
+                syncCheckedAt: now,
             },
         })
-        const categories = (mappedMeta.categories as string[]) ?? []
-        if (categories.length > 0) {
-            await setMediaGenres(media.id, categories, "book", prisma)
+        const genres = (mapped as { genres?: string[] }).genres ?? []
+        if (genres.length > 0) {
+            await setMediaGenres(media.id, genres, "book", prisma)
         }
         if (mapped.creators && mapped.creators.length > 0) {
             await setMediaCreators(media.id, mapped.creators, "book", mapped.creator, prisma)
         }
     }
 
-    private async refreshGoodreads(userId: string, media: RefreshableMedia, meta: Record<string, unknown>) {
-        const olWorkKey = (typeof meta.openLibraryWorkKey === "string" ? meta.openLibraryWorkKey : null)
-            ?? (typeof meta.olWorkKey === "string" ? meta.olWorkKey : null)
-            ?? (media.externalIds?.find(e => e.provider === "openlibrary")?.externalId)
+    private async refreshGoodreads(userId: string, media: RefreshableMedia, details: Record<string, unknown>) {
+        const olWorkKey = media.externalIds?.find(e => e.provider === "openlibrary")?.externalId
 
-        const rawIsbn = (typeof meta.isbn13 === "string" ? meta.isbn13 : null)
-            ?? (typeof meta.isbn === "string" ? meta.isbn : null)
-            ?? (media.externalIds?.find(e => e.provider === "isbn13" || e.provider === "isbn")?.externalId)
-        const cleanIsbn = rawIsbn ? rawIsbn.replace(/["'=-]/g, "").trim() : null
+        const cleanIsbn = media.externalIds?.find(e => e.provider === "isbn13" || e.provider === "isbn")?.externalId
 
         let doc: OpenLibraryBook | null = null
 
@@ -613,32 +589,37 @@ export class MediaRefreshService {
             throw new AppError("The provider no longer has this item", 404)
         }
 
-        const now = new Date().toISOString()
+        const now = new Date()
         const newImageUrl = doc.cover_i
             ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`
             : media.imageUrl
 
-        const pageCount = doc.number_of_pages_median ?? (typeof meta.pageCount === "number" ? meta.pageCount : null)
-        const publisher = doc.publisher?.[0] ?? (typeof meta.publisher === "string" ? meta.publisher : null)
+        const pageCount = doc.number_of_pages_median ?? (typeof details.pageCount === "number" ? details.pageCount : undefined)
+        const publisher = doc.publisher?.[0] ?? (typeof details.publisher === "string" ? details.publisher : undefined)
         const year = doc.first_publish_year ?? media.year
 
-        const updatedMetadata = {
-            ...meta,
+        const updatedDetails = {
             ...(pageCount ? { pageCount } : {}),
             ...(publisher ? { publisher } : {}),
-            openLibraryWorkKey: doc.key,
-            olSyncedAt: now,
-            refreshedAt: now,
         }
+        const validated = validateDetails(updatedDetails, { subtype: null, mediaTypeName: "book", hasProvider: true })
 
         await prisma.media.update({
             where: { id: media.id },
             data: {
                 imageUrl: newImageUrl,
                 year,
-                metadata: updatedMetadata,
+                details: (validated ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+                provider: "openlibrary",
+                providerId: doc.key,
+                syncedAt: now,
+                syncCheckedAt: now,
             },
         })
+
+        if (media.providerId) {
+            await attachExternalIdsToMedia(media.id, [{ provider: "goodreads", externalId: media.providerId }], prisma)
+        }
 
         const categories = (doc.subject ?? []).filter(s => !isJunkGenre(s, "book")).slice(0, 3)
         if (categories.length > 0) {
@@ -655,14 +636,13 @@ export class MediaRefreshService {
         }
     }
 
-    private async refreshBgg(userId: string, media: RefreshableMedia, meta: Record<string, unknown>) {
+    private async refreshBgg(userId: string, media: RefreshableMedia, details: Record<string, unknown>) {
         const token = await bggSearchService.getUserApiKey(userId)
-        const thingId = media.sourceId
+        const thingId = media.providerId
         if (!thingId) throw new AppError("The provider no longer has this item", 404)
 
         let thingXml: string
         try {
-            // Provider quirk: must use boardgamegeek.com without www to avoid redirect/auth failure
             const thingUrl = new URL("https://boardgamegeek.com/xmlapi2/thing")
             thingUrl.searchParams.set("id", thingId)
             thingUrl.searchParams.set("stats", "1")
@@ -688,24 +668,12 @@ export class MediaRefreshService {
             throw new AppError("The provider no longer has this item", 404)
         }
         const mapped = mapBggThing(items[0])
-        const now = new Date().toISOString()
-        const { originalTitle: _staleOrig, ...cleanMeta } = meta
-        const mappedMeta = (mapped.metadata as Record<string, unknown>) ?? {}
+        const now = new Date()
+        const mappedDetails = ((mapped as { details?: Record<string, unknown> }).details ?? {}) as Record<string, unknown>
+        const validated = validateDetails(mappedDetails, { subtype: null, mediaTypeName: "boardgame", hasProvider: true })
 
-        const cleanMappedMeta: Record<string, unknown> = {}
-        for (const [k, v] of Object.entries(mappedMeta)) {
-            if (v !== null && v !== undefined) {
-                cleanMappedMeta[k] = v
-            }
-        }
-
-        const updatedMetadata = {
-            ...cleanMeta,
-            ...cleanMappedMeta,
-            refreshedAt: now,
-        }
         const yearVal = mapped.year ? Number(mapped.year) : media.year
-        const description = mapped.description || media.description // BGG keeps "stored as received" or existing
+        const description = mapped.description || media.description
         const imageUrl = mapped.imageUrl ?? media.imageUrl
         const creator = mapped.creator ?? media.creator
 
@@ -718,10 +686,12 @@ export class MediaRefreshService {
                 description,
                 imageUrl,
                 creator,
-                metadata: updatedMetadata,
+                details: (validated ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+                syncedAt: now,
+                syncCheckedAt: now,
             },
         })
-        const genres = (mappedMeta.categories as string[]) ?? []
+        const genres = (mapped as { genres?: string[] }).genres ?? []
         if (genres.length > 0) {
             await setMediaGenres(media.id, genres, "boardgame", prisma)
         }
@@ -730,10 +700,9 @@ export class MediaRefreshService {
         }
     }
 
-    private async refreshMusic(userId: string, media: RefreshableMedia, meta: Record<string, unknown>) {
-        const isTrack = isMusicTrack(media, meta)
-        const now = new Date().toISOString()
-        const { originalTitle: _staleOrig, ...cleanMeta } = meta
+    private async refreshMusic(userId: string, media: RefreshableMedia, details: Record<string, unknown>) {
+        const isTrack = media.subtype === "track"
+        const now = new Date()
 
         if (isTrack) {
             const recRes = await musicBrainzClient.resolveTrackRecording(media.creator ?? "", media.title)
@@ -744,33 +713,23 @@ export class MediaRefreshService {
                 throw new AppError("The provider no longer has this item", 404)
             }
 
-            // A standalone track joins its album when that album is already in the library (same release group),
-            // so it shows under the album and shares its cover.
             let parentId = media.parentId
             if (!parentId && recRes.releaseGroupId) {
-                const album = await prisma.media.findFirst({
+                const albumExt = await prisma.mediaExternalId.findFirst({
                     where: {
-                        source: "lastfm",
-                        kind: "album",
-                        metadata: { path: ["mbReleaseGroupId"], equals: recRes.releaseGroupId },
+                        provider: "musicbrainz",
+                        externalId: recRes.releaseGroupId,
                     },
-                    select: { id: true },
+                    select: { mediaId: true },
                 })
-                parentId = album?.id ?? null
+                parentId = albumExt?.mediaId ?? null
             }
 
             const durationSec = recRes.lengthMs ? Math.round(recRes.lengthMs / 1000) : null
-            const updatedMetadata = {
-                ...cleanMeta,
-                kind: "track",
-                mbRecordingId: recRes.recordingId,
-                ...(recRes.releaseGroupId ? { mbReleaseGroupId: recRes.releaseGroupId } : {}),
-                ...(durationSec ? { durationSec } : {}),
-                refreshedAt: now,
-                // Idempotency stamps: mark canonical MusicBrainz sync and CAA cover resolution
-                mbSyncedAt: now,
-                coverResolvedAt: now,
+            const updatedDetails = {
+                durationSec: durationSec ?? (typeof details.durationSec === "number" ? details.durationSec : undefined),
             }
+            const validated = validateDetails(updatedDetails, { subtype: "track", mediaTypeName: "music", hasProvider: true })
 
             await prisma.media.update({
                 where: { id: media.id },
@@ -781,27 +740,31 @@ export class MediaRefreshService {
                     description: media.description,
                     imageUrl: recRes.imageUrl || media.imageUrl,
                     parentId,
-                    metadata: updatedMetadata,
+                    provider: "musicbrainz",
+                    providerId: recRes.recordingId,
+                    subtype: "track",
+                    details: (validated ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+                    syncedAt: now,
+                    syncCheckedAt: now,
                 },
             })
+            if (media.providerId) {
+                await attachExternalIdsToMedia(media.id, [{ provider: "lastfm", externalId: media.providerId }], prisma)
+            }
             if (recRes.artist) {
                 await setMediaCreators(media.id, [{ name: recRes.artist, role: "artist" }], "music", recRes.artist, prisma)
             }
             await attachExternalIdsToMedia(media.id, [{ provider: "musicbrainz", externalId: recRes.recordingId }], prisma)
         } else {
             // Album (M1)
-            let mbReleaseGroupId = meta.mbReleaseGroupId as string | undefined
-            if (!mbReleaseGroupId) {
-                const releaseMbid = (typeof meta.mbid === "string" ? meta.mbid : null)
-                    || (media.sourceId && !media.sourceId.startsWith("http") && media.sourceId.includes("-") ? media.sourceId : null)
-                if (releaseMbid) {
-                    const rgRes = await musicBrainzClient.resolveReleaseGroupForRelease(releaseMbid)
-                    if (rgRes.status === "failed") {
-                        throw new AppError("Provider is unavailable", 503)
-                    }
-                    if (rgRes.status === "found") {
-                        mbReleaseGroupId = rgRes.releaseGroupId
-                    }
+            let mbReleaseGroupId = media.externalIds?.find(e => e.provider === "musicbrainz")?.externalId
+            if (!mbReleaseGroupId && media.providerId && !media.providerId.startsWith("http") && media.providerId.includes("-")) {
+                const rgRes = await musicBrainzClient.resolveReleaseGroupForRelease(media.providerId)
+                if (rgRes.status === "failed") {
+                    throw new AppError("Provider is unavailable", 503)
+                }
+                if (rgRes.status === "found") {
+                    mbReleaseGroupId = rgRes.releaseGroupId
                 }
             }
 
@@ -821,15 +784,16 @@ export class MediaRefreshService {
 
             const artistCredit = rg["artist-credit"]?.map(a => a.name).join("") || media.creator
             let year = media.year
+            let releaseDate: Date | null = media.releaseDate
             const firstReleaseDate = rg["first-release-date"]
             if (firstReleaseDate) {
                 const y = parseInt(firstReleaseDate.slice(0, 4), 10)
                 if (!Number.isNaN(y)) year = y
+                releaseDate = new Date(firstReleaseDate)
             }
             const coverUrl = musicBrainzClient.getCoverArtUrl(mbReleaseGroupId) || media.imageUrl
             let mbGenres = extractReleaseGroupGenres(rg.genres)
 
-            // Fall back to Last.fm top tags if no MusicBrainz genres
             if (mbGenres.length === 0) {
                 try {
                     const tags = await musicSearchService.fetchTopTags(userId, "album", artistCredit ?? "", rg.title || media.title)
@@ -841,18 +805,11 @@ export class MediaRefreshService {
                 }
             }
 
-            const updatedMetadata = {
-                ...cleanMeta,
-                kind: "album",
-                mbReleaseGroupId,
-                primaryType: rg["primary-type"] ?? null,
-                secondaryTypes: rg["secondary-types"] ?? [],
-                firstReleaseDate: firstReleaseDate ?? null,
-                refreshedAt: now,
-                // Idempotency stamps: mark canonical MusicBrainz sync and CAA cover resolution
-                mbSyncedAt: now,
-                coverResolvedAt: now,
+            const updatedDetails = {
+                format: rg["primary-type"] ?? undefined,
+                formatTags: rg["secondary-types"] ?? undefined,
             }
+            const validated = validateDetails(updatedDetails, { subtype: "album", mediaTypeName: "music", hasProvider: true })
 
             await prisma.media.update({
                 where: { id: media.id },
@@ -862,10 +819,19 @@ export class MediaRefreshService {
                     creator: artistCredit || media.creator,
                     description: media.description,
                     year: year ?? media.year,
+                    releaseDate,
                     imageUrl: coverUrl,
-                    metadata: updatedMetadata,
+                    provider: "musicbrainz",
+                    providerId: mbReleaseGroupId,
+                    subtype: "album",
+                    details: (validated ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+                    syncedAt: now,
+                    syncCheckedAt: now,
                 },
             })
+            if (media.providerId) {
+                await attachExternalIdsToMedia(media.id, [{ provider: "lastfm", externalId: media.providerId }], prisma)
+            }
             if (artistCredit) {
                 await setMediaCreators(media.id, [{ name: artistCredit, role: "artist" }], "music", artistCredit, prisma)
             }

@@ -126,6 +126,7 @@ export class MusicBrainzService {
 
                 results.push({
                     mediaType: "music",
+                    subtype: "track",
                     title: t.title || t.recording?.title || "Unknown track",
                     creator: trackArtist,
                     creators: trackArtist ? [{ name: trackArtist, role: "artist" }] : undefined,
@@ -134,14 +135,10 @@ export class MusicBrainzService {
                     source: "musicbrainz",
                     sourceId,
                     imageUrl: null,
-                    metadata: {
-                        kind: "track",
-                        album: release.title,
-                        albumSourceId: release.id,
-                        trackNumber,
-                        durationSec,
-                        url: trackUrl,
+                    details: {
+                        ...(durationSec != null ? { durationSec } : {}),
                     },
+                    ...(trackMbid ? { externalIds: [{ provider: "musicbrainz", id: trackMbid }] } : {}),
                 })
             }
         }

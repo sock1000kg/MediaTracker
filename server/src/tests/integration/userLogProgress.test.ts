@@ -46,13 +46,12 @@ describe('P7: Per-user progress belongs on UserLogs, not shared Media', () => {
         const media = await prisma.media.create({
             data: {
                 title: 'Frieren: Beyond Journey\'s End',
-                source: 'anilist',
-                sourceId: 'prog-test-frieren',
+                provider: 'anilist',
+                providerId: 'prog-test-frieren',
                 mediaTypeId: animeType!.id,
                 userId: systemUser!.id,
-                metadata: {
-                    kind: 'anime',
-                    episodes: 28,
+                details: {
+                    episodeCount: 28,
                 },
             },
         })
@@ -98,90 +97,53 @@ describe('P7: Per-user progress belongs on UserLogs, not shared Media', () => {
         const logB = logsB.body.find((l: { mediaId: string }) => l.mediaId === mediaId)
         expect(logB.progress).toEqual({ watchedEpisodes: 28 })
 
-        // Verify shared Media.metadata was not polluted
+        // Verify shared Media.details was not polluted
         const mediaInDb = await prisma.media.findUnique({ where: { id: mediaId } })
-        const meta = mediaInDb?.metadata as Record<string, unknown>
-        expect(meta.watchedEpisodes).toBeUndefined()
+        const details = mediaInDb?.details as Record<string, unknown>
+        expect(details?.watchedEpisodes).toBeUndefined()
     })
 
-    it('data migration copies progress keys from media metadata to logs and removes them from media', async () => {
+    it('stores typed progress columns on UserLogs and formats as progress object in API', async () => {
         const systemUser = await prisma.user.findFirst({ where: { username: 'system' } })
         const mangaType = await prisma.mediaType.findFirst({ where: { name: 'manga' } })
 
-        // Create media with progress keys in metadata (legacy state)
-        const legacyMedia = await prisma.media.create({
+        const mangaMedia = await prisma.media.create({
             data: {
                 title: 'Legacy Manga',
-                source: 'mal',
-                sourceId: 'legacy-manga-1',
+                provider: 'mal',
+                providerId: 'legacy-manga-1',
                 mediaTypeId: mangaType!.id,
                 userId: systemUser!.id,
-                metadata: {
-                    kind: 'manga',
-                    chapters: 100,
-                    readChapters: 45,
-                    readVolumes: 5,
+                details: {
+                    chapterCount: 100,
                 },
             },
         })
 
-        // Create log without progress
-        const legacyLog = await prisma.userLogs.create({
-            data: {
-                userId: userIdA,
-                mediaId: legacyMedia.id,
+        const res = await request(app)
+            .post('/logs')
+            .set('Authorization', `Bearer ${tokenA}`)
+            .send({
+                mediaId: mangaMedia.id,
                 status: 'in progress',
-                logged_at: new Date(),
-            },
-        })
+                progress: { readChapters: 45, readVolumes: 5 },
+            })
+        expect(res.statusCode).toBe(201)
 
-        // Run data migration SQL
-        await prisma.$executeRawUnsafe(`
-            DO $$
-            DECLARE
-                r RECORD;
-                prog JSONB;
-            BEGIN
-                FOR r IN
-                    SELECT l.id AS log_id, m.id AS media_id, m.metadata
-                    FROM "UserLogs" l
-                    JOIN "Media" m ON l."mediaId" = m.id
-                    WHERE m.id = '${legacyMedia.id}'::uuid
-                      AND (m.metadata ? 'watchedEpisodes' OR m.metadata ? 'readChapters' OR m.metadata ? 'readVolumes')
-                LOOP
-                    prog := jsonb_strip_nulls(jsonb_build_object(
-                        'watchedEpisodes', r.metadata->'watchedEpisodes',
-                        'readChapters', r.metadata->'readChapters',
-                        'readVolumes', r.metadata->'readVolumes'
-                    ));
+        const logInDb = await prisma.userLogs.findUnique({ where: { id: res.body.id } })
+        expect(logInDb?.progressChapters).toBe(45)
+        expect(logInDb?.progressVolumes).toBe(5)
+        expect(logInDb?.progressEpisodes).toBeNull()
 
-                    IF prog <> '{}'::jsonb THEN
-                        UPDATE "UserLogs"
-                        SET progress = COALESCE(progress, '{}'::jsonb) || prog
-                        WHERE id = r.log_id;
-                    END IF;
-                END LOOP;
-
-                UPDATE "Media"
-                SET metadata = (metadata - 'watchedEpisodes' - 'readChapters' - 'readVolumes')
-                WHERE id = '${legacyMedia.id}'::uuid;
-            END $$;
-        `)
-
-        const updatedLog = await prisma.userLogs.findUnique({ where: { id: legacyLog.id } })
-        expect(updatedLog?.progress).toEqual({
+        const apiLogs = await request(app).get('/logs').set('Authorization', `Bearer ${tokenA}`)
+        const apiLog = apiLogs.body.find((l: { id: string }) => l.id === res.body.id)
+        expect(apiLog.progress).toEqual({
             readChapters: 45,
             readVolumes: 5,
         })
 
-        const updatedMedia = await prisma.media.findUnique({ where: { id: legacyMedia.id } })
-        const meta = updatedMedia?.metadata as Record<string, unknown>
-        expect(meta.readChapters).toBeUndefined()
-        expect(meta.readVolumes).toBeUndefined()
-        expect(meta.chapters).toBe(100)
-
         // Cleanup
-        await prisma.userLogs.deleteMany({ where: { id: legacyLog.id } })
-        await prisma.media.deleteMany({ where: { id: legacyMedia.id } })
+        await prisma.userLogs.deleteMany({ where: { id: res.body.id } })
+        await prisma.media.deleteMany({ where: { id: mangaMedia.id } })
     })
 })

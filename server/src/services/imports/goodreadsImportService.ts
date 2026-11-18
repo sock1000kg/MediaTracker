@@ -6,7 +6,7 @@ import { GoodReadsRow, goodreadsRowSchema } from "@/schemas/imports/goodReadsSch
 import { AppError } from "@/api/domain/error.js"
 import { validateSchema, parseImportDate, toDayPrecision } from "@/utilities.js"
 import { parse } from "csv-parse/sync"
-import { BookMetadata } from "@/api/domain/media.js"
+import { BookDetails } from "@/schemas/detailsSchemas.js"
 import { ZodError } from "zod"
 import { ImportResult } from "@/api/domain/imports.js"
 import { executeBatchImport, BatchRowItem } from "./batchWrite.js"
@@ -136,11 +136,9 @@ export class GoodreadsImportService {
                         sourceId,
                         description: null,
                         imageUrl: null,
-                        metadata: {
-                            url: constructedSourceUrl,
-                            ...(rawIsbn ? { isbn: rawIsbn } : {}),
-                            ...(rawIsbn13 ? { isbn13: rawIsbn13 } : {}),
+                        details: {
                             ...(csvPageCount ? { pageCount: csvPageCount } : {}),
+                            ...(record['Publisher'] ? { publisher: record['Publisher'] } : {}),
                         },
                     },
                     logData: {
@@ -193,14 +191,14 @@ export class GoodreadsImportService {
                 const logUpdates: { rating?: number; finished_at?: Date } = {}
                 let mediaPatch: Record<string, Prisma.InputJsonValue | null> | undefined
 
-                const existingMeta = (media.metadata && typeof media.metadata === "object" && !Array.isArray(media.metadata))
-                    ? (media.metadata as Record<string, unknown>)
+                const existingDetails = (media.details && typeof media.details === "object" && !Array.isArray(media.details))
+                    ? (media.details as Record<string, unknown>)
                     : {}
-                const hasPageCount = typeof existingMeta.pageCount === "number" && existingMeta.pageCount > 0
-                const itemMeta = (item.mediaData.metadata && typeof item.mediaData.metadata === "object" && !Array.isArray(item.mediaData.metadata))
-                    ? (item.mediaData.metadata as Record<string, unknown>)
+                const hasPageCount = typeof existingDetails.pageCount === "number" && existingDetails.pageCount > 0
+                const itemDetails = (item.mediaData.details && typeof item.mediaData.details === "object" && !Array.isArray(item.mediaData.details))
+                    ? (item.mediaData.details as Record<string, unknown>)
                     : {}
-                const csvPageCount = typeof itemMeta.pageCount === "number" ? itemMeta.pageCount : null
+                const csvPageCount = typeof itemDetails.pageCount === "number" ? itemDetails.pageCount : null
 
                 if (!hasPageCount && csvPageCount) {
                     mediaPatch = { pageCount: csvPageCount }
