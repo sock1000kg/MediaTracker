@@ -575,14 +575,12 @@ export class MediaRefreshService {
         }
 
         if (!doc) {
-            const u = new URL("https://openlibrary.org/search.json")
-            u.searchParams.set("title", media.title)
-            if (media.creator) {
-                u.searchParams.set("author", media.creator)
+            try {
+                doc = await openLibraryService.findByTitleAuthor(media.title, media.creator)
+            } catch (err) {
+                if (err instanceof AppError) throw err
+                throw new AppError("Provider is unavailable", 503)
             }
-            u.searchParams.set("fields", "key,isbn,title,author_name,cover_i,number_of_pages_median,publisher,subject,first_publish_year")
-            u.searchParams.set("limit", "1")
-            doc = await fetchDoc(u)
         }
 
         if (!doc) {
@@ -596,7 +594,7 @@ export class MediaRefreshService {
 
         const pageCount = doc.number_of_pages_median ?? (typeof details.pageCount === "number" ? details.pageCount : undefined)
         const publisher = doc.publisher?.[0] ?? (typeof details.publisher === "string" ? details.publisher : undefined)
-        const year = doc.first_publish_year ?? media.year
+        const year = doc.first_publish_year ?? media.year // we store what Open Library says
 
         const updatedDetails = {
             ...(pageCount ? { pageCount } : {}),

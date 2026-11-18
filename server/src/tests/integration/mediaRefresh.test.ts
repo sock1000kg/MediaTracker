@@ -1310,7 +1310,9 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
                     docs: [
                         {
                             key: "/works/OLREF1W",
-                            title: "New Refreshed Title",
+                            // filed under its original title; the matched edition carries ours
+                            title: "Der Alte Titel",
+                            editions: { docs: [{ title: "Old Title" }] },
                             author_name: ["Refreshed Author"],
                             isbn: ["9781234567890"],
                             cover_i: 99999,
@@ -1336,7 +1338,7 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
             include: { externalIds: true, genres: { include: { genre: true } }, creators: { include: { creator: true } } },
         })
         expect(updated.imageUrl).toBe("https://covers.openlibrary.org/b/id/99999-M.jpg")
-        expect(updated.year).toBe(1985)
+        expect(updated.year).toBe(1985) // Open Library's first_publish_year is stored
         const details = updated.details as Record<string, unknown>
         expect(details.pageCount).toBe(350)
         expect(details.publisher).toBe("Refreshed Publisher")

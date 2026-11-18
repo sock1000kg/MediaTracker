@@ -116,7 +116,7 @@ describe("Open Library background sync job (G2, G3, T1)", () => {
             include: { externalIds: true, genres: { include: { genre: true } } },
         })
         expect(updated1.imageUrl).toBe("https://covers.openlibrary.org/b/id/10101-M.jpg")
-        expect(updated1.year).toBe(2015) // filled in because it was null
+        expect(updated1.year).toBe(2015) // Open Library's first_publish_year
         const details1 = updated1.details as Record<string, unknown>
         expect(details1.pageCount).toBe(220) // OL median pages won over CSV 150
         expect(details1.publisher).toBe("Publisher One")
@@ -178,8 +178,8 @@ describe("Open Library background sync job (G2, G3, T1)", () => {
 
         expect(requestsMade).toHaveLength(1)
         const req = requestsMade[0]
-        // Open Library syntax: title=...&author=...
-        expect(req).toContain("title=Unknown+Odyssey")
+        // Open Library syntax: q=<title>&author=<first author> (q also matches edition titles)
+        expect(req).toContain("q=Unknown+Odyssey")
         expect(req).toContain("author=Homer+Simpson")
         // NEVER intitle: or inauthor:
         expect(req).not.toContain("intitle:")

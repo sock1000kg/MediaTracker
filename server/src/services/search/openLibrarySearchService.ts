@@ -15,6 +15,21 @@ export function isJunkSubject(subject: string): boolean {
     return isJunkGenre(subject, "book")
 }
 
+// Goodreads appends the series: "Empire of the Sun (Empire of the Sun, #1)"
+const withoutSeries = (title: string) => title.replace(/\s*\([^()]*#[\d.]+\)\s*$/, "")
+
+// "The Myth of Sisyphus, and Other Essays" and "The myth of Sisyphus and other essays" compare equal;
+// a subtitle after ":" is ignored, and so is a leading article.
+export function mainTitle(title: string): string {
+    return withoutSeries(title)
+        .split(":")[0]
+        .normalize("NFKD").replace(/[̀-ͯ]/g, "")
+        .toLowerCase()
+        .replace(/[^\p{L}\p{N}]+/gu, " ")
+        .trim()
+        .replace(/^(the|a|an) /, "")
+}
+
 export class OpenLibraryService implements ISearchService {
     // Open Library uses 'limit' for page size
     limit = 20
@@ -140,20 +155,37 @@ export class OpenLibraryService implements ISearchService {
         return result
     }
 
+    // Classics are filed under their original title ("Der Proceß", "La Peste"), so a title= search
+    // for "The Trial" misses the real work. q= also matches edition titles, and OL returns the
+    // best-matching edition, which we use to check the hit really is this book.
+    // Only the first author is sent: Goodreads lists translators too, and OL matches no one then.
     async findByTitleAuthor(title: string, author?: string | null): Promise<OpenLibraryBook | null> {
+        const firstAuthor = author?.split(",")[0]?.trim() || null
+        const found = await this.searchTitleAuthor(title, firstAuthor)
+        if (found || !firstAuthor) return found
+        // OL spells initials both ways ("J.R.R. Tolkien", "J. G. Ballard") and its author filter
+        // doesn't always bridge them, so retry once with spaced initials when there was a miss.
+        const spaced = firstAuthor.replace(/\.(?=\p{L})/gu, ". ")
+        return spaced === firstAuthor ? null : this.searchTitleAuthor(title, spaced)
+    }
+
+    private async searchTitleAuthor(title: string, author: string | null): Promise<OpenLibraryBook | null> {
         const u = new URL("https://openlibrary.org/search.json")
-        u.searchParams.set("title", title)
+        u.searchParams.set("q", withoutSeries(title))
         if (author) u.searchParams.set("author", author)
-        u.searchParams.set("fields", "key,isbn,title,author_name,cover_i,number_of_pages_median,publisher,subject,first_publish_year")
-        u.searchParams.set("limit", "1")
+        u.searchParams.set("fields", "key,isbn,title,author_name,cover_i,number_of_pages_median,publisher,subject,first_publish_year,editions,editions.title")
+        u.searchParams.set("limit", "5")
 
         const res = await providerFetch("openlibrary", u)
         const raw = await res.json()
         const checked = openLibraryResponseSchema.safeParse(raw)
-        if (checked.success && checked.data.docs.length > 0) {
-            return checked.data.docs[0]
-        }
-        return null
+        if (!checked.success) return null
+
+        const wanted = mainTitle(title)
+        return checked.data.docs.find(doc => {
+            const editionTitles = (doc.editions as { docs?: { title?: string }[] } | undefined)?.docs?.map(e => e.title) ?? []
+            return [doc.title, ...editionTitles].some(t => t != null && mainTitle(t) === wanted)
+        }) ?? null
     }
 
     async getWork(key: string): Promise<unknown | null> {

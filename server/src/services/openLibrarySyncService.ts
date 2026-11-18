@@ -176,7 +176,7 @@ export async function syncOpenLibraryBooks(
 
                 const pageCount = matchedDoc.number_of_pages_median ?? (typeof existingDetails.pageCount === "number" ? existingDetails.pageCount : undefined)
                 const publisher = matchedDoc.publisher?.[0] ?? (typeof existingDetails.publisher === "string" ? existingDetails.publisher : undefined)
-                const year = item.year ?? matchedDoc.first_publish_year ?? null
+                const year = matchedDoc.first_publish_year ?? item.year ?? null // we store what Open Library says
 
                 const updatedDetails = {
                     ...(pageCount != null ? { pageCount } : {}),
