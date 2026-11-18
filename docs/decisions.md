@@ -54,7 +54,7 @@ This document records deliberate design decisions, constraints, and provider qui
 ## 7. MusicBrainz Shared 1 req/s Limiter & "Failure Never Erases"
 
 - **Code:** `server/src/services/search/musicBrainzClient.ts`.
-- **Context & Why:** MusicBrainz enforces strict rate limits (no more than 1 request per second per IP, with a mandatory meaningful `User-Agent`). All MusicBrainz client requests share a single in-process `p-throttle` instance.
+- **Context & Why:** MusicBrainz enforces strict rate limits (no more than 1 request per second per IP, with a mandatory meaningful `User-Agent`). All MusicBrainz client requests share a single in-process `RateLimiter` instance.
   Furthermore, the rule **"failure never erases"** is enforced: if an external MusicBrainz query times out, fails, or cannot locate updated cover art, existing media covers and metadata are preserved untouched. The entity's `coverResolvedAt` or `mbSyncedAt` timestamp is updated to record that resolution was attempted, avoiding infinite backfill retry loops while guaranteeing data is never wiped by transient network failures.
 
 ---
@@ -121,3 +121,11 @@ This document records deliberate design decisions, constraints, and provider qui
 
 - **Reference:** [docs/providers.md](file:///home/dat/projects/JavaScript/media-tracker/docs/providers.md), `server/src/services/search/`.
 - **Context & Why:** Terms of Service across third-party media data providers (TMDB, RAWG, Last.fm, MusicBrainz, BoardGameGeek, Open Library) strictly prohibit using their data to train, fine-tune, or feed generative AI models without prior contractual agreements. The application strictly forbids sending provider metadata or cached records to LLMs or generative services.
+
+---
+
+## 16. Goodreads Books Store Open Library Data, Synced in the Background
+
+- **Code:** `server/src/services/imports/goodreadsImportService.ts`, `server/src/services/openLibrarySyncService.ts`, `server/src/queue/handlers/openLibrarySync.ts`.
+- **Context & Why:** Goodreads CSV exports do not contain book genres or rich metadata. Previously, inline Open Library enrichment was attempted per-row during CSV import, which slowed down imports and performed unbatched single-item searches. Furthermore, Open Library's API terms request that clients avoid hundreds of individual requests and instead batch queries through `search.json` (e.g. `q=isbn:(A OR B OR ...)`). Following the music pattern, Goodreads imports store only Goodreads identity (title, author, year, Goodreads external ID and URL) instantly without network calls. A background rate-limited job (`openlibrary.sync`) then fills in canonical Open Library data (cover, genres, publisher, page count, work key) in efficient ISBN batches and title/author fallbacks. Stored Goodreads source and link are preserved for de-duplication and linking.
+

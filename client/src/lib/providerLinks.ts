@@ -10,6 +10,7 @@ type LinkMedia = Pick<Media, "metadata" | "title" | "creator" | "sourceId"> & {
   source?: string | null
   kind?: string | null
   mediaType?: { name?: string | null } | null
+  externalIds?: Array<{ provider: string; externalId: string }> | null
 }
 
 // Known hosts get the provider's own name; anything else shows its hostname.
@@ -63,12 +64,30 @@ export function providerLinks(media: LinkMedia): ProviderLink[] {
     return links
   }
 
+  const links: ProviderLink[] = []
   const stored = linkFor(meta.url)
-  if (stored) return [stored]
+  if (stored) links.push(stored)
+
+  const olWorkKey = (typeof meta.openLibraryWorkKey === "string" ? meta.openLibraryWorkKey : null)
+    ?? (typeof meta.olWorkKey === "string" ? meta.olWorkKey : null)
+    ?? (media.externalIds?.find((e) => e.provider === "openlibrary")?.externalId)
+    ?? (media.source === "open_library" || media.source === "openlibrary" ? media.sourceId : null)
+
+  if (olWorkKey) {
+    const keyPath = olWorkKey.startsWith("/works/")
+      ? olWorkKey
+      : olWorkKey.startsWith("/")
+        ? `/works${olWorkKey}`
+        : `/works/${olWorkKey}`
+    const href = `https://openlibrary.org${keyPath}`
+    if (!links.some((l) => l.href === href || l.label === "View on Open Library")) {
+      links.push({ label: "View on Open Library", href })
+    }
+  }
 
   if (media.source === "anilist" && media.sourceId) {
     const m = /^(anime|manga)-(\d+)$/.exec(media.sourceId)
-    if (m) return [{ label: "View on AniList", href: `https://anilist.co/${m[1]}/${m[2]}` }]
+    if (m) links.push({ label: "View on AniList", href: `https://anilist.co/${m[1]}/${m[2]}` })
   }
-  return []
+  return links
 }

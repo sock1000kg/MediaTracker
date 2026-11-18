@@ -9,6 +9,7 @@ import { jest } from "@jest/globals"
 import { getQueue, registerAllHandlers } from "@/queue/index.js"
 import { MemoryQueue } from "@/queue/memoryQueue.js"
 import { openLibraryService } from "@/services/search/openLibrarySearchService.js"
+import { openLibrarySyncService } from "@/services/openLibrarySyncService.js"
 
 const API = "/imports/goodreads"
 const queue = () => getQueue() as MemoryQueue
@@ -99,6 +100,47 @@ The Hobbit,J.R.R. Tolkien,4,1937,currently-reading,5907`
         const gatsbyLog = logs.find(l => l.rating === 100) // 5 stars * 20
         expect(gatsbyLog).toBeDefined()
         expect(gatsbyLog?.status).toBe("completed") // mapped from 'read'
+    })
+
+    test("T1 / G1: A Goodreads import stores identity plus the Goodreads URL and makes no Open Library calls", async () => {
+        const openLibSpy = jest.spyOn(openLibraryService, "searchBooksOpenLib")
+        const syncSpy = jest.spyOn(openLibrarySyncService, "syncOpenLibraryBooks").mockResolvedValueOnce({
+            processed: 0,
+            updated: 0,
+        })
+        const csvContent = 
+`Title,Author,My Rating,Year Published,Exclusive Shelf,Book Id,ISBN,ISBN13,Number of Pages
+The Never Seeded Mystery,Arthur Conan Mystery,5,1984,read,99999991,"=""0999999991""","=""9780999999991""",320`
+
+        const { job, status } = await importAndWait(token, csvContent, "never-seeded.csv")
+        expect(status).toBe(200)
+        expect(job.status).toBe("completed")
+        expect(openLibSpy).not.toHaveBeenCalled()
+        expect(syncSpy).toHaveBeenCalled()
+
+        const media = await prisma.media.findFirstOrThrow({
+            where: { sourceId: "99999991" },
+            include: { externalIds: true, genres: true },
+        })
+        expect(media.title).toBe("The Never Seeded Mystery")
+        expect(media.creator).toBe("Arthur Conan Mystery")
+        expect(media.year).toBe(1984)
+        expect(media.source).toBe("goodreads")
+        expect(media.imageUrl).toBeNull()
+        expect(media.genres).toHaveLength(0)
+
+        const meta = media.metadata as Record<string, unknown>
+        expect(meta.url).toBe("https://www.goodreads.com/book/show/99999991")
+        expect(meta.isbn).toBe("0999999991")
+        expect(meta.isbn13).toBe("9780999999991")
+        expect(meta.pageCount).toBe(320)
+        expect(meta.olSyncedAt).toBeUndefined()
+
+        expect(media.externalIds.some(e => e.provider === "goodreads" && e.externalId === "99999991")).toBe(true)
+        expect(media.externalIds.some(e => e.provider === "isbn13" && e.externalId === "9780999999991")).toBe(true)
+
+        openLibSpy.mockRestore()
+        syncSpy.mockRestore()
     })
 
     test("POST /import-goodreads skips duplicates if run twice", async () => {

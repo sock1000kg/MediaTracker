@@ -3,6 +3,7 @@ import {
 } from "@/schemas/search/gameSchemas.js"
 import { searchResultsSchema, SearchResult } from "@/schemas/search/searchSchemas.js"
 import { createUserAgentHeader, decryptKey, sanitizeDescription, validateSchema } from "@/utilities.js"
+import { rawgLimiter, parseRetryAfter } from "./rateLimiter.js"
 import { findUserById } from "@/repositories/authRepository.js"
 import { AppError } from "@/api/domain/error.js"
 import prisma from "@/prismaClient.js"
@@ -127,12 +128,6 @@ export function parseRawgDetails(raw: unknown): GameDetails {
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
-function retryDelayMs(res: Response): number {
-    const secs = Number(res.headers.get("Retry-After"))
-    const ms = Number.isFinite(secs) && secs > 0 ? secs * 1000 : DEFAULT_RETRY_MS
-    return Math.min(ms, MAX_RETRY_MS)
-}
-
 export class RawgSearchService {
     async getUserApiKey(userId: string): Promise<string> {
         const user = await findUserById(userId)
@@ -149,15 +144,17 @@ export class RawgSearchService {
     // One request with a single retry after a 429. 401/403 map to 400: the client treats any 401 as an expired session.
     // Every thrown error is a fixed message: nothing from fetch (which may include the URL and key) is propagated.
     private async fetchJson(url: URL): Promise<unknown> {
-        const send = () => fetch(url.toString(), {
+        const send = () => rawgLimiter.schedule(() => fetch(url.toString(), {
             headers: createUserAgentHeader().headers as Record<string, string>,
             signal: AbortSignal.timeout(TIMEOUT_MS), // created per attempt, at send time
-        })
+        }))
 
         try {
             let res = await send()
             if (res.status === 429) {
-                await sleep(retryDelayMs(res))
+                const delay = parseRetryAfter(res, DEFAULT_RETRY_MS, MAX_RETRY_MS)
+                rawgLimiter.pause(delay)
+                await sleep(delay)
                 res = await send()
                 if (res.status === 429) {
                     throw new AppError("Game search is busy right now, try again in a moment", 503)

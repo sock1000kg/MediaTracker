@@ -6,6 +6,7 @@ import { goodreadsImportHandler } from "@/queue/handlers/goodreadsImport.js"
 import { malImportHandler } from "@/queue/handlers/malImport.js"
 import { letterboxdImportHandler } from "@/queue/handlers/letterboxdImport.js"
 import { musicCoverBackfillHandler } from "@/queue/handlers/musicCoverBackfill.js"
+import { openLibrarySyncHandler } from "@/queue/handlers/openLibrarySync.js"
 import type { JobQueue } from "@/queue/types.js"
 
 let instance: JobQueue | null = null
@@ -48,4 +49,5 @@ export function registerAllHandlers(queue: JobQueue = getQueue()): void {
     queue.registerHandler("import.mal", malImportHandler)
     queue.registerHandler("import.letterboxd", letterboxdImportHandler)
     queue.registerHandler("music.coverBackfill", musicCoverBackfillHandler)
+    queue.registerHandler("openlibrary.sync", openLibrarySyncHandler)
 }

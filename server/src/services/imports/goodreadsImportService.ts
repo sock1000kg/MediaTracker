@@ -9,18 +9,10 @@ import { parse } from "csv-parse/sync"
 import { BookMetadata } from "@/api/domain/media.js"
 import { ZodError } from "zod"
 import { ImportResult } from "@/api/domain/imports.js"
-import { openLibraryService } from "../search/openLibrarySearchService.js"
 import { executeBatchImport, BatchRowItem } from "./batchWrite.js"
 import { findMediaByExternalIds, ExternalIdKey } from "@/repositories/mediaRepository.js"
 
 import { LIMITS } from "@/config/limits.js"
-
-// Helpers for preparing rich or unrich data
-type BookEnrichmentData = {
-    description: string | null
-    imageUrl: string | null
-    metadata: BookMetadata
-}
 
 export const MAX_IMPORT_FAILURES = LIMITS.imports.maxFailures
 
@@ -52,49 +44,6 @@ export function importedLogDate(record: Pick<GoodReadsRow, "Date Read" | "Date A
 }
 
 export class GoodreadsImportService {
-    /**
-     * Enriches a record with Google Books data.
-     * Returns a partial object to merge with mediaData.
-     */
-    private async fetchEnrichmentData(
-        userId: string,
-        record: GoodReadsRow
-    ): Promise<BookEnrichmentData | null> {
-        try {
-            const isbn = record['ISBN13'] || record['ISBN']
-            const cleanIsbn = isbn?.replace(/["'=]/g, "") // Clean Goodreads CSV formatting
-
-            let query = ""
-            if (cleanIsbn) {
-                query = `isbn:${cleanIsbn}`
-            } else {
-                query = `intitle:${record['Title']} inauthor:${record['Author']}`
-            }
-
-            // catch errors silently so one failed search doesn't crash the import
-            const searchResponse = await openLibraryService.searchBooksOpenLib(userId, query, 1).catch(() => null)
-            const book = searchResponse?.results?.[0]
-
-            if (!book) return null
-
-            const meta = book.metadata as BookMetadata
-
-            // Map Google result to our internal structure
-            return {
-                description: book.description || null,
-                imageUrl: book.imageUrl || null,
-                metadata: {
-                    pageCount: meta.pageCount || null, // ignore 0
-                    categories: meta.categories ?? null,
-                    publisher: meta.publisher ?? null,
-                },
-            }
-        } catch (error) {
-            console.warn(`Enrichment failed for ${record['Title']}`, error)
-            return null
-        }
-    }
-
     async importFromGoodReads(
         userId: string,
         fileBuffer: Buffer,
@@ -127,7 +76,6 @@ export class GoodreadsImportService {
         const existingMediaMap = await findMediaByExternalIds(lookupKeys, prisma)
 
         const validItems: BatchRowItem[] = []
-        const shouldEnrich = opts.enrich !== false
 
         for (const [index, unvalidRecord] of rawRecords.entries()) {
             const rowNum = index + 2 // 1st entry is line 2
@@ -137,17 +85,6 @@ export class GoodreadsImportService {
                 const sourceId = record['Book Id'] ? String(record['Book Id']) : null
                 const rawIsbn13 = record['ISBN13'] ? String(record['ISBN13']).replace(/["'=]/g, "").trim() : null
                 const rawIsbn = record['ISBN'] ? String(record['ISBN']).replace(/["'=]/g, "").trim() : null
-
-                const matchedMedia = (sourceId && existingMediaMap.get(`goodreads:${sourceId}`)) ||
-                                     (rawIsbn13 && existingMediaMap.get(`isbn13:${rawIsbn13}`)) ||
-                                     (rawIsbn && existingMediaMap.get(`isbn:${rawIsbn}`)) || null
-
-                let enrichmentData: BookEnrichmentData | undefined
-                if (shouldEnrich && !matchedMedia) {
-                    await new Promise(r => setTimeout(r, 100))
-                    const data = await this.fetchEnrichmentData(userId, record)
-                    if (data) enrichmentData = data
-                }
 
                 const mainAuthor = record['Author']
                 const additionalAuthors = record['Additional Authors']
@@ -168,7 +105,6 @@ export class GoodreadsImportService {
 
                 const rawPageCount = record['Number of Pages']
                 const csvPageCount = typeof rawPageCount === "number" && rawPageCount > 0 ? rawPageCount : null
-                const pageCount = enrichmentData?.metadata?.pageCount ?? csvPageCount
 
                 const externalIds: { provider: string; id: string }[] = []
                 if (sourceId) externalIds.push({ provider: "goodreads", id: sourceId })
@@ -185,13 +121,12 @@ export class GoodreadsImportService {
                         if (trimmed) structuredCreators.push({ name: trimmed, role: "author" })
                     }
                 }
-                const bookGenres = (enrichmentData?.metadata as { categories?: string[] } | undefined)?.categories ?? []
 
                 validItems.push({
                     rowNum,
                     title: record['Title'],
                     externalIds,
-                    genres: bookGenres,
+                    genres: [],
                     creators: structuredCreators,
                     mediaData: {
                         title: record['Title'],
@@ -199,12 +134,13 @@ export class GoodreadsImportService {
                         year,
                         source: "goodreads",
                         sourceId,
-                        description: enrichmentData?.description ?? null,
-                        imageUrl: enrichmentData?.imageUrl ?? null,
+                        description: null,
+                        imageUrl: null,
                         metadata: {
                             url: constructedSourceUrl,
-                            ...(enrichmentData?.metadata || {}),
-                            ...(pageCount ? { pageCount } : {}),
+                            ...(rawIsbn ? { isbn: rawIsbn } : {}),
+                            ...(rawIsbn13 ? { isbn13: rawIsbn13 } : {}),
+                            ...(csvPageCount ? { pageCount: csvPageCount } : {}),
                         },
                     },
                     logData: {

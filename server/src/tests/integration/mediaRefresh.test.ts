@@ -1284,4 +1284,157 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
         const after = await prisma.media.findUniqueOrThrow({ where: { id: media.id } })
         expect(after.title).toBe("Ghost Book")
     })
+
+    test("Goodreads refresh (G4): updates provider fields and leaves the log untouched", async () => {
+        const bookType = await prisma.mediaType.findFirstOrThrow({ where: { name: "book" } })
+        const media = await prisma.media.create({
+            data: {
+                title: "Old Title",
+                creator: "Old Author",
+                year: 1980,
+                source: "goodreads",
+                sourceId: "gr-ref-1",
+                imageUrl: "https://old-cover.com/old.jpg",
+                mediaTypeId: bookType.id,
+                userId: userAId,
+                metadata: {
+                    url: "https://www.goodreads.com/book/show/gr-ref-1",
+                    isbn13: "9781234567890",
+                    pageCount: 200,
+                },
+            },
+        })
+
+        const log = await prisma.userLogs.create({
+            data: {
+                userId: userAId,
+                mediaId: media.id,
+                status: "completed",
+                rating: 95,
+                notes: "User personal notes - must not be touched",
+            },
+        })
+
+        jest.spyOn(global, "fetch").mockImplementation(async (url: unknown) => {
+            const u = String(url)
+            if (u.includes("openlibrary.org/search.json")) {
+                return new Response(JSON.stringify({
+                    numFound: 1,
+                    docs: [
+                        {
+                            key: "/works/OLREF1W",
+                            title: "New Refreshed Title",
+                            author_name: ["Refreshed Author"],
+                            isbn: ["9781234567890"],
+                            cover_i: 99999,
+                            number_of_pages_median: 350,
+                            publisher: ["Refreshed Publisher"],
+                            subject: ["Sci-Fi", "Space"],
+                            first_publish_year: 1985,
+                        },
+                    ],
+                }), { status: 200, headers: { "Content-Type": "application/json" } })
+            }
+            return new Response("Not found", { status: 404 })
+        })
+
+        const res = await request(app)
+            .post(`/media/${media.id}/refresh`)
+            .set("Authorization", `Bearer ${tokenA}`)
+
+        expect(res.statusCode).toBe(200)
+
+        const updated = await prisma.media.findUniqueOrThrow({
+            where: { id: media.id },
+            include: { externalIds: true, genres: { include: { genre: true } }, creators: { include: { creator: true } } },
+        })
+        expect(updated.imageUrl).toBe("https://covers.openlibrary.org/b/id/99999-M.jpg")
+        expect(updated.year).toBe(1985)
+        const meta = updated.metadata as Record<string, unknown>
+        expect(meta.pageCount).toBe(350)
+        expect(meta.publisher).toBe("Refreshed Publisher")
+        expect(meta.openLibraryWorkKey).toBe("/works/OLREF1W")
+        expect(meta.url).toBe("https://www.goodreads.com/book/show/gr-ref-1") // kept Goodreads URL
+        expect(meta.refreshedAt).toBeDefined()
+        expect(updated.externalIds.some(e => e.provider === "openlibrary" && e.externalId === "/works/OLREF1W")).toBe(true)
+        expect(updated.genres.map(g => g.genre.name)).toEqual(["Sci-Fi", "Space"])
+
+        // Verify user log is completely untouched
+        const logAfter = await prisma.userLogs.findUniqueOrThrow({ where: { id: log.id } })
+        expect(logAfter.rating).toBe(95)
+        expect(logAfter.notes).toBe("User personal notes - must not be touched")
+        expect(logAfter.status).toBe("completed")
+    })
+
+    test("Goodreads refresh (G4): 404 when no match is found, 503 when Open Library is down", async () => {
+        const bookType = await prisma.mediaType.findFirstOrThrow({ where: { name: "book" } })
+        const media = await prisma.media.create({
+            data: {
+                title: "No Match Book",
+                creator: "Author Nobody",
+                source: "goodreads",
+                sourceId: "gr-ref-404",
+                mediaTypeId: bookType.id,
+                userId: userAId,
+                metadata: { url: "https://www.goodreads.com/book/show/gr-ref-404", isbn: "0000000000" },
+            },
+        })
+        await prisma.userLogs.create({ data: { userId: userAId, mediaId: media.id, status: "wishlist" } })
+
+        // 1. No match -> 404
+        jest.spyOn(global, "fetch").mockImplementation(async () => {
+            return new Response(JSON.stringify({ numFound: 0, docs: [] }), { status: 200, headers: { "Content-Type": "application/json" } })
+        })
+
+        const res404 = await request(app).post(`/media/${media.id}/refresh`).set("Authorization", `Bearer ${tokenA}`)
+        expect(res404.statusCode).toBe(404)
+        expect(res404.body.message).toBe("The provider no longer has this item")
+
+        // 2. Down -> 503
+        jest.spyOn(global, "fetch").mockImplementation(async () => {
+            return new Response("Service Unavailable", { status: 503 })
+        })
+
+        const res503 = await request(app).post(`/media/${media.id}/refresh`).set("Authorization", `Bearer ${tokenA}`)
+        expect(res503.statusCode).toBe(503)
+        expect(res503.body.message).toBe("Provider is unavailable")
+    })
+
+    test("Goodreads refresh (G4): keeps the stored cover when Open Library has none", async () => {
+        const bookType = await prisma.mediaType.findFirstOrThrow({ where: { name: "book" } })
+        const media = await prisma.media.create({
+            data: {
+                title: "Book With Stored Cover",
+                creator: "Cover Author",
+                source: "goodreads",
+                sourceId: "gr-ref-cover",
+                imageUrl: "https://stored-cover.com/kept.jpg",
+                mediaTypeId: bookType.id,
+                userId: userAId,
+                metadata: { url: "https://www.goodreads.com/book/show/gr-ref-cover", isbn13: "9781112223334" },
+            },
+        })
+        await prisma.userLogs.create({ data: { userId: userAId, mediaId: media.id, status: "wishlist" } })
+
+        jest.spyOn(global, "fetch").mockImplementation(async () => {
+            return new Response(JSON.stringify({
+                numFound: 1,
+                docs: [
+                    {
+                        key: "/works/OLNOCOVER1W",
+                        title: "Book With Stored Cover",
+                        author_name: ["Cover Author"],
+                        isbn: ["9781112223334"],
+                        cover_i: null, // Open Library has no cover
+                    },
+                ],
+            }), { status: 200, headers: { "Content-Type": "application/json" } })
+        })
+
+        const res = await request(app).post(`/media/${media.id}/refresh`).set("Authorization", `Bearer ${tokenA}`)
+        expect(res.statusCode).toBe(200)
+
+        const updated = await prisma.media.findUniqueOrThrow({ where: { id: media.id } })
+        expect(updated.imageUrl).toBe("https://stored-cover.com/kept.jpg")
+    })
 })

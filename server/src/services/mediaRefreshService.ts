@@ -1,9 +1,10 @@
 import prisma from "@/prismaClient.js"
 import { AppError } from "@/api/domain/error.js"
 import { MEDIA_INCLUDE, formatMedia } from "@/repositories/mediaFormat.js"
-import { setMediaGenres, setMediaCreators } from "@/services/genreService.js"
+import { setMediaGenres, setMediaCreators, isJunkGenre } from "@/services/genreService.js"
 import { attachExternalIdsToMedia } from "@/repositories/mediaRepository.js"
 import { createUserAgentHeader, sanitizeDescription } from "@/utilities.js"
+import { openLibraryLimiter, anilistLimiter, parseRetryAfter } from "@/services/search/rateLimiter.js"
 
 // TMDB
 import {
@@ -26,7 +27,7 @@ import { AniListMedia } from "@/schemas/search/animeSchemas.js"
 
 // Open Library
 import { openLibraryService } from "@/services/search/openLibrarySearchService.js"
-import { openLibraryResponseSchema } from "@/schemas/search/bookSchemas.js"
+import { openLibraryResponseSchema, OpenLibraryBook } from "@/schemas/search/bookSchemas.js"
 
 // BGG
 import {
@@ -123,6 +124,8 @@ export class MediaRefreshService {
             await this.refreshAniList(userId, media, meta)
         } else if (source === "open_library" || source === "openlibrary" || source === "google_books") {
             await this.refreshOpenLibrary(userId, media, meta)
+        } else if (source === "goodreads") {
+            await this.refreshGoodreads(userId, media, meta)
         } else if (source === "bgg") {
             await this.refreshBgg(userId, media, meta)
         } else if (source === "lastfm") {
@@ -289,16 +292,18 @@ export class MediaRefreshService {
 
         let raw: unknown
         try {
-            const res = await fetch("https://graphql.anilist.co", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
-                    ...(createUserAgentHeader().headers as Record<string, string>),
-                },
-                body: JSON.stringify({ query, variables: { id: anilistId } }),
-                signal: AbortSignal.timeout(8000),
-            })
+            const res = await anilistLimiter.schedule(() =>
+                fetch("https://graphql.anilist.co", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Accept: "application/json",
+                        ...(createUserAgentHeader().headers as Record<string, string>),
+                    },
+                    body: JSON.stringify({ query, variables: { id: anilistId } }),
+                    signal: AbortSignal.timeout(8000),
+                })
+            )
             if (res.status === 404) {
                 throw new AppError("The provider no longer has this item", 404)
             }
@@ -377,10 +382,12 @@ export class MediaRefreshService {
             const keyQuery = sourceId.startsWith("/works/") ? sourceId : `/works/${sourceId}`
             const u = new URL("https://openlibrary.org/search.json")
             u.searchParams.set("q", `key:"${keyQuery}"`)
-            const res = await fetch(u.toString(), {
-                headers: createUserAgentHeader().headers as Record<string, string>,
-                signal: AbortSignal.timeout(8000),
-            })
+            const res = await openLibraryLimiter.schedule(() =>
+                fetch(u.toString(), {
+                    headers: createUserAgentHeader().headers as Record<string, string>,
+                    signal: AbortSignal.timeout(8000),
+                })
+            )
             if (res.status === 404) {
                 throw new AppError("The provider no longer has this item", 404)
             }
@@ -439,6 +446,117 @@ export class MediaRefreshService {
         }
         if (mapped.creators && mapped.creators.length > 0) {
             await setMediaCreators(media.id, mapped.creators, "book", mapped.creator, prisma)
+        }
+    }
+
+    private async refreshGoodreads(userId: string, media: RefreshableMedia, meta: Record<string, unknown>) {
+        const olWorkKey = (typeof meta.openLibraryWorkKey === "string" ? meta.openLibraryWorkKey : null)
+            ?? (typeof meta.olWorkKey === "string" ? meta.olWorkKey : null)
+            ?? (media.externalIds?.find(e => e.provider === "openlibrary")?.externalId)
+
+        const rawIsbn = (typeof meta.isbn13 === "string" ? meta.isbn13 : null)
+            ?? (typeof meta.isbn === "string" ? meta.isbn : null)
+            ?? (media.externalIds?.find(e => e.provider === "isbn13" || e.provider === "isbn")?.externalId)
+        const cleanIsbn = rawIsbn ? rawIsbn.replace(/["'=-]/g, "").trim() : null
+
+        let doc: OpenLibraryBook | null = null
+
+        const fetchDoc = async (u: URL): Promise<OpenLibraryBook | null> => {
+            let raw: unknown
+            try {
+                const res = await openLibraryLimiter.schedule(() =>
+                    fetch(u.toString(), {
+                        headers: createUserAgentHeader().headers as Record<string, string>,
+                        signal: AbortSignal.timeout(8000),
+                    })
+                )
+                if (res.status === 404) return null
+                if (res.status === 429) {
+                    const delay = parseRetryAfter(res, 1000)
+                    openLibraryLimiter.pause(delay)
+                    throw new AppError("Provider is unavailable", 503)
+                }
+                if (!res.ok) throw new AppError("Provider is unavailable", 503)
+                raw = await res.json()
+            } catch (err) {
+                if (err instanceof AppError) throw err
+                throw new AppError("Provider is unavailable", 503)
+            }
+            const checked = openLibraryResponseSchema.safeParse(raw)
+            if (!checked.success || checked.data.docs.length === 0) return null
+            return checked.data.docs[0]
+        }
+
+        if (olWorkKey) {
+            const keyQuery = olWorkKey.startsWith("/works/") ? olWorkKey : `/works/${olWorkKey}`
+            const u = new URL("https://openlibrary.org/search.json")
+            u.searchParams.set("q", `key:"${keyQuery}"`)
+            u.searchParams.set("fields", "key,isbn,title,author_name,cover_i,number_of_pages_median,publisher,subject,first_publish_year")
+            doc = await fetchDoc(u)
+        }
+
+        if (!doc && cleanIsbn) {
+            const u = new URL("https://openlibrary.org/search.json")
+            u.searchParams.set("q", `isbn:${cleanIsbn}`)
+            u.searchParams.set("fields", "key,isbn,title,author_name,cover_i,number_of_pages_median,publisher,subject,first_publish_year")
+            u.searchParams.set("limit", "1")
+            doc = await fetchDoc(u)
+        }
+
+        if (!doc) {
+            const u = new URL("https://openlibrary.org/search.json")
+            u.searchParams.set("title", media.title)
+            if (media.creator) {
+                u.searchParams.set("author", media.creator)
+            }
+            u.searchParams.set("fields", "key,isbn,title,author_name,cover_i,number_of_pages_median,publisher,subject,first_publish_year")
+            u.searchParams.set("limit", "1")
+            doc = await fetchDoc(u)
+        }
+
+        if (!doc) {
+            throw new AppError("The provider no longer has this item", 404)
+        }
+
+        const now = new Date().toISOString()
+        const newImageUrl = doc.cover_i
+            ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`
+            : media.imageUrl
+
+        const pageCount = doc.number_of_pages_median ?? (typeof meta.pageCount === "number" ? meta.pageCount : null)
+        const publisher = doc.publisher?.[0] ?? (typeof meta.publisher === "string" ? meta.publisher : null)
+        const year = doc.first_publish_year ?? media.year
+
+        const updatedMetadata = {
+            ...meta,
+            ...(pageCount ? { pageCount } : {}),
+            ...(publisher ? { publisher } : {}),
+            openLibraryWorkKey: doc.key,
+            olSyncedAt: now,
+            refreshedAt: now,
+        }
+
+        await prisma.media.update({
+            where: { id: media.id },
+            data: {
+                imageUrl: newImageUrl,
+                year,
+                metadata: updatedMetadata,
+            },
+        })
+
+        const categories = (doc.subject ?? []).filter(s => !isJunkGenre(s, "book")).slice(0, 3)
+        if (categories.length > 0) {
+            await setMediaGenres(media.id, categories, "book", prisma)
+        }
+
+        if (doc.author_name?.length) {
+            const creators = doc.author_name.map(name => ({ name, role: "author" }))
+            await setMediaCreators(media.id, creators, "book", media.creator, prisma)
+        }
+
+        if (doc.key) {
+            await attachExternalIdsToMedia(media.id, [{ provider: "openlibrary", externalId: doc.key }], prisma)
         }
     }
 

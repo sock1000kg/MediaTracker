@@ -76,6 +76,7 @@ Jobs:
 - `demo.reset`: resets the demo account. Scheduled weekly with an idempotent job scheduler, so it runs once even with several instances.
 - `tmdb.refresh`: refreshes stale TMDB metadata older than 6 months or purges metadata for unlinked items.
 - `music.coverBackfill`: walks Last.fm music media to migrate release URLs to release-group URLs and resolve covers for standalone tracks via MusicBrainz, marking rows with `coverResolvedAt`. Enqueued at server startup and after demo resets.
+- `openlibrary.sync`: rate-limited background job syncing Open Library data (covers, genres, publishers, page counts, work keys) for Goodreads book rows missing `metadata.olSyncedAt`. Uses batched ISBN queries followed by title/author queries. Enqueued after Goodreads imports, on server startup, and after demo resets.
 
 Users see their jobs through `GET /jobs` and `GET /jobs/:id`, and only their own. The worker runs in the API process by default (`QUEUE_WORKER=true`).
 

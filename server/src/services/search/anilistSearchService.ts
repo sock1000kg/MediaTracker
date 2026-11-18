@@ -2,10 +2,11 @@ import {
     AniListMedia, AniListMode, AnimeSearchFilters, anilistResponseSchema
 } from "@/schemas/search/animeSchemas.js"
 import { searchResultsSchema, SearchResult } from "@/schemas/search/searchSchemas.js"
-import { createThrottle, createUserAgentHeader, validateSchema } from "@/utilities.js"
+import { createUserAgentHeader, validateSchema } from "@/utilities.js"
 import { ISearchService } from "./searchServiceInterface.js"
 import { AppError } from "@/api/domain/error.js"
 import { unexpectedShape } from "./providerErrors.js"
+import { anilistLimiter, parseRetryAfter } from "./rateLimiter.js"
 
 const ANILIST_ENDPOINT = "https://graphql.anilist.co"
 const MIN_GAP_MS = 700 // AniList allows ~90 requests/min
@@ -79,7 +80,7 @@ function isConnectionError(error: unknown): boolean {
     return false
 }
 
-export const anilistThrottle = createThrottle(MIN_GAP_MS)
+export const anilistThrottle = <T>(fn: () => Promise<T>): Promise<T> => anilistLimiter.schedule(fn)
 
 export type AniListVariables = {
     page: number
@@ -304,12 +305,6 @@ export function mapAniListMedia(mode: AniListMode, item: AniListMedia): SearchRe
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
-function retryDelayMs(res: Response): number {
-    const secs = Number(res.headers.get("Retry-After"))
-    const ms = Number.isFinite(secs) && secs > 0 ? secs * 1000 : DEFAULT_RETRY_MS
-    return Math.min(ms, MAX_RETRY_MS)
-}
-
 export class AniListSearchService implements ISearchService {
     async getUserApiKey(): Promise<string | undefined> {
         return undefined
@@ -321,7 +316,7 @@ export class AniListSearchService implements ISearchService {
 
     private async fetchJson(variables: AniListVariables): Promise<unknown> {
         const body = JSON.stringify({ query: ANILIST_GRAPHQL_QUERY, variables })
-        const send = () => anilistThrottle(() =>
+        const send = () => anilistLimiter.schedule(() =>
             fetch(ANILIST_ENDPOINT, {
                 method: "POST",
                 headers: {
@@ -336,11 +331,17 @@ export class AniListSearchService implements ISearchService {
         try {
             let res = await send()
             if (res.status === 429) {
-                await sleep(retryDelayMs(res))
+                const delay = parseRetryAfter(res, DEFAULT_RETRY_MS, MAX_RETRY_MS)
+                anilistLimiter.pause(delay)
+                await sleep(delay)
                 res = await send()
                 if (res.status === 429) {
                     throw new AppError("Anime search is busy right now, try again in a moment", 503)
                 }
+            }
+            const remaining = res.headers.get("X-RateLimit-Remaining")
+            if (remaining !== null && Number(remaining) <= 2) {
+                anilistLimiter.pause(1000)
             }
             if (!res.ok) {
                 throw new AppError("AniList search failed", 502, { cause: `upstream HTTP ${res.status}` })

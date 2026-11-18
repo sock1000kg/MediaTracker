@@ -33,13 +33,13 @@ A self-hostable media journal: books, music, anime, manga, movies, TV, video gam
 
 ## Tech stack
 
-| Area | Tools |
-| --- | --- |
-| Frontend | React 19, Vite, TypeScript, Tailwind CSS v4, shadcn/ui (Radix), TanStack Query |
-| Backend | Node.js 22, Express 5, TypeScript, Prisma, PostgreSQL 17, Zod |
-| Background jobs | BullMQ on [Valkey](https://valkey.io) (BSD-licensed, Redis-compatible) |
-| Testing | Jest, Vitest, Supertest |
-| Ops | Docker, Docker Compose, GitHub Actions |
+| Area            | Tools                                                                          |
+| --------------- | ------------------------------------------------------------------------------ |
+| Frontend        | React 19, Vite, TypeScript, Tailwind CSS v4, shadcn/ui (Radix), TanStack Query |
+| Backend         | Node.js 22, Express 5, TypeScript, Prisma, PostgreSQL 17, Zod                  |
+| Background jobs | BullMQ on [Valkey](https://valkey.io) (BSD-licensed, Redis-compatible)         |
+| Testing         | Jest, Vitest, Supertest                                                        |
+| Ops             | Docker, Docker Compose, GitHub Actions                                         |
 
 ## Quick start
 
@@ -52,11 +52,11 @@ cp server/.env.example server/.env    # then fill in the values, see docs/config
 docker compose --env-file server/.env -f docker-compose.yml -f docker-compose.dev.yml up --build
 ```
 
-| Service | URL |
-| --- | --- |
-| Frontend (Vite, hot reload) | <http://localhost:5173> |
-| API | <http://localhost:5000> (health: `GET /healthz`) |
-| Prisma Studio | <http://localhost:5555> |
+| Service                     | URL                                              |
+| --------------------------- | ------------------------------------------------ |
+| Frontend (Vite, hot reload) | <http://localhost:5173>                          |
+| API                         | <http://localhost:5000> (health: `GET /healthz`) |
+| Prisma Studio               | <http://localhost:5555>                          |
 
 On start, the backend runs the database migrations and seeds the system and demo users. Registering a new account needs the `REGISTER_KEY` from your `.env`.
 
@@ -66,17 +66,17 @@ See **[docs/setup.md](docs/setup.md)** for running tests, production builds and 
 
 ## Documentation
 
-| Doc | Contents |
-| --- | --- |
-| [AGENTS.md](AGENTS.md) | Practical guide for coding agents and contributors |
-| [docs/decisions.md](docs/decisions.md) | Architectural decisions, constraints, and provider quirks |
-| [docs/setup.md](docs/setup.md) | Local development, tests, production build |
-| [docs/configuration.md](docs/configuration.md) | Every environment variable |
-| [docs/api.md](docs/api.md) | REST API reference |
-| [docs/architecture.md](docs/architecture.md) | How the server, search providers, job queue and auth fit together |
-| [docs/providers.md](docs/providers.md) | Data providers: their terms, what we must not do, required attribution |
-| [docs/deployment.md](docs/deployment.md) | Docker images, Compose files, CI/CD |
-| [client/DESIGN.md](client/DESIGN.md) | Visual design system and UI behaviour |
+| Doc                                            | Contents                                                               |
+| ---------------------------------------------- | ---------------------------------------------------------------------- |
+| [AGENTS.md](AGENTS.md)                         | Guide for coding agents                                                |
+| [docs/decisions.md](docs/decisions.md)         | Architectural decisions, constraints, and provider quirks              |
+| [docs/setup.md](docs/setup.md)                 | Local development, tests, production build                             |
+| [docs/configuration.md](docs/configuration.md) | Every environment variable                                             |
+| [docs/api.md](docs/api.md)                     | REST API reference                                                     |
+| [docs/architecture.md](docs/architecture.md)   | How the server, search providers, job queue and auth fit together      |
+| [docs/providers.md](docs/providers.md)         | Data providers: their terms, what we must not do, required attribution |
+| [docs/deployment.md](docs/deployment.md)       | Docker images, Compose files, CI/CD                                    |
+| [client/DESIGN.md](client/DESIGN.md)           | Visual design system and UI behaviour                                  |
 
 ## Project structure
 

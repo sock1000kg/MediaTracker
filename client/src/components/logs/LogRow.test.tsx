@@ -178,4 +178,42 @@ describe("LogRow component with children logs", () => {
     renderWithProviders(<LogRow log={book} onEdit={onEdit} onDelete={onDelete} />)
     expect(screen.getAllByRole("button", { name: /expand|hide/i })).toHaveLength(1)
   })
+
+  it("T2: renders categories from media.genres for a synced Goodreads book", () => {
+    const syncedBookLog: Log = {
+      id: "log-book-1",
+      rating: 90,
+      status: "completed",
+      notes: "",
+      logged_at: "2024-01-01T00:00:00.000Z",
+      started_at: null,
+      finished_at: null,
+      tags: [],
+      media: {
+        id: "media-book-1",
+        userId: "user-1",
+        title: "Dune",
+        creator: "Frank Herbert",
+        year: 1965,
+        source: "goodreads",
+        sourceId: "gr-dune",
+        imageUrl: "https://cover.jpg",
+        description: null,
+        created_at: "2024-01-01T00:00:00.000Z",
+        parentId: null,
+        position: null,
+        mediaType: { ...dummyMediaType, name: "book" },
+        metadata: {
+          url: "https://www.goodreads.com/book/show/gr-dune",
+          openLibraryWorkKey: "/works/OL893415W",
+          olSyncedAt: "2024-01-01T12:00:00.000Z",
+        },
+        genres: ["Science Fiction", "Space Opera"],
+      },
+    }
+
+    renderWithProviders(<LogRow log={syncedBookLog} onEdit={onEdit} onDelete={onDelete} />)
+    expect(screen.getByText("Science Fiction")).toBeInTheDocument()
+    expect(screen.getByText("Space Opera")).toBeInTheDocument()
+  })
 })

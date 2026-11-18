@@ -25,13 +25,13 @@ export default function Login() {
   const [password, setPassword] = useState("")
 
   const loginMutation = useMutation({
-    mutationFn: async ({ username, password }: {username: string, password: string}) => {
+    mutationFn: async ({ username, password }: { username: string, password: string }) => {
       const API_BASE = import.meta.env.VITE_API_URL
-      const res = await fetch(`${API_BASE}/auth/login`, { 
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, password }),
-            credentials: "include",
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+        credentials: "include",
       })
       const data = await res.json()
 
@@ -82,72 +82,72 @@ export default function Login() {
       )}
 
       <div className="relative w-full max-w-sm">
-      <div className="absolute -top-[72px] left-1/2 z-0 -translate-x-1/2">
-        <BlueDude size={96} label="A small blue creature, grinning" />
-      </div>
-      <p className="absolute -top-[60px] left-1/2 z-0 ml-14 -rotate-3 whitespace-nowrap font-hand text-lg text-muted-foreground">
-        oh, it’s you!
-      </p>
-      <Card className="relative z-10 w-full shadow-paper">
+        <div className="absolute -top-[72px] left-1/2 z-0 -translate-x-1/2">
+          <BlueDude size={96} label="A small blue creature, grinning" />
+        </div>
+        <p className="absolute -top-[60px] left-1/2 z-0 ml-14 -rotate-3 whitespace-nowrap font-hand text-lg text-muted-foreground">
+          hi
+        </p>
+        <Card className="relative z-10 w-full shadow-paper">
 
-        <CardHeader>
-          <CardTitle className="font-display text-2xl font-semibold text-center">Welcome back</CardTitle>
-        </CardHeader>
+          <CardHeader>
+            <CardTitle className="font-display text-2xl font-semibold text-center">Welcome back</CardTitle>
+          </CardHeader>
 
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
 
-            <div className="space-y-2">
+              <div className="space-y-2">
                 <Label htmlFor="username">Username</Label>
                 <Input
-                    id="username"
-                    type="username"
-                    placeholder="YourUsername"
-                    value={username}
-                    onChange={(e) => { setUsername(e.target.value) }}
-                    required
-                    disabled={loginMutation.isPending}
+                  id="username"
+                  type="username"
+                  placeholder="YourUsername"
+                  value={username}
+                  onChange={(e) => { setUsername(e.target.value) }}
+                  required
+                  disabled={loginMutation.isPending}
                 />
-                </div>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                ref={passwordRef}
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  ref={passwordRef}
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={loginMutation.isPending}
+                />
+
+                {/* Error message */}
+                {loginMutation.isError && (
+                  <p className="mt-2 text-center text-sm text-destructive">
+                    {loginMutation.error instanceof Error
+                      ? loginMutation.error.message : "An unexpected error occured"}
+                  </p>
+                )}
+
+              </div>
+              <Button
+                type="submit"
+                variant="amber"
+                className="w-full"
                 disabled={loginMutation.isPending}
-              />
+              >
+                {loginMutation.isPending ? "Signing in..." : "Sign in"}
+              </Button>
+            </form>
 
-          {/* Error message */}
-          {loginMutation.isError && (
-            <p className="mt-2 text-center text-sm text-destructive">
-              {loginMutation.error instanceof Error
-                ? loginMutation.error.message : "An unexpected error occured"}
+            {/* Switch to register */}
+            <p className="mt-4 text-center text-sm text-foreground">
+              Don’t have an account? <Link to="/register" className="underline">Sign up</Link>
             </p>
-          )}
-
-            </div>
-            <Button 
-              type="submit" 
-              variant="amber" 
-              className="w-full" 
-              disabled={loginMutation.isPending}
-            >
-              {loginMutation.isPending ? "Signing in..." : "Sign in"}
-            </Button>
-          </form>
-
-          {/* Switch to register */}
-          <p className="mt-4 text-center text-sm text-foreground">
-            Don’t have an account? <Link to="/register" className="underline">Sign up</Link>
-          </p>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

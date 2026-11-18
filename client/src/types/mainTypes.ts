@@ -40,6 +40,7 @@ export interface Media {
   originalTitle?: string | null
   genres?: string[]
   creators?: MediaCreatorItem[]
+  externalIds?: Array<{ provider: string; externalId: string }>
   parent?: {
     id: string
     title: string
@@ -74,6 +75,7 @@ export interface Log {
   media: Media
   genres?: string[]
   creators?: MediaCreatorItem[]
+  externalIds?: Array<{ provider: string; externalId: string }>
   tags?: TagItem[]
   collectionIds?: string[]
   childSummary?: ChildSummary

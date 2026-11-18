@@ -10,6 +10,7 @@ import { findUserById } from "@/repositories/authRepository.js"
 import { AppError } from "@/api/domain/error.js"
 import prisma from "@/prismaClient.js"
 import { findMediaBySource, attachExternalIdsToMedia } from "@/repositories/mediaRepository.js"
+import { tmdbLimiter, parseRetryAfter } from "./rateLimiter.js"
 import { unexpectedShape } from "./providerErrors.js"
 
 const BASE_URL = "https://api.themoviedb.org/3"
@@ -185,12 +186,6 @@ export function parseTmdbDetails(raw: unknown): MovieDetails {
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
-function retryDelayMs(res: Response): number {
-    const secs = Number(res.headers.get("Retry-After"))
-    const ms = Number.isFinite(secs) && secs > 0 ? secs * 1000 : DEFAULT_RETRY_MS
-    return Math.min(ms, MAX_RETRY_MS)
-}
-
 export class TmdbSearchService {
     async getUserApiKey(userId: string): Promise<string> {
         const user = await findUserById(userId)
@@ -206,15 +201,17 @@ export class TmdbSearchService {
 
     // One request with a single retry after a 429. A 401 is mapped to 400: the client treats any 401 as an expired session
     private async fetchJson(url: URL, auth: TmdbAuth): Promise<unknown> {
-        const send = () => fetch(url.toString(), {
+        const send = () => tmdbLimiter.schedule(() => fetch(url.toString(), {
             headers: { ...(createUserAgentHeader().headers as Record<string, string>), ...(auth.headers ?? {}) },
             signal: AbortSignal.timeout(TIMEOUT_MS), // created per attempt, at send time
-        })
+        }))
 
         try {
             let res = await send()
             if (res.status === 429) {
-                await sleep(retryDelayMs(res))
+                const delay = parseRetryAfter(res, DEFAULT_RETRY_MS, MAX_RETRY_MS)
+                tmdbLimiter.pause(delay)
+                await sleep(delay)
                 res = await send()
                 if (res.status === 429) {
                     throw new AppError("Movie search is busy right now, try again in a moment", 503)

@@ -1,59 +1,11 @@
 import { z } from "zod"
 import { createUserAgentHeader } from "@/utilities.js"
+import { RateLimiter, musicBrainzLimiter } from "./rateLimiter.js"
 
 export const MB_BASE_URL = "https://musicbrainz.org/ws/2"
 export const MB_TIMEOUT_MS = 10000
 
-// Rate limit: MusicBrainz strictly enforces 1 req/sec per IP with an identified User-Agent.
-// This in-process limiter schedules all outgoing requests sequentially.
-export class RateLimiter {
-    private lastCallTime = 0
-    private readonly intervalMs: number
-    private queue: Array<() => Promise<void>> = []
-    private processing = false
-
-    constructor(intervalMs = 1000) {
-        this.intervalMs = intervalMs
-    }
-
-    schedule<T>(fn: () => Promise<T>): Promise<T> {
-        return new Promise<T>((resolve, reject) => {
-            this.queue.push(async () => {
-                try {
-                    const res = await fn()
-                    resolve(res)
-                } catch (err) {
-                    reject(err)
-                }
-            })
-            this.processQueue()
-        })
-    }
-
-    private async processQueue() {
-        if (this.processing || this.queue.length === 0) return
-        this.processing = true
-        while (this.queue.length > 0) {
-            const now = Date.now()
-            const elapsed = now - this.lastCallTime
-            if (this.lastCallTime > 0 && elapsed < this.intervalMs) {
-                await new Promise((r) => setTimeout(r, this.intervalMs - elapsed))
-            }
-            this.lastCallTime = Date.now()
-            const next = this.queue.shift()
-            if (next) {
-                await next()
-            }
-        }
-        this.processing = false
-    }
-
-    reset() {
-        this.lastCallTime = 0
-        this.queue = []
-        this.processing = false
-    }
-}
+export { RateLimiter }
 
 export class LruCache<K, V> {
     private readonly max: number
@@ -252,7 +204,7 @@ export class MusicBrainzHttpError extends Error {
 export class MusicBrainzClient {
     readonly baseUrl = MB_BASE_URL
     readonly timeoutMs = MB_TIMEOUT_MS
-    readonly limiter = new RateLimiter(1000)
+    readonly limiter = musicBrainzLimiter
     readonly releaseGroupCache = new LruCache<string, string | null>(2000)
 
     getCoverArtUrl(releaseGroupId: string): string {

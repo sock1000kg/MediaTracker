@@ -8,6 +8,7 @@ import { ImportResult } from "@/api/domain/imports.js"
 import { SearchResult } from "@/schemas/search/searchSchemas.js"
 import { AniListMedia, anilistResponseSchema } from "@/schemas/search/animeSchemas.js"
 import { mapAniListMedia, anilistThrottle } from "../search/anilistSearchService.js"
+import { anilistLimiter, parseRetryAfter } from "../search/rateLimiter.js"
 import { Media, Prisma } from "@/db.js"
 import { createUserAgentHeader, tagKey } from "@/utilities.js"
 import { findUserByUsername } from "@/repositories/authRepository.js"
@@ -359,9 +360,14 @@ export async function defaultAniListResolver(
                 })
 
                 if (response.status === 429) {
-                    const retryAfter = Number(response.headers.get("Retry-After")) || 2
-                    await new Promise(r => setTimeout(r, retryAfter * 1000))
+                    const retryAfter = parseRetryAfter(response, 2000)
+                    anilistLimiter.pause(retryAfter)
                     continue
+                }
+
+                const remaining = response.headers.get("X-RateLimit-Remaining")
+                if (remaining !== null && Number(remaining) <= 2) {
+                    anilistLimiter.pause(1000)
                 }
 
                 if (!response.ok) {

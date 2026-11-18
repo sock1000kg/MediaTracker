@@ -9,6 +9,7 @@ import { createUserAgentHeader, decryptKey, validateSchema } from "@/utilities.j
 import { findUserById } from "@/repositories/authRepository.js"
 import { AppError } from "@/api/domain/error.js"
 import { unexpectedShape } from "./providerErrors.js"
+import { bggLimiter, parseRetryAfter } from "./rateLimiter.js"
 
 // Host quirk: must use boardgamegeek.com without www; www redirects or fails Cloudflare/token auth for XMLAPI2.
 const BASE_URL = "https://boardgamegeek.com/xmlapi2"
@@ -18,12 +19,6 @@ const MAX_RETRY_MS = 3000
 const TIMEOUT_MS = 8000
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
-
-function retryDelayMs(res: Response): number {
-    const secs = Number(res.headers.get("Retry-After"))
-    const ms = Number.isFinite(secs) && secs > 0 ? secs * 1000 : DEFAULT_RETRY_MS
-    return Math.min(ms, MAX_RETRY_MS)
-}
 
 function parseNum(val: unknown): number | null {
     if (val === null || val === undefined) return null
@@ -139,18 +134,20 @@ export class BggSearchService {
     }
 
     async fetchXml(url: URL, token: string): Promise<string> {
-        const send = () => fetch(url.toString(), {
+        const send = () => bggLimiter.schedule(() => fetch(url.toString(), {
             headers: {
                 Authorization: `Bearer ${token}`,
                 ...(createUserAgentHeader().headers as Record<string, string>),
             },
             signal: AbortSignal.timeout(TIMEOUT_MS),
-        })
+        }))
 
         try {
             let res = await send()
             if (res.status === 429 || res.status === 503) {
-                await sleep(retryDelayMs(res))
+                const delay = parseRetryAfter(res, DEFAULT_RETRY_MS, MAX_RETRY_MS)
+                bggLimiter.pause(delay)
+                await sleep(delay)
                 res = await send()
                 if (res.status === 429 || res.status === 503) {
                     throw new AppError("BoardGameGeek search is busy right now, try again in a moment", 503)

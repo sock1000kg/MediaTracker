@@ -4,6 +4,7 @@ import { BookSearchFilters, OpenLibraryBook, openLibraryResponseSchema } from "@
 import { createUserAgentHeader, fetchAndParse, validateSchema } from "@/utilities.js"
 import { AppError } from "@/api/domain/error.js"
 import { isJunkGenre, JUNK_BOOK_SUBJECTS } from "@/services/genreService.js"
+import { openLibraryLimiter } from "./rateLimiter.js"
 
 // Re-export for compatibility
 export { JUNK_BOOK_SUBJECTS }
@@ -85,12 +86,14 @@ export class OpenLibraryService implements ISearchService {
 
         const headers = createUserAgentHeader()
 
-        const parsed = await fetchAndParse(
-            url, 
-            openLibraryResponseSchema, 
-            "Open Library API error", 
-            "Failed to fetch from Open Library",
-            headers 
+        const parsed = await openLibraryLimiter.schedule(() =>
+            fetchAndParse(
+                url, 
+                openLibraryResponseSchema, 
+                "Open Library API error", 
+                "Failed to fetch from Open Library",
+                headers 
+            )
         )
 
         const results = this.mapResults(parsed.docs)

@@ -28,7 +28,8 @@ MediaTracker gets its catalogue data from outside services. This page lists each
 
 ## Open Library
 **Terms:** [openlibrary.org/developers/api](https://openlibrary.org/developers/api)
-- **Rules:** identify every request with a `User-Agent` that includes a contact email (we send `MediaTracker/<version> (<CONTACT_EMAIL>)`; keep `CONTACT_EMAIL` set). Identified requests get 3 req/s, anonymous 1 req/s.
+- **Rules:** identify every request with a `User-Agent` that includes a contact email (we send `MediaTracker/<version> (<CONTACT_EMAIL>)`; keep `CONTACT_EMAIL` set). Identified requests get 3 req/s, anonymous 1 req/s. Do not make hundreds of single-book requests; batch lookups through `search.json` (e.g. `q=isbn:(A OR B OR ...)` with fields limit).
+- **Our rate limit:** ~2 req/s (500 ms interval) via shared `openLibraryLimiter`, safely below the 3 req/s identified ceiling to leave headroom for user searches.
 - **Don't:** use it as a bulk data backend or for high-traffic commercial services; bulk-download metadata through the API (use their monthly dumps instead).
 - **Attribution:** none formally required; we credit Open Library on Book search.
 
@@ -56,13 +57,15 @@ MediaTracker gets its catalogue data from outside services. This page lists each
 ## AniList
 **Terms:** [AniList API terms of use](https://anilist.gitbook.io/anilist-apiv2-docs/docs/guide/terms-of-use), [rate limiting](https://docs.anilist.co/guide/rate-limiting)
 - **Rules:** free for non-commercial use (and commercial under $150/month revenue); 90 requests/minute with a burst limiter (sometimes degraded to 30/minute).
+- **Our rate limit:** ~85 req/min (700 ms interval) via shared `anilistLimiter`. Honors `Retry-After` on 429 and `X-RateLimit-Remaining` (pausing when remaining quota is depleted).
 - **Don't:** use the API as a backup or data-storage service; hoard or mass-collect data; put "AniList" or "AniChart" in the app's name (if ever used, it must say "unofficial" / "for AniList").
 - **Known grey area:** AniList bars competing "list or tracker services" unless they provide "significant sustained integration/syncing" with AniList accounts, or are authorised on request. MediaTracker is a self-hosted, invite-only, multi-media journal, like other open-source trackers that use AniList without sync. AniList sync was considered and dropped (2026-11-17); if AniList ever objects, ask them directly or revisit sync.
 - **Attribution:** none required; we credit AniList on Anime & manga search.
 
 ## TMDB (The Movie Database)
 **Terms:** [themoviedb.org/api-terms-of-use](https://www.themoviedb.org/api-terms-of-use), [logos and attribution](https://www.themoviedb.org/about/logos-attribution)
-- **Rules:** non-commercial under the standard licence (commercial needs a written agreement, §2); **don't cache TMDB data for more than 6 months** (§1.C): the daily `tmdb.refresh` job re-fetches it, or purges description and image when no key holder exists or TMDB returns 404.
+- **Rules:** non-commercial under the standard licence (commercial needs a written agreement, §2); **don't cache TMDB data for more than 6 months** (§1.C): the daily `tmdb.refresh` job re-fetches it, or purges description and image when no key holder exists or TMDB returns 404. Historical guidance limits calls to 40 requests per 10 seconds.
+- **Our rate limit:** 4 req/s (250 ms interval) via shared `tmdbLimiter`, respecting `Retry-After` on 429.
 - **Don't:** sell, lease or sublicense the API or TMDB content; make derivatives of TMDB content; use TMDB as an image host for ads or graphics; use TMDB content for training, or in connection with, a machine-learning or AI-based application (TMDB reserves this right); run excessive bandwidth.
 - **On termination:** promptly delete all TMDB content, including cached content (§1.D).
 - **Attribution:** the TMDB logo (we use "Alt short (blue)" from their logo page, unmodified, less prominent than our own branding) **and** the notice "This product uses the TMDB API but is not endorsed or certified by TMDB." Shown on Movie and TV search, in Settings → API Keys, and in the README.
@@ -70,12 +73,14 @@ MediaTracker gets its catalogue data from outside services. This page lists each
 ## RAWG
 **Terms:** [rawg.io/apidocs](https://rawg.io/apidocs)
 - **Rules:** free for personal and hobby projects (commercial use free under 100,000 monthly active users, otherwise a paid plan); the free plan allows 20,000 requests per month.
+- **Our rate limit:** 2 req/s (500 ms interval) via shared `rawgLimiter`.
 - **Don't:** redistribute the data, resell it, or make it available to other businesses.
 - **Attribution:** **an active hyperlink to RAWG on every page that uses RAWG data** (Game search credit and each item's "View on RAWG" link).
 
 ## BoardGameGeek
 **Terms:** [Using the XML API](https://boardgamegeek.com/using_the_xml_api), [XML API Terms of Use](https://boardgamegeek.com/wiki/page/XML_API_Terms_of_Use)
 - **Rules:** a registered **application token** is required (`Authorization: Bearer <token>`, host `boardgamegeek.com` without `www`). Tokens belong to an application, not a person; register as **non-commercial**, describing the app honestly. Licence is "solely for strictly non-commercial purposes". Space requests out (about one every few seconds), and batch `thing` lookups (max 20 ids).
+- **Our rate limit:** 1 req/s (1000 ms interval) via shared `bggLimiter`, with retry and pause on 429 or 503.
 - **Don't:** **modify the data**: descriptions and ratings are stored exactly as received and only formatted for display; use the API or any site data to **train an AI or LLM**; use it commercially without a separate licence (ads, paid features, merchandise, even supporting a non-profit event count as commercial); interfere with BGG's servers; hotlink-heavy image use (prefer their own image URLs sparingly).
 - **Attribution:** credit **BoardGameGeek** by name **and** show the **"Powered by BGG" logo** (their file, unmodified; we show it on a white plate so it reads in dark mode). Shown on Game search in board games mode.
 

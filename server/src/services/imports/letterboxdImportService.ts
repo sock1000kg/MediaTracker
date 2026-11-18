@@ -3,13 +3,13 @@ import path from "path"
 import { fileURLToPath } from "url"
 import { unzipSync, strFromU8, UnzipFileInfo } from "fflate"
 import { parse } from "csv-parse/sync"
-import pThrottle from "p-throttle"
 import prisma from "@/prismaClient.js"
 import { AppError } from "@/api/domain/error.js"
 import { ImportResult } from "@/api/domain/imports.js"
 import { SearchResult } from "@/schemas/search/searchSchemas.js"
 import { tmdbSearchResponseSchema } from "@/schemas/search/movieSchemas.js"
 import { tmdbSearchService, tmdbAuth, buildTmdbSearchUrl, mapTmdbMovie } from "../search/tmdbSearchService.js"
+import { tmdbLimiter, parseRetryAfter } from "../search/rateLimiter.js"
 import { findUserByUsername } from "@/repositories/authRepository.js"
 import { findMediaTypeForUserOrGlobal } from "@/repositories/mediaTypeRepository.js"
 import { findMediaByExternalIds } from "@/repositories/mediaRepository.js"
@@ -565,61 +565,73 @@ export async function resolveLetterboxdFilmsWithKey(
     const result = new Map<string, SearchResult | null>()
     if (films.length === 0) return result
 
-    const throttle = pThrottle({ limit: 10, interval: 1000 })
-    const searchThrottled = throttle(async (film: { name: string; year: number | null }) => {
-        try {
-            const auth = tmdbAuth(apiKey)
-            const url = buildTmdbSearchUrl({ q: film.name, year: film.year ?? undefined, anyReleaseYear: true }, auth)
-            const res = await fetch(url, { headers: { ...createUserAgentHeader().headers, ...auth.headers } })
-            if (!res.ok) return null
-            const json = await res.json()
-            const parsed = tmdbSearchResponseSchema.safeParse(json)
-            if (!parsed.success) return null
-
-            const targetTitle = normalizeTitle(film.name)
-            const items = parsed.data.results
-
-            // 1. the first result whose normalised title (or original title) equals the name and release year equals year
-            for (const item of items) {
-                if (!item.id) continue
-                const rTitle = item.title ? normalizeTitle(item.title) : ""
-                const rOrig = item.original_title ? normalizeTitle(item.original_title) : ""
-                const titleMatch = rTitle === targetTitle || rOrig === targetTitle
-                const rYear = item.release_date ? parseInt(item.release_date.slice(0, 4), 10) : null
-                if (titleMatch && film.year != null && rYear === film.year) {
-                    return mapTmdbMovie(item)
+    const searchThrottled = async (film: { name: string; year: number | null }) => {
+        let attempts = 0
+        const maxAttempts = 3
+        while (attempts < maxAttempts) {
+            attempts++
+            try {
+                const auth = tmdbAuth(apiKey)
+                const url = buildTmdbSearchUrl({ q: film.name, year: film.year ?? undefined, anyReleaseYear: true }, auth)
+                const res = await tmdbLimiter.schedule(() =>
+                    fetch(url, { headers: { ...createUserAgentHeader().headers, ...auth.headers } })
+                )
+                if (res.status === 429) {
+                    const retryAfter = parseRetryAfter(res, 1000)
+                    tmdbLimiter.pause(retryAfter)
+                    continue
                 }
-            }
+                if (!res.ok) return null
+                const json = await res.json()
+                const parsed = tmdbSearchResponseSchema.safeParse(json)
+                if (!parsed.success) return null
 
-            // 2. else the first result with the year +/- 1
-            for (const item of items) {
-                if (!item.id) continue
-                const rTitle = item.title ? normalizeTitle(item.title) : ""
-                const rOrig = item.original_title ? normalizeTitle(item.original_title) : ""
-                const titleMatch = rTitle === targetTitle || rOrig === targetTitle
-                const rYear = item.release_date ? parseInt(item.release_date.slice(0, 4), 10) : null
-                if (titleMatch && film.year != null && rYear != null && Math.abs(rYear - film.year) === 1) {
-                    return mapTmdbMovie(item)
-                }
-            }
+                const targetTitle = normalizeTitle(film.name)
+                const items = parsed.data.results
 
-            // Fallback if year was not provided in export
-            if (film.year == null) {
+                // 1. the first result whose normalised title (or original title) equals the name and release year equals year
                 for (const item of items) {
                     if (!item.id) continue
                     const rTitle = item.title ? normalizeTitle(item.title) : ""
                     const rOrig = item.original_title ? normalizeTitle(item.original_title) : ""
-                    if (rTitle === targetTitle || rOrig === targetTitle) {
+                    const titleMatch = rTitle === targetTitle || rOrig === targetTitle
+                    const rYear = item.release_date ? parseInt(item.release_date.slice(0, 4), 10) : null
+                    if (titleMatch && film.year != null && rYear === film.year) {
                         return mapTmdbMovie(item)
                     }
                 }
-            }
 
-            return null
-        } catch {
-            return null
+                // 2. else the first result with the year +/- 1
+                for (const item of items) {
+                    if (!item.id) continue
+                    const rTitle = item.title ? normalizeTitle(item.title) : ""
+                    const rOrig = item.original_title ? normalizeTitle(item.original_title) : ""
+                    const titleMatch = rTitle === targetTitle || rOrig === targetTitle
+                    const rYear = item.release_date ? parseInt(item.release_date.slice(0, 4), 10) : null
+                    if (titleMatch && film.year != null && rYear != null && Math.abs(rYear - film.year) === 1) {
+                        return mapTmdbMovie(item)
+                    }
+                }
+
+                // Fallback if year was not provided in export
+                if (film.year == null) {
+                    for (const item of items) {
+                        if (!item.id) continue
+                        const rTitle = item.title ? normalizeTitle(item.title) : ""
+                        const rOrig = item.original_title ? normalizeTitle(item.original_title) : ""
+                        if (rTitle === targetTitle || rOrig === targetTitle) {
+                            return mapTmdbMovie(item)
+                        }
+                    }
+                }
+
+                return null
+            } catch {
+                return null
+            }
         }
-    })
+        return null
+    }
 
     const lookups = films.map(async (f) => {
         const key = letterboxdFilmKey(f.name, f.year)

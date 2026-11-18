@@ -291,27 +291,6 @@ export function attachmentHeader(asciiName: string, realName: string): string {
     return `attachment; filename="${asciiName}"; filename*=UTF-8''${encoded}`
 }
 
-// THROTTLE
-// Spaces out calls so each one starts at least `minGapMs` after the previous one (FIFO).
-// The clock is injectable for tests.
-export type ThrottleClock = { now: () => number, sleep: (ms: number) => Promise<void> }
-
-const realClock: ThrottleClock = {
-    now: () => Date.now(),
-    sleep: ms => new Promise(resolve => setTimeout(resolve, ms)),
-}
-
-export function createThrottle(minGapMs: number, clock: ThrottleClock = realClock) {
-    let nextSlot = 0
-    return async function throttled<T>(fn: () => Promise<T>): Promise<T> {
-        const now = clock.now()
-        const start = Math.max(now, nextSlot)
-        nextSlot = start + minGapMs // reserve synchronously so concurrent callers queue up
-        if (start > now) await clock.sleep(start - now)
-        return fn()
-    }
-}
-
 // Lives in its own import-free module so test setup files can use it before dotenv has loaded
 export { redactUrl } from "./redactUrl.js"
 
