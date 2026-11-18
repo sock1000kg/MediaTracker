@@ -37,8 +37,9 @@ describe("ApiKeyForm", () => {
 
     // All four services shown
     expect(screen.getByText("Last.fm")).toBeInTheDocument()
-    expect(screen.getByText("TMDB")).toBeInTheDocument()
+    // TMDB's label is its logo (their attribution rules), with the "not endorsed" notice under the input
     expect(screen.getByRole("img", { name: "TMDB" })).toBeInTheDocument()
+    expect(screen.getByText(/not endorsed or certified by TMDB/)).toBeInTheDocument()
     expect(screen.getByText("RAWG")).toBeInTheDocument()
     expect(screen.getByText("BoardGameGeek")).toBeInTheDocument()
   })

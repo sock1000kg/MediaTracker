@@ -58,6 +58,13 @@ describe("formatLogMetadata", () => {
     expect(fmt({ pageCount: 10, publisher: "P", genre: "Fiction" })).toEqual(["10 pages", "Publisher: P", "genre: Fiction"])
   })
 
+  it("provider media never shows leftover keys (ids and bookkeeping stamps)", () => {
+    expect(formatLogMetadata({ source: "tmdb", metadata: { kind: "movie", runtime: 148, tmdbId: 1368337, fetchedAt: "2026-11-18T03:00:13.929Z", refreshCheckedAt: "2026-11-18T03:00:13.929Z" } } as never))
+      .toEqual(["148 min"])
+    expect(formatLogMetadata({ source: "lastfm", metadata: { kind: "album", mbid: "503c", mbSyncedAt: "x", primaryType: "Album" } } as never))
+      .toEqual(["Album"])
+  })
+
   it("only shows a key when it was not used by the branch (a key unused for this kind still shows)", () => {
     // 'episodes' isn't used for manga, so it is shown raw
     expect(fmt({ kind: "manga", episodes: 12 })).toEqual(["episodes: 12"])

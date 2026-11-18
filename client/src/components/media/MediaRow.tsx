@@ -20,18 +20,6 @@ interface MediaRowProps {
 export function MediaRow({ media, log, onEdit, onDelete, onLog }: MediaRowProps) {
   const categories = media.genres ?? (Array.isArray(media.metadata?.categories) ? (media.metadata.categories as string[]) : [])
   const metaParts = formatLogMetadata(media)
-  const isMusic = media.mediaType?.name?.toLowerCase() === "music"
-  const mbUrl = (typeof media.metadata?.mbReleaseGroupId === "string")
-    ? `https://musicbrainz.org/release-group/${encodeURIComponent(media.metadata.mbReleaseGroupId)}`
-    : (typeof media.metadata?.mbRecordingId === "string")
-    ? `https://musicbrainz.org/recording/${encodeURIComponent(media.metadata.mbRecordingId)}`
-    : null
-  const lastFmUrl = (isMusic && media.creator && media.title)
-    ? (media.metadata?.kind === "track"
-        ? `https://www.last.fm/music/${encodeURIComponent(media.creator)}/_/${encodeURIComponent(media.title)}`
-        : `https://www.last.fm/music/${encodeURIComponent(media.creator)}/${encodeURIComponent(media.title)}`)
-    : null
-  const url = (typeof media.metadata?.url === "string" ? media.metadata.url : null) || mbUrl || lastFmUrl
   const byline = [media.creator, media.year].filter(Boolean).join(" · ")
   const rating = log ? displayRating(log.rating) : null
   const status = log ? [statusLabel(log.status), formatLogDate(log.logged_at)].filter(Boolean).join(" · ") : ""
@@ -77,31 +65,6 @@ export function MediaRow({ media, log, onEdit, onDelete, onLog }: MediaRowProps)
         </div>
       )}
 
-      {isMusic ? (
-        <div className="mt-1 flex flex-wrap gap-2">
-          {mbUrl && (
-            <a href={mbUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-link underline-offset-4 hover:underline">
-              View on MusicBrainz
-            </a>
-          )}
-          {lastFmUrl && (
-            <a href={lastFmUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-link underline-offset-4 hover:underline">
-              View on Last.fm
-            </a>
-          )}
-          {!mbUrl && !lastFmUrl && url && (
-            <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-link underline-offset-4 hover:underline">
-              More info
-            </a>
-          )}
-        </div>
-      ) : (
-        url && (
-          <a href={url} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block text-xs text-link underline-offset-4 hover:underline">
-            More info
-          </a>
-        )
-      )}
     </RowShell>
   )
 }

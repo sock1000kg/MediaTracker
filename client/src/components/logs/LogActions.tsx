@@ -3,7 +3,8 @@ import { useQueryClient } from "@tanstack/react-query"
 import { MoreHorizontal, Loader2 } from "lucide-react"
 import type { Log } from "@/types/mainTypes"
 import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { providerLinks } from "@/lib/providerLinks"
 import { AddToCollectionDialog } from "@/components/collections/AddToCollectionDialog"
 import { refreshMedia } from "@/api/media"
 import { fetchLogsQueryOptions } from "@/queryOptions/fetchLogsQueryOptions"
@@ -28,6 +29,7 @@ export function LogActions({ log, onEdit, onDelete, extraMenuItems }: LogActions
     return () => clearTimeout(t)
   }, [errorToast])
 
+  const links = providerLinks(log.media)
   const isCustom = !log.media.source || log.media.source === "custom"
 
   const handleRefresh = async () => {
@@ -53,6 +55,12 @@ export function LogActions({ log, onEdit, onDelete, extraMenuItems }: LogActions
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          {links.map((link) => (
+            <DropdownMenuItem key={link.href} asChild>
+              <a href={link.href} target="_blank" rel="noopener noreferrer">{link.label}</a>
+            </DropdownMenuItem>
+          ))}
+          {links.length > 0 && <DropdownMenuSeparator />}
           <DropdownMenuItem onSelect={() => setCollectionDialogOpen(true)}>Add to collection…</DropdownMenuItem>
           {extraMenuItems}
           {!isCustom && (

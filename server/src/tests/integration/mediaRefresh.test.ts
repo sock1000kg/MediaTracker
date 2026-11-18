@@ -914,6 +914,41 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
         expect(logAfter.rating).toBe(88)
     })
 
+    test("Music refresh (track): an older row with only Media.kind is refreshed as a track and joins its album", async () => {
+        const musicType = await prisma.mediaType.findFirstOrThrow({ where: { name: "music" } })
+        const album = await prisma.media.create({
+            data: {
+                title: "In Rainbows", creator: "Radiohead", source: "lastfm", sourceId: "test-album-in-rainbows",
+                kind: "album", mediaTypeId: musicType.id, userId: userAId,
+                metadata: { kind: "album", mbReleaseGroupId: "rg-in-rainbows-test" },
+            },
+        })
+        // Like "15 Steps": logged before metadata.kind existed, sourceId is a Last.fm URL
+        const track = await prisma.media.create({
+            data: {
+                title: "15 Steps", creator: "Radiohead", source: "lastfm",
+                sourceId: "https://www.last.fm/music/Radiohead/_/15+Steps-test",
+                kind: "track", mediaTypeId: musicType.id, userId: userAId, metadata: {},
+            },
+        })
+        await prisma.userLogs.create({ data: { userId: userAId, mediaId: track.id, status: "completed" } })
+
+        const spy = jest.spyOn(musicBrainzClient, "resolveTrackRecording").mockResolvedValue({
+            status: "found", recordingId: "rec-15-step", title: "15 Step", artist: "Radiohead", lengthMs: 237000,
+            releaseGroupId: "rg-in-rainbows-test",
+            imageUrl: "https://coverartarchive.org/release-group/rg-in-rainbows-test/front-250",
+        })
+
+        const res = await request(app).post(`/media/${track.id}/refresh`).set("Authorization", `Bearer ${tokenA}`)
+        expect(res.statusCode).toBe(200)
+        expect(spy).toHaveBeenCalledWith("Radiohead", "15 Steps")
+
+        const updated = await prisma.media.findUniqueOrThrow({ where: { id: track.id } })
+        expect(updated.parentId).toBe(album.id)
+        expect(updated.imageUrl).toBe("https://coverartarchive.org/release-group/rg-in-rainbows-test/front-250")
+        expect((updated.metadata as Record<string, unknown>).kind).toBe("track")
+    })
+
     test("Music refresh (track): unresolvable track returns 404 'The provider no longer has this item'", async () => {
         const musicType = await prisma.mediaType.findFirstOrThrow({ where: { name: "music" } })
         const media = await prisma.media.create({

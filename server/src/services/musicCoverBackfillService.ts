@@ -1,7 +1,7 @@
 import prisma from "@/prismaClient.js"
 import { DbClient } from "@/db.js"
 import { Prisma } from "@/generated/prisma/client.js"
-import { musicBrainzClient, extractReleaseGroupGenres } from "./search/musicBrainzClient.js"
+import { musicBrainzClient, extractReleaseGroupGenres, isMusicTrack } from "./search/musicBrainzClient.js"
 import { setMediaGenres } from "./genreService.js"
 import { attachExternalIdsToMedia } from "@/repositories/mediaRepository.js"
 
@@ -98,7 +98,7 @@ export async function backfillMusicCovers(
                     newImageUrl = item.imageUrl
                 }
             } else if (!item.imageUrl) {
-                const isTrack = meta.kind === "track" || (!meta.kind && Boolean(item.sourceId?.includes("#")))
+                const isTrack = isMusicTrack(item, meta)
                 if (isTrack) {
                     const trackResult = await musicBrainzClient.resolveTrackCover(
                         item.creator ?? "",
@@ -223,7 +223,7 @@ export async function backfillMusicData(
                 continue
             }
 
-            const isTrack = meta.kind === "track" || (!meta.kind && Boolean(item.sourceId?.includes("#")))
+            const isTrack = isMusicTrack(item, meta)
 
             if (!isTrack) {
                 // Album row (M1)

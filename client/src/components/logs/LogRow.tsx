@@ -30,17 +30,6 @@ export function LogRow({ log, onEdit, onDelete, onTagClick, leading, extraAction
   const metaParts = formatLogMetadata(media, log)
   const originalTitle = media.originalTitle ?? (typeof media.metadata?.originalTitle === "string" ? media.metadata.originalTitle : null)
   const isMusic = media.mediaType?.name?.toLowerCase() === "music"
-  const mbUrl = (typeof media.metadata?.mbReleaseGroupId === "string")
-    ? `https://musicbrainz.org/release-group/${encodeURIComponent(media.metadata.mbReleaseGroupId)}`
-    : (typeof media.metadata?.mbRecordingId === "string")
-    ? `https://musicbrainz.org/recording/${encodeURIComponent(media.metadata.mbRecordingId)}`
-    : null
-  const lastFmUrl = (isMusic && media.creator && media.title)
-    ? (media.metadata?.kind === "track"
-        ? `https://www.last.fm/music/${encodeURIComponent(media.creator)}/_/${encodeURIComponent(media.title)}`
-        : `https://www.last.fm/music/${encodeURIComponent(media.creator)}/${encodeURIComponent(media.title)}`)
-    : null
-  const url = (typeof media.metadata?.url === "string" ? media.metadata.url : null) || mbUrl || lastFmUrl
   const byline = [media.creator, media.year].filter(Boolean).join(" · ")
   const rating = displayRating(log.rating)
   const status = logDateLine(log)
@@ -50,9 +39,12 @@ export function LogRow({ log, onEdit, onDelete, onTagClick, leading, extraAction
     ? (childSummary?.rated === 1 ? "track" : "tracks")
     : (childSummary?.rated === 1 ? "season" : "seasons")
   const avgStr = displayRating(childSummary?.avgRating).text
-  const summaryLine = childSummary != null
+  const summaryLine = childSummary != null && childSummary.rated > 0
     ? `${childSummary.rated} ${unit} rated · avg ${avgStr}`
     : null
+  // Albums and shows can always be expanded, even before any track or season is rated
+  const parentKind = media.kind ?? (typeof media.metadata?.kind === "string" ? media.metadata.kind : null)
+  const canExpand = parentKind === "album" || parentKind === "show" || childSummary != null
 
   const isChild = Boolean(media.parentId || media.kind === "track" || media.kind === "season" || media.metadata?.kind === "track" || media.metadata?.kind === "season")
   const parentTitle = (typeof media.parent?.title === "string" && media.parent.title.trim())
@@ -95,33 +87,20 @@ export function LogRow({ log, onEdit, onDelete, onTagClick, leading, extraAction
             {rating.text}
             {rating.text !== "–" && <span className="text-xs text-muted-foreground">/100</span>}
           </p>
+          {canExpand && (
+            <Button
+              size="sm"
+              variant="outline"
+              aria-expanded={expanded}
+              onClick={() => setExpanded(!expanded)}
+              className="h-6 px-2 text-xs gap-1"
+            >
+              {expanded ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
+              {expanded ? "Hide" : "Expand"}
+            </Button>
+          )}
           {status && <p className="text-xs text-muted-foreground">{status}</p>}
           <div className="flex items-center justify-end gap-1 max-sm:ml-auto">
-            {isMusic ? (
-              <>
-                {mbUrl && (
-                  <a href={mbUrl} target="_blank" rel="noopener noreferrer" className="px-1 text-xs text-link underline-offset-4 hover:underline">
-                    View on MusicBrainz
-                  </a>
-                )}
-                {lastFmUrl && (
-                  <a href={lastFmUrl} target="_blank" rel="noopener noreferrer" className="px-1 text-xs text-link underline-offset-4 hover:underline">
-                    View on Last.fm
-                  </a>
-                )}
-                {!mbUrl && !lastFmUrl && url && (
-                  <a href={url} target="_blank" rel="noopener noreferrer" className="px-1 text-xs text-link underline-offset-4 hover:underline">
-                    More info
-                  </a>
-                )}
-              </>
-            ) : (
-              url && (
-                <a href={url} target="_blank" rel="noopener noreferrer" className="px-1 text-xs text-link underline-offset-4 hover:underline">
-                  More info
-                </a>
-              )
-            )}
             {extraActions}
             <LogActions log={log} onEdit={onEdit} onDelete={onDelete} extraMenuItems={extraMenuItems} />
           </div>
@@ -140,25 +119,14 @@ export function LogRow({ log, onEdit, onDelete, onTagClick, leading, extraAction
         {metaParts.length > 0 && <> · {metaParts.join(" · ")}</>}
       </p>
 
-      {summaryLine && (
-        <div className="mt-1 flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">{summaryLine}</span>
-          <Button
-            size="sm"
-            variant="outline"
-            aria-expanded={expanded}
-            onClick={() => setExpanded(!expanded)}
-            className="h-6 px-2 text-xs gap-1"
-          >
-            {expanded ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
-            {expanded ? "Hide" : "Expand"}
-          </Button>
-        </div>
-      )}
+      {summaryLine && <p className="mt-1 text-xs text-muted-foreground">{summaryLine}</p>}
 
-      {expanded && summaryLine && (
+      {expanded && canExpand && (
         <div className="mt-2 border-t border-border pt-2 flex flex-col gap-1">
           {childrenLoading && <p className="text-xs text-muted-foreground animate-pulse">Loading...</p>}
+          {!childrenLoading && children.every((c) => c.log == null) && (
+            <p className="text-xs text-muted-foreground">No {isMusic ? "tracks" : "seasons"} logged yet.</p>
+          )}
           {!childrenLoading && (
             <ul className="flex flex-col divide-y divide-border/40">
               {children

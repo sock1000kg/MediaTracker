@@ -27,7 +27,7 @@ export function MediaTile({ media, log, onEdit, onDelete, onLog }: MediaTileProp
         {rating && <span className="font-display tabular-nums text-primary" aria-label={rating.label}>{rating.text}</span>}
       </div>
       {byline && <p className="truncate text-xs text-muted-foreground">{byline}</p>}
-      <div className="flex items-center justify-end">
+      <div className="mt-auto flex items-center justify-end">
         <MediaActions media={media} logged={!!log} logInMenu onEdit={onEdit} onDelete={onDelete} onLog={onLog} />
       </div>
     </TileShell>

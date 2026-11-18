@@ -3,6 +3,8 @@ import {
     RateLimiter,
     LruCache,
     MusicBrainzClient,
+    MusicBrainzHttpError,
+    isMusicTrack,
 } from "@/services/search/musicBrainzClient.js"
 
 describe("MusicBrainzClient unit tests", () => {
@@ -89,23 +91,38 @@ describe("MusicBrainzClient unit tests", () => {
         expect(client.releaseGroupCache.has("rel-fail")).toBe(false)
     })
 
-    test("resolveReleaseGroupForRelease returns found, none, or failed", async () => {
+    test("resolveReleaseGroupForRelease looks the release up directly: found, none (404), or failed", async () => {
         const client = new MusicBrainzClient()
-        jest.spyOn(client, "fetchJson").mockResolvedValue({
-            releases: [
-                { id: "rel-found", "release-group": { id: "rg-100" } },
-            ],
+        const fetchSpy = jest.spyOn(client, "fetchJson").mockImplementation(async (url: string) => {
+            if (url.includes("/release/rel-found")) return { id: "rel-found", "release-group": { id: "rg-100" } }
+            if (url.includes("/release/rel-not-in-mb")) throw new MusicBrainzHttpError(404)
+            throw new MusicBrainzHttpError(503)
         })
 
-        const found = await client.resolveReleaseGroupForRelease("rel-found")
-        expect(found).toEqual({ status: "found", releaseGroupId: "rg-100" })
+        expect(await client.resolveReleaseGroupForRelease("rel-found")).toEqual({ status: "found", releaseGroupId: "rg-100" })
+        expect(String(fetchSpy.mock.calls[0][0])).not.toContain("query=")
+        expect(await client.resolveReleaseGroupForRelease("rel-not-in-mb")).toEqual({ status: "none" })
+        expect(await client.resolveReleaseGroupForRelease("rel-down")).toEqual({ status: "failed" })
+        expect(client.releaseGroupCache.has("rel-down")).toBe(false)
 
-        const none = await client.resolveReleaseGroupForRelease("rel-not-in-mb")
-        expect(none).toEqual({ status: "none" })
+        // found ids are cached
+        await client.resolveReleaseGroupForRelease("rel-found")
+        expect(fetchSpy).toHaveBeenCalledTimes(3)
+    })
 
-        jest.spyOn(client, "fetchJson").mockRejectedValue(new Error("Network timeout"))
-        const failed = await client.resolveReleaseGroupForRelease("rel-fail-net")
-        expect(failed).toEqual({ status: "failed" })
+    test("a merged release id resolves through the redirect; the search batch leaves it null and uncached", async () => {
+        const client = new MusicBrainzClient()
+        jest.spyOn(client, "fetchJson").mockImplementation(async (url: string) => {
+            // fetch follows MusicBrainz's 301, so a direct lookup of the old id returns the surviving release
+            if (url.includes("/release/old-merged-id")) return { id: "surviving-id", "release-group": { id: "rg-damn" } }
+            return { releases: [] }
+        })
+
+        const search = await client.resolveReleaseGroups(["old-merged-id"])
+        expect(search.groups.get("old-merged-id")).toBeNull()
+        expect(client.releaseGroupCache.has("old-merged-id")).toBe(false)
+
+        expect(await client.resolveReleaseGroupForRelease("old-merged-id")).toEqual({ status: "found", releaseGroupId: "rg-damn" })
     })
 
     test("resolveTrackCover prefers official release whose release group primary type is Album, then EP/Single", async () => {
@@ -159,5 +176,55 @@ describe("MusicBrainzClient unit tests", () => {
 
         const cover = await client.resolveTrackCover("Artist", "Track")
         expect(cover).toEqual({ status: "failed" })
+    })
+
+    test("isMusicTrack: older track rows with only the Media.kind column (or a /_/ Last.fm URL) count as tracks", () => {
+        // Avril 14th: logged before metadata.kind existed
+        expect(isMusicTrack({ kind: "track", sourceId: "076205ee-7f45-3325-a5a4-38d27ceabd61" }, {})).toBe(true)
+        expect(isMusicTrack({ kind: null, sourceId: "https://www.last.fm/music/Radiohead/_/15+Steps" }, {})).toBe(true)
+        expect(isMusicTrack({ kind: null, sourceId: "abc" }, { url: "https://www.last.fm/music/Aphex+Twin/_/Avril+14th" })).toBe(true)
+        expect(isMusicTrack({ kind: "album", sourceId: "503c4a0f" }, {})).toBe(false)
+        expect(isMusicTrack({ kind: null, sourceId: "lastfm:07d02411#3" }, {})).toBe(true)
+        expect(isMusicTrack({ kind: null, sourceId: "09a09037" }, { kind: "album" })).toBe(false)
+    })
+
+    test("track lookup: finds the studio recording despite spelling drift, preferring a studio album over a compilation", async () => {
+        const client = new MusicBrainzClient()
+        const fetchSpy = jest.spyOn(client, "fetchJson").mockImplementation(async () => ({
+            recordings: [
+                { id: "rec-comp", score: 100, title: "15 Step", releases: [
+                    { id: "r1", status: "Official", "release-group": { id: "rg-comp", "primary-type": "Album", "secondary-types": ["Compilation"] } },
+                ] },
+                { id: "rec-studio", score: 99, title: "15 Step", length: 237000, releases: [
+                    { id: "r2", status: "Official", "release-group": { id: "rg-in-rainbows", "primary-type": "Album" } },
+                ] },
+                { id: "rec-other-song", score: 60, title: "Steps", releases: [
+                    { id: "r3", status: "Official", "release-group": { id: "rg-wrong", "primary-type": "Album" } },
+                ] },
+            ],
+        }))
+
+        const res = await client.resolveTrackRecording("Radiohead", "15 Steps")
+        expect(res).toMatchObject({ status: "found", recordingId: "rec-studio", releaseGroupId: "rg-in-rainbows", title: "15 Step" })
+        const firstQuery = new URL(String(fetchSpy.mock.calls[0][0])).searchParams.get("query") ?? ""
+        expect(firstQuery).toContain("status:official")
+        expect(firstQuery).toContain("NOT secondarytype:live")
+        expect(fetchSpy).toHaveBeenCalledTimes(1)
+    })
+
+    test("track lookup: falls back to the exact-title search when no official non-live release matches", async () => {
+        const client = new MusicBrainzClient()
+        const fetchSpy = jest.spyOn(client, "fetchJson")
+            .mockResolvedValueOnce({ recordings: [] })
+            .mockResolvedValueOnce({ recordings: [
+                { id: "rec-live", score: 100, title: "Rare Song", releases: [
+                    { id: "r1", status: "Bootleg", "release-group": { id: "rg-live", "primary-type": "Album", "secondary-types": ["Live"] } },
+                ] },
+            ] })
+
+        const res = await client.resolveTrackRecording("Artist", "Rare Song")
+        expect(res).toMatchObject({ status: "found", recordingId: "rec-live", releaseGroupId: "rg-live" })
+        expect(fetchSpy).toHaveBeenCalledTimes(2)
+        expect(new URL(String(fetchSpy.mock.calls[1][0])).searchParams.get("query")).toContain('recording:"Rare Song"')
     })
 })

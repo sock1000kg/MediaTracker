@@ -142,6 +142,7 @@ export const mbReleaseGroupSchema = z.object({
     id: z.string(),
     title: z.string().optional(),
     "primary-type": z.string().nullable().optional(),
+    "secondary-types": z.array(z.string()).nullable().optional(),
     "type-id": z.string().optional(),
 })
 
@@ -166,6 +167,7 @@ export const mbRecordingSearchReleaseSchema = z.object({
 
 export const mbRecordingSearchItemSchema = z.object({
     id: z.string(),
+    score: z.number().optional(),
     title: z.string().optional(),
     length: z.number().nullable().optional(),
     "artist-credit": z.array(z.object({ name: z.string() })).optional(),
@@ -235,6 +237,18 @@ export type TrackRecordingResult =
     | { status: "none" }
     | { status: "failed" }
 
+/** Escapes Lucene query syntax so a title can be used unquoted (loose word match) in a MusicBrainz search. */
+export function escapeLucene(text: string): string {
+    return text.replace(/([+\-!(){}[\]^"~*?:\\/]|&&|\|\|)/g, "\\$1")
+}
+
+/** A non-2xx MusicBrainz response; `status` lets callers tell "not found" (404) from "down". */
+export class MusicBrainzHttpError extends Error {
+    constructor(readonly status: number) {
+        super(`MusicBrainz request failed with status ${status}`)
+    }
+}
+
 export class MusicBrainzClient {
     readonly baseUrl = MB_BASE_URL
     readonly timeoutMs = MB_TIMEOUT_MS
@@ -260,7 +274,7 @@ export class MusicBrainzClient {
             })
 
             if (!res.ok) {
-                throw new Error(`MusicBrainz request failed with status ${res.status}`)
+                throw new MusicBrainzHttpError(res.status)
             }
             return await res.json()
         })
@@ -270,6 +284,9 @@ export class MusicBrainzClient {
      * Resolves a list of release mbids to their release-group IDs in batches of <= 25.
      * Caches release-id -> release-group ID to avoid re-querying.
      * On failure or timeout, failed mbids are recorded in `failed` and NOT cached.
+     * Used by search only (one request covers a whole results page). Ids the search index doesn't know come back
+     * null and are NOT cached: merged releases (see resolveReleaseGroupForRelease) are missing from the index, and
+     * a later log/refresh of the same album should still get its direct lookup.
      */
     async resolveReleaseGroups(releaseMbids: string[]): Promise<ResolveReleaseGroupsResult> {
         const groups = new Map<string, string | null>()
@@ -312,6 +329,7 @@ export class MusicBrainzClient {
                 }
 
                 for (const mbid of chunk) {
+                    if (!foundMap.has(mbid)) continue
                     const rgid = foundMap.get(mbid) ?? null
                     this.releaseGroupCache.set(mbid, rgid)
                     groups.set(mbid, rgid)
@@ -321,6 +339,11 @@ export class MusicBrainzClient {
                 for (const mbid of chunk) {
                     failed.add(mbid)
                 }
+                continue
+            }
+
+            for (const mbid of chunk) {
+                if (!groups.has(mbid)) groups.set(mbid, null)
             }
         }
 
@@ -337,15 +360,25 @@ export class MusicBrainzClient {
     async resolveReleaseGroupForRelease(mbid: string): Promise<ReleaseGroupResult> {
         const clean = mbid?.trim()
         if (!clean) return { status: "none" }
-        const { groups, failed } = await this.resolveReleaseGroups([clean])
-        if (failed.has(clean)) {
+        const cached = this.releaseGroupCache.get(clean)
+        if (cached) return { status: "found", releaseGroupId: cached }
+
+        // A direct lookup, not a search: when MusicBrainz merges two releases, the old id (often the one Last.fm
+        // still hands out, e.g. DAMN.) 301-redirects to the surviving release here (fetch follows it), while the
+        // search index has forgotten it. Only a 404 means the release is really gone.
+        try {
+            const json = await this.fetchJson(`${this.baseUrl}/release/${encodeURIComponent(clean)}?inc=release-groups`)
+            const rgid = mbReleaseSearchItemSchema.parse(json)["release-group"]?.id ?? null
+            if (!rgid) return { status: "none" }
+            this.releaseGroupCache.set(clean, rgid)
+            return { status: "found", releaseGroupId: rgid }
+        } catch (error) {
+            if (error instanceof MusicBrainzHttpError && (error.status === 404 || error.status === 400)) {
+                return { status: "none" }
+            }
+            console.warn("MusicBrainz release lookup failed:", error)
             return { status: "failed" }
         }
-        const rgid = groups.get(clean)
-        if (rgid) {
-            return { status: "found", releaseGroupId: rgid }
-        }
-        return { status: "none" }
     }
 
     /**
@@ -375,17 +408,26 @@ export class MusicBrainzClient {
         if (!cleanArtist || !cleanTitle) return { status: "none" }
 
         try {
-            const escapedTitle = cleanTitle.replace(/"/g, '\\"')
             const escapedArtist = cleanArtist.replace(/"/g, '\\"')
-            const query = `recording:"${escapedTitle}" AND artist:"${escapedArtist}"`
+            const search = async (query: string) => {
+                const u = new URL(`${this.baseUrl}/recording/`)
+                u.searchParams.set("query", query)
+                u.searchParams.set("limit", "25")
+                return mbRecordingSearchResponseSchema.parse(await this.fetchJson(u.toString())).recordings ?? []
+            }
 
-            const u = new URL(`${this.baseUrl}/recording/`)
-            u.searchParams.set("query", query)
-            u.searchParams.set("limit", "25")
-
-            const json = await this.fetchJson(u.toString())
-            const parsed = mbRecordingSearchResponseSchema.parse(json)
-            const recordings = parsed.recordings ?? []
+            // First: a loose title match limited to official, non-live releases. An exact phrase misses spelling
+            // drift between Last.fm and MusicBrainz ("15 Steps" vs the studio "15 Step"), and popular tracks have
+            // dozens of live bootleg recordings that crowd the studio one out of the first page.
+            // Then: the exact phrase with no filters, for tracks that only exist on unofficial or live releases.
+            // MusicBrainz's own relevance score keeps the loose match from wandering to another song that shares a
+            // word ("Love" → "Love Song"): "15 Step" scores 99 for "15 Steps".
+            let recordings = (await search(
+                `recording:(${escapeLucene(cleanTitle)}) AND artist:"${escapedArtist}" AND status:official AND NOT secondarytype:live`
+            )).filter((r) => (r.score ?? 100) >= 90)
+            if (recordings.length === 0) {
+                recordings = await search(`recording:"${cleanTitle.replace(/"/g, '\\"')}" AND artist:"${escapedArtist}"`)
+            }
 
             let bestRecording: (typeof recordings)[0] | null = null
             let bestReleaseGroupId: string | null = null
@@ -424,6 +466,8 @@ export class MusicBrainzClient {
                         else if (primaryType === "ep" || primaryType === "single") score = 40
                         else score = 30
                     }
+                    // A studio album beats a compilation, soundtrack or live album of the same status
+                    if ((rg["secondary-types"] ?? []).length > 0) score -= 15
 
                     if (score > bestScore) {
                         bestScore = score
@@ -471,6 +515,21 @@ export class MusicBrainzClient {
 }
 
 export const musicBrainzClient = new MusicBrainzClient()
+
+/**
+ * Track or album? Older rows (logged before metadata.kind existed, e.g. a track logged from track search) only
+ * have the Media.kind column, and their sourceId is a bare Last.fm mbid or URL, so check every marker we have.
+ * Treating a track as an album looks its recording id up as a release, which "doesn't exist".
+ */
+export function isMusicTrack(
+    media: { kind?: string | null; sourceId?: string | null },
+    meta: Record<string, unknown>
+): boolean {
+    const kind = (typeof meta.kind === "string" && meta.kind) || media.kind
+    if (kind) return kind === "track"
+    const url = typeof meta.url === "string" ? meta.url : media.sourceId ?? ""
+    return Boolean(media.sourceId?.includes("#")) || url.includes("/_/")
+}
 
 export function buildMusicBrainzUrl(id: string, type: "release-group" | "recording" | "release" = "release-group"): string {
     return `https://musicbrainz.org/${type}/${encodeURIComponent(id)}`

@@ -40,8 +40,7 @@ import { bggThingResponseSchema } from "@/schemas/search/bggSchemas.js"
 import {
     musicBrainzClient,
     extractReleaseGroupGenres,
-    MbReleaseGroupDetail,
-} from "@/services/search/musicBrainzClient.js"
+    MbReleaseGroupDetail, isMusicTrack } from "@/services/search/musicBrainzClient.js"
 import { musicSearchService } from "@/services/search/lastFmSearchService.js"
 
 const TEN_MINUTES_MS = 10 * 60 * 1000
@@ -519,7 +518,7 @@ export class MediaRefreshService {
     }
 
     private async refreshMusic(userId: string, media: RefreshableMedia, meta: Record<string, unknown>) {
-        const isTrack = meta.kind === "track" || (!meta.kind && Boolean(media.sourceId?.includes("#")))
+        const isTrack = isMusicTrack(media, meta)
         const now = new Date().toISOString()
         const { originalTitle: _staleOrig, ...cleanMeta } = meta
 
@@ -530,6 +529,21 @@ export class MediaRefreshService {
             }
             if (recRes.status === "none") {
                 throw new AppError("The provider no longer has this item", 404)
+            }
+
+            // A standalone track joins its album when that album is already in the library (same release group),
+            // so it shows under the album and shares its cover.
+            let parentId = media.parentId
+            if (!parentId && recRes.releaseGroupId) {
+                const album = await prisma.media.findFirst({
+                    where: {
+                        source: "lastfm",
+                        kind: "album",
+                        metadata: { path: ["mbReleaseGroupId"], equals: recRes.releaseGroupId },
+                    },
+                    select: { id: true },
+                })
+                parentId = album?.id ?? null
             }
 
             const durationSec = recRes.lengthMs ? Math.round(recRes.lengthMs / 1000) : null
@@ -553,6 +567,7 @@ export class MediaRefreshService {
                     creator: recRes.artist || media.creator,
                     description: media.description,
                     imageUrl: recRes.imageUrl || media.imageUrl,
+                    parentId,
                     metadata: updatedMetadata,
                 },
             })

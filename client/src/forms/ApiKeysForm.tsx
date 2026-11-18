@@ -11,6 +11,8 @@ import { RAWG_URL, RAWG_ATTRIBUTION_TEXT } from "@/lib/gameFormat"
 interface ServiceConfig {
     service: AllowedSource
     label: string
+    /** Shown instead of the text label (e.g. TMDB's logo, which their attribution rules ask for) */
+    labelLogo?: string
     placeholder?: string
     attribution?: React.ReactNode
 }
@@ -20,13 +22,9 @@ const SERVICES: ServiceConfig[] = [
     {
         service: "tmdb",
         label: "TMDB",
+        labelLogo: TMDB_LOGO_URL,
         placeholder: "TMDB API Key or read access token. Used for movie search.",
-        attribution: (
-            <span className="inline-flex items-center gap-2">
-                <img src={TMDB_LOGO_URL} alt="TMDB" className="h-4 w-auto inline-flex align-middle" />
-                <span>{TMDB_ATTRIBUTION}</span>
-            </span>
-        ),
+        attribution: <span>{TMDB_ATTRIBUTION}</span>,
     },
     {
         service: "rawg",
@@ -75,7 +73,11 @@ function ApiKeyRow({
     return (
         <form onSubmit={handleSubmit}>
             <label className="block mb-4">
-                <span className="text-foreground font-medium">{config.label}</span>
+                {config.labelLogo ? (
+                    <img src={config.labelLogo} alt={config.label} className="block h-4 w-auto my-1" />
+                ) : (
+                    <span className="text-foreground font-medium">{config.label}</span>
+                )}
                 <div className="flex gap-4 mt-1">
                     <input
                         type="text"

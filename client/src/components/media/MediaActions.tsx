@@ -3,7 +3,8 @@ import { useQueryClient } from "@tanstack/react-query"
 import { MoreHorizontal, Loader2 } from "lucide-react"
 import type { Media } from "@/types/mainTypes"
 import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { providerLinks } from "@/lib/providerLinks"
 import { refreshMedia } from "@/api/media"
 import { fetchLogsQueryOptions } from "@/queryOptions/fetchLogsQueryOptions"
 import { fetchMediasQueryOptions } from "@/queryOptions/fetchMediasQueryOptions"
@@ -29,6 +30,7 @@ export function MediaActions({ media, logged, logInMenu = false, onEdit, onDelet
     return () => clearTimeout(t)
   }, [errorToast])
 
+  const links = providerLinks(media)
   const isCustom = !media.source || media.source === "custom"
 
   const handleRefresh = async () => {
@@ -54,6 +56,12 @@ export function MediaActions({ media, logged, logInMenu = false, onEdit, onDelet
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          {links.map((link) => (
+            <DropdownMenuItem key={link.href} asChild>
+              <a href={link.href} target="_blank" rel="noopener noreferrer">{link.label}</a>
+            </DropdownMenuItem>
+          ))}
+          {links.length > 0 && <DropdownMenuSeparator />}
           {!logged && logInMenu && <DropdownMenuItem onSelect={() => onLog(media)}>Log it</DropdownMenuItem>}
           {!isCustom && (
             <DropdownMenuItem

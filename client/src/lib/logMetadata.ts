@@ -226,8 +226,8 @@ function displayValue(v: unknown): string | null {
 }
 
 /**
- * Human-readable metadata parts for a Logs card (join with " • "). Keys that were formatted are hidden;
- * every other key shows as "key: value" (empty values and objects are skipped). Never throws.
+ * Human-readable metadata parts for a Logs card (join with " • "). Keys that were formatted are hidden; on custom
+ * media every other key shows as "key: value" (empty values and objects are skipped). Never throws.
  */
 export function formatLogMetadata(
   media: (Pick<Media, "metadata"> & { source?: string | null; kind?: string | null }) | null | undefined,
@@ -241,6 +241,9 @@ export function formatLogMetadata(
     if (Object.keys(effectiveMeta).length === 0) return []
     const { parts, used } = branchFor(effectiveMeta, media?.source ?? undefined, log?.progress ?? null)
     const out = [...parts]
+    // Leftover "key: value" text is only for custom media, whose metadata the user typed in MediaForm. On provider
+    // media the leftovers are ids and bookkeeping stamps (tmdbId, fetchedAt, refreshCheckedAt, mbSyncedAt, ...).
+    if (media?.source) return out
     for (const [key, value] of Object.entries(meta)) {
       if (ALWAYS_HIDDEN.has(key) || used.has(key)) continue
       const shown = displayValue(value)

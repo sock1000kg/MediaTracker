@@ -35,9 +35,12 @@ export function LogTile({ log, onEdit, onDelete, onTagClick, badge, extraActions
     ? (childSummary?.rated === 1 ? "track" : "tracks")
     : (childSummary?.rated === 1 ? "season" : "seasons")
   const avgStr = displayRating(childSummary?.avgRating).text
-  const summaryLine = childSummary != null
+  const summaryLine = childSummary != null && childSummary.rated > 0
     ? `${childSummary.rated} ${unit} rated · avg ${avgStr}`
     : null
+  // Albums and shows can always be expanded, even before any track or season is rated
+  const parentKind = media.kind ?? (typeof media.metadata?.kind === "string" ? media.metadata.kind : null)
+  const canExpand = parentKind === "album" || parentKind === "show" || childSummary != null
 
   const isChild = Boolean(media.parentId || media.kind === "track" || media.kind === "season" || media.metadata?.kind === "track" || media.metadata?.kind === "season")
   const parentTitle = (typeof media.parent?.title === "string" && media.parent.title.trim())
@@ -74,7 +77,7 @@ export function LogTile({ log, onEdit, onDelete, onTagClick, badge, extraActions
       {fromSubtitle && <p className="truncate text-xs text-muted-foreground">{fromSubtitle}</p>}
       {byline && <p className="truncate text-xs text-muted-foreground">{byline}</p>}
 
-      {summaryLine && (
+      {canExpand && (
         <div className="mt-1">
           <Button
             size="sm"
@@ -83,12 +86,15 @@ export function LogTile({ log, onEdit, onDelete, onTagClick, badge, extraActions
             onClick={() => setExpanded(!expanded)}
             className="w-full text-xs h-6 px-1 flex items-center justify-between"
           >
-            <span className="truncate">{summaryLine}</span>
+            <span className="truncate">{summaryLine ?? (isMusic ? "Tracks" : "Seasons")}</span>
             {expanded ? <ChevronUp className="size-3 shrink-0" /> : <ChevronDown className="size-3 shrink-0" />}
           </Button>
           {expanded && (
             <div className="mt-2 border-t border-border pt-1 flex flex-col gap-1">
               {childrenLoading && <p className="text-[11px] text-muted-foreground animate-pulse">Loading...</p>}
+              {!childrenLoading && children.every((c) => c.log == null) && (
+                <p className="text-[11px] text-muted-foreground">No {isMusic ? "tracks" : "seasons"} logged yet.</p>
+              )}
               {!childrenLoading && (
                 <ul className="flex flex-col divide-y divide-border/30">
                   {children
@@ -138,7 +144,7 @@ export function LogTile({ log, onEdit, onDelete, onTagClick, badge, extraActions
           ))}
         </div>
       )}
-      <div className="flex items-center justify-between mt-1">
+      <div className="flex items-center justify-between mt-auto pt-1">
         <p className="text-xs text-muted-foreground">{formatLogDate(log.finished_at || log.logged_at)}</p>
         <div className="flex items-center gap-1">
           {extraActions}

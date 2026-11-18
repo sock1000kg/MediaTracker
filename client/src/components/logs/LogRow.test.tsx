@@ -161,4 +161,21 @@ describe("LogRow component with children logs", () => {
     expect(screen.getByText("Only Shallow")).toBeInTheDocument()
     expect(screen.getByText("from Loveless")).toBeInTheDocument()
   })
+
+  it("an album with no rated tracks can still be expanded; a book has no Expand", async () => {
+    const user = userEvent.setup()
+    const unratedAlbum: Log = { ...parentAlbumLog, media: { ...parentAlbumLog.media, childSummary: undefined } }
+    renderWithProviders(<LogRow log={unratedAlbum} onEdit={onEdit} onDelete={onDelete} childrenLogs={[]} />)
+    expect(screen.queryByText(/tracks rated/)).toBeNull()
+    await user.click(screen.getByRole("button", { name: /expand/i }))
+    expect(screen.getByText("No tracks logged yet.")).toBeTruthy()
+
+    const book: Log = {
+      ...parentAlbumLog,
+      id: "018f0000-0000-7000-8000-000000000099",
+      media: { ...parentAlbumLog.media, id: "018f0000-0000-7000-8000-000000000999", metadata: {}, childSummary: undefined, mediaType: { ...dummyMediaType, name: "book" } },
+    }
+    renderWithProviders(<LogRow log={book} onEdit={onEdit} onDelete={onDelete} />)
+    expect(screen.getAllByRole("button", { name: /expand|hide/i })).toHaveLength(1)
+  })
 })
