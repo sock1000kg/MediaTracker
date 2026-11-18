@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { createUserAgentHeader } from "@/utilities.js"
 import { RateLimiter, musicBrainzLimiter } from "./rateLimiter.js"
+import { providerFetch } from "@/providers/providerFetch.js"
 
 export const MB_BASE_URL = "https://musicbrainz.org/ws/2"
 export const MB_TIMEOUT_MS = 10000
@@ -212,24 +213,24 @@ export class MusicBrainzClient {
     }
 
     async fetchJson(url: string): Promise<unknown> {
-        return this.limiter.schedule(async () => {
-            const u = new URL(url)
-            u.searchParams.set("fmt", "json")
-            const headers = createUserAgentHeader().headers as Record<string, string>
+        const u = new URL(url)
+        u.searchParams.set("fmt", "json")
 
-            const res = await fetch(u.toString(), {
-                headers: {
-                    ...headers,
-                    Accept: "application/json",
-                },
-                signal: AbortSignal.timeout(this.timeoutMs),
+        try {
+            const res = await providerFetch("musicbrainz", u, {
+                timeoutMs: this.timeoutMs,
+                allow404: true,
+                allowHttpErrors: true,
             })
 
             if (!res.ok) {
                 throw new MusicBrainzHttpError(res.status)
             }
             return await res.json()
-        })
+        } catch (err) {
+            if (err instanceof MusicBrainzHttpError) throw err
+            throw new MusicBrainzHttpError(503)
+        }
     }
 
     /**

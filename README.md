@@ -74,7 +74,7 @@ See **[docs/setup.md](docs/setup.md)** for running tests, production builds and 
 | [docs/configuration.md](docs/configuration.md) | Every environment variable                                             |
 | [docs/api.md](docs/api.md)                     | REST API reference                                                     |
 | [docs/architecture.md](docs/architecture.md)   | How the server, search providers, job queue and auth fit together      |
-| [docs/providers.md](docs/providers.md)         | Data providers: their terms, what we must not do, required attribution |
+| [client/public/docs/providers.html](client/public/docs/providers.html) | Data providers: their terms, what we must not do, required attribution (served at /docs/providers.html) |
 | [docs/deployment.md](docs/deployment.md)       | Docker images, Compose files, CI/CD                                    |
 | [client/DESIGN.md](client/DESIGN.md)           | Visual design system and UI behaviour                                  |
 

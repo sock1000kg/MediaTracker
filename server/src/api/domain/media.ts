@@ -112,6 +112,11 @@ export async function createImportedMedia(
             if (!systemUser) {
                 throw new AppError("System user missing", 500)
             }
+            let effectiveParentMetadata = (parent.metadata as Prisma.JsonValue) ?? null
+            if (effectiveParentMetadata && typeof effectiveParentMetadata === "object" && !Array.isArray(effectiveParentMetadata)) {
+                const { url: _unusedUrl, ...restMeta } = effectiveParentMetadata as Record<string, unknown>
+                effectiveParentMetadata = restMeta as Prisma.JsonValue
+            }
             parentMedia = await createMedia(
                 parent.title,
                 parentType,
@@ -120,7 +125,7 @@ export async function createImportedMedia(
                 parent.source,
                 parent.sourceId,
                 parent.description ?? null,
-                (parent.metadata as Prisma.JsonValue) ?? null,
+                effectiveParentMetadata,
                 parent.imageUrl ?? null,
                 systemUser.id,
                 tx,
@@ -233,7 +238,7 @@ export async function createImportedMedia(
         }
 
         let effectiveMetadata = mediaData.metadata ?? null
-        if (mediaData.source === "lastfm" && effectiveMetadata && typeof effectiveMetadata === "object" && !Array.isArray(effectiveMetadata)) {
+        if (effectiveMetadata && typeof effectiveMetadata === "object" && !Array.isArray(effectiveMetadata)) {
             const { url: _unusedUrl, ...restMeta } = effectiveMetadata as Record<string, unknown>
             effectiveMetadata = restMeta
         }

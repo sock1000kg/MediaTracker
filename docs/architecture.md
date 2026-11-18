@@ -35,6 +35,8 @@ Deleting a user cascades to everything they own. Shared `system` media is never 
 
 ## Search providers
 
+Every provider call goes through `providerFetch` (`server/src/providers/providerFetch.ts`), ensuring uniform rate limiting, identified `User-Agent` headers, auth injection, timeouts, and single-retry handling on `429` / `503`.
+
 Each provider lives in `services/search/*SearchService.ts`, and they share the same shape:
 - **Pure, tested helpers:** a URL builder and a result mapper.
 - **Responses:** validated against Zod schemas and mapped to a common `SearchResult`.
@@ -52,7 +54,7 @@ Each provider lives in `services/search/*SearchService.ts`, and they share the s
 
 ### Provider terms we follow
 
-Full details per provider (rules, what we must not do, required attribution): [providers.md](providers.md).
+Full details per provider (rules, what we must not do, required attribution): [providers.html](../client/public/docs/providers.html).
 
 - TMDB logo + 6-month refresh
 - Cover Art Archive for music art

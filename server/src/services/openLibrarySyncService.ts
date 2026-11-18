@@ -4,6 +4,7 @@ import { Prisma } from "@/generated/prisma/client.js"
 import { openLibraryLimiter, parseRetryAfter } from "./search/rateLimiter.js"
 import { createUserAgentHeader } from "@/utilities.js"
 import { openLibraryResponseSchema, OpenLibraryBook } from "@/schemas/search/bookSchemas.js"
+import { openLibraryService } from "@/services/search/openLibrarySearchService.js"
 import { setMediaGenres, setMediaCreators, isJunkGenre } from "./genreService.js"
 import { attachExternalIdsToMedia } from "@/repositories/mediaRepository.js"
 
@@ -111,44 +112,13 @@ export async function syncOpenLibraryBooks(
         }
 
         // 2. Batch search for all ISBNs in candidates (if any)
-        const docByIsbn = new Map<string, OpenLibraryBook>()
+        let docByIsbn = new Map<string, OpenLibraryBook>()
         let batchIsbnSearchFailed = false
 
         if (isbnsToQuery.length > 0) {
             try {
-                const u = new URL("https://openlibrary.org/search.json")
-                u.searchParams.set("q", `isbn:(${isbnsToQuery.join(" OR ")})`)
-                u.searchParams.set("fields", "key,isbn,title,author_name,cover_i,number_of_pages_median,publisher,subject,first_publish_year")
-                u.searchParams.set("limit", String(Math.max(isbnsToQuery.length * 2, 50)))
-
-                const res = await openLibraryLimiter.schedule(() =>
-                    fetch(u.toString(), {
-                        headers: createUserAgentHeader().headers as Record<string, string>,
-                        signal: AbortSignal.timeout(10000),
-                    })
-                )
-
-                if (res.status === 429) {
-                    const retryAfter = parseRetryAfter(res, 1000)
-                    openLibraryLimiter.pause(retryAfter)
-                    batchIsbnSearchFailed = true
-                } else if (!res.ok) {
-                    batchIsbnSearchFailed = true
-                } else {
-                    const raw = await res.json()
-                    const checked = openLibraryResponseSchema.safeParse(raw)
-                    if (checked.success && checked.data.docs) {
-                        for (const doc of checked.data.docs) {
-                            if (Array.isArray(doc.isbn)) {
-                                for (const isb of doc.isbn) {
-                                    const cleaned = cleanIsbn(isb)
-                                    if (cleaned) docByIsbn.set(cleaned, doc)
-                                }
-                            }
-                        }
-                    }
-                    consecutiveFailures = 0
-                }
+                docByIsbn = await openLibraryService.findByIsbns(isbnsToQuery)
+                consecutiveFailures = 0
             } catch {
                 batchIsbnSearchFailed = true
             }
@@ -179,35 +149,8 @@ export async function syncOpenLibraryBooks(
             if (!matchedDoc) {
                 let singleSearchFailed = false
                 try {
-                    const u = new URL("https://openlibrary.org/search.json")
-                    u.searchParams.set("title", item.title)
-                    if (item.creator) {
-                        u.searchParams.set("author", item.creator)
-                    }
-                    u.searchParams.set("fields", "key,isbn,title,author_name,cover_i,number_of_pages_median,publisher,subject,first_publish_year")
-                    u.searchParams.set("limit", "1")
-
-                    const res = await openLibraryLimiter.schedule(() =>
-                        fetch(u.toString(), {
-                            headers: createUserAgentHeader().headers as Record<string, string>,
-                            signal: AbortSignal.timeout(8000),
-                        })
-                    )
-
-                    if (res.status === 429) {
-                        const retryAfter = parseRetryAfter(res, 1000)
-                        openLibraryLimiter.pause(retryAfter)
-                        singleSearchFailed = true
-                    } else if (!res.ok) {
-                        singleSearchFailed = true
-                    } else {
-                        const raw = await res.json()
-                        const checked = openLibraryResponseSchema.safeParse(raw)
-                        if (checked.success && checked.data.docs.length > 0) {
-                            matchedDoc = checked.data.docs[0]
-                        }
-                        consecutiveFailures = 0
-                    }
+                    matchedDoc = await openLibraryService.findByTitleAuthor(item.title, item.creator)
+                    consecutiveFailures = 0
                 } catch {
                     singleSearchFailed = true
                 }

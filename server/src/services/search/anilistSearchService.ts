@@ -7,6 +7,8 @@ import { ISearchService } from "./searchServiceInterface.js"
 import { AppError } from "@/api/domain/error.js"
 import { unexpectedShape } from "./providerErrors.js"
 import { anilistLimiter, parseRetryAfter } from "./rateLimiter.js"
+import { providerFetch } from "@/providers/providerFetch.js"
+import { getProviderEntry } from "@/providers/registry.js"
 
 const ANILIST_ENDPOINT = "https://graphql.anilist.co"
 const MIN_GAP_MS = 700 // AniList allows ~90 requests/min
@@ -14,6 +16,96 @@ const DEFAULT_RETRY_MS = 1000
 const MAX_RETRY_MS = 3000
 const TIMEOUT_MS = 8000
 const CONNECTION_ERROR_CODES = new Set(["UND_ERR_CONNECT_TIMEOUT", "ECONNREFUSED", "ENOTFOUND", "EAI_AGAIN", "ECONNRESET"])
+
+export const ANILIST_BATCH_MAL_QUERY = `
+query ($ids: [Int], $type: MediaType) {
+  Page(perPage: 50) {
+    media(idMal_in: $ids, type: $type) {
+      id
+      idMal
+      title {
+        romaji
+        english
+        native
+      }
+      episodes
+      duration
+      chapters
+      volumes
+      startDate {
+        year
+      }
+      averageScore
+      genres
+      tags {
+        name
+        rank
+        isAdult
+        isGeneralSpoiler
+        isMediaSpoiler
+      }
+      studios(isMain: true) {
+        nodes {
+          name
+        }
+      }
+      coverImage {
+        extraLarge
+        large
+        medium
+      }
+      description
+      format
+      siteUrl
+    }
+  }
+}
+`
+
+export const ANILIST_BATCH_ID_QUERY = `
+query ($ids: [Int], $type: MediaType) {
+  Page(perPage: 50) {
+    media(id_in: $ids, type: $type) {
+      id
+      idMal
+      title {
+        romaji
+        english
+        native
+      }
+      episodes
+      duration
+      chapters
+      volumes
+      startDate {
+        year
+      }
+      averageScore
+      genres
+      tags {
+        name
+        rank
+        isAdult
+        isGeneralSpoiler
+        isMediaSpoiler
+      }
+      studios(isMain: true) {
+        nodes {
+          name
+        }
+      }
+      coverImage {
+        extraLarge
+        large
+        medium
+      }
+      description
+      format
+      siteUrl
+    }
+  }
+}
+`
 
 export const ANILIST_GRAPHQL_QUERY = `query ($page: Int, $perPage: Int, $search: String, $type: MediaType, $format_in: [MediaFormat], $countryOfOrigin: CountryCode, $sort: [MediaSort]) {
   Page(page: $page, perPage: $perPage) {
@@ -314,30 +406,21 @@ export class AniListSearchService implements ISearchService {
         return items.filter(i => i.id != null).map(i => mapAniListMedia(mode, i))
     }
 
-    private async fetchJson(variables: AniListVariables): Promise<unknown> {
-        const body = JSON.stringify({ query: ANILIST_GRAPHQL_QUERY, variables })
-        const send = () => anilistLimiter.schedule(() =>
-            fetch(ANILIST_ENDPOINT, {
+    async fetchGraphql(query: string, variables: unknown): Promise<unknown> {
+        const body = JSON.stringify({ query, variables })
+        try {
+            const res = await providerFetch("anilist", ANILIST_ENDPOINT, {
                 method: "POST",
                 headers: {
-                    ...(createUserAgentHeader().headers as Record<string, string>),
                     "Content-Type": "application/json",
                 },
                 body,
-                signal: AbortSignal.timeout(TIMEOUT_MS),
+                timeoutMs: TIMEOUT_MS,
+                allowHttpErrors: true,
             })
-        )
 
-        try {
-            let res = await send()
             if (res.status === 429) {
-                const delay = parseRetryAfter(res, DEFAULT_RETRY_MS, MAX_RETRY_MS)
-                anilistLimiter.pause(delay)
-                await sleep(delay)
-                res = await send()
-                if (res.status === 429) {
-                    throw new AppError("Anime search is busy right now, try again in a moment", 503)
-                }
+                throw new AppError("Anime search is busy right now, try again in a moment", 503)
             }
             const remaining = res.headers.get("X-RateLimit-Remaining")
             if (remaining !== null && Number(remaining) <= 2) {
@@ -362,6 +445,64 @@ export class AniListSearchService implements ISearchService {
             }
             throw new AppError("AniList search failed", 502, { cause: error })
         }
+    }
+
+    private async fetchJson(variables: AniListVariables): Promise<unknown> {
+        return this.fetchGraphql(ANILIST_GRAPHQL_QUERY, variables)
+    }
+
+    async getByMalIds(ids: number[], mode: AniListMode = "anime"): Promise<Map<number, SearchResult>> {
+        const result = new Map<number, SearchResult>()
+        if (ids.length === 0) return result
+
+        const batchSize = getProviderEntry("anilist").batchSize ?? 50
+        const anilistType = mode === "manga" ? "MANGA" : "ANIME"
+
+        for (let i = 0; i < ids.length; i += batchSize) {
+            const batchIds = ids.slice(i, i + batchSize)
+            try {
+                const json = await this.fetchGraphql(ANILIST_BATCH_MAL_QUERY, { ids: batchIds, type: anilistType })
+                const parsed = anilistResponseSchema.safeParse(json)
+                if (parsed.success && parsed.data.data?.Page?.media) {
+                    for (const m of parsed.data.data.Page.media) {
+                        if (m && typeof m.idMal === "number") {
+                            const mapped = mapAniListMedia(mode, m as AniListMedia)
+                            result.set(m.idMal, mapped)
+                        }
+                    }
+                }
+            } catch {
+                // If a batch fails, continue with remaining batches
+            }
+        }
+        return result
+    }
+
+    async getByAniListIds(ids: number[], mode: AniListMode = "anime"): Promise<Map<number, SearchResult>> {
+        const result = new Map<number, SearchResult>()
+        if (ids.length === 0) return result
+
+        const batchSize = getProviderEntry("anilist").batchSize ?? 50
+        const anilistType = mode === "manga" ? "MANGA" : "ANIME"
+
+        for (let i = 0; i < ids.length; i += batchSize) {
+            const batchIds = ids.slice(i, i + batchSize)
+            try {
+                const json = await this.fetchGraphql(ANILIST_BATCH_ID_QUERY, { ids: batchIds, type: anilistType })
+                const parsed = anilistResponseSchema.safeParse(json)
+                if (parsed.success && parsed.data.data?.Page?.media) {
+                    for (const m of parsed.data.data.Page.media) {
+                        if (m && typeof m.id === "number") {
+                            const mapped = mapAniListMedia(mode, m as AniListMedia)
+                            result.set(m.id, mapped)
+                        }
+                    }
+                }
+            } catch {
+                // If a batch fails, continue with remaining batches
+            }
+        }
+        return result
     }
 
     async search(mode: AniListMode, q: string, page = 1, filters: AnimeSearchFilters = {}):

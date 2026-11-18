@@ -10,8 +10,7 @@ import { useProviderSearch } from "@/hooks/useProviderSearch"
 import { useSearchLogging } from "@/hooks/useSearchLogging"
 import { useStoredView } from "@/hooks/useStoredView"
 import { isResultLogged } from "@/lib/utils"
-import { RAWG_URL, RAWG_ATTRIBUTION_TEXT } from "@/lib/gameFormat"
-import { BGG_URL, BGG_ATTRIBUTION_TEXT, BGG_LOGO_URL } from "@/lib/boardGameFormat"
+import { CLIENT_PROVIDERS } from "@/lib/providers"
 import type { BoardGameResult, GamePlatform, GameResult, GameSort } from "@/types/search"
 
 type GameMode = "video" | "board"
@@ -60,8 +59,8 @@ export function GameSearchSection() {
   }
 
   const attribution = mode === "board"
-    ? { href: BGG_URL, text: BGG_ATTRIBUTION_TEXT, logo: { src: BGG_LOGO_URL, alt: "Powered by BGG", plate: true } }
-    : { href: RAWG_URL, text: RAWG_ATTRIBUTION_TEXT }
+    ? CLIENT_PROVIDERS.bgg.attribution
+    : CLIENT_PROVIDERS.rawg.attribution
 
   return (
     <SearchPageShell page="games">

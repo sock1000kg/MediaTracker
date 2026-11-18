@@ -1,17 +1,11 @@
-import type { Media } from "@/types/mainTypes"
-import { buildLastFmUrl, buildMusicBrainzRecordingUrl, buildMusicBrainzReleaseGroupUrl } from "@/lib/musicFormat"
+import { CLIENT_PROVIDERS, type LinkMedia } from "./providers"
 
 export interface ProviderLink {
   label: string
   href: string
 }
 
-type LinkMedia = Pick<Media, "metadata" | "title" | "creator" | "sourceId"> & {
-  source?: string | null
-  kind?: string | null
-  mediaType?: { name?: string | null } | null
-  externalIds?: Array<{ provider: string; externalId: string }> | null
-}
+export type { LinkMedia }
 
 // Known hosts get the provider's own name; anything else shows its hostname.
 const HOST_NAMES: Record<string, string> = {
@@ -42,52 +36,90 @@ function linkFor(href: unknown): ProviderLink | null {
 }
 
 /**
- * The "View on …" links for a media item, for the actions menus. Music links are built from ids and names
- * rather than stored (task 45); AniList rows never stored a URL, so it is built from the sourceId.
+ * The "View on …" links for a media item, for the actions menus.
+ * Links are built dynamically from stored ids for every provider.
+ * Falls back to stored metadata.url only when no id can be built.
  */
 export function providerLinks(media: LinkMedia): ProviderLink[] {
   const meta = (media.metadata ?? {}) as Record<string, unknown>
-  const isMusic = media.source === "lastfm" || media.mediaType?.name?.toLowerCase() === "music"
+  const mediaTypeName = typeof media.mediaType === "string" ? media.mediaType.toLowerCase() : media.mediaType?.name?.toLowerCase()
+  const source = media.source?.toLowerCase()
+  const isMusic = source === "musicbrainz" || source === "lastfm" || mediaTypeName === "music"
 
   if (isMusic) {
     const links: ProviderLink[] = []
-    if (typeof meta.mbReleaseGroupId === "string" && meta.kind !== "track") {
-      links.push({ label: "View on MusicBrainz", href: buildMusicBrainzReleaseGroupUrl(meta.mbReleaseGroupId) })
-    } else if (typeof meta.mbRecordingId === "string") {
-      links.push({ label: "View on MusicBrainz", href: buildMusicBrainzRecordingUrl(meta.mbRecordingId) })
-    }
-    if (media.creator && media.title) {
-      const kind = (typeof meta.kind === "string" ? meta.kind : null) ?? media.kind
-      const isTrack = kind === "track" || (typeof meta.url === "string" && meta.url.includes("/_/"))
-      links.push({ label: "View on Last.fm", href: buildLastFmUrl({ artist: media.creator, title: media.title, kind: isTrack ? "track" : "album" }) })
+    const mbHref = CLIENT_PROVIDERS.musicbrainz.buildLink(media)
+    if (mbHref) links.push({ label: "View on MusicBrainz", href: mbHref })
+
+    const lastfmHref = CLIENT_PROVIDERS.lastfm.buildLink(media)
+    if (lastfmHref) links.push({ label: "View on Last.fm", href: lastfmHref })
+
+    if (links.length === 0) {
+      const stored = linkFor(meta.url)
+      if (stored) links.push(stored)
     }
     return links
   }
 
   const links: ProviderLink[] = []
-  const stored = linkFor(meta.url)
-  if (stored) links.push(stored)
 
-  const olWorkKey = (typeof meta.openLibraryWorkKey === "string" ? meta.openLibraryWorkKey : null)
-    ?? (typeof meta.olWorkKey === "string" ? meta.olWorkKey : null)
-    ?? (media.externalIds?.find((e) => e.provider === "openlibrary")?.externalId)
-    ?? (media.source === "open_library" || media.source === "openlibrary" ? media.sourceId : null)
+  if (source === "tmdb" || mediaTypeName === "movie" || mediaTypeName === "tv") {
+    const href = CLIENT_PROVIDERS.tmdb.buildLink(media)
+    if (href) links.push({ label: "View on TMDB", href })
+  }
 
-  if (olWorkKey) {
-    const keyPath = olWorkKey.startsWith("/works/")
-      ? olWorkKey
-      : olWorkKey.startsWith("/")
-        ? `/works${olWorkKey}`
-        : `/works/${olWorkKey}`
-    const href = `https://openlibrary.org${keyPath}`
-    if (!links.some((l) => l.href === href || l.label === "View on Open Library")) {
-      links.push({ label: "View on Open Library", href })
+  if (source === "rawg") {
+    const href = CLIENT_PROVIDERS.rawg.buildLink(media)
+    if (href) links.push({ label: "View on RAWG", href })
+  }
+
+  if (source === "bgg" || source === "boardgamegeek") {
+    const href = CLIENT_PROVIDERS.bgg.buildLink(media)
+    if (href) links.push({ label: "View on BoardGameGeek", href })
+  }
+
+  if (source === "anilist") {
+    const href = CLIENT_PROVIDERS.anilist.buildLink(media)
+    if (href) links.push({ label: "View on AniList", href })
+  }
+
+  if (source === "open_library" || source === "openlibrary") {
+    const href = CLIENT_PROVIDERS.openlibrary.buildLink(media)
+    if (href) links.push({ label: "View on Open Library", href })
+  }
+
+  if (source === "goodreads") {
+    const href = CLIENT_PROVIDERS.goodreads.buildLink(media)
+    if (href) links.push({ label: "View on Goodreads", href })
+    const olHref = CLIENT_PROVIDERS.openlibrary.buildLink(media)
+    if (olHref && !links.some(l => l.href === olHref)) {
+      links.push({ label: "View on Open Library", href: olHref })
     }
   }
 
-  if (media.source === "anilist" && media.sourceId) {
-    const m = /^(anime|manga)-(\d+)$/.exec(media.sourceId)
-    if (m) links.push({ label: "View on AniList", href: `https://anilist.co/${m[1]}/${m[2]}` })
+  // If no source or unrecognized source, only test builders if source is not set
+  if (links.length === 0 && !source) {
+    const builders = [
+      CLIENT_PROVIDERS.tmdb,
+      CLIENT_PROVIDERS.rawg,
+      CLIENT_PROVIDERS.bgg,
+      CLIENT_PROVIDERS.anilist,
+      CLIENT_PROVIDERS.openlibrary,
+      CLIENT_PROVIDERS.goodreads,
+    ]
+    for (const p of builders) {
+      const href = p.buildLink(media)
+      if (href && !links.some(l => l.href === href)) {
+        links.push({ label: `View on ${p.displayName}`, href })
+      }
+    }
   }
+
+  // Fallback to stored url only when no id could be built
+  if (links.length === 0) {
+    const stored = linkFor(meta.url)
+    if (stored) links.push(stored)
+  }
+
   return links
 }

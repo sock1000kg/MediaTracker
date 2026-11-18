@@ -5,6 +5,8 @@ import { setMediaGenres, setMediaCreators, isJunkGenre } from "@/services/genreS
 import { attachExternalIdsToMedia } from "@/repositories/mediaRepository.js"
 import { createUserAgentHeader, sanitizeDescription } from "@/utilities.js"
 import { openLibraryLimiter, anilistLimiter, parseRetryAfter } from "@/services/search/rateLimiter.js"
+import { providerFetch } from "@/providers/providerFetch.js"
+import { getStorageProviderForSource, getProviderEntry } from "@/providers/registry.js"
 
 // TMDB
 import {
@@ -22,7 +24,7 @@ import {
 import { rawgGameDetailsSchema } from "@/schemas/search/gameSchemas.js"
 
 // AniList
-import { mapAniListMedia } from "@/services/search/anilistSearchService.js"
+import { mapAniListMedia, anilistSearchService } from "@/services/search/anilistSearchService.js"
 import { AniListMedia } from "@/schemas/search/animeSchemas.js"
 
 // Open Library
@@ -114,21 +116,31 @@ export class MediaRefreshService {
             }
         }
 
-        const source = media.source.toLowerCase()
+        const storageProvider = getStorageProviderForSource(media.source)
+        if (!storageProvider) {
+            throw new AppError("Nothing to refresh", 400)
+        }
 
-        if (source === "tmdb") {
-            await this.refreshTmdb(userId, media)
-        } else if (source === "rawg") {
+        const entry = getProviderEntry(storageProvider)
+        if (entry.storageRule === "never") {
+            throw new AppError("Nothing to refresh", 400)
+        }
+
+        if (storageProvider === "tmdb") {
+            await this.refreshTmdb(userId, media, meta)
+        } else if (storageProvider === "rawg") {
             await this.refreshRawg(userId, media, meta)
-        } else if (source === "anilist" || source === "jikan") {
+        } else if (storageProvider === "anilist") {
             await this.refreshAniList(userId, media, meta)
-        } else if (source === "open_library" || source === "openlibrary" || source === "google_books") {
-            await this.refreshOpenLibrary(userId, media, meta)
-        } else if (source === "goodreads") {
-            await this.refreshGoodreads(userId, media, meta)
-        } else if (source === "bgg") {
+        } else if (storageProvider === "openlibrary") {
+            if (media.source.toLowerCase() === "goodreads") {
+                await this.refreshGoodreads(userId, media, meta)
+            } else {
+                await this.refreshOpenLibrary(userId, media, meta)
+            }
+        } else if (storageProvider === "bgg") {
             await this.refreshBgg(userId, media, meta)
-        } else if (source === "lastfm") {
+        } else if (storageProvider === "lastfm" || storageProvider === "musicbrainz") {
             await this.refreshMusic(userId, media, meta)
         } else {
             throw new AppError("Nothing to refresh", 400)
@@ -142,7 +154,50 @@ export class MediaRefreshService {
         return formatMedia(updated)
     }
 
-    private async refreshTmdb(userId: string, media: RefreshableMedia) {
+    private async refreshTmdb(userId: string, media: RefreshableMedia, meta: Record<string, unknown>) {
+        if (media.source?.toLowerCase() === "letterboxd") {
+            const match = await tmdbSearchService.findMovie(media.title, media.year, { userId })
+            if (!match) {
+                throw new AppError("The provider no longer has this item", 404)
+            }
+            const now = new Date().toISOString()
+            const matchMeta = (match.metadata as Record<string, unknown>) ?? {}
+            const { url: _unusedUrl, ...cleanMatchMeta } = matchMeta
+            const updatedMetadata = {
+                ...cleanMatchMeta,
+                refreshedAt: now,
+                fetchedAt: now,
+            }
+            await prisma.media.update({
+                where: { id: media.id },
+                data: {
+                    title: match.title,
+                    originalTitle: (cleanMatchMeta.originalTitle as string) ?? null,
+                    creator: match.creator,
+                    year: match.year ? Number(match.year) : media.year,
+                    description: match.description || media.description,
+                    imageUrl: match.imageUrl || media.imageUrl,
+                    source: "tmdb",
+                    sourceId: match.sourceId,
+                    metadata: updatedMetadata,
+                },
+            })
+            if (match.creators && match.creators.length > 0) {
+                await setMediaCreators(media.id, match.creators, "movie", match.creator, prisma)
+            }
+            const categories = (cleanMatchMeta.categories as string[]) ?? []
+            if (categories.length > 0) {
+                await setMediaGenres(media.id, categories, "movie", prisma)
+            }
+            const tmdbId = typeof cleanMatchMeta.tmdbId === "number"
+                ? cleanMatchMeta.tmdbId
+                : Number(/^movie-(\d+)$/.exec(match.sourceId ?? "")?.[1])
+            if (tmdbId) {
+                await attachExternalIdsToMedia(media.id, [{ provider: "tmdb", externalId: String(tmdbId) }], prisma)
+            }
+            return
+        }
+
         const userApiKey = await tmdbSearchService.getUserApiKey(userId)
         const auth = tmdbAuth(userApiKey)
         await refreshSingleTmdbItem(media, auth, prisma, { setRefreshedAt: true })
@@ -157,9 +212,11 @@ export class MediaRefreshService {
         let raw: unknown
         try {
             const url = buildRawgDetailsUrl(gameId, userApiKey)
-            const res = await fetch(url.toString(), {
-                headers: createUserAgentHeader().headers as Record<string, string>,
-                signal: AbortSignal.timeout(8000),
+            const res = await providerFetch("rawg", url, {
+                apiKey: userApiKey,
+                timeoutMs: 8000,
+                allow404: true,
+                allowHttpErrors: true,
             })
             if (res.status === 404) {
                 throw new AppError("The provider no longer has this item", 404)
@@ -229,6 +286,52 @@ export class MediaRefreshService {
     }
 
     private async refreshAniList(userId: string, media: RefreshableMedia, meta: Record<string, unknown>) {
+        if (media.source?.toLowerCase() === "mal") {
+            const rawMalId = typeof meta?.idMal === "number" ? meta.idMal : Number(media.sourceId)
+            if (!rawMalId || Number.isNaN(rawMalId)) {
+                throw new AppError("The provider no longer has this item", 404)
+            }
+            const kind = (meta?.kind as "anime" | "manga") || (media.mediaType?.name === "manga" ? "manga" : "anime")
+            const matches = await anilistSearchService.getByMalIds([rawMalId], kind)
+            const match = matches.get(rawMalId)
+            if (!match) {
+                throw new AppError("The provider no longer has this item", 404)
+            }
+            const now = new Date().toISOString()
+            const matchMeta = (match.metadata as Record<string, unknown>) ?? {}
+            const { url: _unusedUrl, ...cleanMatchMeta } = matchMeta
+            const updatedMetadata = {
+                ...cleanMatchMeta,
+                refreshedAt: now,
+                fetchedAt: now,
+            }
+            await prisma.media.update({
+                where: { id: media.id },
+                data: {
+                    title: match.title,
+                    originalTitle: (cleanMatchMeta.originalTitle as string) ?? null,
+                    creator: match.creator,
+                    year: match.year ? Number(match.year) : media.year,
+                    description: match.description || media.description,
+                    imageUrl: match.imageUrl || media.imageUrl,
+                    source: "anilist",
+                    sourceId: match.sourceId,
+                    metadata: updatedMetadata,
+                },
+            })
+            const categories = (cleanMatchMeta.categories as string[]) ?? []
+            if (categories.length > 0) {
+                await setMediaGenres(media.id, categories, kind, prisma)
+            }
+            const anilistId = typeof cleanMatchMeta.anilistId === "number"
+                ? cleanMatchMeta.anilistId
+                : Number(/^(?:anime|manga)-(\d+)$/.exec(match.sourceId ?? "")?.[1])
+            if (anilistId) {
+                await attachExternalIdsToMedia(media.id, [{ provider: "anilist", externalId: String(anilistId) }], prisma)
+            }
+            return
+        }
+
         const kind = (meta.kind as string) || (media.mediaType?.name === "manga" ? "manga" : "anime")
         let anilistId: number | null = null
         const match = /^(?:anime|manga)-(\d+)$/.exec(media.sourceId ?? "") || /^(\d+)$/.exec(media.sourceId ?? "")
@@ -292,18 +395,17 @@ export class MediaRefreshService {
 
         let raw: unknown
         try {
-            const res = await anilistLimiter.schedule(() =>
-                fetch("https://graphql.anilist.co", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Accept: "application/json",
-                        ...(createUserAgentHeader().headers as Record<string, string>),
-                    },
-                    body: JSON.stringify({ query, variables: { id: anilistId } }),
-                    signal: AbortSignal.timeout(8000),
-                })
-            )
+            const res = await providerFetch("anilist", "https://graphql.anilist.co", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                },
+                body: JSON.stringify({ query, variables: { id: anilistId } }),
+                timeoutMs: 8000,
+                allow404: true,
+                allowHttpErrors: true,
+            })
             if (res.status === 404) {
                 throw new AppError("The provider no longer has this item", 404)
             }
@@ -382,12 +484,11 @@ export class MediaRefreshService {
             const keyQuery = sourceId.startsWith("/works/") ? sourceId : `/works/${sourceId}`
             const u = new URL("https://openlibrary.org/search.json")
             u.searchParams.set("q", `key:"${keyQuery}"`)
-            const res = await openLibraryLimiter.schedule(() =>
-                fetch(u.toString(), {
-                    headers: createUserAgentHeader().headers as Record<string, string>,
-                    signal: AbortSignal.timeout(8000),
-                })
-            )
+            const res = await providerFetch("openlibrary", u, {
+                timeoutMs: 8000,
+                allow404: true,
+                allowHttpErrors: true,
+            })
             if (res.status === 404) {
                 throw new AppError("The provider no longer has this item", 404)
             }
@@ -464,18 +565,12 @@ export class MediaRefreshService {
         const fetchDoc = async (u: URL): Promise<OpenLibraryBook | null> => {
             let raw: unknown
             try {
-                const res = await openLibraryLimiter.schedule(() =>
-                    fetch(u.toString(), {
-                        headers: createUserAgentHeader().headers as Record<string, string>,
-                        signal: AbortSignal.timeout(8000),
-                    })
-                )
+                const res = await providerFetch("openlibrary", u, {
+                    timeoutMs: 8000,
+                    allow404: true,
+                    allowHttpErrors: true,
+                })
                 if (res.status === 404) return null
-                if (res.status === 429) {
-                    const delay = parseRetryAfter(res, 1000)
-                    openLibraryLimiter.pause(delay)
-                    throw new AppError("Provider is unavailable", 503)
-                }
                 if (!res.ok) throw new AppError("Provider is unavailable", 503)
                 raw = await res.json()
             } catch (err) {

@@ -65,6 +65,14 @@ export class RateLimiter {
         this.clock = clock
     }
 
+    getClock(): RateLimiterClock {
+        return this.clock
+    }
+
+    async sleep(ms: number): Promise<void> {
+        return this.clock.sleep(ms)
+    }
+
     getIntervalMs(): number {
         return this.intervalMs
     }
@@ -128,10 +136,11 @@ export class RateLimiter {
 }
 
 // In-process rate limiters shared across search, imports, jobs and refresh.
-// Documented numbers and sources are recorded in docs/providers.md.
+// Documented numbers and sources are recorded in client/public/docs/providers.html.
 export const openLibraryLimiter = new RateLimiter(500)   // ~2 req/s (under identified 3 req/s limit)
 export const tmdbLimiter = new RateLimiter(250)          // 4 req/s (under TMDB 40 req / 10s guidance)
 export const anilistLimiter = new RateLimiter(700)       // ~85 req/min (under AniList 90 req/min limit)
 export const rawgLimiter = new RateLimiter(500)          // 2 req/s (under RAWG 20k/month quota)
 export const bggLimiter = new RateLimiter(1000)          // 1 req/s (respectful pacing per BGG terms)
 export const musicBrainzLimiter = new RateLimiter(1000)  // 1 req/s (MusicBrainz strict 1 req/s rule)
+export const lastFmLimiter = new RateLimiter(250)        // 4 req/s (respectful pacing for search ranking and tags)

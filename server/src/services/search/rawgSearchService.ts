@@ -4,6 +4,9 @@ import {
 import { searchResultsSchema, SearchResult } from "@/schemas/search/searchSchemas.js"
 import { createUserAgentHeader, decryptKey, sanitizeDescription, validateSchema } from "@/utilities.js"
 import { rawgLimiter, parseRetryAfter } from "./rateLimiter.js"
+import { unexpectedShape } from "./providerErrors.js"
+import { providerFetch } from "@/providers/providerFetch.js"
+import { getUserApiKey as getRegistryUserApiKey } from "@/providers/registry.js"
 import { findUserById } from "@/repositories/authRepository.js"
 import { AppError } from "@/api/domain/error.js"
 import prisma from "@/prismaClient.js"
@@ -25,7 +28,6 @@ export const RAWG_ORDERING: Record<NonNullable<GameSearchFilters["sort"]>, strin
 }
 
 import { isJunkGenre, JUNK_RAWG_TAGS } from "@/services/genreService.js"
-import { unexpectedShape } from "./providerErrors.js"
 
 export { JUNK_RAWG_TAGS }
 
@@ -130,38 +132,21 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 export class RawgSearchService {
     async getUserApiKey(userId: string): Promise<string> {
-        const user = await findUserById(userId)
-        if (!user) throw new AppError("Non-existent userId", 404)
-
-        const key = user.apiKeys
-            .map(k => ({ ...k, key: decryptKey(k.key) }))
-            .find(k => k.service === "rawg")?.key
-
-        if (!key) throw new AppError("Missing Game API Key", 404)
-        return key
+        return getRegistryUserApiKey("rawg", userId)
     }
 
-    // One request with a single retry after a 429. 401/403 map to 400: the client treats any 401 as an expired session.
-    // Every thrown error is a fixed message: nothing from fetch (which may include the URL and key) is propagated.
+    // One request with a single retry after a 429. Routed through providerFetch.
     private async fetchJson(url: URL): Promise<unknown> {
-        const send = () => rawgLimiter.schedule(() => fetch(url.toString(), {
-            headers: createUserAgentHeader().headers as Record<string, string>,
-            signal: AbortSignal.timeout(TIMEOUT_MS), // created per attempt, at send time
-        }))
-
         try {
-            let res = await send()
-            if (res.status === 429) {
-                const delay = parseRetryAfter(res, DEFAULT_RETRY_MS, MAX_RETRY_MS)
-                rawgLimiter.pause(delay)
-                await sleep(delay)
-                res = await send()
-                if (res.status === 429) {
-                    throw new AppError("Game search is busy right now, try again in a moment", 503)
-                }
-            }
+            const res = await providerFetch("rawg", url, {
+                timeoutMs: TIMEOUT_MS,
+                allowHttpErrors: true,
+            })
             if (res.status === 401 || res.status === 403) {
                 throw new AppError("RAWG rejected your API key. Check it in Settings → API Keys.", 400)
+            }
+            if (res.status === 429 || res.status === 503) {
+                throw new AppError("RAWG is unavailable", 503)
             }
             if (!res.ok) throw new AppError("RAWG search failed", 502, { cause: `upstream HTTP ${res.status}` })
             return await res.json()
@@ -173,6 +158,22 @@ export class RawgSearchService {
             }
             throw new AppError("RAWG search failed", 502, { cause: error })
         }
+    }
+
+    async getGame(id: number, options?: { apiKey?: string; userId?: string }): Promise<GameDetails> {
+        let key = options?.apiKey
+        if (!key && options?.userId) {
+            key = await this.getUserApiKey(options.userId)
+        }
+        if (!key) throw new AppError("Missing Game API Key", 404)
+
+        const url = buildRawgDetailsUrl(id, key)
+        const raw = await this.fetchJson(url)
+        const checked = rawgGameDetailsSchema.safeParse(raw)
+        if (!checked.success) {
+            throw new AppError("RAWG search failed", 502, { cause: unexpectedShape(checked.error) })
+        }
+        return parseRawgDetails(checked.data)
     }
 
     async searchGamesRawg(userId: string, q: string, page = 1, filters: GameSearchFilters = {}):

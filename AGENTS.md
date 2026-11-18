@@ -53,12 +53,14 @@ NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules npx jest --runInBand
 
 ## 5. Where Things Live
 
-- **Search Providers:**
+- **Search Providers & External Registry:**
+  - Provider registry & rules: `server/src/providers/registry.ts`, `server/src/providers/providerFetch.ts`. To add a provider, add a registry entry first; refer to [`client/public/docs/providers.html`](client/public/docs/providers.html) for full provider rules and attribution specs.
   - Server providers: `server/src/services/search/` (TMDB for movies/TV, OpenLibrary for books, RAWG for video games, BoardGameGeek for board games, MusicBrainz / Last.fm for music).
   - Search routes & controllers: `server/src/api/routes/searchRoutes.ts`, `server/src/api/controllers/searchControllers.ts`.
   - Client search hooks: `client/src/hooks/useProviderSearch.ts`, `client/src/hooks/useSearchLogging.tsx`, `client/src/hooks/useHideLogged.ts`.
   - Client search UI sections: `client/src/pages/sections/*SearchSection.tsx`.
   - Client shared search components: `client/src/components/search/` (`SearchPageShell`, `SearchHeader`, `SearchResults`, `ProviderAttribution`).
+  - Client provider links: `client/src/lib/providers.ts`, `client/src/lib/providerLinks.ts`.
 - **Job Queue:**
   - Queue setup & BullMQ / Valkey driver: `server/src/queue/` (`bullmqQueue.ts`, `limits.ts`, `index.ts`).
   - Queue job handlers: `server/src/queue/handlers/` (`goodreadsImport.ts`, `malImport.ts`, `letterboxdImport.ts`, `tmdbRefresh.ts`, `musicCoverBackfill.ts`, `demoReset.ts`).

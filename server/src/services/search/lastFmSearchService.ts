@@ -8,7 +8,10 @@ import {
 } from "@/schemas/search/musicSchemas.js"
 
 import { searchResultsSchema, searchResultSchema, SearchResult } from "@/schemas/search/searchSchemas.js"
-import { createUserAgentHeader, decryptKey, fetchAndParse, validateSchema } from "@/utilities.js"
+import { createUserAgentHeader, decryptKey, validateSchema } from "@/utilities.js"
+import { providerFetch } from "@/providers/providerFetch.js"
+import { getUserApiKey as getRegistryUserApiKey } from "@/providers/registry.js"
+import { ZodSchema } from "zod"
 import { findUserById } from "@/repositories/authRepository.js"
 import { ISearchService } from "./searchServiceInterface.js"
 import { AppError } from "@/api/domain/error.js"
@@ -79,18 +82,23 @@ export class LastFmSearchService implements ISearchService {
     maxResults = 30
 
     async getUserApiKey(userId: string): Promise<string> {
-        const user = await findUserById(userId)
-        if (!user) throw new AppError("Non-existent userId", 404)
+        return getRegistryUserApiKey("lastfm", userId)
+    }
 
-        const lastfmKey = user.apiKeys
-            .map(k => ({ ...k, key: decryptKey(k.key) }))
-            .find(k => k.service === "lastfm")?.key
-
-        if (!lastfmKey) {
-            throw new AppError("Missing Music API Key", 404)
+    private async fetchJson<T>(url: URL, schema: ZodSchema<T>, timeoutMs = 8000): Promise<T> {
+        const res = await providerFetch("lastfm", url, {
+            timeoutMs,
+            allowHttpErrors: true,
+        })
+        if (!res.ok) {
+            const errorBody = await res.json().catch(() => null)
+            throw Object.assign(new Error("Failed to fetch from Last.fm"), {
+                status: res.status,
+                message: errorBody?.message ?? "Last.fm API error"
+            })
         }
-
-        return lastfmKey
+        const raw = await res.json()
+        return validateSchema(schema, raw)
     }
 
     // Shared mapper for both albums & tracks → SearchResult[]
@@ -140,8 +148,7 @@ export class LastFmSearchService implements ISearchService {
         const key = await this.getUserApiKey(userId)
         const url = buildTopTagsUrl(kind, artist, name, key)
 
-        const init: RequestInit = { ...createUserAgentHeader(), signal: AbortSignal.timeout(5000) }
-        const parsed = await fetchAndParse(url, lastFmTopTagsResponseSchema, "Last.fm API error", "Failed to fetch from Last.fm", init)
+        const parsed = await this.fetchJson(url, lastFmTopTagsResponseSchema, 5000)
 
         return cleanLastFmTags(parsed.toptags?.tag ?? [], artist)
     }
@@ -158,10 +165,8 @@ export class LastFmSearchService implements ISearchService {
         url.searchParams.set("format", "json")
         url.searchParams.set("limit", this.maxResults.toString())
         url.searchParams.set("page", page.toString())
-        
-        const headers = createUserAgentHeader()
 
-        const parsed = await fetchAndParse(url, lastFmTrackSearchResponseSchema, "Last.fm API error", "Failed to fetch from Last.fm", headers)
+        const parsed = await this.fetchJson(url, lastFmTrackSearchResponseSchema)
 
         const items = parsed.results?.trackmatches?.track ?? []
         const nextPage = this.computePagination(items, page)
@@ -186,10 +191,7 @@ export class LastFmSearchService implements ISearchService {
         url.searchParams.set("limit", this.maxResults.toString())
         url.searchParams.set("page", page.toString())
 
-        const headers = createUserAgentHeader()
-        // console.log(url.toString(), "\n", headers)
-
-        const parsed = await fetchAndParse(url, lastFmAlbumSearchResponseSchema, "Last.fm API error", "Failed to fetch from Last.fm", headers)
+        const parsed = await this.fetchJson(url, lastFmAlbumSearchResponseSchema)
 
         const items = parsed.results?.albummatches?.album ?? []
         const nextPage = this.computePagination(items, page)
@@ -275,14 +277,7 @@ export class LastFmSearchService implements ISearchService {
             try {
                 const key = await this.getUserApiKey(userId)
                 const url = buildAlbumInfoUrl(key, artist, albumName, mbid)
-                const init: RequestInit = { ...createUserAgentHeader(), signal: AbortSignal.timeout(10000) }
-                const raw = await fetchAndParse(
-                    url,
-                    lastFmAlbumInfoResponseSchema,
-                    "Last.fm API error",
-                    "Failed to fetch from Last.fm",
-                    init
-                )
+                const raw = await this.fetchJson(url, lastFmAlbumInfoResponseSchema, 10000)
 
                 const album = raw.album
                 if (album) {

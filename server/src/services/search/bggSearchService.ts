@@ -10,6 +10,8 @@ import { findUserById } from "@/repositories/authRepository.js"
 import { AppError } from "@/api/domain/error.js"
 import { unexpectedShape } from "./providerErrors.js"
 import { bggLimiter, parseRetryAfter } from "./rateLimiter.js"
+import { providerFetch } from "@/providers/providerFetch.js"
+import { getUserApiKey as getRegistryUserApiKey } from "@/providers/registry.js"
 
 // Host quirk: must use boardgamegeek.com without www; www redirects or fails Cloudflare/token auth for XMLAPI2.
 const BASE_URL = "https://boardgamegeek.com/xmlapi2"
@@ -122,39 +124,21 @@ export function mapBggThing(item: BggThingItem): SearchResult {
 
 export class BggSearchService {
     async getUserApiKey(userId: string): Promise<string> {
-        const user = await findUserById(userId)
-        if (!user) throw new AppError("Non-existent userId", 404)
-
-        const key = user.apiKeys
-            .map(k => ({ ...k, key: decryptKey(k.key) }))
-            .find(k => k.service === "bgg")?.key
-
-        if (!key) throw new AppError("Missing Board Game API Key", 404)
-        return key
+        return getRegistryUserApiKey("bgg", userId)
     }
 
     async fetchXml(url: URL, token: string): Promise<string> {
-        const send = () => bggLimiter.schedule(() => fetch(url.toString(), {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                ...(createUserAgentHeader().headers as Record<string, string>),
-            },
-            signal: AbortSignal.timeout(TIMEOUT_MS),
-        }))
-
         try {
-            let res = await send()
-            if (res.status === 429 || res.status === 503) {
-                const delay = parseRetryAfter(res, DEFAULT_RETRY_MS, MAX_RETRY_MS)
-                bggLimiter.pause(delay)
-                await sleep(delay)
-                res = await send()
-                if (res.status === 429 || res.status === 503) {
-                    throw new AppError("BoardGameGeek search is busy right now, try again in a moment", 503)
-                }
-            }
+            const res = await providerFetch("bgg", url, {
+                apiKey: token,
+                timeoutMs: TIMEOUT_MS,
+                allowHttpErrors: true,
+            })
             if (res.status === 401 || res.status === 403) {
                 throw new AppError("BoardGameGeek rejected the token", 400)
+            }
+            if (res.status === 429 || res.status === 503) {
+                throw new AppError("BoardGameGeek is unavailable", 503)
             }
             if (!res.ok) throw new AppError("BoardGameGeek search failed", 502, { cause: `upstream HTTP ${res.status}` })
             return await res.text()
@@ -166,6 +150,26 @@ export class BggSearchService {
             }
             throw new AppError("BoardGameGeek search failed", 502, { cause: error })
         }
+    }
+
+    async getThing(id: number, options?: { apiKey?: string; userId?: string }): Promise<SearchResult> {
+        let token = options?.apiKey
+        if (!token && options?.userId) {
+            token = await this.getUserApiKey(options.userId)
+        }
+        if (!token) throw new AppError("Missing Board Game API Key", 404)
+
+        const url = new URL("https://boardgamegeek.com/xmlapi2/thing")
+        url.searchParams.set("id", String(id))
+        url.searchParams.set("stats", "1")
+        const xml = await this.fetchXml(url, token)
+        const parsed = parseBggXml(xml)
+        const parsedAny = parsed as any
+        const item = parsedAny?.items?.item ? (Array.isArray(parsedAny.items.item) ? parsedAny.items.item[0] : parsedAny.items.item) : null
+        if (!item) {
+            throw new AppError("The provider no longer has this item", 404)
+        }
+        return mapBggThing(item)
     }
 
     async searchBoardGames(userId: string, q: string, page = 1):

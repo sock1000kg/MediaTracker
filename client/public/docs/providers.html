@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data providers and their terms - MediaTracker</title>
+<style>
+:root {
+  --bg: #f6f4f1; --surface: #ffffff; --fg: #1f1c19; --muted: #6b645c; --line: #e3ddd5;
+  --accent: #2a7f9e; --warn: #b4531f; --ok: #3d7a4a; --chip: #eef4f6;
+  --display: system-ui, -apple-system, "Segoe UI", Roboto, Georgia, serif;
+  --body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #1b1916; --surface: #24211d; --fg: #ece6de; --muted: #a39a8f; --line: #38332d;
+  --accent: #5cc0e0; --warn: #f0925b; --ok: #7fc28c; --chip: #23323a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #1b1916; --surface: #24211d; --fg: #ece6de; --muted: #a39a8f; --line: #38332d;
+  --accent: #5cc0e0; --warn: #f0925b; --ok: #7fc28c; --chip: #23323a; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body); margin: 0; padding: 0; }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 40px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+h1 { font: 600 2.1rem/1.15 var(--display); margin: 0; text-wrap: balance; }
+h2 { font: 600 1.35rem/1.25 var(--display); margin: 8px 0 0; text-wrap: balance; }
+h3 { font: 600 1.05rem/1.3 var(--body); margin: 0; }
+p { margin: 0; max-width: 70ch; }
+.lede { color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: .85rem; color: var(--muted); }
+.tag { display: inline-block; font: 500 .72rem/1.6 var(--mono); padding: 0 7px; border-radius: 4px; background: var(--chip); color: var(--accent); white-space: nowrap; }
+.tag.warn { color: var(--warn); background: color-mix(in srgb, var(--warn) 12%, transparent); }
+.tag.ok { color: var(--ok); background: color-mix(in srgb, var(--ok) 12%, transparent); }
+.types { display: grid; gap: 14px; }
+.type { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; display: grid; gap: 12px; }
+.type header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+.type header .tag { margin-left: auto; }
+dl { display: grid; grid-template-columns: 9.5rem 1fr; gap: 8px 16px; margin: 0; }
+dt { font: 500 .78rem/1.6 var(--mono); text-transform: uppercase; letter-spacing: .04em; color: var(--muted); padding-top: 2px; }
+dd { margin: 0; min-width: 0; }
+dd ul { margin: 0; padding-left: 1.1em; }
+code { font: .86em var(--mono); background: var(--chip); padding: 0 4px; border-radius: 3px; overflow-wrap: anywhere; }
+.gaps { display: grid; gap: 10px; }
+.gap { border-left: 3px solid var(--warn); padding: 4px 0 4px 14px; }
+.gap.ok { border-left-color: var(--ok); }
+.tablebox { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; min-width: 640px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 500 .75rem/1.4 var(--mono); text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+tr:last-child td { border-bottom: 0; }
+td.num { font-variant-numeric: tabular-nums; font-family: var(--mono); white-space: nowrap; }
+a { color: var(--accent); }
+@media (max-width: 620px) { dl { grid-template-columns: 1fr; gap: 2px 0; } dt { padding-top: 8px; } .type header .tag { margin-left: 0; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header style="display:grid;gap:10px">
+    <h1>Where MediaTracker's data comes from</h1>
+    <p class="lede">MediaTracker gets its catalogue data from outside services. This page describes for each media type: which provider powers search, whose data is stored when you log something, what each import does, and how we follow each provider's rate limits and data rules. Summaries are as of <b>2026-11-18</b> and are not legal advice; the linked terms are what counts. Check them before adding features that use provider data in new ways.</p>
+  </header>
+
+  <section style="display:grid;gap:12px">
+    <h2>Ground rules for every provider</h2>
+    <div class="gaps">
+      <div class="gap ok"><b>Non-commercial only.</b> No ads, paid tiers, selling data or selling access. Almost every free licence below depends on this.</div>
+      <div class="gap ok"><b>No AI or machine learning on provider data.</b> Never train, fine-tune or embed provider text (descriptions, reviews, keywords) and never feed it to a chatbot. Recommendation features may use the user's own notes, tags and ratings, and open data (Wikidata, Wikipedia, Open Library, MusicBrainz).</div>
+      <div class="gap ok"><b>No redistribution.</b> No exports of provider catalogues, no public API or feed that serves their data, no dataset downloads. A user's export of their own journal is fine.</div>
+      <div class="gap ok"><b>On-demand only.</b> Search when a person searches; fetch details when they log. Background jobs only fill in data for items users have already logged, never background catalogue sync.</div>
+      <div class="gap ok"><b>Bring your own key for everything that needs one.</b> One key or token identifies the app, not the person searching. Each user provides their own key for keyed providers (TMDB, RAWG, BGG, Last.fm); there is no shared server key or fallback. Keys are stored encrypted and never shown again.</div>
+    </div>
+  </section>
+
+  <section class="types" aria-label="Media types">
+    <article class="type">
+      <header><h3>Books</h3><span class="tag">Open Library · no key</span></header>
+      <dl>
+        <dt>Terms</dt><dd><a href="https://openlibrary.org/developers/api">openlibrary.org/developers/api</a></dd>
+        <dt>Search</dt><dd>Open Library <code>search.json</code>, 20 results per page.</dd>
+        <dt>Stored on log</dt><dd>The search result as it came: title, authors, first publish year, cover URL, up to 3 subjects as categories, median page count, first publisher, ISBN. "View on Open Library" links are built dynamically from the work key (<code>/works/&lt;key&gt;</code>).</dd>
+        <dt>Import</dt><dd><b>Goodreads CSV.</b> Stored with title, author, ISBN and Goodreads link. Background job syncs covers and categories via batched ISBN queries (up to 50 books per request) and fallback title/author queries.</dd>
+        <dt>Rules &amp; Don'ts</dt><dd>Identify requests with a User-Agent containing contact info. Do not make hundreds of unbatched requests; never use as a bulk data backend.</dd>
+        <dt>Attribution</dt><dd>Credit Open Library on Book search.</dd>
+      </dl>
+    </article>
+
+    <article class="type">
+      <header><h3>Music</h3><span class="tag">Last.fm (user key) + MusicBrainz + Cover Art Archive</span></header>
+      <dl>
+        <dt>Terms</dt><dd><a href="https://www.last.fm/api/tos">Last.fm Terms</a> · <a href="https://musicbrainz.org/doc/MusicBrainz_API">MusicBrainz API</a> · <a href="https://coverartarchive.org">Cover Art Archive</a></dd>
+        <dt>Search</dt><dd>Last.fm album and track search with per-user API key for ranking. Covers on the results page are fetched by sending release IDs to MusicBrainz in batches (up to 25 per request) and turned into Cover Art Archive links.</dd>
+        <dt>Stored on log</dt><dd><b>MusicBrainz</b> is the primary stored source: release-group title, artist credit, first release year, primary and secondary types, up to 5 genres by vote, and a Cover Art Archive URL. Tracks store recording title, artist, length, and parent release group. Last.fm data is never stored, keeping its 100 MB storage cap out of play. Last.fm and MusicBrainz links are built dynamically from ids.</dd>
+        <dt>Rules &amp; Don'ts</dt><dd>MusicBrainz strict 1 req/s rate limit. Last.fm images are excluded from its licence and never used. Covers come from the Cover Art Archive. Core MusicBrainz data is CC0; curated genres are CC BY-NC-SA.</dd>
+        <dt>Attribution</dt><dd>Credit Last.fm and link back to its pages. Credit Cover Art Archive on Music search. Credit MusicBrainz for tracklists and curated genres.</dd>
+        <dt>Termination</dt><dd>On termination, delete Last.fm data.</dd>
+      </dl>
+    </article>
+
+    <article class="type">
+      <header><h3>Anime &amp; Manga</h3><span class="tag">AniList · no key</span></header>
+      <dl>
+        <dt>Terms</dt><dd><a href="https://anilist.gitbook.io/anilist-apiv2-docs/docs/guide/terms-of-use">AniList API Terms of Use</a></dd>
+        <dt>Search</dt><dd>AniList GraphQL, one request per page.</dd>
+        <dt>Stored on log</dt><dd>The search result as mapped: title, format, episode, chapter and volume counts, minutes per episode, score, MAL id, cover, genres. Links to AniList are built dynamically from id (<code>/anime/&lt;id&gt;</code> or <code>/manga/&lt;id&gt;</code>).</dd>
+        <dt>Import</dt><dd><b>MyAnimeList XML.</b> MAL ids are resolved on AniList in batches of 50 per GraphQL request via the shared provider lookup.</dd>
+        <dt>Rules &amp; Don'ts</dt><dd>Free for non-commercial use. 90 req/min limit (paced to ~85/min). Honors Retry-After and X-RateLimit-Remaining. Do not hoard data or use AniList in the app name.</dd>
+        <dt>Attribution</dt><dd>Credit AniList on Anime &amp; Manga search.</dd>
+      </dl>
+    </article>
+
+    <article class="type">
+      <header><h3>Movies &amp; TV</h3><span class="tag">TMDB · user key</span></header>
+      <dl>
+        <dt>Terms</dt><dd><a href="https://www.themoviedb.org/api-terms-of-use">TMDB Terms of Use</a></dd>
+        <dt>Search</dt><dd>TMDB movie search or show search with seasons as child items.</dd>
+        <dt>Stored on log</dt><dd>The search result plus details (runtime, original language, IMDb id) stamped with <code>fetchedAt</code>. "View on TMDB" links are built dynamically from stored ids (<code>/movie/&lt;id&gt;</code>, <code>/tv/&lt;id&gt;</code>, <code>/tv/&lt;id&gt;/season/&lt;n&gt;</code>).</dd>
+        <dt>Import</dt><dd><b>Letterboxd ZIP.</b> Each unique film is resolved via the shared TMDB <code>findMovie</code> lookup with your TMDB key.</dd>
+        <dt>Rules &amp; Don'ts</dt><dd><b>6-month caching rule:</b> TMDB data must not be cached for more than 180 days. A daily refresh job re-fetches stale items using a key holder's key, or purges description and image on 404 or missing keys. No AI/ML training on TMDB content.</dd>
+        <dt>Attribution</dt><dd>TMDB logo and notice: "This product uses the TMDB API but is not endorsed or certified by TMDB." Shown on Movie and TV search, Settings, and README.</dd>
+        <dt>Termination</dt><dd>On termination, promptly delete all TMDB content.</dd>
+      </dl>
+    </article>
+
+    <article class="type">
+      <header><h3>Video games</h3><span class="tag">RAWG · user key</span></header>
+      <dl>
+        <dt>Terms</dt><dd><a href="https://rawg.io/apidocs">RAWG API Terms</a></dd>
+        <dt>Search</dt><dd>RAWG games search.</dd>
+        <dt>Stored on log</dt><dd>The search result plus details (description, developers, publishers, categories). Links to RAWG are built dynamically from stored slug or id (<code>/games/&lt;slug|id&gt;</code>).</dd>
+        <dt>Rules &amp; Don'ts</dt><dd>Free for personal/hobby projects (20,000 req/month quota per user key). Do not redistribute or resell data.</dd>
+        <dt>Attribution</dt><dd>Active hyperlink to RAWG on every page displaying RAWG data.</dd>
+      </dl>
+    </article>
+
+    <article class="type">
+      <header><h3>Board games</h3><span class="tag">BoardGameGeek · app token</span></header>
+      <dl>
+        <dt>Terms</dt><dd><a href="https://boardgamegeek.com/wiki/page/XML_API_Terms_of_Use">BGG XML API Terms of Use</a></dd>
+        <dt>Search</dt><dd>BGG XML API2 <code>search</code>, then <code>thing</code> in batches of up to 20 ids at <code>boardgamegeek.com</code> (no www).</dd>
+        <dt>Stored on log</dt><dd>Stored exactly as received without modification (descriptions, ratings, players, play time, designers, categories) and formatted only for display. Links are built dynamically from id (<code>/boardgame/&lt;id&gt;</code>).</dd>
+        <dt>Rules &amp; Don'ts</dt><dd>Registered non-commercial application token required. Space requests out; batch <code>thing</code> lookups. Do not modify data or use for AI/LLM training.</dd>
+        <dt>Attribution</dt><dd>Credit BoardGameGeek by name and show the unmodified "Powered by BGG" logo.</dd>
+      </dl>
+    </article>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>Other services and planned sources</h2>
+    <div class="gaps">
+      <div class="gap ok"><b>Google Books (not active):</b> Service code kept, UI disabled. If re-enabled, must follow Google's API terms and "Powered by Google" branding.</div>
+      <div class="gap ok"><b>User-uploaded files (Not APIs):</b> Goodreads, MyAnimeList and Letterboxd imports read export files uploaded by the user. We do not call those services' private APIs.</div>
+      <div class="gap ok"><b>Planned open data:</b> Wikidata (CC0 structured links and IDs) and Wikipedia (CC BY-SA 4.0 plot/premise text for opt-in local embeddings). Commercial provider text is never embedded.</div>
+    </div>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>Central provider registry and rate limits</h2>
+    <p>All provider HTTP requests go through a unified <code>providerFetch</code> function and registry in <code>server/src/providers/</code>. Every call enforces the provider's rate limiter, User-Agent, user auth, timeout, automatic single retry on 429/503 with Retry-After, and typed error mapping.</p>
+    <div class="tablebox"><table>
+      <thead><tr><th>Provider</th><th>Mechanism</th><th>Rate</th><th>Storage rule</th><th>Shared across search, imports and jobs?</th><th>429 handling</th></tr></thead>
+      <tbody>
+        <tr data-provider="musicbrainz"><td>MusicBrainz</td><td><code>providerFetch</code></td><td class="num">1/s</td><td><code>stored</code></td><td>Yes</td><td>Retry-After, pauses limiter, retries once</td></tr>
+        <tr data-provider="coverartarchive"><td>Cover Art Archive</td><td><code>providerFetch</code></td><td class="num">n/a</td><td><code>stored</code></td><td>Yes</td><td>Static front redirect cache</td></tr>
+        <tr data-provider="openlibrary"><td>Open Library</td><td><code>providerFetch</code></td><td class="num">≈2/s</td><td><code>stored</code></td><td>Yes</td><td>Retry-After, pauses limiter, retries once</td></tr>
+        <tr data-provider="anilist"><td>AniList</td><td><code>providerFetch</code></td><td class="num">≈85/min</td><td><code>stored</code></td><td>Yes</td><td>Retry-After, pauses limiter, retries once</td></tr>
+        <tr data-provider="tmdb"><td>TMDB</td><td><code>providerFetch</code></td><td class="num">4/s</td><td><code>refresh-after-days: 180</code></td><td>Yes</td><td>Retry-After, pauses limiter, retries once</td></tr>
+        <tr data-provider="rawg"><td>RAWG</td><td><code>providerFetch</code></td><td class="num">2/s</td><td><code>stored</code></td><td>Yes</td><td>Retry-After, pauses limiter, retries once</td></tr>
+        <tr data-provider="bgg"><td>BoardGameGeek</td><td><code>providerFetch</code></td><td class="num">1/s</td><td><code>as-received</code></td><td>Yes</td><td>Retry-After, pauses limiter, retries once</td></tr>
+        <tr data-provider="lastfm"><td>Last.fm</td><td><code>providerFetch</code></td><td class="num">4/s</td><td><code>never</code></td><td>Yes</td><td>Retry-After, pauses limiter, retries once</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>Known gaps</h2>
+    <div class="gaps">
+      <div class="gap"><b>Limits are per process.</b> With two server replicas every limiter's rate doubles. Production runs one replica today.</div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

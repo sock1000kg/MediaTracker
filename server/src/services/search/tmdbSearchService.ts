@@ -12,12 +12,18 @@ import prisma from "@/prismaClient.js"
 import { findMediaBySource, attachExternalIdsToMedia } from "@/repositories/mediaRepository.js"
 import { tmdbLimiter, parseRetryAfter } from "./rateLimiter.js"
 import { unexpectedShape } from "./providerErrors.js"
+import { providerFetch } from "@/providers/providerFetch.js"
+import { getUserApiKey as getRegistryUserApiKey } from "@/providers/registry.js"
 
 const BASE_URL = "https://api.themoviedb.org/3"
 const IMAGE_BASE = "https://image.tmdb.org/t/p/w342"
 const DEFAULT_RETRY_MS = 1000
 const MAX_RETRY_MS = 3000
 const TIMEOUT_MS = 8000
+
+export function normalizeTitle(s: string): string {
+    return s.trim().toLowerCase().replace(/['".,!?:;-]/g, "").replace(/\s+/g, " ")
+}
 
 export const TMDB_MOVIE_GENRES: Record<number, string> = {
     28: "Action", 12: "Adventure", 16: "Animation", 35: "Comedy", 80: "Crime",
@@ -188,40 +194,25 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 export class TmdbSearchService {
     async getUserApiKey(userId: string): Promise<string> {
-        const user = await findUserById(userId)
-        if (!user) throw new AppError("Non-existent userId", 404)
-
-        const key = user.apiKeys
-            .map(k => ({ ...k, key: decryptKey(k.key) }))
-            .find(k => k.service === "tmdb")?.key
-
-        if (!key) throw new AppError("Missing Movie API Key", 404)
-        return key
+        return getRegistryUserApiKey("tmdb", userId)
     }
 
-    // One request with a single retry after a 429. A 401 is mapped to 400: the client treats any 401 as an expired session
+    // One request with a single retry after a 429. Routed through providerFetch.
     private async fetchJson(url: URL, auth: TmdbAuth): Promise<unknown> {
-        const send = () => tmdbLimiter.schedule(() => fetch(url.toString(), {
-            headers: { ...(createUserAgentHeader().headers as Record<string, string>), ...(auth.headers ?? {}) },
-            signal: AbortSignal.timeout(TIMEOUT_MS), // created per attempt, at send time
-        }))
-
         try {
-            let res = await send()
-            if (res.status === 429) {
-                const delay = parseRetryAfter(res, DEFAULT_RETRY_MS, MAX_RETRY_MS)
-                tmdbLimiter.pause(delay)
-                await sleep(delay)
-                res = await send()
-                if (res.status === 429) {
-                    throw new AppError("Movie search is busy right now, try again in a moment", 503)
-                }
-            }
+            const res = await providerFetch("tmdb", url, {
+                headers: auth.headers,
+                timeoutMs: TIMEOUT_MS,
+                allowHttpErrors: true,
+            })
             if (res.status === 401) {
                 throw new AppError("TMDB rejected your API key. Check it in Settings → API Keys.", 400)
             }
             if (res.status === 404) {
                 throw new AppError("TMDB resource not found", 404, { cause: "upstream HTTP 404" })
+            }
+            if (res.status === 429 || res.status === 503) {
+                throw new AppError("TMDB rate limit exceeded or service unavailable", 503)
             }
             if (!res.ok) throw new AppError("TMDB search failed", 502, { cause: `upstream HTTP ${res.status}` })
             return await res.json()
@@ -237,6 +228,222 @@ export class TmdbSearchService {
 
     async fetchWithAuth(url: URL, auth: TmdbAuth): Promise<unknown> {
         return this.fetchJson(url, auth)
+    }
+
+    async findMovie(
+        title: string,
+        year: number | null | undefined,
+        options?: { apiKey?: string; userId?: string }
+    ): Promise<SearchResult | null> {
+        let auth: TmdbAuth
+        if (options?.apiKey) {
+            auth = tmdbAuth(options.apiKey)
+        } else if (options?.userId) {
+            auth = tmdbAuth(await this.getUserApiKey(options.userId))
+        } else {
+            throw new AppError("Missing Movie API Key", 404)
+        }
+
+        const url = buildTmdbSearchUrl({ q: title, year: year ?? undefined, anyReleaseYear: true }, auth)
+        let raw: unknown
+        try {
+            raw = await this.fetchJson(url, auth)
+        } catch {
+            return null
+        }
+
+        const parsed = tmdbSearchResponseSchema.safeParse(raw)
+        if (!parsed.success) return null
+
+        const targetTitle = normalizeTitle(title)
+        const items = parsed.data.results
+
+        // 1. the first result whose normalised title (or original title) equals the name and release year equals year
+        for (const item of items) {
+            if (!item.id) continue
+            const rTitle = item.title ? normalizeTitle(item.title) : ""
+            const rOrig = item.original_title ? normalizeTitle(item.original_title) : ""
+            const titleMatch = rTitle === targetTitle || rOrig === targetTitle
+            const rYear = item.release_date ? parseInt(item.release_date.slice(0, 4), 10) : null
+            if (titleMatch && year != null && rYear === year) {
+                return mapTmdbMovie(item)
+            }
+        }
+
+        // 2. else the first result with the year +/- 1
+        for (const item of items) {
+            if (!item.id) continue
+            const rTitle = item.title ? normalizeTitle(item.title) : ""
+            const rOrig = item.original_title ? normalizeTitle(item.original_title) : ""
+            const titleMatch = rTitle === targetTitle || rOrig === targetTitle
+            const rYear = item.release_date ? parseInt(item.release_date.slice(0, 4), 10) : null
+            if (titleMatch && year != null && rYear != null && Math.abs(rYear - year) === 1) {
+                return mapTmdbMovie(item)
+            }
+        }
+
+        // 3. Fallback if year was not provided in export
+        if (year == null) {
+            for (const item of items) {
+                if (!item.id) continue
+                const rTitle = item.title ? normalizeTitle(item.title) : ""
+                const rOrig = item.original_title ? normalizeTitle(item.original_title) : ""
+                if (rTitle === targetTitle || rOrig === targetTitle) {
+                    return mapTmdbMovie(item)
+                }
+            }
+        }
+
+        return null
+    }
+
+    async getMovie(id: number, options?: { apiKey?: string; userId?: string }): Promise<SearchResult> {
+        let auth: TmdbAuth
+        if (options?.apiKey) {
+            auth = tmdbAuth(options.apiKey)
+        } else if (options?.userId) {
+            auth = tmdbAuth(await this.getUserApiKey(options.userId))
+        } else {
+            throw new AppError("Missing Movie API Key", 404)
+        }
+        const url = buildTmdbDetailsUrl(id, auth)
+        const raw = await this.fetchJson(url, auth)
+        const data = tmdbMovieDetailsSchema.parse(raw)
+
+        const title = data.title?.trim() || data.original_title?.trim() || "Unknown title"
+        const original = data.original_title?.trim()
+        const originalTitle = original && title && original !== title ? original : null
+        const yearStr = data.release_date?.slice(0, 4)
+        const year = yearStr && /^\d{4}$/.test(yearStr) ? yearStr : null
+        const imageUrl = data.poster_path ? `${IMAGE_BASE}${data.poster_path}` : null
+        const directors = (data.credits?.crew ?? [])
+            .filter(c => c.job === "Director" && c.name?.trim())
+            .map(c => c.name!.trim())
+        const creator = directors.length > 0 ? directors.join(", ") : null
+        const genres = (data.genres ?? []).map(g => g.name?.trim() ?? "").filter(Boolean)
+
+        return {
+            mediaType: "movie",
+            title,
+            creator,
+            year,
+            description: data.overview?.trim() || "",
+            source: "tmdb",
+            sourceId: `movie-${id}`,
+            imageUrl,
+            metadata: {
+                kind: "movie",
+                tmdbId: id,
+                ...(originalTitle ? { originalTitle } : {}),
+                ...(genres.length ? { categories: genres } : {}),
+                runtime: data.runtime && data.runtime > 0 ? data.runtime : null,
+                imdbId: data.imdb_id || null,
+                fetchedAt: new Date().toISOString(),
+            },
+        }
+    }
+
+    async getShow(id: number, options?: { apiKey?: string; userId?: string }): Promise<SearchResult> {
+        let auth: TmdbAuth
+        if (options?.apiKey) {
+            auth = tmdbAuth(options.apiKey)
+        } else if (options?.userId) {
+            auth = tmdbAuth(await this.getUserApiKey(options.userId))
+        } else {
+            throw new AppError("Missing Movie API Key", 404)
+        }
+        const url = buildTmdbTvDetailsUrl(id, auth)
+        const raw = await this.fetchJson(url, auth)
+        const data = tmdbTvShowDetailsSchema.parse(raw)
+
+        const showTitle = data.name?.trim() || data.original_name?.trim() || "Unknown title"
+        const original = data.original_name?.trim()
+        const originalTitle = original && showTitle && original !== showTitle ? original : null
+        const showYear = data.first_air_date?.slice(0, 4)
+        const validShowYear = showYear && /^\d{4}$/.test(showYear) ? showYear : null
+
+        const createdByNames = (data.created_by ?? []).map(c => c.name?.trim()).filter(Boolean) as string[]
+        const firstNetwork = data.networks?.[0]?.name?.trim() || null
+        const creator = createdByNames.length > 0 ? createdByNames.join(", ") : firstNetwork
+        const networks = (data.networks ?? []).map(n => n.name?.trim()).filter(Boolean) as string[]
+        const genres = (data.genres ?? []).map(g => g.name?.trim()).filter(Boolean) as string[]
+        const showImageUrl = data.poster_path ? `${IMAGE_BASE}${data.poster_path}` : null
+
+        return {
+            mediaType: "tv",
+            title: showTitle,
+            creator,
+            year: validShowYear,
+            description: data.overview?.trim() || "",
+            source: "tmdb",
+            sourceId: `tv:${id}`,
+            imageUrl: showImageUrl,
+            metadata: {
+                kind: "show",
+                tmdbId: id,
+                ...(originalTitle ? { originalTitle } : {}),
+                categories: genres.length ? genres : null,
+                networks: networks.length ? networks : null,
+                seasonCount: data.number_of_seasons ?? null,
+                episodeCount: data.number_of_episodes ?? null,
+                fetchedAt: new Date().toISOString(),
+            },
+        }
+    }
+
+    async getSeason(id: number, n: number, options?: { apiKey?: string; userId?: string }): Promise<SearchResult> {
+        let auth: TmdbAuth
+        if (options?.apiKey) {
+            auth = tmdbAuth(options.apiKey)
+        } else if (options?.userId) {
+            auth = tmdbAuth(await this.getUserApiKey(options.userId))
+        } else {
+            throw new AppError("Missing Movie API Key", 404)
+        }
+        const url = buildTmdbTvDetailsUrl(id, auth)
+        const raw = await this.fetchJson(url, auth)
+        const data = tmdbTvShowDetailsSchema.parse(raw)
+
+        const seasonItem = (data.seasons ?? []).find(s => s.season_number === n)
+        if (!seasonItem) {
+            throw new AppError("The provider no longer has this item", 404)
+        }
+
+        const showTitle = data.name?.trim() || data.original_name?.trim() || "Unknown title"
+        const seasonName = seasonItem.name?.trim() || `Season ${n}`
+        const title = `${showTitle}: ${seasonName}`
+        const sYear = seasonItem.air_date?.slice(0, 4)
+        const showYear = data.first_air_date?.slice(0, 4)
+        const year = sYear && /^\d{4}$/.test(sYear) ? sYear : (showYear && /^\d{4}$/.test(showYear) ? showYear : null)
+        const showImageUrl = data.poster_path ? `${IMAGE_BASE}${data.poster_path}` : null
+        const imageUrl = seasonItem.poster_path ? `${IMAGE_BASE}${seasonItem.poster_path}` : showImageUrl
+        const createdByNames = (data.created_by ?? []).map(c => c.name?.trim()).filter(Boolean) as string[]
+        const firstNetwork = data.networks?.[0]?.name?.trim() || null
+        const creator = createdByNames.length > 0 ? createdByNames.join(", ") : firstNetwork
+        const networks = (data.networks ?? []).map(n => n.name?.trim()).filter(Boolean) as string[]
+        const genres = (data.genres ?? []).map(g => g.name?.trim()).filter(Boolean) as string[]
+
+        return {
+            mediaType: "tv",
+            title,
+            creator,
+            year,
+            description: seasonItem.overview?.trim() || "",
+            source: "tmdb",
+            sourceId: `tv:${id}:s${n}`,
+            imageUrl,
+            metadata: {
+                kind: "season",
+                tmdbId: id,
+                showTitle,
+                seasonNumber: n,
+                episodeCount: seasonItem.episode_count ?? null,
+                airDate: seasonItem.air_date ?? null,
+                networks: networks.length ? networks : null,
+                categories: genres.length ? genres : null,
+                fetchedAt: new Date().toISOString(),
+            },
+        }
     }
 
     async searchMoviesTmdb(userId: string, q: string, page = 1, filters: { year?: number } = {}):

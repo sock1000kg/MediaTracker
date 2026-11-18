@@ -11,7 +11,7 @@ import { useSearchLogging } from "@/hooks/useSearchLogging"
 import { useStoredView } from "@/hooks/useStoredView"
 import { isResultLogged } from "@/lib/utils"
 import { parseYear } from "@/lib/searchQuery"
-import { TMDB_ATTRIBUTION, TMDB_URL, TMDB_LOGO_URL } from "@/lib/movieFormat"
+import { CLIENT_PROVIDERS } from "@/lib/providers"
 import type { MovieResult } from "@/types/search"
 
 export function MovieSearchSection() {
@@ -41,7 +41,7 @@ export function MovieSearchSection() {
     <SearchPageShell page="movies">
       <SearchHeader
         title="Movie search"
-        attribution={{ href: TMDB_URL, text: TMDB_ATTRIBUTION, logo: { src: TMDB_LOGO_URL, alt: "TMDB", before: true } }}
+        attribution={CLIENT_PROVIDERS.tmdb.attribution}
         value={inputValue}
         onChange={setInputValue}
         onSearch={handleSearch}

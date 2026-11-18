@@ -119,7 +119,7 @@ This document records deliberate design decisions, constraints, and provider qui
 
 ## 15. No-AI-on-Provider-Data Rule
 
-- **Reference:** [docs/providers.md](file:///home/dat/projects/JavaScript/media-tracker/docs/providers.md), `server/src/services/search/`.
+- **Reference:** [client/public/docs/providers.html](../client/public/docs/providers.html), `server/src/services/search/`.
 - **Context & Why:** Terms of Service across third-party media data providers (TMDB, RAWG, Last.fm, MusicBrainz, BoardGameGeek, Open Library) strictly prohibit using their data to train, fine-tune, or feed generative AI models without prior contractual agreements. The application strictly forbids sending provider metadata or cached records to LLMs or generative services.
 
 ---
@@ -128,4 +128,11 @@ This document records deliberate design decisions, constraints, and provider qui
 
 - **Code:** `server/src/services/imports/goodreadsImportService.ts`, `server/src/services/openLibrarySyncService.ts`, `server/src/queue/handlers/openLibrarySync.ts`.
 - **Context & Why:** Goodreads CSV exports do not contain book genres or rich metadata. Previously, inline Open Library enrichment was attempted per-row during CSV import, which slowed down imports and performed unbatched single-item searches. Furthermore, Open Library's API terms request that clients avoid hundreds of individual requests and instead batch queries through `search.json` (e.g. `q=isbn:(A OR B OR ...)`). Following the music pattern, Goodreads imports store only Goodreads identity (title, author, year, Goodreads external ID and URL) instantly without network calls. A background rate-limited job (`openlibrary.sync`) then fills in canonical Open Library data (cover, genres, publisher, page count, work key) in efficient ISBN batches and title/author fallbacks. Stored Goodreads source and link are preserved for de-duplication and linking.
+
+---
+
+## 17. Dynamic Provider Links (Built from IDs, Not Stored)
+
+- **Code:** `client/src/lib/providers.ts`, `client/src/lib/providerLinks.ts`, `server/src/api/domain/media.ts`.
+- **Context & Why:** Outbound links to external provider web pages (TMDB, RAWG, Open Library, MusicBrainz, Last.fm, BoardGameGeek, AniList, Goodreads) are dynamically synthesized on the client from provider IDs (e.g. `sourceId`, `metadata.imdbId`, `metadata.workKey`, `metadata.releaseGroupId`, etc.). New media records do not persist `metadata.url` in the database. Building links from IDs guarantees that URL scheme changes or domain migrations don't require database migrations, and removes redundant URL data from stored metadata. Older records with stored URLs continue to use them as a fallback if IDs are missing.
 

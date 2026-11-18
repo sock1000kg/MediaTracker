@@ -1,10 +1,11 @@
 import { ISearchService } from "@/services/search/searchServiceInterface.js"
 import { SearchResult, searchResultsSchema } from "@/schemas/search/searchSchemas.js"
 import { BookSearchFilters, OpenLibraryBook, openLibraryResponseSchema } from "@/schemas/search/bookSchemas.js"
-import { createUserAgentHeader, fetchAndParse, validateSchema } from "@/utilities.js"
+import { validateSchema } from "@/utilities.js"
 import { AppError } from "@/api/domain/error.js"
 import { isJunkGenre, JUNK_BOOK_SUBJECTS } from "@/services/genreService.js"
-import { openLibraryLimiter } from "./rateLimiter.js"
+import { providerFetch } from "@/providers/providerFetch.js"
+import { getProviderEntry } from "@/providers/registry.js"
 
 // Re-export for compatibility
 export { JUNK_BOOK_SUBJECTS }
@@ -84,18 +85,15 @@ export class OpenLibraryService implements ISearchService {
     {
         const url = this.buildSearchUrl(q, page, filters)
 
-        const headers = createUserAgentHeader()
+        let raw: unknown
+        try {
+            const res = await providerFetch("openlibrary", url)
+            raw = await res.json()
+        } catch {
+            throw new AppError("Failed to fetch from Open Library", 503)
+        }
 
-        const parsed = await openLibraryLimiter.schedule(() =>
-            fetchAndParse(
-                url, 
-                openLibraryResponseSchema, 
-                "Open Library API error", 
-                "Failed to fetch from Open Library",
-                headers 
-            )
-        )
-
+        const parsed = validateSchema(openLibraryResponseSchema, raw)
         const results = this.mapResults(parsed.docs)
 
         if (!results.length) {
@@ -109,6 +107,63 @@ export class OpenLibraryService implements ISearchService {
         return { 
             results: validateSchema(searchResultsSchema, results), 
             nextStartIndex 
+        }
+    }
+
+    async findByIsbns(isbns: string[]): Promise<Map<string, OpenLibraryBook>> {
+        const result = new Map<string, OpenLibraryBook>()
+        if (isbns.length === 0) return result
+
+        const batchSize = getProviderEntry("openlibrary").batchSize ?? 50
+        for (let i = 0; i < isbns.length; i += batchSize) {
+            const batch = isbns.slice(i, i + batchSize)
+            const u = new URL("https://openlibrary.org/search.json")
+            u.searchParams.set("q", `isbn:(${batch.join(" OR ")})`)
+            u.searchParams.set("fields", "key,isbn,title,author_name,cover_i,number_of_pages_median,publisher,subject,first_publish_year")
+            u.searchParams.set("limit", String(Math.max(batch.length * 2, 50)))
+
+            const res = await providerFetch("openlibrary", u)
+            const raw = await res.json()
+            const checked = openLibraryResponseSchema.safeParse(raw)
+            if (checked.success && checked.data.docs) {
+                for (const doc of checked.data.docs) {
+                    if (Array.isArray(doc.isbn)) {
+                        for (const isb of doc.isbn) {
+                            const cleaned = isb.replace(/[^0-9X]/gi, "")
+                            if (cleaned) result.set(cleaned, doc)
+                        }
+                    }
+                }
+            }
+        }
+        return result
+    }
+
+    async findByTitleAuthor(title: string, author?: string | null): Promise<OpenLibraryBook | null> {
+        const u = new URL("https://openlibrary.org/search.json")
+        u.searchParams.set("title", title)
+        if (author) u.searchParams.set("author", author)
+        u.searchParams.set("fields", "key,isbn,title,author_name,cover_i,number_of_pages_median,publisher,subject,first_publish_year")
+        u.searchParams.set("limit", "1")
+
+        const res = await providerFetch("openlibrary", u)
+        const raw = await res.json()
+        const checked = openLibraryResponseSchema.safeParse(raw)
+        if (checked.success && checked.data.docs.length > 0) {
+            return checked.data.docs[0]
+        }
+        return null
+    }
+
+    async getWork(key: string): Promise<unknown | null> {
+        const cleanKey = key.startsWith("/works/") ? key.slice("/works/".length) : (key.startsWith("/") ? key.slice(1) : key)
+        const u = new URL(`https://openlibrary.org/works/${cleanKey}.json`)
+        try {
+            const res = await providerFetch("openlibrary", u, { allow404: true })
+            if (res.status === 404) return null
+            return await res.json()
+        } catch {
+            return null
         }
     }
 }

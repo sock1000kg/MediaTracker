@@ -499,7 +499,9 @@ export async function deleteMedia(id: string): Promise<void> {
 }
 
 export async function deleteAllMediasForUser(userId: string, client: DbClient): Promise<void> {
-    await client.media.deleteMany({ where: { userId } })
+    await client.media.deleteMany({
+        where: { userId },
+    })
 }
 
 export async function findMediaChildren(parentId: string, userId: string, client: DbClient = prisma) {

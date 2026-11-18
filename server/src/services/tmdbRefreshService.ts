@@ -14,9 +14,10 @@ import {
 import { tmdbMovieDetailsSchema } from "@/schemas/search/movieSchemas.js"
 import { tmdbTvShowDetailsSchema } from "@/schemas/search/tvSchemas.js"
 import { setMediaGenres, setMediaCreators } from "./genreService.js"
+import { getProviderEntry } from "@/providers/registry.js"
 
 const MAX_BATCH_SIZE = 200
-const STALE_DAYS = 180
+const STALE_DAYS = getProviderEntry("tmdb").refreshAfterDays ?? 180
 const IMAGE_BASE = "https://image.tmdb.org/t/p/w342"
 
 export interface RefreshResult {
@@ -112,7 +113,6 @@ export async function refreshSingleTmdbItem(
 
         const updatedMetadata: Record<string, unknown> = {
             ...cleanMeta,
-            url: `https://www.themoviedb.org/movie/${tmdbId}`,
             kind: "movie",
             tmdbId,
             ...(originalTitle ? { originalTitle } : {}),
@@ -166,7 +166,6 @@ export async function refreshSingleTmdbItem(
 
         const updatedMetadata: Record<string, unknown> = {
             ...cleanMeta,
-            url: `https://www.themoviedb.org/tv/${tmdbId}`,
             kind: "show",
             tmdbId,
             ...(originalTitle ? { originalTitle } : {}),
@@ -226,7 +225,6 @@ export async function refreshSingleTmdbItem(
 
         const updatedMetadata: Record<string, unknown> = {
             ...cleanMeta,
-            url: `https://www.themoviedb.org/tv/${tmdbId}/season/${sNum}`,
             kind: "season",
             tmdbId,
             showTitle,

@@ -7,7 +7,7 @@ import { AppError } from "@/api/domain/error.js"
 import { ImportResult } from "@/api/domain/imports.js"
 import { SearchResult } from "@/schemas/search/searchSchemas.js"
 import { AniListMedia, anilistResponseSchema } from "@/schemas/search/animeSchemas.js"
-import { mapAniListMedia, anilistThrottle } from "../search/anilistSearchService.js"
+import { mapAniListMedia, anilistThrottle, anilistSearchService } from "../search/anilistSearchService.js"
 import { anilistLimiter, parseRetryAfter } from "../search/rateLimiter.js"
 import { Media, Prisma } from "@/db.js"
 import { createUserAgentHeader, tagKey } from "@/utilities.js"
@@ -324,74 +324,7 @@ export async function defaultAniListResolver(
     malIds: number[],
     kind: MalKind
 ): Promise<Map<number, SearchResult>> {
-    const resultMap = new Map<number, SearchResult>()
-    if (malIds.length === 0) return resultMap
-
-    const anilistType = kind === "anime" ? "ANIME" : "MANGA"
-
-    for (let i = 0; i < malIds.length; i += BATCH_SIZE) {
-        const batchIds = malIds.slice(i, i + BATCH_SIZE)
-
-        let success = false
-        let attempts = 0
-        while (!success && attempts < 3) {
-            attempts++
-            try {
-                const response = await anilistThrottle(async () => {
-                    const controller = new AbortController()
-                    const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS)
-                    try {
-                        return await fetch(ANILIST_ENDPOINT, {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "Accept": "application/json",
-                                ...(createUserAgentHeader().headers as Record<string, string>),
-                            },
-                            body: JSON.stringify({
-                                query: BATCH_QUERY,
-                                variables: { ids: batchIds, type: anilistType },
-                            }),
-                            signal: controller.signal,
-                        })
-                    } finally {
-                        clearTimeout(timeout)
-                    }
-                })
-
-                if (response.status === 429) {
-                    const retryAfter = parseRetryAfter(response, 2000)
-                    anilistLimiter.pause(retryAfter)
-                    continue
-                }
-
-                const remaining = response.headers.get("X-RateLimit-Remaining")
-                if (remaining !== null && Number(remaining) <= 2) {
-                    anilistLimiter.pause(1000)
-                }
-
-                if (!response.ok) {
-                    break
-                }
-
-                const json = await response.json()
-                const parsed = anilistResponseSchema.safeParse(json)
-                if (parsed.success && parsed.data.data?.Page?.media) {
-                    for (const m of parsed.data.data.Page.media) {
-                        if (m && typeof m.idMal === "number") {
-                            const mapped = mapAniListMedia(kind, m as AniListMedia)
-                            resultMap.set(m.idMal, mapped)
-                        }
-                    }
-                }
-                success = true
-            } catch {
-                break
-            }
-        }
-    }
-
-    return resultMap
+    return anilistSearchService.getByMalIds(malIds, kind)
 }
 
 export function loadMalCache(customPath?: string): { anime: Record<string, SearchResult>; manga: Record<string, SearchResult> } {
