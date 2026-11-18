@@ -26,7 +26,7 @@ The request flow is **route → controller → service → repository** (`server
 - **Media**: title, creator, year, description, image, `source` + `sourceId` (where a search result came from), and a free-form `metadata` JSON (categories, page count, runtime, platforms, …).
   - Media logged from search or imports belongs to the internal **`system`** user, so everyone shares it.
   - Media created by hand belongs to its creator.
-- **MediaType**: built-in types (book, music, anime, manga, movie, game, boardgame) belong to `system`. Users can add their own.
+- **MediaType**: built-in types (book, music, anime, manga, movie, tv, game, boardgame) belong to `system`. Users can add their own.
 - **UserLogs**: one log per user per media, with status, rating (0–100), notes, `logged_at`, and optional `started_at` / `finished_at` stored at day precision (noon UTC) so time zones never flip the calendar day.
 - **Tag / LogTag**: personal tags on logs (private per user, unique per user case-insensitively, at most 20 tags per log and 500 per user).
 - **Collection / CollectionItem**: private, ordered lists of logs (owned by User, unique nameKey per user case-insensitively, optional description and ranked flag, at most 200 collections per user and 1000 items per collection; dense positions starting from 0, maintained on additions, removals and reorders).
@@ -71,6 +71,8 @@ Jobs:
 - `import.goodreads`: imports a Goodreads CSV and reports progress (0–100). New logs take `logged_at` from Date Read, then Date Added, then now.
   - One import runs per user at a time.
   - The uploaded CSV is removed from the queue once the job finishes.
+- `import.mal`: imports a MyAnimeList XML or XML.gz export, mapping entries to canonical statuses and ratings.
+- `import.letterboxd`: imports a Letterboxd ZIP export (ratings, diary logs, watchlist, likes, and custom lists as collections).
 - `demo.reset`: resets the demo account. Scheduled weekly with an idempotent job scheduler, so it runs once even with several instances.
 - `tmdb.refresh`: refreshes stale TMDB metadata older than 6 months or purges metadata for unlinked items.
 - `music.coverBackfill`: walks Last.fm music media to migrate release URLs to release-group URLs and resolve covers for standalone tracks via MusicBrainz, marking rows with `coverResolvedAt`. Enqueued at server startup and after demo resets.
@@ -87,7 +89,7 @@ Users see their jobs through `GET /jobs` and `GET /jobs/:id`, and only their own
 ## Frontend
 
 - **Data:** TanStack Query handles fetching and caching. The cache is cleared on login and logout.
-- **Pages:** `pages/sections/*` are the tabs inside `Homepage.tsx`: Logs, Your media, Media types, Stats, five searches and Settings.
+- **Pages:** `pages/sections/*` are the tabs inside `Homepage.tsx`: Logs, Your media, Collections, Media types, Stats, six searches (books, music, anime/manga, movies, tv, games with board games) and Settings.
 - **Stats:** computed client-side from `GET /logs` (`lib/stats.ts`); there is no stats endpoint.
 - **Shared view pieces:** `components/media-view/` holds `Cover`, `RowShell`, `TileShell`, `ClampText`, `GroupHeading`, `GroupFooter`, `ViewControls` and `PageBackdrop`. They're used by `components/logs`, `components/media` and `components/search`.
 - **Preferences:**

@@ -213,49 +213,6 @@ export function ApiKeyForm() {
                 </p>
             )}
 
-            {/* GOOGLE BOOKS
-            <form onSubmit={
-                hasGoogleBooksKey 
-                ? handleUpdate("google_books", googleBooksInput) 
-                : handleCreate("google_books", googleBooksInput)
-            }>
-                <label className="block mb-4">
-                    <span className="text-foreground font-medium">Google Books</span>
-                    <div className="flex gap-4 mt-1">
-                        <input
-                            type="text"
-                            value={googleBooksInput ?? ""}
-                            onChange={(e) =>
-                                setGoogleBooksInput(e.target.value)
-                            }
-                            className="block w-full rounded-md border border-input bg-card px-3 py-2 text-sm focus:ring-2 focus:outline-none "
-                            placeholder="Google Books API Key"
-                        />
-
-                        {hasGoogleBooksKey ? 
-                        <Button
-                            type="submit"
-                            variant="amber"  
-                        >
-                            Update
-                        </Button> :
-                        <Button
-                            type="submit"
-                            variant="amber"  
-                        >
-                            Add
-                        </Button>}
-                        <Button
-                            type="button"
-                            variant="destructive"
-                            onClick={handleDelete("google_books")}  
-                        >
-                            Delete
-                        </Button>
-                    </div>
-                </label>
-            </form> */}
-
             {SERVICES.map((config) => (
                 <ApiKeyRow
                     key={config.service}

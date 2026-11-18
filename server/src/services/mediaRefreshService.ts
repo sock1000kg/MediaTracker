@@ -99,7 +99,8 @@ export class MediaRefreshService {
             throw new AppError("You can only refresh media you have logged", 403)
         }
 
-        // Rate limit: at most once per 10 minutes
+        // Rate limit: refreshedAt stamp enforces at most one manual refresh per 10 minutes per item across all users,
+        // preventing abuse and upstream provider quota exhaustion.
         const meta = (media.metadata ?? {}) as Record<string, unknown>
         if (typeof meta.refreshedAt === "string") {
             const lastTime = new Date(meta.refreshedAt).getTime()
@@ -175,6 +176,8 @@ export class MediaRefreshService {
             throw new AppError("Provider is unavailable", 503)
         }
         const d = checked.data
+        // Refresh rule: keep stored values whenever the provider returns null/empty or omits fields.
+        // Refreshes should enrich or update metadata, never erase existing user or previously fetched data.
         const title = d.name?.trim() || media.title
         const yearStr = d.released?.slice(0, 4)
         const year = yearStr && /^\d{4}$/.test(yearStr) ? Number(yearStr) : media.year
@@ -447,6 +450,7 @@ export class MediaRefreshService {
 
         let thingXml: string
         try {
+            // Provider quirk: must use boardgamegeek.com without www to avoid redirect/auth failure
             const thingUrl = new URL("https://boardgamegeek.com/xmlapi2/thing")
             thingUrl.searchParams.set("id", thingId)
             thingUrl.searchParams.set("stats", "1")
@@ -536,6 +540,7 @@ export class MediaRefreshService {
                 ...(recRes.releaseGroupId ? { mbReleaseGroupId: recRes.releaseGroupId } : {}),
                 ...(durationSec ? { durationSec } : {}),
                 refreshedAt: now,
+                // Idempotency stamps: mark canonical MusicBrainz sync and CAA cover resolution
                 mbSyncedAt: now,
                 coverResolvedAt: now,
             }
@@ -616,6 +621,7 @@ export class MediaRefreshService {
                 secondaryTypes: rg["secondary-types"] ?? [],
                 firstReleaseDate: firstReleaseDate ?? null,
                 refreshedAt: now,
+                // Idempotency stamps: mark canonical MusicBrainz sync and CAA cover resolution
                 mbSyncedAt: now,
                 coverResolvedAt: now,
             }

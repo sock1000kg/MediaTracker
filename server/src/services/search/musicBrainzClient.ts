@@ -4,6 +4,8 @@ import { createUserAgentHeader } from "@/utilities.js"
 export const MB_BASE_URL = "https://musicbrainz.org/ws/2"
 export const MB_TIMEOUT_MS = 10000
 
+// Rate limit: MusicBrainz strictly enforces 1 req/sec per IP with an identified User-Agent.
+// This in-process limiter schedules all outgoing requests sequentially.
 export class RateLimiter {
     private lastCallTime = 0
     private readonly intervalMs: number
@@ -288,6 +290,8 @@ export class MusicBrainzClient {
             return { groups, failed }
         }
 
+        // Upstream constraint: MusicBrainz Lucene query parser limits query string complexity;
+        // batching in chunks of <= 25 prevents URL overflow and 400 Bad Request responses.
         const chunkSize = 25
         for (let i = 0; i < uncached.length; i += chunkSize) {
             const chunk = uncached.slice(i, i + chunkSize)
@@ -456,6 +460,7 @@ export class MusicBrainzClient {
      * - { status: "found", imageUrl: string } if found
      * - { status: "none" } if no match found in MusicBrainz
      * - { status: "failed" } if request failed (network error, timeout, 503, etc.)
+     * "Failure never erases": callers must distinguish "failed" from "none" so transient errors never overwrite or erase existing artwork.
      */
     async resolveTrackCover(artist: string, title: string): Promise<TrackCoverResult> {
         const res = await this.resolveTrackRecording(artist, title)

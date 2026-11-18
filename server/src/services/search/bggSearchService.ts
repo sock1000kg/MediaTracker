@@ -2,15 +2,15 @@ import { XMLParser } from "fast-xml-parser"
 import {
     bggSearchResponseSchema,
     bggThingResponseSchema,
-    BggSearchItem,
     BggThingItem,
 } from "@/schemas/search/bggSchemas.js"
 import { searchResultsSchema, SearchResult } from "@/schemas/search/searchSchemas.js"
-import { createUserAgentHeader, decryptKey, sanitizeDescription, validateSchema } from "@/utilities.js"
+import { createUserAgentHeader, decryptKey, validateSchema } from "@/utilities.js"
 import { findUserById } from "@/repositories/authRepository.js"
 import { AppError } from "@/api/domain/error.js"
 import { unexpectedShape } from "./providerErrors.js"
 
+// Host quirk: must use boardgamegeek.com without www; www redirects or fails Cloudflare/token auth for XMLAPI2.
 const BASE_URL = "https://boardgamegeek.com/xmlapi2"
 const PAGE_SIZE = 20
 const DEFAULT_RETRY_MS = 1000
@@ -50,7 +50,7 @@ function getPrimaryName(names?: Array<{ "@_type"?: string | null; "@_value"?: st
     return primary?.["@_value"]?.trim() || names[0]?.["@_value"]?.trim() || "Unknown title"
 }
 
-export function parseBggXml<T>(xml: string): Record<string, unknown> {
+export function parseBggXml(xml: string): Record<string, unknown> {
     const parser = new XMLParser({
         ignoreAttributes: false,
         attributeNamePrefix: "@_",
@@ -199,7 +199,8 @@ export class BggSearchService {
 
         const items = checkedSearch.data.items?.item ?? []
 
-        // Exact (case-insensitive) title matches first, otherwise BGG's order
+        // Tie-break/re-ranking quirk: BGG search returns items in arbitrary/chronological ID order rather than relevance.
+        // We sort exact (case-insensitive) primary title matches to the front while preserving BGG's relative order for the rest.
         const qLower = cleanQ.toLowerCase()
         const sortedItems = [...items].sort((a, b) => {
             const aExact = getPrimaryName(a.name).toLowerCase() === qLower ? 1 : 0

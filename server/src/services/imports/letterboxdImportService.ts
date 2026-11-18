@@ -16,8 +16,6 @@ import { findMediaByExternalIds } from "@/repositories/mediaRepository.js"
 import {
     findCollectionByNameKey,
     createCollection,
-    findCollectionItem,
-    countItemsInCollection,
     addItem,
     touchCollection,
 } from "@/repositories/collectionRepository.js"
@@ -88,7 +86,7 @@ export type ParseLetterboxdListResult =
 
 export function parseLetterboxdList(
     text: string,
-    fileName?: string
+    _fileName?: string
 ): ParseLetterboxdListResult {
     if (!text || !text.trim()) {
         return { ok: false, reason: "empty or unreadable file" }
@@ -1093,9 +1091,11 @@ export class LetterboxdImportService {
                 isNew = true
             }
 
-            let { existingLogIds, currentItemCount, nextPosition } = isNew
+            const collState = isNew
                 ? { existingLogIds: new Set<string>(), currentItemCount: 0, nextPosition: 0 }
                 : await loadCollectionState(coll.id, prisma)
+            const { existingLogIds } = collState
+            let { currentItemCount, nextPosition } = collState
 
             const likesRows = parseCsvRows(files.likes)
             const orderedLikedKeys: string[] = []
@@ -1184,9 +1184,11 @@ export class LetterboxdImportService {
                 isNew = true
             }
 
-            let { existingLogIds, currentItemCount, nextPosition } = isNew
+            const collState = isNew
                 ? { existingLogIds: new Set<string>(), currentItemCount: 0, nextPosition: 0 }
                 : await loadCollectionState(coll.id, prisma)
+            const { existingLogIds } = collState
+            let { currentItemCount, nextPosition } = collState
 
             const sortedFilms = [...list.films].sort((a, b) => a.position - b.position)
             let newlyAddedCount = 0

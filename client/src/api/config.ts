@@ -25,6 +25,10 @@ export interface PublicLimits {
 
 export interface PublicConfig {
   limits: PublicLimits
+  demo: {
+    username: string
+    password: string
+  } | null
 }
 
 export async function fetchConfig(): Promise<PublicConfig> {

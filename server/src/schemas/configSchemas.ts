@@ -23,8 +23,16 @@ export const publicConfigLimitsSchema = z.object({
     }),
 })
 
+export const publicDemoSchema = z
+    .object({
+        username: z.string(),
+        password: z.string(),
+    })
+    .nullable()
+
 export const publicConfigSchema = z.object({
     limits: publicConfigLimitsSchema,
+    demo: publicDemoSchema,
 })
 
 export type PublicConfig = z.infer<typeof publicConfigSchema>

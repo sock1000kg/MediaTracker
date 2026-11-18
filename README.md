@@ -3,7 +3,7 @@
 [![CI](https://github.com/sock1000kg/MediaTracker/actions/workflows/ci.yml/badge.svg)](https://github.com/sock1000kg/MediaTracker/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-A self-hostable media journal: books, music, anime, manga, movies and games, all in one place. Search a catalogue, log it, rate it and keep notes, or add your own media. Designed to be simple, and feels more like a journal rather than a media bank. Created for my personal use.
+A self-hostable media journal: books, music, anime, manga, movies, TV, video games and board games, all in one place. Search a catalogue, log it, rate it and keep notes, or add your own media. Designed to be simple, and feels more like a journal rather than a media bank. Created for my personal use.
 
 **Live demo:** <https://media-tracker.sock1000kg.io.vn/> (username `demo`, password `Demo123!!!`; the demo account is reset weekly)
 
@@ -38,7 +38,7 @@ A self-hostable media journal: books, music, anime, manga, movies and games, all
 | Frontend | React 19, Vite, TypeScript, Tailwind CSS v4, shadcn/ui (Radix), TanStack Query |
 | Backend | Node.js 22, Express 5, TypeScript, Prisma, PostgreSQL 17, Zod |
 | Background jobs | BullMQ on [Valkey](https://valkey.io) (BSD-licensed, Redis-compatible) |
-| Testing | Jest, Supertest |
+| Testing | Jest, Vitest, Supertest |
 | Ops | Docker, Docker Compose, GitHub Actions |
 
 ## Quick start
@@ -68,6 +68,8 @@ See **[docs/setup.md](docs/setup.md)** for running tests, production builds and 
 
 | Doc | Contents |
 | --- | --- |
+| [AGENTS.md](AGENTS.md) | Practical guide for coding agents and contributors |
+| [docs/decisions.md](docs/decisions.md) | Architectural decisions, constraints, and provider quirks |
 | [docs/setup.md](docs/setup.md) | Local development, tests, production build |
 | [docs/configuration.md](docs/configuration.md) | Every environment variable |
 | [docs/api.md](docs/api.md) | REST API reference |
@@ -104,7 +106,7 @@ See **[docs/setup.md](docs/setup.md)** for running tests, production builds and 
 
 ## Acknowledgements
 
-Search data comes from Open Library, Last.fm, AniList, RAWG, TMDB, and BoardGameGeek. This product uses the TMDB API but is not endorsed or certified by TMDB.
+Search data comes from Open Library, Last.fm, AniList, RAWG, TMDB, BoardGameGeek, and MusicBrainz / Cover Art Archive. This product uses the TMDB API but is not endorsed or certified by TMDB.
 
 ## License
 

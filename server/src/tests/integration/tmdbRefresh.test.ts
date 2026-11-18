@@ -388,7 +388,7 @@ describe("TMDB Refresh and Purge Job (Integration)", () => {
         })
 
         const err404 = new Error("TMDB resource not found")
-        ;(err404 as any).status = 404
+        Object.assign(err404, { status: 404 })
         jest.spyOn(tmdbSearchService, "fetchWithAuth").mockRejectedValue(err404)
 
         const result = await refreshStaleTmdbMedia(200, prisma)
@@ -408,7 +408,7 @@ describe("TMDB Refresh and Purge Job (Integration)", () => {
 
     it("rotates failing stale rows across consecutive runs based on refreshCheckedAt", async () => {
         const staleDate = new Date(Date.now() - 200 * 24 * 60 * 60 * 1000).toISOString()
-        const createdMovies: any[] = []
+        const createdMovies: Array<{ id: string }> = []
 
         for (let i = 1; i <= 4; i++) {
             const m = await prisma.media.create({
@@ -447,8 +447,8 @@ describe("TMDB Refresh and Purge Job (Integration)", () => {
         const afterRun1 = await prisma.media.findMany({
             where: { id: { in: createdMovies.map(m => m.id) } },
         })
-        const run1Checked = afterRun1.filter(m => (m.metadata as any)?.refreshCheckedAt)
-        const run1Unchecked = afterRun1.filter(m => !(m.metadata as any)?.refreshCheckedAt)
+        const run1Checked = afterRun1.filter(m => (m.metadata as Record<string, unknown> | null)?.refreshCheckedAt)
+        const run1Unchecked = afterRun1.filter(m => !(m.metadata as Record<string, unknown> | null)?.refreshCheckedAt)
         expect(run1Checked).toHaveLength(2)
         expect(run1Unchecked).toHaveLength(2)
 
@@ -462,7 +462,7 @@ describe("TMDB Refresh and Purge Job (Integration)", () => {
         const afterRun2 = await prisma.media.findMany({
             where: { id: { in: createdMovies.map(m => m.id) } },
         })
-        const run2Checked = afterRun2.filter(m => (m.metadata as any)?.refreshCheckedAt)
+        const run2Checked = afterRun2.filter(m => (m.metadata as Record<string, unknown> | null)?.refreshCheckedAt)
         expect(run2Checked).toHaveLength(4)
     })
 
@@ -480,7 +480,7 @@ describe("TMDB Refresh and Purge Job (Integration)", () => {
                 mediaTypeId: movieTypeId,
                 userId: systemUserId,
                 metadata: {
-                    kind: "comic" as any,
+                    kind: "comic" as unknown as "movie",
                     fetchedAt: staleDate,
                 },
             },

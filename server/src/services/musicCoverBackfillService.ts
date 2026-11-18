@@ -21,6 +21,9 @@ export async function backfillMusicCovers(
     let totalUpdated = 0
     const failedMediaIds = new Set<string>()
 
+    // Only process items that haven't been resolved yet.
+    // coverResolvedAt: idempotency stamp recorded once cover resolution completes (found or none),
+    // ensuring we don't hammer the CAA / MusicBrainz API on subsequent runs.
     const totalRaw = await db.$queryRaw<Array<{ count: bigint | number }>>(Prisma.sql`
         SELECT COUNT(*)::int AS count
         FROM "Media"
@@ -164,6 +167,8 @@ export async function backfillMusicData(
     let totalUpdated = 0
     const failedMediaIds = new Set<string>()
 
+    // mbSyncedAt: idempotency stamp set when Last.fm media has successfully had its canonical
+    // MusicBrainz release-group / recording metadata populated. Failed items omit this stamp so they can retry later.
     const totalRaw = await db.$queryRaw<Array<{ count: bigint | number }>>(Prisma.sql`
         SELECT COUNT(*)::int AS count
         FROM "Media"

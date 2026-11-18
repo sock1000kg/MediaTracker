@@ -147,6 +147,8 @@ export async function createLog(
 export async function getAllLogs(userId: string, client: DbClient = prisma) {
     const logs = await client.userLogs.findMany({
         where: { userId },
+        // Ordering rule: logged_at is non-unique (e.g. bulk imports or multiple logs in same millisecond).
+        // UUID v7 id is time-ordered but can have sub-millisecond variations; adding id: "asc" provides a stable tie-breaker.
         orderBy: [
             { logged_at: "desc" },
             { id: "asc" },

@@ -48,6 +48,7 @@ describe("useLimits hook", () => {
         imports: { maxFileBytes: 25 * 1024 * 1024 },
         search: { queryMaxLength: 150 },
       },
+      demo: null,
     })
 
     await waitFor(() => {

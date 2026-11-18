@@ -6,7 +6,6 @@ export const MANGA_TYPES = ["manga", "novel", "lightnovel", "oneshot", "manhwa",
 export const ANIME_SORTS = ["relevance", "score", "popularity", "newest"] as const
 
 export type AniListMode = "anime" | "manga"
-export type JikanMode = AniListMode
 
 export const animeMetadataSchema = z.object({
     url: z.string().optional(),
@@ -93,43 +92,6 @@ export const anilistResponseSchema = z.object({
 })
 
 export type AniListMedia = z.infer<typeof anilistMediaSchema>
-
-// Jikan v4 (kept for backwards compatibility / existing data)
-const named = z.array(z.object({ name: nl(z.string()) })).nullable().optional()
-const fromYear = z.object({ prop: nl(z.object({ from: nl(z.object({ year: nl(z.number()) })) })) }).nullable().optional()
-
-export const jikanItemSchema = z.object({
-    mal_id: nl(z.number()),
-    url: nl(z.string()),
-    images: nl(z.object({
-        jpg: nl(z.object({ image_url: nl(z.string()), large_image_url: nl(z.string()) })),
-        webp: nl(z.object({ large_image_url: nl(z.string()) })),
-    })),
-    title: nl(z.string()),
-    title_english: nl(z.string()),
-    type: nl(z.string()),
-    synopsis: nl(z.string()),
-    score: nl(z.number()),
-    year: nl(z.number()),
-    aired: fromYear,
-    published: fromYear,
-    duration: nl(z.string()),
-    episodes: nl(z.number()),
-    chapters: nl(z.number()),
-    volumes: nl(z.number()),
-    genres: named,
-    themes: named,
-    demographics: named,
-    studios: named,
-    authors: named,
-})
-
-export const jikanResponseSchema = z.object({
-    data: z.array(jikanItemSchema).default([]),
-    pagination: nl(z.object({ has_next_page: nl(z.boolean()) })),
-})
-
-export type JikanItem = z.infer<typeof jikanItemSchema>
 
 const emptyToUndefined = (val: unknown) => (val === "" ? undefined : val)
 

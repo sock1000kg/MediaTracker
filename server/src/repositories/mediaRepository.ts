@@ -505,6 +505,8 @@ export async function deleteAllMediasForUser(userId: string, client: DbClient): 
 export async function findMediaChildren(parentId: string, userId: string, client: DbClient = prisma) {
     const children = await client.media.findMany({
         where: { parentId },
+        // Ordering rule: children (e.g. seasons, tracks) sort primarily by track/season position.
+        // If position is null/tied, created_at orders them chronologically, with UUID v7 id as final stable tie-breaker.
         orderBy: [
             { position: "asc" },
             { created_at: "asc" },

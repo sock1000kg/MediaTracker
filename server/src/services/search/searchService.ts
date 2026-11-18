@@ -18,8 +18,12 @@ export class SearchService {
         return musicSearchService.searchTracksLastFm(userId, q, page)
     }
 
-    async searchAblums(userId: string, q: string, page: number = 1) {
+    async searchAlbums(userId: string, q: string, page: number = 1) {
         return musicSearchService.searchAlbumsLastFm(userId, q, page)
+    }
+
+    async searchAblums(userId: string, q: string, page: number = 1) {
+        return this.searchAlbums(userId, q, page)
     }
 
     async getAlbumTracks(userId: string, artist: string, album: string, mbid?: string) {

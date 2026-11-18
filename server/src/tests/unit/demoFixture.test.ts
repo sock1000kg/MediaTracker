@@ -107,7 +107,7 @@ describe("Demo Media Fixture (Unit)", () => {
                 expect(item.media.title).toBeTruthy()
                 expect(item.media.source).toBeTruthy()
                 expect(item.media.sourceId).toBeTruthy()
-                if (item.mediaTypeName === "music" && (item.media.metadata as any)?.kind === "track" && !item.parent) {
+                if (item.mediaTypeName === "music" && (item.media.metadata as Record<string, unknown> | null)?.kind === "track" && !item.parent) {
                     expect(item.media.imageUrl).toBeNull()
                 } else {
                     expect(item.media.imageUrl).toBeTruthy()

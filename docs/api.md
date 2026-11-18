@@ -28,7 +28,7 @@ Base URL: the API origin (e.g. `http://localhost:5000`). Bodies are JSON unless 
 
 | Method | Path | Description |
 | --- | --- | --- |
-| GET | `/config` | Public application configuration and client limits (`Cache-Control: public, max-age=3600`). Returns `{ limits: { notes, tags, collections, imports, search } }`. |
+| GET | `/config` | Public application configuration and client limits (`Cache-Control: public, max-age=3600`). Returns `{ limits: { notes, tags, collections, imports, search }, demo: { username, password } | null }` (`demo` is filled only when `PUBLIC_DEMO=true` and `DEMO_USER_PASSWORD` is set). |
 
 ## Auth
 
@@ -56,8 +56,8 @@ The preferences shape (every key is optional):
 ```json
 {
   "theme": "light | dark | system",
-  "defaultTab": "logs | medias | collections | mediaTypes | stats | settings | bookSearch | musicSearch | animeSearch | movieSearch | gameSearch",
-  "hideLogged": { "books": true, "music": false, "anime": false, "movies": false, "games": false },
+  "defaultTab": "logs | medias | collections | mediaTypes | stats | settings | bookSearch | musicSearch | animeSearch | movieSearch | tvSearch | gameSearch",
+  "hideLogged": { "books": true, "music": false, "anime": false, "movies": false, "tv": false, "games": false },
   "defaultSort": { "logs": [{ "field": "date", "direction": "desc" }], "medias": [] }
 }
 ```
@@ -66,7 +66,7 @@ The preferences shape (every key is optional):
 
 | Method | Path | Description |
 | --- | --- | --- |
-| GET | `/media-type` | Your media types plus the built-in ones (book, music, anime, manga, movie, game). |
+| GET | `/media-type` | Your media types plus the built-in ones (book, music, anime, manga, movie, tv, game, boardgame). |
 | POST | `/media-type` | Create a custom type. |
 | PUT | `/media-type/:name` | Rename one of your types. |
 | DELETE | `/media-type/:name` | Delete one of your types. |
@@ -120,7 +120,7 @@ Collections are private, ordered lists of your logs. Up to 200 collections per u
 | Method | Path | Description |
 | --- | --- | --- |
 | GET | `/api-key` | Your stored keys. They're encrypted at rest. |
-| POST | `/api-key` | `{ service, key }`. The `service` is `lastfm`, `tmdb` or `rawg`. Keys can be up to 512 characters. |
+| POST | `/api-key` | `{ service, key }`. The `service` is `lastfm`, `tmdb`, `rawg` or `bgg`. Keys can be up to 512 characters. |
 | PUT | `/api-key` | `{ service, key }`. Replace a key. |
 | DELETE | `/api-key` | `{ service }` |
 
@@ -131,8 +131,8 @@ All search endpoints take `q` (required) and `page` (default 1), and return `{ r
 | Method | Path | Provider | Extra parameters |
 | --- | --- | --- | --- |
 | GET | `/search/books` | Open Library | `author`, `subject`, `language` (ISO 639-2, e.g. `eng`), `yearFrom`, `yearTo`, `sort` = `relevance \| new \| old \| rating` |
-| GET | `/search/music/albums` | Last.fm (key) | none |
-| GET | `/search/music/tracks` | Last.fm (key) | none |
+| GET | `/search/music/albums` | MusicBrainz & Last.fm (key) | none |
+| GET | `/search/music/tracks` | MusicBrainz & Last.fm (key) | none |
 | GET | `/search/anime` | AniList | `type` = `tv \| movie \| ova \| special \| ona \| music`, `sort` = `relevance \| score \| popularity \| newest` |
 | GET | `/search/manga` | AniList | `type` = `manga \| novel \| lightnovel \| oneshot \| manhwa \| manhua`, `sort` as for anime |
 | GET | `/search/movies` | TMDB (key) | `year` |

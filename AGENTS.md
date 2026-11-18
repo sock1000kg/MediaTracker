@@ -1,0 +1,86 @@
+# AGENTS.md
+
+A short, practical guide for coding agents and developers working on `media-tracker`.
+
+---
+
+## 1. Project Layout
+
+- `server/`: Express + TypeScript backend, Prisma ORM, BullMQ / in-memory queues, external media search providers.
+- `client/`: React 19 + TypeScript frontend with Vite, Tailwind CSS v4, TanStack Query, Radix UI primitives.
+- `docs/`: System documentation, architecture, API reference, deployment notes, external provider guidelines, and architectural decisions (`docs/decisions.md`).
+
+---
+
+## 2. Dev Stack Execution
+
+To start the local development stack:
+```bash
+docker compose --env-file server/.env -f docker-compose.yml -f docker-compose.dev.yml up
+```
+> **Note:** Plain `docker compose up` fails because Docker Compose requires variable interpolation (`${POSTGRES_USER}`, `${POSTGRES_PASSWORD}`, `${POSTGRES_DB}`) defined in `server/.env`. Always supply `--env-file server/.env`.
+
+---
+
+## 3. Running Tests and Resource Limits
+
+The user's host machine runs out of memory when running suites concurrently.
+- **Sequential execution only:** Always run the client and server test suites one after another, never in parallel.
+- **Client test command:** Run Vitest with bounded workers:
+  ```bash
+  cd client && npx vitest run --maxWorkers 4
+  ```
+- **Test Database:** Tests expect the test PostgreSQL instance on `localhost:5433` (as defined in `server/.env.test` and spun up via `docker-compose.test-db.yml`).
+- **Server test command:**
+  ```bash
+  cd server && NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules npx jest --runInBand
+  ```
+
+---
+
+## 4. EACCES `prisma generate` Build Fallback
+
+If `npm run build` or `npx prisma generate` in `server/` fails with `EACCES: permission denied` on files inside `server/src/generated/` (which can happen when containerized builds generate Prisma models as root), use the build fallback that compiles TypeScript and copies test fixtures directly without re-running `prisma generate`:
+```bash
+cd server && npx tsc && npx tsc-alias && npx copyfiles -u 2 "src/tests/**/*csv" "src/tests/**/*json" "src/tests/**/*xml" "src/tests/**/*zip" dist/tests/
+```
+Then run tests with:
+```bash
+NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules npx jest --runInBand
+```
+
+---
+
+## 5. Where Things Live
+
+- **Search Providers:**
+  - Server providers: `server/src/services/search/` (TMDB for movies/TV, OpenLibrary for books, RAWG for video games, BoardGameGeek for board games, MusicBrainz / Last.fm for music).
+  - Search routes & controllers: `server/src/api/routes/searchRoutes.ts`, `server/src/api/controllers/searchControllers.ts`.
+  - Client search hooks: `client/src/hooks/useProviderSearch.ts`, `client/src/hooks/useSearchLogging.tsx`, `client/src/hooks/useHideLogged.ts`.
+  - Client search UI sections: `client/src/pages/sections/*SearchSection.tsx`.
+  - Client shared search components: `client/src/components/search/` (`SearchPageShell`, `SearchHeader`, `SearchResults`, `ProviderAttribution`).
+- **Job Queue:**
+  - Queue setup & BullMQ / Valkey driver: `server/src/queue/` (`bullmqQueue.ts`, `limits.ts`, `index.ts`).
+  - Queue job handlers: `server/src/queue/handlers/` (`goodreadsImport.ts`, `malImport.ts`, `letterboxdImport.ts`, `tmdbRefresh.ts`, `musicCoverBackfill.ts`, `demoReset.ts`).
+  - In-memory queue fallback for tests and development without Redis: `server/src/queue/memoryQueue.ts`.
+- **Database Migrations:**
+  - Prisma schema: `server/src/prisma/schema.prisma`.
+  - Migrations: `server/src/prisma/migrations/`.
+- **Seed & Demo Fixture:**
+  - Database seed logic: `server/src/tests/seed.ts`.
+  - Static demo fixture builder & JSON: `server/scripts/build-demo-fixture.ts`, `server/src/tests/fixtures/demo/demo-media.json`.
+  - Demo reset handler & service: `server/src/queue/handlers/demoReset.ts`, `server/src/services/demoService.ts`.
+
+---
+
+## 6. Commit Style
+
+- Use **Conventional Commits** format (e.g. `feat(client): ...`, `fix(server): ...`, `docs: ...`, `chore: ...`).
+- **No attribution or co-author trailers** (do not append `Co-authored-by`, `Signed-off-by`, or AI assistant attributions).
+
+---
+
+## 7. Sensitive User Data & Exports
+
+- **Never read, parse, or commit the user's original Letterboxd export files or personal data.**
+- Only test with sanitized, mock test fixtures located in `server/src/tests/fixtures/` or synthetic test inputs.

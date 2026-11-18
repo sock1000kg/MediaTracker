@@ -107,7 +107,7 @@ describe('BGG XML Parsing and Mapping', () => {
         const raw = parseBggXml(xml)
         const parsed = bggThingResponseSchema.parse(raw)
         const mapped = mapBggThing(parsed.items!.item[0])
-        expect((mapped.metadata as any)?.bggRating).toBeNull()
+        expect((mapped.metadata as Record<string, unknown> | null)?.bggRating).toBeNull()
         expect(mapped.imageUrl).toBe('https://cf.geekdo-images.com/thumb.jpg')
         expect(mapped.creator).toBeNull()
     })

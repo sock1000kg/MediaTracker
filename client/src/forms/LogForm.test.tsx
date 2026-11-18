@@ -47,6 +47,7 @@ describe("LogForm limits integration", () => {
         imports: { maxFileBytes: 10 * 1024 * 1024 },
         search: { queryMaxLength: 100 },
       },
+      demo: null,
     })
 
     const queryClient = createTestQueryClient()

@@ -37,19 +37,19 @@ export const searchAlbums = async (req: Request, res: Response, next: NextFuncti
         return res.status(401).json({ message: "Unauthorized: missing userId" })
     }
 
-    const q = req.query.q as string
-    sanitizeQuery(q)
+    const rawQ = typeof req.query.q === "string" ? req.query.q : ""
+    const q = sanitizeQuery(rawQ)
     if (!q) {
         return res.status(400).json({ message: "Missing query" })
     }
-    if (q.length > LIMITS.search.queryMaxLength) {
+    if (rawQ.trim().length > LIMITS.search.queryMaxLength) {
         return res.status(400).json({ message: `Search query must be at most ${LIMITS.search.queryMaxLength} characters` })
     }
 
     const page = parseInt(req.query.page as string) || 1
 
     try {
-        const results = await searchService.searchAblums(userId, q, page)
+        const results = await searchService.searchAlbums(userId, q, page)
         res.status(200).json(results)
     } catch (error) {
         next(error)
@@ -84,12 +84,12 @@ export const searchTracks = async (req: Request, res: Response, next: NextFuncti
         return res.status(401).json({ message: "Unauthorized: missing userId" })
     }
 
-    const q = req.query.q as string
-    sanitizeQuery(q)
+    const rawQ = typeof req.query.q === "string" ? req.query.q : ""
+    const q = sanitizeQuery(rawQ)
     if (!q) {
         return res.status(400).json({ message: "Missing query" })
     }
-    if (q.length > LIMITS.search.queryMaxLength) {
+    if (rawQ.trim().length > LIMITS.search.queryMaxLength) {
         return res.status(400).json({ message: `Search query must be at most ${LIMITS.search.queryMaxLength} characters` })
     }
 

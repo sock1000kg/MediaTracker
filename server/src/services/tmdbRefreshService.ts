@@ -291,6 +291,10 @@ async function purgeMedia(
         kind,
         ...(tmdbId !== undefined ? { tmdbId } : {}),
         ...(meta?.url ? { url: meta.url } : {}),
+        // Idempotency stamps:
+        // - purgedAt: marks deleted/unlinked TMDB items without hard-deleting media (which preserves user logs)
+        // - refreshCheckedAt: rotates failing stale rows so other rows get a turn in consecutive runs
+        // - fetchedAt: timestamp of successful TMDB fetch (cleared to null when purged so item is inactive)
         fetchedAt: null,
         purgedAt: timestamp,
         refreshCheckedAt: timestamp,
@@ -335,6 +339,9 @@ export async function refreshStaleTmdbMedia(
             AND "imageUrl" IS NULL
             AND (metadata IS NULL OR metadata->>'fetchedAt' IS NULL)
           )
+        -- Candidate ordering: NULLS FIRST prioritizes rows never checked.
+        -- Ordering by refreshCheckedAt ASC ensures failing stale items rotate so a persistent failure does not starve other rows.
+        -- id ASC provides a stable tie-breaker for deterministic pagination across runs.
         ORDER BY metadata->>'refreshCheckedAt' ASC NULLS FIRST, id ASC
         LIMIT ${batchLimit}
     `)

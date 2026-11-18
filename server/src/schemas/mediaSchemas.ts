@@ -48,15 +48,6 @@ const yearSchema = z
     .default(null)
 )
 
-const descriptionSchema = z
-    .preprocess((val: string | null | undefined) => {
-        return sanitizeDescription(val)
-    }, z
-    .string()
-    .nullable() 
-    .default(null)
-)
-
 const sourceSchema = z
     .preprocess((val: string | null | undefined) => {
         return sanitizeSource(val)

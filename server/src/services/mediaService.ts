@@ -184,6 +184,8 @@ export class MediaService {
                 } else {
                     const existingForCover = await findMediaBySource(mediaData.sourceId, mediaData.source, prisma)
                     const existingMeta = (existingForCover?.metadata ?? {}) as Record<string, unknown>
+                    // Idempotency check: coverResolvedAt indicates cover resolution already completed (found or none).
+                    // If already resolved or image exists, skip expensive MusicBrainz/CAA roundtrips.
                     const alreadyResolved = existingForCover?.imageUrl != null || existingMeta.coverResolvedAt != null
 
                     if (!alreadyResolved) {
@@ -218,6 +220,7 @@ export class MediaService {
 
                                 const updatedMetaPatch: Record<string, string | number | boolean | null> = {
                                     kind: "track",
+                                    // Idempotency stamp: prevents repeat cover resolution attempts
                                     coverResolvedAt: now,
                                 }
 
@@ -231,6 +234,7 @@ export class MediaService {
                                     updatedMetaPatch.mbRecordingId = recRes.recordingId
                                     if (recRes.releaseGroupId) updatedMetaPatch.mbReleaseGroupId = recRes.releaseGroupId
                                     if (durationSec) updatedMetaPatch.durationSec = durationSec
+                                    // Idempotency stamp: marks successful sync with MusicBrainz recording data
                                     updatedMetaPatch.mbSyncedAt = now
                                 }
 
@@ -333,6 +337,8 @@ export class MediaService {
             if (!alreadyFetched) {
                 try {
                     const kindMeta = (mediaData.metadata ?? {}) as { kind?: "album" | "track" }
+                    // Genre fallback: MusicBrainz release-groups/recordings often lack genres.
+                    // Fall back to Last.fm crowd-sourced top tags (cleaned of junk) to populate categories.
                     fetchedCategories = await musicSearchService.fetchTopTags(
                         userId, kindMeta.kind ?? "album", mediaData.creator ?? "", mediaData.title
                     )

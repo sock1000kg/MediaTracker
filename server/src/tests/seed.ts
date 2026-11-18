@@ -126,6 +126,11 @@ function findFixtureFile(relativePath: string): string | null {
     return null
 }
 
+// Seeding strategy & known race:
+// seedDatabase() runs on every container startup (via Dockerfile entrypoint) to ensure essential seed
+// records (system user, demo user, default media types, fixture media) exist out of the box.
+// Known issue: if multiple server replicas start concurrently against the same database, concurrent
+// find-then-create calls can race. Production deployments should run migrations/seed as an init container or single replica.
 export async function seedDatabase(options?: SeedOptions, deps?: SeedDeps) {
     const systemUser = await createSystemUser()
     const demoUser = await createDemoUser()

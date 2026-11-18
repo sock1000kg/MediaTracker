@@ -3,13 +3,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { fetchConfig } from "@/api/config"
 
 export default function Login() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const passwordRef = useRef<HTMLInputElement>(null)
+
+  const { data: config } = useQuery({
+    queryKey: ["config"],
+    queryFn: fetchConfig,
+    staleTime: Infinity,
+    gcTime: Infinity,
+  })
+  const demo = config?.demo
 
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
@@ -45,7 +55,32 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center pt-24">
+    <div className="relative flex min-h-screen flex-col items-center justify-center p-4 pt-20 sm:pt-24">
+      {/* Demo credentials card pinned top-right, or in normal flow above the login card under 640px */}
+      {demo && (
+        <aside
+          aria-label="Demo credentials"
+          className="w-full max-w-sm mb-4 sm:mb-0 sm:w-auto sm:max-w-60 sm:absolute sm:top-3 sm:right-3 bg-card border border-border rounded-lg p-3 shadow-paper text-sm z-20"
+        >
+          <p className="font-display font-semibold mb-1">Just looking?</p>
+          <div className="font-mono text-xs text-muted-foreground space-y-0.5 mb-2">
+            <p>user: {demo.username}</p>
+            <p>pass: {demo.password}</p>
+          </div>
+          <button
+            type="button"
+            className="text-xs text-primary underline hover:text-primary/80 cursor-pointer p-0 font-normal"
+            onClick={() => {
+              setUsername(demo.username)
+              setPassword(demo.password)
+              passwordRef.current?.focus()
+            }}
+          >
+            Fill in the form for me
+          </button>
+        </aside>
+      )}
+
       <div className="relative w-full max-w-sm">
       <div className="absolute -top-[72px] left-1/2 z-0 -translate-x-1/2">
         <BlueDude size={96} label="A small blue creature, grinning" />
@@ -78,6 +113,7 @@ export default function Login() {
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input
+                ref={passwordRef}
                 id="password"
                 type="password"
                 placeholder="••••••••"

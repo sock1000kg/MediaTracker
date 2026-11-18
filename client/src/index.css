@@ -332,10 +332,30 @@ button.user-tag:hover {
   }
 }
 
+/* Landing page hand bob: 2px with steps(2), out of phase */
+.hand-bob-left {
+  animation: hand-bob-left 2s steps(2) infinite;
+}
+.hand-bob-right {
+  animation: hand-bob-right 2s steps(2) infinite;
+}
+@keyframes hand-bob-left {
+  50% {
+    transform: translateY(-2px);
+  }
+}
+@keyframes hand-bob-right {
+  50% {
+    transform: translateY(2px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-pulse,
   .bubble,
-  .dude-hop {
+  .dude-hop,
+  .hand-bob-left,
+  .hand-bob-right {
     animation: none !important;
   }
   *,

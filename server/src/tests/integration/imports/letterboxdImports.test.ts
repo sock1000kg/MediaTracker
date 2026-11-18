@@ -745,13 +745,13 @@ describe("Media Import Routes (Letterboxd)", () => {
         })
 
         const realFindMany = appPrisma.userLogs.findMany.bind(appPrisma)
-        const spyFindMany = jest.spyOn(appPrisma.userLogs, "findMany").mockImplementation(((async (args: any) => {
+        const spyFindMany = jest.spyOn(appPrisma.userLogs, "findMany").mockImplementation((async (args) => {
             const res = await realFindMany(args)
             if (args?.select?.media?.select?.externalIds) {
-                return (res as any[]).filter((ul: any) => ul.media?.title !== "Interstellar")
+                return (res as Array<{ media?: { title?: string } }>).filter((ul) => ul.media?.title !== "Interstellar")
             }
             return res
-        }) as any))
+        }) as unknown as typeof realFindMany)
 
         try {
             const res = await importAndWait(token, Buffer.from(zipBytes))
