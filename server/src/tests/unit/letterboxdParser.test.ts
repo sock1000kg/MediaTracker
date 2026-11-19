@@ -4,6 +4,7 @@ import {
     unzipLetterboxdExport,
     mergeLetterboxdFiles,
     normalizeLetterboxdUri,
+    parseLetterboxdList,
     MAX_UNPACKED_ENTRY_SIZE,
 } from "@/services/imports/letterboxdImportService.js"
 import { AppError } from "@/api/domain/error.js"
@@ -58,7 +59,6 @@ describe("Letterboxd parser and unzipper", () => {
             expect(film.loggedAt).toEqual(new Date(Date.UTC(2024, 0, 10, 12))) // earliest Date: 2024-01-10
             expect(film.notes).toBe("Mind-bending masterpiece.")
             expect(film.tags).toEqual(["cinema", "2024"])
-            expect(film.progress).toEqual({ watches: 2 })
             expect(film.filmUri).toBe("boxd.it/1sXg")
         })
 
@@ -81,7 +81,6 @@ describe("Letterboxd parser and unzipper", () => {
             expect(film.finishedAt).toBeNull()
             expect(film.loggedAt).toEqual(new Date(Date.UTC(2024, 2, 1, 12)))
             expect(film.filmUri).toBe("boxd.it/n0sC")
-            expect(film.progress).toBeNull()
         })
 
         it("handles diary-only film (no film URI) coming through with no letterboxd id", () => {
@@ -103,7 +102,6 @@ describe("Letterboxd parser and unzipper", () => {
             expect(film.finishedAt).toEqual(new Date(Date.UTC(2024, 3, 5, 12)))
             expect(film.filmUri).toBeNull()
             expect(film.tags).toEqual(["festival", "indies"])
-            expect(film.progress).toBeNull()
         })
 
         it("a likes-only film comes through as completed", () => {
@@ -135,6 +133,56 @@ describe("Letterboxd parser and unzipper", () => {
             expect(film.status).toBe("completed")
             expect(film.rating).toBe(90) // 4.5 * 20
             expect(film.liked).toBe(true)
+        })
+
+        it("a film only in a list comes through as wishlist", () => {
+            const listCsv = [
+                "Letterboxd list export v7",
+                "Date,Name,Tags,URL,Description",
+                "2024-05-01,Favorite Films,,https://boxd.it/l1,Great films",
+                "",
+                "Position,Name,Year,URL",
+                "1,Stalker,1979,https://boxd.it/1848",
+            ].join("\n")
+
+            const merged = mergeLetterboxdFiles({
+                lists: [{ fileName: "lists/favorites.csv", text: listCsv }],
+            })
+
+            expect(merged).toHaveLength(1)
+            const film = merged[0]
+            expect(film.name).toBe("Stalker")
+            expect(film.year).toBe(1979)
+            expect(film.status).toBe("wishlist")
+            expect(film.inLists).toBe(true)
+            expect(film.onlyInLists).toBe(true)
+            expect(film.rating).toBeNull()
+            expect(film.finishedAt).toBeNull()
+            expect(film.filmUri).toBe("boxd.it/1848")
+        })
+
+        it("a film in watched and in a list keeps completed status", () => {
+            const watchedCsv = "Date,Name,Year,Letterboxd URI\n2024-01-01,Inception,2010,https://boxd.it/1sXg\n"
+            const listCsv = [
+                "Letterboxd list export v7",
+                "Date,Name,Tags,URL,Description",
+                "2024-05-01,Favorites,,https://boxd.it/l1,Desc",
+                "",
+                "Position,Name,Year,URL",
+                "1,Inception,2010,https://boxd.it/1sXg",
+            ].join("\n")
+
+            const merged = mergeLetterboxdFiles({
+                watched: watchedCsv,
+                lists: [{ fileName: "lists/favs.csv", text: listCsv }],
+            })
+
+            expect(merged).toHaveLength(1)
+            const film = merged[0]
+            expect(film.name).toBe("Inception")
+            expect(film.status).toBe("completed")
+            expect(film.inLists).toBe(true)
+            expect(film.onlyInLists).toBe(false)
         })
     })
 
@@ -206,6 +254,178 @@ describe("Letterboxd parser and unzipper", () => {
             expect(() => unzipLetterboxdExport(modified)).toThrow(
                 new AppError("File is too large (max 10 MB unpacked)", 400)
             )
+        })
+
+        it("unzips lists/*.csv (one level, .csv only) and returns them in files.lists", () => {
+            const zipBytes = zipSync({
+                "watched.csv": strToU8("Date,Name,Year,Letterboxd URI\n2024-01-01,Arrival,2016,https://boxd.it/bW9S\n"),
+                "lists/top10.csv": strToU8("Date,Name,Tags,URL,Description\n2024-01-01,Top 10,,,\n\nPosition,Name,Year,URL\n1,Arrival,2016,https://boxd.it/bW9S\n"),
+                "lists/favorites.csv": strToU8("Date,Name,Tags,URL,Description\n2024-01-01,Favorites,,,\n\nPosition,Name,Year,URL\n1,Arrival,2016,https://boxd.it/bW9S\n"),
+                "likes/lists.csv": strToU8("Date,Name,URL\n2024-01-01,Ignored List,https://boxd.it/l\n"),
+                "lists/nested/sub.csv": strToU8("Date,Name,Tags,URL,Description\n2024-01-01,Sub,,,\n\nPosition,Name,Year,URL\n1,Arrival,2016,https://boxd.it/bW9S\n"),
+                "lists/readme.txt": strToU8("some notes"),
+            })
+
+            const files = unzipLetterboxdExport(Buffer.from(zipBytes))
+            expect(files.watched).toContain("Arrival")
+            expect(files.lists).toBeDefined()
+            expect(files.lists).toHaveLength(2)
+            expect(files.lists![0].fileName).toBe("lists/favorites.csv")
+            expect(files.lists![1].fileName).toBe("lists/top10.csv")
+        })
+    })
+
+    describe("parseLetterboxdList", () => {
+        it("parses the normal shape with version line", () => {
+            const csv = [
+                "Letterboxd list export v7",
+                "Date,Name,Tags,URL,Description",
+                "2024-05-01,My Top Movies,\"sci-fi, favorites\",https://boxd.it/xyz,\"A collection of my favorite sci-fi movies.\"",
+                "",
+                "Position,Name,Year,URL,Description",
+                "1,2001: A Space Odyssey,1968,https://boxd.it/2a0i,\"Kubrick masterpiece\"",
+                "2,Solaris,1972,https://boxd.it/184e,",
+            ].join("\n")
+
+            const res = parseLetterboxdList(csv, "my-top-movies.csv")
+            expect(res.ok).toBe(true)
+            if (!res.ok) return
+            expect(res.list.name).toBe("My Top Movies")
+            expect(res.list.description).toBe("A collection of my favorite sci-fi movies.")
+            expect(res.list.films).toHaveLength(2)
+            expect(res.list.films[0]).toEqual({
+                position: 1,
+                name: "2001: A Space Odyssey",
+                year: 1968,
+                uri: "boxd.it/2a0i",
+            })
+            expect(res.list.films[1]).toEqual({
+                position: 2,
+                name: "Solaris",
+                year: 1972,
+                uri: "boxd.it/184e",
+            })
+        })
+
+        it("parses successfully when version line is absent", () => {
+            const csv = [
+                "Date,Name,Tags,URL,Description",
+                "2024-05-01,No Version List,,https://boxd.it/nv,Simple description",
+                "",
+                "Position,Name,Year,URL",
+                "1,Alien,1979,https://boxd.it/2a6q",
+            ].join("\n")
+
+            const res = parseLetterboxdList(csv, "no-version.csv")
+            expect(res.ok).toBe(true)
+            if (!res.ok) return
+            expect(res.list.name).toBe("No Version List")
+            expect(res.list.description).toBe("Simple description")
+            expect(res.list.films).toHaveLength(1)
+            expect(res.list.films[0].name).toBe("Alien")
+            expect(res.list.films[0].year).toBe(1979)
+        })
+
+        it("ignores extra/unknown columns in both header and film rows", () => {
+            const csv = [
+                "ExtraCol1,Date,Name,ExtraCol2,Tags,URL,Description,ExtraCol3",
+                "foo,2024-05-01,Extra Cols List,bar,,https://boxd.it/ec,Desc,baz",
+                "",
+                "Custom1,Position,Custom2,Name,Custom3,Year,Custom4,URL,Custom5",
+                "x,1,y,Blade Runner,z,1982,w,https://boxd.it/2b04,v",
+            ].join("\n")
+
+            const res = parseLetterboxdList(csv, "extra.csv")
+            expect(res.ok).toBe(true)
+            if (!res.ok) return
+            expect(res.list.name).toBe("Extra Cols List")
+            expect(res.list.description).toBe("Desc")
+            expect(res.list.films).toHaveLength(1)
+            expect(res.list.films[0]).toEqual({
+                position: 1,
+                name: "Blade Runner",
+                year: 1982,
+                uri: "boxd.it/2b04",
+            })
+        })
+
+        it("handles quoted commas and newlines in descriptions", () => {
+            const csv = [
+                "Letterboxd list export v7",
+                "Date,Name,Tags,URL,Description",
+                "2024-05-01,Multiline List,,https://boxd.it/ml,\"Line 1, with a comma\nLine 2, another line\nLine 3\"",
+                "",
+                "Position,Name,Year,URL",
+                "1,Arrival,2016,https://boxd.it/bW9S",
+            ].join("\n")
+
+            const res = parseLetterboxdList(csv, "multiline.csv")
+            expect(res.ok).toBe(true)
+            if (!res.ok) return
+            expect(res.list.name).toBe("Multiline List")
+            expect(res.list.description).toBe("Line 1, with a comma\nLine 2, another line\nLine 3")
+            expect(res.list.films).toHaveLength(1)
+        })
+
+        it("returns ok: false with 'no films' for an empty film section", () => {
+            const csv = [
+                "Letterboxd list export v7",
+                "Date,Name,Tags,URL,Description",
+                "2024-05-01,Empty Film Section List,,https://boxd.it/empty,No films here",
+                "",
+                "Position,Name,Year,URL",
+            ].join("\n")
+
+            const res = parseLetterboxdList(csv, "empty.csv")
+            expect(res).toEqual({ ok: false, reason: "no films" })
+        })
+
+        it("handles BOM correctly", () => {
+            const bom = "\uFEFF"
+            const csv = bom + [
+                "Date,Name,Tags,URL,Description",
+                "2024-05-01,BOM List,,https://boxd.it/bom,BOM test",
+                "",
+                "Position,Name,Year,URL",
+                "1,Metropolis,1927,https://boxd.it/29U0",
+            ].join("\n")
+
+            const res = parseLetterboxdList(csv, "bom.csv")
+            expect(res.ok).toBe(true)
+            if (!res.ok) return
+            expect(res.list.name).toBe("BOM List")
+            expect(res.list.films).toHaveLength(1)
+            expect(res.list.films[0].name).toBe("Metropolis")
+        })
+
+        it("returns ok: false with 'no list name' if list name is missing", () => {
+            const csv = [
+                "Date,Name,Tags,URL,Description",
+                "2024-05-01,,,https://boxd.it/empty,Description only",
+                "",
+                "Position,Name,Year,URL",
+                "1,Metropolis,1927,https://boxd.it/29U0",
+            ].join("\n")
+
+            const res = parseLetterboxdList(csv, "noname.csv")
+            expect(res).toEqual({ ok: false, reason: "no list name" })
+        })
+
+        it("returns ok: false with 'empty or unreadable file' for empty or unreadable input", () => {
+            expect(parseLetterboxdList("", "empty.csv")).toEqual({
+                ok: false,
+                reason: "empty or unreadable file",
+            })
+        })
+
+        it("returns ok: false with 'no film section' when film section is absent", () => {
+            const csv = [
+                "Date,Name,Tags,URL,Description",
+                "2024-05-01,Only Meta List,,https://boxd.it/om,Description",
+            ].join("\n")
+
+            const res = parseLetterboxdList(csv, "no-section.csv")
+            expect(res).toEqual({ ok: false, reason: "no film section" })
         })
     })
 })

@@ -4,10 +4,10 @@ import { aspectForMedia, capitalise, coverToken, coverTokenFromKey } from "./med
 describe("mediaView", () => {
   it("aspectForMedia", () => {
     expect(aspectForMedia({ mediaType: { name: "Music" } })).toBe("square")
-    expect(aspectForMedia({ mediaType: { name: "book" }, metadata: { kind: "album" } })).toBe("square")
+    expect(aspectForMedia({ mediaType: { name: "book" }, subtype: "album" })).toBe("square")
     expect(aspectForMedia({ mediaType: { name: "game" } })).toBe("wide")
     expect(aspectForMedia({})).toBe("portrait")
-    expect(aspectForMedia({ mediaType: null, metadata: null })).toBe("portrait")
+    expect(aspectForMedia({ mediaType: null })).toBe("portrait")
   })
   it("coverToken is stable and in 1..6, including negative and non-finite ids", () => {
     for (const id of [0, 1, 7, -13, 1e9, NaN, Infinity, "abc", "12"]) {

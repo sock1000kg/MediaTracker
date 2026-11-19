@@ -6,6 +6,7 @@ import { tmdbSearchService } from "./tmdbSearchService.js"
 import { rawgSearchService } from "./rawgSearchService.js"
 import { GameSearchFilters } from "@/schemas/search/gameSchemas.js"
 import { openLibraryService } from "./openLibrarySearchService.js"
+import { bggSearchService } from "./bggSearchService.js"
 
 export class SearchService {
     async searchBooks(userId: string, q: string, page: number = 1, filters?: BookSearchFilters) {
@@ -17,12 +18,16 @@ export class SearchService {
         return musicSearchService.searchTracksLastFm(userId, q, page)
     }
 
-    async searchAblums(userId: string, q: string, page: number = 1) {
+    async searchAlbums(userId: string, q: string, page: number = 1) {
         return musicSearchService.searchAlbumsLastFm(userId, q, page)
     }
 
-    async getAlbumTracks(userId: string, artist: string, album: string, mbid?: string) {
-        return musicSearchService.fetchAlbumTracks(userId, artist, album, mbid)
+    async searchAblums(userId: string, q: string, page: number = 1) {
+        return this.searchAlbums(userId, q, page)
+    }
+
+    async getAlbumTracks(userId: string, artist: string, album: string, mbid?: string, releaseGroupId?: string) {
+        return musicSearchService.fetchAlbumTracks(userId, artist, album, mbid, releaseGroupId)
     }
 
     async searchAnime(_userId: string, q: string, page: number = 1, filters?: AnimeSearchFilters) {
@@ -47,6 +52,10 @@ export class SearchService {
 
     async searchGames(userId: string, q: string, page: number = 1, filters?: GameSearchFilters) {
         return rawgSearchService.searchGamesRawg(userId, q, page, filters)
+    }
+
+    async searchBoardGames(userId: string, q: string, page: number = 1) {
+        return bggSearchService.searchBoardGames(userId, q, page)
     }
 }
 

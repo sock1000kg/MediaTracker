@@ -58,12 +58,12 @@ export default function StatsSection() {
     [chosen, logs],
   )
   // Period select: a month range still shows its year
-  const periodValue = range.kind === "month" ? `y:${range.year}` : rangeToString(range)
-  const selectedYear = range.kind === "year" || range.kind === "month" ? range.year : null
+  const periodValue = range.mode === "month" ? `y:${range.year}` : rangeToString(range)
+  const selectedYear = range.mode === "year" || range.mode === "month" ? range.year : null
   const monthOpts = useMemo(() => (selectedYear === null ? [] : monthOptions(logs, selectedYear)), [logs, selectedYear])
   const setRange = (v: string) => { setChosen(v); writeStoredString(RANGE_KEY, v) }
   const setMonth = (v: string) => {
-    if (selectedYear !== null) setRange(v === "year" ? `y:${selectedYear}` : rangeToString({ kind: "month", year: selectedYear, month: Number(v) }))
+    if (selectedYear !== null) setRange(v === "year" ? `y:${selectedYear}` : rangeToString({ mode: "month", year: selectedYear, month: Number(v) }))
   }
 
   const [storedGran, setStoredGran] = useState<Granularity | null>(readStoredGranularity)
@@ -97,9 +97,9 @@ export default function StatsSection() {
   const filteredLogs = useMemo(() => filterByType(inRange, selectedType), [inRange, selectedType])
 
   const sum = useMemo(() => summary(filteredLogs), [filteredLogs])
-  const unit: Unit = range.kind === "month" ? "day" : range.kind === "all" && granularity === "year" ? "year" : "month"
+  const unit: Unit = range.mode === "month" ? "day" : range.mode === "all" && granularity === "year" ? "year" : "month"
   const months = useMemo(
-    () => range.kind === "month" ? perDay(filteredLogs, range.year, range.month)
+    () => range.mode === "month" ? perDay(filteredLogs, range.year, range.month)
       : unit === "year" ? perYear(filteredLogs)
       : perMonth(filteredLogs, range),
     [filteredLogs, range, unit],
@@ -232,7 +232,7 @@ export default function StatsSection() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Label htmlFor="stats-month" className="text-sm text-muted-foreground">Month</Label>
-                    <Select value={range.kind === "month" ? String(range.month) : "year"} onValueChange={setMonth} disabled={selectedYear === null}>
+                    <Select value={range.mode === "month" ? String(range.month) : "year"} onValueChange={setMonth} disabled={selectedYear === null}>
                       <SelectTrigger id="stats-month" className="w-40"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="year">Whole year</SelectItem>
@@ -316,7 +316,7 @@ export default function StatsSection() {
           <StatsFigure
             title={`Logged over time${sectionSuffix}`}
             summary={timeSummary}
-            controls={range.kind === "all" ? (
+            controls={range.mode === "all" ? (
               <div role="group" aria-label="Group the chart" className="inline-flex rounded-lg border border-border p-0.5 text-xs">
                 {(["month", "year"] as const).map((g) => (
                   <button

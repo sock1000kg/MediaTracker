@@ -186,7 +186,7 @@ describe('Log routes', () => {
                 data: {
                     userId: user.id,
                     mediaId: media.id,
-                    status: 'in progress',
+                    status: 'in_progress',
                     rating: 70,
                     notes: 'Initial notes'
                 }
@@ -238,7 +238,7 @@ describe('Log routes', () => {
             data: {
                 userId: otherUser.id,
                 mediaId: media.id,
-                status: 'in progress',
+                status: 'in_progress',
                 rating: 50
             }
         })
@@ -303,7 +303,7 @@ describe('Log routes', () => {
                 data: {
                     userId: user.id,
                     mediaId: media.id,
-                    status: 'in progress',
+                    status: 'in_progress',
                     rating: 70,
                     notes: 'Initial notes'
                 }
@@ -340,7 +340,7 @@ describe('Log routes', () => {
                 data: {
                     userId: otherUser.id,
                     mediaId: media.id,
-                    status: 'in progress',
+                    status: 'in_progress',
                     rating: 50
                 }
             })

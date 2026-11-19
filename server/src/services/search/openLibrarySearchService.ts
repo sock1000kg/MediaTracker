@@ -1,9 +1,11 @@
 import { ISearchService } from "@/services/search/searchServiceInterface.js"
 import { SearchResult, searchResultsSchema } from "@/schemas/search/searchSchemas.js"
 import { BookSearchFilters, OpenLibraryBook, openLibraryResponseSchema } from "@/schemas/search/bookSchemas.js"
-import { createUserAgentHeader, fetchAndParse, validateSchema } from "@/utilities.js"
+import { validateSchema } from "@/utilities.js"
 import { AppError } from "@/api/domain/error.js"
 import { isJunkGenre, JUNK_BOOK_SUBJECTS } from "@/services/genreService.js"
+import { providerFetch } from "@/providers/providerFetch.js"
+import { getProviderEntry } from "@/providers/registry.js"
 
 // Re-export for compatibility
 export { JUNK_BOOK_SUBJECTS }
@@ -11,6 +13,21 @@ export const JUNK_SUBJECTS = JUNK_BOOK_SUBJECTS
 
 export function isJunkSubject(subject: string): boolean {
     return isJunkGenre(subject, "book")
+}
+
+// Goodreads appends the series: "Empire of the Sun (Empire of the Sun, #1)"
+const withoutSeries = (title: string) => title.replace(/\s*\([^()]*#[\d.]+\)\s*$/, "")
+
+// "The Myth of Sisyphus, and Other Essays" and "The myth of Sisyphus and other essays" compare equal;
+// a subtitle after ":" is ignored, and so is a leading article.
+export function mainTitle(title: string): string {
+    return withoutSeries(title)
+        .split(":")[0]
+        .normalize("NFKD").replace(/[̀-ͯ]/g, "")
+        .toLowerCase()
+        .replace(/[^\p{L}\p{N}]+/gu, " ")
+        .trim()
+        .replace(/^(the|a|an) /, "")
 }
 
 export class OpenLibraryService implements ISearchService {
@@ -44,16 +61,17 @@ export class OpenLibraryService implements ISearchService {
                 year: item.first_publish_year ? item.first_publish_year.toString() : null,
                 description: null, // Open Library Search API rarely returns descriptions in the list view
                 imageUrl: imageUrl,
-                source: "open_library",
+                source: "openlibrary",
                 // The 'key' usually comes as "/works/OL123W", we can keep it as is or strip "/works/"
                 sourceId: item.key, 
-                metadata: {
-                    pageCount: item.number_of_pages_median ?? null,
-                    categories: categories.length ? categories : null,
-                    publisher: item.publisher ? item.publisher[0] : null,
-                    url: `https://openlibrary.org${item.key}`,
-                    isbn: item.isbn ? item.isbn[0] : null
-                }
+                genres: categories.length ? categories : undefined,
+                details: {
+                    pageCount: typeof item.number_of_pages_median === "number" && item.number_of_pages_median > 0
+                        ? item.number_of_pages_median
+                        : undefined,
+                    publisher: item.publisher && item.publisher[0] ? item.publisher[0] : undefined,
+                },
+                ...(item.isbn && item.isbn[0] ? { externalIds: [{ provider: "isbn", id: item.isbn[0] }] } : {}),
             }
         })
     }
@@ -83,16 +101,15 @@ export class OpenLibraryService implements ISearchService {
     {
         const url = this.buildSearchUrl(q, page, filters)
 
-        const headers = createUserAgentHeader()
+        let raw: unknown
+        try {
+            const res = await providerFetch("openlibrary", url)
+            raw = await res.json()
+        } catch {
+            throw new AppError("Failed to fetch from Open Library", 503)
+        }
 
-        const parsed = await fetchAndParse(
-            url, 
-            openLibraryResponseSchema, 
-            "Open Library API error", 
-            "Failed to fetch from Open Library",
-            headers 
-        )
-
+        const parsed = validateSchema(openLibraryResponseSchema, raw)
         const results = this.mapResults(parsed.docs)
 
         if (!results.length) {
@@ -106,6 +123,80 @@ export class OpenLibraryService implements ISearchService {
         return { 
             results: validateSchema(searchResultsSchema, results), 
             nextStartIndex 
+        }
+    }
+
+    async findByIsbns(isbns: string[]): Promise<Map<string, OpenLibraryBook>> {
+        const result = new Map<string, OpenLibraryBook>()
+        if (isbns.length === 0) return result
+
+        const batchSize = getProviderEntry("openlibrary").batchSize ?? 50
+        for (let i = 0; i < isbns.length; i += batchSize) {
+            const batch = isbns.slice(i, i + batchSize)
+            const u = new URL("https://openlibrary.org/search.json")
+            u.searchParams.set("q", `isbn:(${batch.join(" OR ")})`)
+            u.searchParams.set("fields", "key,isbn,title,author_name,cover_i,number_of_pages_median,publisher,subject,first_publish_year")
+            u.searchParams.set("limit", String(Math.max(batch.length * 2, 50)))
+
+            const res = await providerFetch("openlibrary", u)
+            const raw = await res.json()
+            const checked = openLibraryResponseSchema.safeParse(raw)
+            if (checked.success && checked.data.docs) {
+                for (const doc of checked.data.docs) {
+                    if (Array.isArray(doc.isbn)) {
+                        for (const isb of doc.isbn) {
+                            const cleaned = isb.replace(/[^0-9X]/gi, "")
+                            if (cleaned) result.set(cleaned, doc)
+                        }
+                    }
+                }
+            }
+        }
+        return result
+    }
+
+    // Classics are filed under their original title ("Der Proceß", "La Peste"), so a title= search
+    // for "The Trial" misses the real work. q= also matches edition titles, and OL returns the
+    // best-matching edition, which we use to check the hit really is this book.
+    // Only the first author is sent: Goodreads lists translators too, and OL matches no one then.
+    async findByTitleAuthor(title: string, author?: string | null): Promise<OpenLibraryBook | null> {
+        const firstAuthor = author?.split(",")[0]?.trim() || null
+        const found = await this.searchTitleAuthor(title, firstAuthor)
+        if (found || !firstAuthor) return found
+        // OL spells initials both ways ("J.R.R. Tolkien", "J. G. Ballard") and its author filter
+        // doesn't always bridge them, so retry once with spaced initials when there was a miss.
+        const spaced = firstAuthor.replace(/\.(?=\p{L})/gu, ". ")
+        return spaced === firstAuthor ? null : this.searchTitleAuthor(title, spaced)
+    }
+
+    private async searchTitleAuthor(title: string, author: string | null): Promise<OpenLibraryBook | null> {
+        const u = new URL("https://openlibrary.org/search.json")
+        u.searchParams.set("q", withoutSeries(title))
+        if (author) u.searchParams.set("author", author)
+        u.searchParams.set("fields", "key,isbn,title,author_name,cover_i,number_of_pages_median,publisher,subject,first_publish_year,editions,editions.title")
+        u.searchParams.set("limit", "5")
+
+        const res = await providerFetch("openlibrary", u)
+        const raw = await res.json()
+        const checked = openLibraryResponseSchema.safeParse(raw)
+        if (!checked.success) return null
+
+        const wanted = mainTitle(title)
+        return checked.data.docs.find(doc => {
+            const editionTitles = (doc.editions as { docs?: { title?: string }[] } | undefined)?.docs?.map(e => e.title) ?? []
+            return [doc.title, ...editionTitles].some(t => t != null && mainTitle(t) === wanted)
+        }) ?? null
+    }
+
+    async getWork(key: string): Promise<unknown | null> {
+        const cleanKey = key.startsWith("/works/") ? key.slice("/works/".length) : (key.startsWith("/") ? key.slice(1) : key)
+        const u = new URL(`https://openlibrary.org/works/${cleanKey}.json`)
+        try {
+            const res = await providerFetch("openlibrary", u, { allow404: true })
+            if (res.status === 404) return null
+            return await res.json()
+        } catch {
+            return null
         }
     }
 }

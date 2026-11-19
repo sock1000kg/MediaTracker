@@ -82,8 +82,10 @@ describe("Demo Media Seeding (Integration)", () => {
             return acc
         }, {})
 
+        const normalizeStatus = (s: string) => s === "in progress" ? "in_progress" : s
         const expectedByStatus = fixture.items.reduce<Record<string, number>>((acc, it) => {
-            acc[it.log.status] = (acc[it.log.status] || 0) + 1
+            const st = normalizeStatus(it.log.status)
+            acc[st] = (acc[st] || 0) + 1
             return acc
         }, {})
 

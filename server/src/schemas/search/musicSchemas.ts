@@ -1,16 +1,17 @@
 import { z } from "zod"
 
-export const musicMetadataSchema = z.object({
-    url: z.string().optional(),
-    kind: z.enum(["album", "track"]).optional(),
-    categories: z.array(z.string()).nullable().optional(),
-    album: z.string().optional(),
-    albumSourceId: z.string().optional(),
-    trackNumber: z.number().optional(),
-    durationSec: z.number().nullable().optional(),
-})
+export const albumDetailsSchema = z.object({
+    format: z.string().nullable().optional(),
+    formatTags: z.array(z.string()).nullable().optional(),
+}).strict()
 
-export type MusicMetadata = z.infer<typeof musicMetadataSchema>
+export type AlbumDetails = z.infer<typeof albumDetailsSchema>
+
+export const trackDetailsSchema = z.object({
+    durationSec: z.number().nullable().optional(),
+}).strict()
+
+export type TrackDetails = z.infer<typeof trackDetailsSchema>
 
 export const lastFmTrackSchema = z.object({
     name: z.string(),

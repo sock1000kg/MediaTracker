@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { coverToken, type CoverAspect } from "@/lib/mediaView"
 import { cn } from "@/lib/utils"
 
@@ -22,11 +23,20 @@ interface CoverProps {
 }
 
 export function Cover({ id, title, imageUrl, aspect, size }: CoverProps) {
+  const [failedUrl, setFailedUrl] = useState<string | null>(null)
   const dims = size === "row" ? cn("flex-none", ROW_SIZE[aspect]) : cn("w-full", TILE_ASPECT[aspect])
   const base = cn("rounded-md ring-1 ring-border", dims)
 
-  if (imageUrl) {
-    return <img src={imageUrl} loading="lazy" alt="" className={cn(base, "object-cover")} />
+  if (imageUrl && failedUrl !== imageUrl) {
+    return (
+      <img
+        src={imageUrl}
+        loading="lazy"
+        alt=""
+        onError={() => setFailedUrl(imageUrl)}
+        className={cn(base, "object-cover")}
+      />
+    )
   }
 
   const letter = (title ?? "").trim().charAt(0).toUpperCase()

@@ -7,7 +7,8 @@ import { AppError } from "@/api/domain/error.js"
 import { ImportResult } from "@/api/domain/imports.js"
 import { SearchResult } from "@/schemas/search/searchSchemas.js"
 import { AniListMedia, anilistResponseSchema } from "@/schemas/search/animeSchemas.js"
-import { mapAniListMedia, anilistThrottle } from "../search/anilistSearchService.js"
+import { mapAniListMedia, anilistThrottle, anilistSearchService } from "../search/anilistSearchService.js"
+import { anilistLimiter, parseRetryAfter } from "../search/rateLimiter.js"
 import { Media, Prisma } from "@/db.js"
 import { createUserAgentHeader, tagKey } from "@/utilities.js"
 import { findUserByUsername } from "@/repositories/authRepository.js"
@@ -152,7 +153,7 @@ export function parseMalTags(raw: unknown): string[] {
 }
 
 export function parseMalExport(buffer: Buffer): {
-    kind: MalKind
+    exportType: MalKind
     entries: MalEntry[]
 } {
     const decompressed = decompressMalExport(buffer)
@@ -264,7 +265,7 @@ export function parseMalExport(buffer: Buffer): {
         }
     }
 
-    return { kind, entries }
+    return { exportType: kind, entries }
 }
 
 const BATCH_QUERY = `
@@ -323,69 +324,7 @@ export async function defaultAniListResolver(
     malIds: number[],
     kind: MalKind
 ): Promise<Map<number, SearchResult>> {
-    const resultMap = new Map<number, SearchResult>()
-    if (malIds.length === 0) return resultMap
-
-    const anilistType = kind === "anime" ? "ANIME" : "MANGA"
-
-    for (let i = 0; i < malIds.length; i += BATCH_SIZE) {
-        const batchIds = malIds.slice(i, i + BATCH_SIZE)
-
-        let success = false
-        let attempts = 0
-        while (!success && attempts < 3) {
-            attempts++
-            try {
-                const response = await anilistThrottle(async () => {
-                    const controller = new AbortController()
-                    const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS)
-                    try {
-                        return await fetch(ANILIST_ENDPOINT, {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "Accept": "application/json",
-                                ...(createUserAgentHeader().headers as Record<string, string>),
-                            },
-                            body: JSON.stringify({
-                                query: BATCH_QUERY,
-                                variables: { ids: batchIds, type: anilistType },
-                            }),
-                            signal: controller.signal,
-                        })
-                    } finally {
-                        clearTimeout(timeout)
-                    }
-                })
-
-                if (response.status === 429) {
-                    const retryAfter = Number(response.headers.get("Retry-After")) || 2
-                    await new Promise(r => setTimeout(r, retryAfter * 1000))
-                    continue
-                }
-
-                if (!response.ok) {
-                    break
-                }
-
-                const json = await response.json()
-                const parsed = anilistResponseSchema.safeParse(json)
-                if (parsed.success && parsed.data.data?.Page?.media) {
-                    for (const m of parsed.data.data.Page.media) {
-                        if (m && typeof m.idMal === "number") {
-                            const mapped = mapAniListMedia(kind, m as AniListMedia)
-                            resultMap.set(m.idMal, mapped)
-                        }
-                    }
-                }
-                success = true
-            } catch {
-                break
-            }
-        }
-    }
-
-    return resultMap
+    return anilistSearchService.getByMalIds(malIds, kind)
 }
 
 export function loadMalCache(customPath?: string): { anime: Record<string, SearchResult>; manga: Record<string, SearchResult> } {
@@ -446,7 +385,7 @@ export class MalImportService {
         fileBuffer: Buffer,
         opts: MalImportOptions = {}
     ): Promise<ImportResult> {
-        const { kind, entries } = parseMalExport(fileBuffer)
+        const { exportType: kind, entries } = parseMalExport(fileBuffer)
         const resolver = opts.resolver ?? defaultAniListResolver
 
         const results: ImportResult = {
@@ -503,7 +442,7 @@ export class MalImportService {
                 missCount++
             }
 
-            // Deep-clone resolved if present so local metadata mutations don't pollute cache
+            // Deep-clone resolved if present so local details mutations don't pollute cache
             const resolved: SearchResult | undefined = rawResolved ? JSON.parse(JSON.stringify(rawResolved)) : undefined
 
             const bareMedia: SearchResult = {
@@ -515,39 +454,25 @@ export class MalImportService {
                 sourceId: String(entry.malId),
                 imageUrl: null,
                 description: null,
-                metadata: {
-                    kind,
-                    ...(kind === "anime" ? {
-                        episodes: entry.seriesEpisodes,
-                        idMal: entry.malId,
-                    } : {
-                        chapters: entry.mangaChapters,
-                        volumes: entry.mangaVolumes,
-                        idMal: entry.malId,
-                    }),
-                },
+                details: kind === "anime"
+                    ? (entry.seriesEpisodes ? { episodeCount: entry.seriesEpisodes } : null)
+                    : {
+                        ...(entry.mangaChapters ? { chapterCount: entry.mangaChapters } : {}),
+                        ...(entry.mangaVolumes ? { volumeCount: entry.mangaVolumes } : {}),
+                    },
+                externalIds: [{ provider: "mal", id: String(entry.malId) }],
             }
 
             const target = resolved ?? bareMedia
-            const targetMeta = target.metadata as { categories?: string[]; kind?: string; originalTitle?: string } | undefined
-            const malGenres = targetMeta?.categories ?? []
-
-            const progress = kind === "anime"
-                ? (entry.watchedEpisodes != null ? { watchedEpisodes: entry.watchedEpisodes } : null)
-                : (entry.readChapters != null || entry.readVolumes != null
-                    ? {
-                        ...(entry.readChapters != null ? { readChapters: entry.readChapters } : {}),
-                        ...(entry.readVolumes != null ? { readVolumes: entry.readVolumes } : {}),
-                      }
-                    : null)
+            const malGenres = target.genres ?? []
 
             validItems.push({
                 rowNum,
                 title: entry.title,
-                kind: targetMeta?.kind ?? kind,
-                originalTitle: targetMeta?.originalTitle ?? null,
+                originalTitle: target.originalTitle ?? null,
                 genres: malGenres,
                 creators: target.creators ?? null,
+                externalIds: [{ provider: "mal", id: String(entry.malId) }],
                 mediaData: {
                     title: target.title,
                     creator: target.creator ?? null,
@@ -556,7 +481,7 @@ export class MalImportService {
                     sourceId: target.sourceId,
                     description: target.description ?? null,
                     imageUrl: target.imageUrl ?? null,
-                    metadata: target.metadata ?? null,
+                    details: (target.details as Prisma.InputJsonValue) ?? null,
                 },
                 logData: {
                     status: logStatus,
@@ -566,7 +491,9 @@ export class MalImportService {
                     startedAt: entry.startDate,
                     finishedAt: entry.finishDate,
                     tags: entry.tags,
-                    progress: progress ?? null,
+                    progressEpisodes: kind === "anime" ? (entry.watchedEpisodes ?? null) : null,
+                    progressChapters: kind === "manga" ? (entry.readChapters ?? null) : null,
+                    progressVolumes: kind === "manga" ? (entry.readVolumes ?? null) : null,
                 },
                 idMal: entry.malId,
             })
@@ -586,7 +513,7 @@ export class MalImportService {
                     match = bySourceKey.get(`mal:${item.idMal}`) ?? null
                 }
                 if (!match && item.idMal) {
-                    match = bySourceKey.get(`jikan:${kind}-${item.idMal}`) ?? null
+                    match = bySourceKey.get(`mal:${kind}-${item.idMal}`) ?? null
                 }
                 if (!match && item.idMal) {
                     match = byIdMal.get(item.idMal) ?? null
@@ -601,7 +528,9 @@ export class MalImportService {
                     started_at?: Date | null
                     notes?: string | null
                     status?: string | null
-                    progress?: Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput
+                    progressEpisodes?: number | null
+                    progressChapters?: number | null
+                    progressVolumes?: number | null
                 } = {}
                 let mediaPatch: Record<string, Prisma.InputJsonValue | null> | undefined
                 let newTags: string[] | undefined
@@ -634,8 +563,16 @@ export class MalImportService {
                 }
 
                 // Progress gap fill: fill only if null / empty
-                if (log.progress == null && item.logData.progress != null) {
-                    logUpdates.progress = item.logData.progress as Prisma.InputJsonValue
+                if (log.progressEpisodes == null && item.logData.progressEpisodes != null) {
+                    logUpdates.progressEpisodes = item.logData.progressEpisodes
+                    filled = true
+                }
+                if (log.progressChapters == null && item.logData.progressChapters != null) {
+                    logUpdates.progressChapters = item.logData.progressChapters
+                    filled = true
+                }
+                if (log.progressVolumes == null && item.logData.progressVolumes != null) {
+                    logUpdates.progressVolumes = item.logData.progressVolumes
                     filled = true
                 }
 
@@ -657,23 +594,23 @@ export class MalImportService {
                     }
                 }
 
-                // Media metadata gap fill (episodes/chapters)
-                const meta = (media.metadata && typeof media.metadata === "object" && !Array.isArray(media.metadata))
-                    ? (media.metadata as Record<string, unknown>)
+                // Media details gap fill (episodeCount/chapterCount/volumeCount)
+                const details = (media.details && typeof media.details === "object" && !Array.isArray(media.details))
+                    ? (media.details as Record<string, unknown>)
                     : {}
-                const itemMeta = (item.mediaData.metadata && typeof item.mediaData.metadata === "object" && !Array.isArray(item.mediaData.metadata))
-                    ? (item.mediaData.metadata as Record<string, unknown>)
+                const itemDetails = (item.mediaData.details && typeof item.mediaData.details === "object" && !Array.isArray(item.mediaData.details))
+                    ? (item.mediaData.details as Record<string, unknown>)
                     : {}
 
-                if (kind === "anime" && itemMeta.episodes != null) {
-                    if (meta.episodes == null) {
-                        mediaPatch = { episodes: Number(itemMeta.episodes) }
+                if (kind === "anime" && itemDetails.episodeCount != null) {
+                    if (details.episodeCount == null) {
+                        mediaPatch = { episodeCount: Number(itemDetails.episodeCount) }
                         filled = true
                     }
                 } else if (kind === "manga") {
                     const patch: Record<string, number> = {}
-                    if (meta.chapters == null && itemMeta.chapters != null) patch.chapters = Number(itemMeta.chapters)
-                    if (meta.volumes == null && itemMeta.volumes != null) patch.volumes = Number(itemMeta.volumes)
+                    if (details.chapterCount == null && itemDetails.chapterCount != null) patch.chapterCount = Number(itemDetails.chapterCount)
+                    if (details.volumeCount == null && itemDetails.volumeCount != null) patch.volumeCount = Number(itemDetails.volumeCount)
                     if (Object.keys(patch).length > 0) {
                         mediaPatch = patch
                         filled = true

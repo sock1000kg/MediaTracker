@@ -1,65 +1,63 @@
 export type MediaResult<T extends string = string> = {
   source: string
   mediaType: T
+  subtype?: "album" | "track" | "show" | "season" | null
   creator?: string | null
+  creators?: Array<{ name: string; role: string }>
+  genres?: string[]
   year?: string | null
+  releaseDate?: string | null
   sourceId: string
   title: string
+  originalTitle?: string | null
   description?: string | null
   imageUrl?: string | null
-  metadata?: Record<string, unknown>
+  details?: Record<string, unknown> | null
+  externalIds?: Array<{ provider: string; id: string }>
   inLibrary?: boolean
   myLog?: { id: string; rating: number | null; status: string | null } | null
 }
 
 export type BookResult = MediaResult<"book"> & {
-  metadata: {
+  details?: {
     pageCount?: number
-    categories?: string[]
     publisher?: string
-    url?: string
-  }
+  } | null
 }
 
-export type MusicMetadata = {
-  url?: string
-  kind?: "album" | "track"
-  categories?: string[] | null
-  album?: string
-  albumSourceId?: string
-  trackNumber?: number
+export type MusicDetails = {
+  format?: string
+  formatTags?: string[]
   durationSec?: number | null
 }
 
 export type MusicResult = MediaResult<"music"> & {
-  metadata: MusicMetadata
+  subtype?: "album" | "track" | null
+  details?: MusicDetails | null
 }
 
 export type MusicTrackResult = MediaResult<"music"> & {
-  metadata: MusicMetadata
+  subtype?: "track"
+  details?: MusicDetails | null
   myLog?: { id: string; rating: number | null; status: string | null } | null
 }
 
 export type AnimeKind = "anime" | "manga"
 
 export type AnimeResult = MediaResult<AnimeKind> & {
-  metadata: {
-    url?: string
-    kind: AnimeKind
+  details?: {
     format?: string | null
-    episodes?: number | null
-    chapters?: number | null
-    volumes?: number | null
+    episodeCount?: number | null
+    durationSec?: number | null
+    chapterCount?: number | null
+    volumeCount?: number | null
     score?: number | null
-    scoreScale?: "mal" | "anilist"
-    originalTitle?: string | null
-    categories?: string[] | null
-    episodeMinutes?: number | null
-    idMal?: number | null
-    watchedEpisodes?: number | null
-    readChapters?: number | null
-    readVolumes?: number | null
-  }
+    scoreScale?: "mal_10" | "anilist_100" | string
+    country?: string | null
+    airingStatus?: string | null
+    publishingStatus?: string | null
+    language?: string | null
+  } | null
 }
 
 export type AnimeSort = "relevance" | "score" | "popularity" | "newest"
@@ -70,16 +68,12 @@ export type AnimeSearchFilters = {
 }
 
 export type MovieResult = MediaResult<"movie"> & {
-  metadata: {
-    url?: string
-    kind: "movie"
-    originalTitle?: string | null
-    originalLanguage?: string | null
+  details?: {
+    durationSec?: number | null
+    language?: string | null
     score?: number | null
-    runtime?: number | null
-    categories?: string[] | null
-    imdbId?: string | null
-  }
+    scoreScale?: "tmdb_10" | string
+  } | null
 }
 
 export type GamePlatform = "pc" | "playstation" | "xbox" | "nintendo" | "ios" | "android" | "mac" | "linux"
@@ -91,53 +85,54 @@ export type GameSearchFilters = {
 }
 
 export type GameResult = MediaResult<"game"> & {
-  metadata: {
-    url?: string
-    kind: "game"
+  details?: {
     platforms?: string[] | null
     metacritic?: number | null
     score?: number | null // RAWG rating, 0-5
+    scoreScale?: "rawg_5" | string
     publishers?: string[] | null
-    categories?: string[] | null
-  }
+    avgPlaytimeHours?: number | null
+  } | null
 }
 
-export type TvShowMetadata = {
-  url?: string
-  kind: "show"
-  tmdbId: number
-  originalTitle?: string | null
-  firstAirDate?: string | null
-  categories?: string[] | null
-  originCountry?: string[] | string | null
+export type TvShowDetails = {
   seasonCount?: number | null
   episodeCount?: number | null
-  status?: string | null
   networks?: string[] | null
-  creator?: string | null
+  country?: string | null
+  airingStatus?: string | null
+  language?: string | null
+  score?: number | null
+  scoreScale?: "tmdb_10" | string
 }
 
-export type TvSeasonMetadata = {
-  url?: string
-  kind: "season"
-  tmdbId: number
-  showTitle: string
-  seasonNumber: number
-  episodeCount: number | null
-  airDate?: string | null
-  networks?: string[] | null
-  categories?: string[] | null
+export type TvSeasonDetails = {
+  episodeCount?: number | null
 }
 
 export type TvResult = MediaResult<"tv"> & {
-  metadata: TvShowMetadata | TvSeasonMetadata
+  subtype?: "show" | "season" | null
+  details?: TvShowDetails | TvSeasonDetails | null
 }
 
 export type TvSeasonResult = MediaResult<"tv"> & {
-  metadata: TvSeasonMetadata
+  subtype?: "season"
+  details?: TvSeasonDetails | null
 }
 
 export type BookSort = "relevance" | "new" | "old" | "rating"
+
+export type BoardGameResult = MediaResult<"boardgame"> & {
+  details?: {
+    minPlayers?: number | null
+    maxPlayers?: number | null
+    playTimeMin?: number | null
+    minPlayTimeMin?: number | null
+    maxPlayTimeMin?: number | null
+    score?: number | null
+    scoreScale?: "bgg_10" | string
+  } | null
+}
 
 // Mirrors the server's BookSearchFilters (everything except q and page)
 export type BookSearchFilters = {

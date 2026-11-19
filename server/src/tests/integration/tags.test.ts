@@ -52,7 +52,6 @@ describe("Tag Endpoints and Log Tags", () => {
                 title: "Tag Book 1",
                 mediaTypeId: mediaTypeA.id,
                 userId: userAId,
-                source: "custom"
             }
         })
     })
@@ -394,7 +393,7 @@ describe("Tag Endpoints and Log Tags", () => {
             })
             const mt = await prisma.mediaType.findFirstOrThrow({ where: { name: "book" } })
             const med = await prisma.media.create({
-                data: { title: "CascadeBook", userId: u.userId, mediaTypeId: mt.id, source: "custom" }
+                data: { title: "CascadeBook", userId: u.userId, mediaTypeId: mt.id }
             })
             const l = await prisma.userLogs.create({
                 data: { userId: u.userId, mediaId: med.id, status: "completed" }
@@ -423,10 +422,10 @@ describe("Tag Endpoints and Log Tags", () => {
 
         test("Concurrent log saves both introducing a new tag both succeed and share one tag", async () => {
             const m1 = await prisma.media.create({
-                data: { title: "Comfort 1", userId: userAId, mediaTypeId: mediaTypeA.id, source: "custom" }
+                data: { title: "Comfort 1", userId: userAId, mediaTypeId: mediaTypeA.id }
             })
             const m2 = await prisma.media.create({
-                data: { title: "Comfort 2", userId: userAId, mediaTypeId: mediaTypeA.id, source: "custom" }
+                data: { title: "Comfort 2", userId: userAId, mediaTypeId: mediaTypeA.id }
             })
 
             const [r1, r2] = await Promise.all([

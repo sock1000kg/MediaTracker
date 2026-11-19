@@ -158,7 +158,7 @@ describe('Log Dates API - startedAt and finishedAt', () => {
             creator: 'Some Author',
             year: '2021',
             mediaType: 'book',
-            source: 'open_library',
+            source: 'openlibrary',
             sourceId: 'OL-DATES-1',
         }
 

@@ -16,7 +16,7 @@ import {
 import { cn } from "@/lib/utils"
 
 interface BlueDudeProps {
-  size: 32 | 48 | 64 | 96
+  size: 32 | 48 | 64 | 80 | 96 | 160 | number
   mood?: Mood
   glance?: Glance
   className?: string

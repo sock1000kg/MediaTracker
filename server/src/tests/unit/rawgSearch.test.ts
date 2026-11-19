@@ -86,27 +86,28 @@ describe('mapRawgGame', () => {
     it('maps fields', () => {
         expect(mapRawgGame(item)).toEqual({
             mediaType: 'game',
-            title: 'The Witcher 3', creator: null, year: '2015', description: null, source: 'rawg', sourceId: 'game-3328',
+            title: 'The Witcher 3', creator: null, year: '2015', releaseDate: '2015-05-18', description: null, source: 'rawg', sourceId: 'game-3328',
             imageUrl: 'https://media.rawg.io/a.jpg',
-            metadata: {
-                url: 'https://rawg.io/games/the-witcher-3', kind: 'game', platforms: ['PC', 'Xbox One'],
-                metacritic: 92, score: 4.66, categories: ['RPG', 'Open World'], playtimeHours: 45,
+            genres: ['RPG', 'Open World'],
+            details: {
+                platforms: ['PC', 'Xbox One'],
+                metacritic: 92, score: 4.66, scoreScale: 'rawg_5', avgPlaytimeHours: 45,
             },
         })
     })
     it('null released / image, non-https image, rating 0, url falls back to id', () => {
         const r = mapRawgGame(rawgGameItemSchema.parse({ id: 1, name: 'A', released: null, background_image: 'http://x/y.jpg', rating: 0, playtime: 0 }))
         expect(r).toMatchObject({ year: null, imageUrl: null, sourceId: 'game-1' })
-        expect(r.metadata).toEqual({ url: 'https://rawg.io/games/1', kind: 'game', platforms: null, metacritic: null, score: null, categories: null, playtimeHours: null })
+        expect(r.details).toEqual({})
     })
-    it('all-null fields are safe and validate; kind survives the union', () => {
+    it('all-null fields are safe and validate', () => {
         const r = mapRawgGame(rawgGameItemSchema.parse({ id: 2, name: null, released: 'TBA', platforms: null, genres: null, tags: null }))
         expect(r.year).toBeNull()
         const [v] = searchResultsSchema.parse([r])
         expect(v.title).toBe('Unknown title')
-        expect(v.metadata).toMatchObject({ kind: 'game' })
-        const [g] = searchResultsSchema.parse([{ mediaType: 'game', source: 'rawg', sourceId: 'game-1', metadata: { kind: 'game', platforms: ['PC'], metacritic: 80 } }])
-        expect(g.metadata).toMatchObject({ kind: 'game', platforms: ['PC'], metacritic: 80 })
+        expect(v.mediaType).toBe('game')
+        const [g] = searchResultsSchema.parse([{ mediaType: 'game', source: 'rawg', sourceId: 'game-1', details: { platforms: ['PC'], metacritic: 80 } }])
+        expect(g.details).toMatchObject({ platforms: ['PC'], metacritic: 80 })
     })
 })
 

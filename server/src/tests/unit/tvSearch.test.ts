@@ -82,27 +82,27 @@ describe('mapTmdbShow', () => {
             sourceId: 'tv:60625',
             imageUrl: 'https://image.tmdb.org/t/p/w342/cvhNj9eoRBe5SxjqiY7RBeJ959f.jpg',
         })
-        expect(r.metadata).toEqual({
-            url: 'https://www.themoviedb.org/tv/60625',
-            kind: 'show',
-            tmdbId: 60625,
-            firstAirDate: '2013-12-02',
-            categories: ['Animation', 'Comedy', 'Sci-Fi & Fantasy'],
-            originCountry: ['US'],
+        expect(r.details).toEqual({
+            country: 'US',
+            score: 8.7,
+            scoreScale: 'tmdb_10',
         })
-        expect(searchResultsSchema.parse([r])[0].metadata).toMatchObject({ kind: 'show' })
+        expect(r.releaseDate).toBe('2013-12-02')
+        expect(r.genres).toEqual(['Animation', 'Comedy', 'Sci-Fi & Fantasy'])
+        expect(r.externalIds).toEqual([{ provider: 'tmdb', id: '60625' }])
+        expect(searchResultsSchema.parse([r])[0].subtype).toBe('show')
     })
 
     it('originalTitle only when it differs', () => {
         const r = mapTmdbShow({ ...item, name: 'Attack on Titan', original_name: '進撃の巨人' })
-        expect(r.metadata).toMatchObject({ originalTitle: '進撃の巨人' })
+        expect(r.originalTitle).toBe('進撃の巨人')
     })
 
     it('empty air date and null poster', () => {
         const r = mapTmdbShow({ ...item, first_air_date: '', poster_path: null, genre_ids: [] })
         expect(r.year).toBeNull()
         expect(r.imageUrl).toBeNull()
-        expect(r.metadata).toMatchObject({ categories: null })
+        expect(r.genres).toBeUndefined()
     })
 
     it('genre map has 16 entries', () => {
@@ -192,10 +192,8 @@ describe('fetchTvSeasons mapping logic', () => {
             title: 'Rick and Morty',
             creator: 'Dan Harmon, Justin Roiland',
         })
-        expect(result.show.metadata).toMatchObject({
+        expect(result.show.details).toMatchObject({
             seasonCount: 7,
-            episodeCount: 71,
-            status: 'Returning Series',
             networks: ['Adult Swim'],
         })
 
@@ -211,13 +209,10 @@ describe('fetchTvSeasons mapping logic', () => {
             imageUrl: 'https://image.tmdb.org/t/p/w342/s1_poster.jpg',
             creator: 'Dan Harmon, Justin Roiland',
         })
-        expect(result.seasons[0].metadata).toMatchObject({
-            kind: 'season',
-            tmdbId: 60625,
-            showTitle: 'Rick and Morty',
-            seasonNumber: 1,
+        expect(result.seasons[0].subtype).toBe('season')
+        expect(result.seasons[0].releaseDate).toBe('2013-12-02')
+        expect(result.seasons[0].details).toMatchObject({
             episodeCount: 11,
-            airDate: '2013-12-02',
         })
 
         // Season 2: sorted second
@@ -234,8 +229,7 @@ describe('fetchTvSeasons mapping logic', () => {
             title: 'Rick and Morty: Specials',
             imageUrl: 'https://image.tmdb.org/t/p/w342/show_poster.jpg', // fallback to show poster
         })
-        expect(result.seasons[2].metadata).toMatchObject({
-            seasonNumber: 0,
+        expect(result.seasons[2].details).toMatchObject({
             episodeCount: 5,
         })
     })

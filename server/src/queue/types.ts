@@ -2,6 +2,9 @@
 // (and wired in registerAllHandlers() in ./index.ts).
 export interface JobPayloads {
     "demo.reset": Record<string, never>
+    "tmdb.refresh": Record<string, never>
+    "music.coverBackfill": Record<string, never>
+    "openlibrary.sync": Record<string, never>
     "import.goodreads": { csv: string }
     "import.mal": { xml: string }
     "import.letterboxd": {
@@ -12,6 +15,7 @@ export interface JobPayloads {
             diary?: string
             reviews?: string
             likes?: string
+            lists?: { fileName: string; text: string }[]
         }
     }
 }

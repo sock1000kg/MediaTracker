@@ -7,6 +7,7 @@ import { movieSearchQuerySchema } from '@/schemas/search/movieSchemas.js'
 import { tvSearchQuerySchema } from '@/schemas/search/tvSchemas.js'
 import { gameSearchQuerySchema } from '@/schemas/search/gameSchemas.js'
 import { bookSearchQuerySchema } from '@/schemas/search/bookSchemas.js'
+import { bggSearchQuerySchema } from '@/schemas/search/bggSchemas.js'
 
 // Returns the book info fetched from google books (A media shaped item without media type cus its enforced in frontend)
 export const searchBooks = async (req: Request, res: Response, next: NextFunction) => {
@@ -36,19 +37,19 @@ export const searchAlbums = async (req: Request, res: Response, next: NextFuncti
         return res.status(401).json({ message: "Unauthorized: missing userId" })
     }
 
-    const q = req.query.q as string
-    sanitizeQuery(q)
+    const rawQ = typeof req.query.q === "string" ? req.query.q : ""
+    const q = sanitizeQuery(rawQ)
     if (!q) {
         return res.status(400).json({ message: "Missing query" })
     }
-    if (q.length > LIMITS.search.queryMaxLength) {
+    if (rawQ.trim().length > LIMITS.search.queryMaxLength) {
         return res.status(400).json({ message: `Search query must be at most ${LIMITS.search.queryMaxLength} characters` })
     }
 
     const page = parseInt(req.query.page as string) || 1
 
     try {
-        const results = await searchService.searchAblums(userId, q, page)
+        const results = await searchService.searchAlbums(userId, q, page)
         res.status(200).json(results)
     } catch (error) {
         next(error)
@@ -64,13 +65,16 @@ export const getAlbumTracks = async (req: Request, res: Response, next: NextFunc
     const artist = typeof req.query.artist === "string" ? req.query.artist.trim() : ""
     const album = typeof req.query.album === "string" ? req.query.album.trim() : ""
     const mbid = typeof req.query.mbid === "string" && req.query.mbid.trim() ? req.query.mbid.trim() : undefined
+    const releaseGroupId = typeof req.query.releaseGroupId === "string" && req.query.releaseGroupId.trim()
+        ? req.query.releaseGroupId.trim()
+        : (typeof req.query.mbReleaseGroupId === "string" && req.query.mbReleaseGroupId.trim() ? req.query.mbReleaseGroupId.trim() : undefined)
 
-    if (!mbid && (!artist || !album)) {
-        return res.status(400).json({ message: "Artist and album or mbid are required" })
+    if (!releaseGroupId && !mbid && (!artist || !album)) {
+        return res.status(400).json({ message: "Artist and album, mbid, or releaseGroupId are required" })
     }
 
     try {
-        const results = await searchService.getAlbumTracks(userId, artist, album, mbid)
+        const results = await searchService.getAlbumTracks(userId, artist, album, mbid, releaseGroupId)
         res.status(200).json(results)
     } catch (error) {
         next(error)
@@ -83,12 +87,12 @@ export const searchTracks = async (req: Request, res: Response, next: NextFuncti
         return res.status(401).json({ message: "Unauthorized: missing userId" })
     }
 
-    const q = req.query.q as string
-    sanitizeQuery(q)
+    const rawQ = typeof req.query.q === "string" ? req.query.q : ""
+    const q = sanitizeQuery(rawQ)
     if (!q) {
         return res.status(400).json({ message: "Missing query" })
     }
-    if (q.length > LIMITS.search.queryMaxLength) {
+    if (rawQ.trim().length > LIMITS.search.queryMaxLength) {
         return res.status(400).json({ message: `Search query must be at most ${LIMITS.search.queryMaxLength} characters` })
     }
 
@@ -102,7 +106,7 @@ export const searchTracks = async (req: Request, res: Response, next: NextFuncti
     }
 }
 
-const jikanSearch = (mode: "anime" | "manga") => async (req: Request, res: Response, next: NextFunction) => {
+const animeMangaSearch = (mode: "anime" | "manga") => async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId
     if (!userId) {
         return res.status(401).json({ message: "Unauthorized: missing userId" })
@@ -126,8 +130,8 @@ const jikanSearch = (mode: "anime" | "manga") => async (req: Request, res: Respo
     }
 }
 
-export const searchAnime = jikanSearch("anime")
-export const searchManga = jikanSearch("manga")
+export const searchAnime = animeMangaSearch("anime")
+export const searchManga = animeMangaSearch("manga")
 
 export const searchMovies = async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId
@@ -210,3 +214,25 @@ export const getTvSeasons = async (req: Request, res: Response, next: NextFuncti
         next(error)
     }
 }
+
+export const searchBoardGames = async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.userId
+    if (!userId) {
+        return res.status(401).json({ message: "Unauthorized: missing userId" })
+    }
+
+    const parsedQuery = bggSearchQuerySchema.safeParse(req.query)
+    if (!parsedQuery.success) {
+        const message = parsedQuery.error.issues.map(i => i.message).join("; ")
+        return res.status(400).json({ message })
+    }
+    const { q, page } = parsedQuery.data
+
+    try {
+        const results = await searchService.searchBoardGames(userId, q, page)
+        res.status(200).json(results)
+    } catch (error) {
+        next(error)
+    }
+}
+

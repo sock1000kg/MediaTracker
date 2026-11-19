@@ -20,7 +20,7 @@ export function ResultTile({ result, kind, isLogged, onLog }: ResultTileProps) {
     >
       <h3 className="line-clamp-2 min-w-0 text-sm font-semibold break-words">{result.title}</h3>
       <p className="truncate text-xs text-muted-foreground">{byline}</p>
-      <div className="mt-1 flex justify-end">
+      <div className="mt-auto flex justify-end pt-1">
         <Button size="sm" variant="amber" onClick={onLog}>{isLogged ? "Edit log" : "+ Log"}</Button>
       </div>
     </TileShell>

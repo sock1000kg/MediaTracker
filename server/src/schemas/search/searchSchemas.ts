@@ -2,13 +2,14 @@ import { z } from "zod"
 import { uuidSchema } from "@/schemas/common.js"
 import { searchMediaSchema } from "@schemas/mediaSchemas.js"
 import { searchLogSchema } from "@/schemas/logSchemas.js"
-import { normalizeTypeName } from "@/utilities.js"
-import { bookMetadataSchema } from "./bookSchemas.js"
-import { musicMetadataSchema } from "./musicSchemas.js"
-import { animeMetadataSchema } from "./animeSchemas.js"
-import { movieMetadataSchema } from "./movieSchemas.js"
-import { gameMetadataSchema } from "./gameSchemas.js"
-import { tvSeasonMetadataSchema, tvShowMetadataSchema } from "./tvSchemas.js"
+import { normalizeTypeName, sanitizeDescription } from "@/utilities.js"
+import { bookDetailsSchema } from "./bookSchemas.js"
+import { albumDetailsSchema, trackDetailsSchema } from "./musicSchemas.js"
+import { animeDetailsSchema, mangaDetailsSchema } from "./animeSchemas.js"
+import { movieDetailsSchema } from "./movieSchemas.js"
+import { gameDetailsSchema } from "./gameSchemas.js"
+import { tvSeasonDetailsSchema, tvShowDetailsSchema } from "./tvSchemas.js"
+import { boardgameDetailsSchema } from "./bggSchemas.js"
 
 const parentMediaSchema = searchMediaSchema.extend({
     mediaType: z
@@ -27,18 +28,33 @@ export const createMediaAndLogSchema = z.object({
     if (data.parent && !data.parent.mediaType) {
         data.parent.mediaType = data.mediaData.mediaType
     }
+    if (data.mediaData.source !== "bgg") {
+        data.mediaData.description = sanitizeDescription(data.mediaData.description)
+    } else {
+        data.mediaData.description = data.mediaData.description ? String(data.mediaData.description).trim() || null : null
+    }
+    if (data.parent) {
+        if (data.parent.source !== "bgg") {
+            data.parent.description = sanitizeDescription(data.parent.description)
+        } else {
+            data.parent.description = data.parent.description ? String(data.parent.description).trim() || null : null
+        }
+    }
     return data
 })
 
-// Music goes first and is strict: the book schema would otherwise match music results and strip `kind`
-const mediaMetadataSchema = z.union([
-  musicMetadataSchema.strict(),
-  tvSeasonMetadataSchema,
-  tvShowMetadataSchema,
-  animeMetadataSchema,
-  movieMetadataSchema,
-  gameMetadataSchema,
-  bookMetadataSchema
+const mediaDetailsSchema = z.union([
+    albumDetailsSchema.strict(),
+    trackDetailsSchema.strict(),
+    boardgameDetailsSchema,
+    tvSeasonDetailsSchema,
+    tvShowDetailsSchema,
+    animeDetailsSchema,
+    mangaDetailsSchema,
+    movieDetailsSchema,
+    gameDetailsSchema,
+    bookDetailsSchema,
+    z.record(z.string(), z.unknown()),
 ])
 
 export const searchResultCreatorSchema = z.object({
@@ -48,7 +64,7 @@ export const searchResultCreatorSchema = z.object({
 
 //Schema for ONE result of a search (generic normaliztion for all types)
 // Search providers stamp the type so clients can log a result as-is
-export const SEARCH_MEDIA_TYPES = ["book", "music", "movie", "tv", "game", "anime", "manga"] as const
+export const SEARCH_MEDIA_TYPES = ["book", "music", "movie", "tv", "game", "anime", "manga", "boardgame"] as const
 
 export const searchResultSchema = z.object({
     mediaType: z.enum(SEARCH_MEDIA_TYPES),
@@ -61,6 +77,7 @@ export const searchResultSchema = z.object({
         .nullable()
         .default(null),
     creators: z.array(searchResultCreatorSchema).optional(),
+    genres: z.array(z.string()).optional(),
     year: z
         .string()
         .nullable()
@@ -81,7 +98,10 @@ export const searchResultSchema = z.object({
         rating: z.number().nullable(),
         status: z.string().nullable(),
     }).nullable().optional(),
-    metadata: mediaMetadataSchema.optional(), // raw Google volumeInfo
+    details: mediaDetailsSchema.nullable().optional(),
+    subtype: z.enum(["album", "track", "show", "season"]).nullable().optional(),
+    releaseDate: z.string().nullable().optional(),
+    originalTitle: z.string().nullable().optional(),
     externalIds: z.array(z.object({
         provider: z.string(),
         id: z.string(),

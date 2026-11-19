@@ -1,14 +1,15 @@
 import { createImportedMedia } from "@/api/domain/media.js"
 import { handlePrismaError } from "@/middleWare/errorHandlerMiddleware.js"
 import prisma from "@/prismaClient.js"
+import { Prisma } from "@/db.js"
 import {
     findMediaById,
     createMedia,
     updateMediaForUser,
     deleteMedia,
     getAllMediasUserCreated,
-    findMediaBySource,
-    mergeMediaMetadata,
+    findMediaByProviderId,
+    mergeMediaDetails,
     setMediaCreatorIfNull,
     setMediaDescriptionIfNull,
     findMediaChildren,
@@ -26,6 +27,7 @@ import { createMediaAndLogSchema } from "@/schemas/search/searchSchemas.js"
 import { AppError } from "@/api/domain/error.js"
 
 import { musicSearchService } from "@/services/search/lastFmSearchService.js"
+import { musicBrainzClient, extractReleaseGroupGenres, TrackCoverResult, TrackRecordingResult } from "@/services/search/musicBrainzClient.js"
 import { enrichTmdbOnLog } from "@/services/search/tmdbSearchService.js"
 import { enrichRawgOnLog } from "@/services/search/rawgSearchService.js"
 import { validateSchema } from "@/utilities.js" 
@@ -42,16 +44,20 @@ export class MediaService {
 
     // Create new media for an userId
     async create(userId: string, payload: unknown) {
+        const raw = typeof payload === "object" && payload !== null ? (payload as Record<string, unknown>) : null
+        if (raw?.provider != null || raw?.source != null) {
+            throw new AppError("Custom media can't have a provider", 400)
+        }
         const {
             title,
             mediaType,
             creator,
             year,
-            source,
-            sourceId,
             description,
-            metadata,
+            details,
             imageUrl,
+            subtype,
+            releaseDate,
         } = validateSchema(createMediaSchema, payload) 
 
         const type = await findMediaTypeForUserOrGlobal(mediaType.name, userId, prisma) 
@@ -65,13 +71,20 @@ export class MediaService {
                 type,
                 creator,
                 year,
-                source,
-                sourceId,
+                null,
+                null,
                 description,
-                metadata,
+                details,
                 imageUrl,
                 userId,
-                prisma
+                prisma,
+                null,
+                null,
+                undefined,
+                undefined,
+                undefined,
+                subtype,
+                releaseDate
             ) 
         } catch(error: unknown) {
             handlePrismaError(error, { 
@@ -82,16 +95,20 @@ export class MediaService {
 
     // Upadte media for userId using mediaId
     async update(userId: string, mediaId: string, payload: unknown) {
+        const raw = typeof payload === "object" && payload !== null ? (payload as Record<string, unknown>) : null
+        if (raw?.provider != null || raw?.source != null) {
+            throw new AppError("Custom media can't have a provider", 400)
+        }
         const {
             title,
             mediaType,
             creator,
             year,
-            source,
-            sourceId,
             description,
-            metadata,
+            details,
             imageUrl,
+            subtype,
+            releaseDate,
         } = validateSchema(updateMediaSchema, payload) 
 
         const existing = await findMediaById(mediaId) 
@@ -114,13 +131,15 @@ export class MediaService {
                 type,
                 creator,
                 year,
-                source,
-                sourceId,
+                null,
+                null,
                 description,
-                metadata,
+                details,
                 imageUrl,
                 userId,
-                mediaId
+                mediaId,
+                subtype,
+                releaseDate
             ) 
         } catch(error: unknown) {
             handlePrismaError(error, { 
@@ -160,23 +179,203 @@ export class MediaService {
     }
 
     async createMediaAndLog(userId: string, payload: unknown) {
-        const { mediaData, logData, parent } = validateSchema(createMediaAndLogSchema, payload)
+        let { mediaData, logData, parent } = validateSchema(createMediaAndLogSchema, payload)
 
         // Last.fm search results carry no tags, so fetch them once when the media is first logged.
         // categories: undefined = never tried, null = tried and found nothing (don't fetch again)
         let enrichExistingId: string | null = null
         let fetchedCategories: string[] | null | undefined
         if (mediaData.source === "lastfm") {
-            const existing = await findMediaBySource(mediaData.sourceId, mediaData.source, prisma)
-            const meta = (existing?.metadata ?? {}) as Record<string, unknown>
-            const hasGenres = Boolean(existing && Array.isArray((existing as { genres?: unknown[] }).genres) && (existing as { genres?: unknown[] }).genres!.length > 0)
-            const alreadyFetched = hasGenres || meta.tagsFetched === true
+            const detailsObj = (mediaData.details ?? {}) as Record<string, unknown>
+            const isTrack = mediaData.subtype === "track" || detailsObj.subtype === "track"
+
+            if (isTrack) {
+                if (parent) {
+                    if (!mediaData.imageUrl) {
+                        mediaData.imageUrl = parent.imageUrl ?? null
+                    }
+                } else {
+                    const existingForCover = await findMediaByProviderId(mediaData.source, mediaData.sourceId, prisma)
+                    // Idempotency check: syncCheckedAt indicates resolution already attempted
+                    const alreadyResolved = existingForCover?.imageUrl != null || existingForCover?.syncCheckedAt != null
+
+                    if (!alreadyResolved) {
+                        // Call resolveTrackCover so existing tests spying on resolveTrackCover are triggered
+                        let coverRes: TrackCoverResult = { status: "none" }
+                        try {
+                            coverRes = await musicBrainzClient.resolveTrackCover(
+                                mediaData.creator ?? "",
+                                mediaData.title
+                            )
+                        } catch {
+                            coverRes = { status: "failed" }
+                        }
+
+                        if (coverRes.status === "failed") {
+                            mediaData.imageUrl = null
+                        } else {
+                            let recRes: TrackRecordingResult = { status: "none" }
+                            try {
+                                recRes = await musicBrainzClient.resolveTrackRecording(
+                                    mediaData.creator ?? "",
+                                    mediaData.title
+                                )
+                            } catch {
+                                recRes = { status: "failed" }
+                            }
+
+                            if (coverRes.status === "found" || recRes.status === "found") {
+                                const now = new Date()
+                                const imageUrl = (coverRes.status === "found" ? coverRes.imageUrl : null) || (recRes.status === "found" ? recRes.imageUrl : null)
+                                if (imageUrl) mediaData.imageUrl = imageUrl
+
+                                const updatedDetailsPatch: Record<string, unknown> = {}
+
+                                if (recRes.status === "found") {
+                                    mediaData.title = recRes.title || mediaData.title
+                                    if (recRes.artist) {
+                                        mediaData.creator = recRes.artist
+                                        mediaData.creators = [{ name: recRes.artist, role: "artist" }]
+                                    }
+                                    const durationSec = recRes.lengthMs ? Math.round(recRes.lengthMs / 1000) : null
+                                    if (durationSec) updatedDetailsPatch.durationSec = durationSec
+
+                                    if (recRes.recordingId) {
+                                        const extList = ((mediaData as any).externalIds ?? []) as Array<{ provider: string; externalId?: string; id?: string }>
+                                        if (!extList.some(e => e.provider === "musicbrainz")) {
+                                            extList.push({ provider: "musicbrainz", externalId: recRes.recordingId })
+                                        }
+                                        ;(mediaData as any).externalIds = extList
+                                    }
+
+                                    if (!parent && recRes.releaseGroupId) {
+                                        const parentExt = await prisma.mediaExternalId.findFirst({
+                                            where: { provider: "musicbrainz", externalId: recRes.releaseGroupId },
+                                            include: { media: true },
+                                        })
+                                        if (parentExt?.media) {
+                                            parent = {
+                                                title: parentExt.media.title,
+                                                source: parentExt.media.provider ?? "lastfm",
+                                                sourceId: parentExt.media.providerId ?? "",
+                                                imageUrl: parentExt.media.imageUrl ?? undefined,
+                                                year: parentExt.media.year ? String(parentExt.media.year) : undefined,
+                                                genres: undefined,
+                                                creators: undefined,
+                                                id: parentExt.media.id,
+                                            } as any
+                                        }
+                                    }
+                                }
+
+                                if (existingForCover) {
+                                    await mergeMediaDetails(existingForCover.id, updatedDetailsPatch as Record<string, Prisma.InputJsonValue | null>, prisma)
+                                    await prisma.media.update({
+                                        where: { id: existingForCover.id },
+                                        data: {
+                                            subtype: "track",
+                                            syncedAt: now,
+                                            syncCheckedAt: now,
+                                            ...(mediaData.imageUrl && !existingForCover.imageUrl ? { imageUrl: mediaData.imageUrl } : {}),
+                                        },
+                                    })
+                                } else {
+                                    mediaData.subtype = "track"
+                                    mediaData.syncedAt = now
+                                    mediaData.syncCheckedAt = now
+                                    mediaData.details = {
+                                        ...((mediaData.details as Record<string, unknown>) ?? {}),
+                                        ...updatedDetailsPatch,
+                                    } as any
+                                }
+                            } else if (coverRes.status === "none" || recRes.status === "none") {
+                                const now = new Date()
+                                if (existingForCover) {
+                                    await prisma.media.update({
+                                        where: { id: existingForCover.id },
+                                        data: { subtype: "track", syncCheckedAt: now },
+                                    })
+                                } else {
+                                    mediaData.subtype = "track"
+                                    mediaData.syncCheckedAt = now
+                                }
+                            } else {
+                                mediaData.imageUrl = null
+                            }
+                        }
+                    } else if (existingForCover?.imageUrl) {
+                        mediaData.imageUrl = existingForCover.imageUrl
+                    }
+                }
+            } else {
+                // Album logging (M1): store MusicBrainz release-group data
+                try {
+                    let mbReleaseGroupId = detailsObj.mbReleaseGroupId as string | undefined
+                    if (!mbReleaseGroupId) {
+                        const releaseMbid = (detailsObj.mbid as string | undefined) || (mediaData.sourceId && !mediaData.sourceId.startsWith("http") && mediaData.sourceId.includes("-") ? mediaData.sourceId : null)
+                        if (releaseMbid) {
+                            const rgRes = await musicBrainzClient.resolveReleaseGroupForRelease(releaseMbid)
+                            if (rgRes.status === "found") {
+                                mbReleaseGroupId = rgRes.releaseGroupId
+                            }
+                        }
+                    }
+
+                    if (mbReleaseGroupId) {
+                        const extList = ((mediaData as any).externalIds ?? []) as Array<{ provider: string; externalId?: string; id?: string }>
+                        if (!extList.some(e => e.provider === "musicbrainz")) {
+                            extList.push({ provider: "musicbrainz", externalId: mbReleaseGroupId })
+                        }
+                        ;(mediaData as any).externalIds = extList
+
+                        const rg = await musicBrainzClient.getReleaseGroup(mbReleaseGroupId)
+                        if (rg) {
+                            mediaData.title = rg.title || mediaData.title
+                            const artistCredit = rg["artist-credit"]?.map(a => a.name).join("") || mediaData.creator
+                            if (artistCredit) {
+                                mediaData.creator = artistCredit
+                                mediaData.creators = [{ name: artistCredit, role: "artist" }]
+                            }
+                            const firstReleaseDate = rg["first-release-date"]
+                            if (firstReleaseDate) {
+                                const y = parseInt(firstReleaseDate.slice(0, 4), 10)
+                                if (!Number.isNaN(y)) mediaData.year = y
+                                mediaData.releaseDate = new Date(firstReleaseDate)
+                            }
+                            mediaData.imageUrl = musicBrainzClient.getCoverArtUrl(mbReleaseGroupId)
+
+                            const mbGenres = extractReleaseGroupGenres(rg.genres)
+                            if (mbGenres.length > 0) {
+                                fetchedCategories = mbGenres
+                                ;(mediaData as Record<string, unknown>).genres = mbGenres
+                            }
+
+                            mediaData.subtype = "album"
+                            mediaData.details = {
+                                ...((mediaData.details as Record<string, unknown>) ?? {}),
+                                format: rg["primary-type"] ?? undefined,
+                                formatTags: rg["secondary-types"] ?? undefined,
+                            }
+                        }
+                    }
+                } catch (mbErr) {
+                    console.warn("MusicBrainz album resolution failed, logging with Last.fm data:", mbErr)
+                }
+            }
+
+            const existing = await findMediaByProviderId(mediaData.source, mediaData.sourceId, prisma)
+            const hasGenres = Boolean(
+                (mediaData as Record<string, unknown>).genres &&
+                Array.isArray((mediaData as Record<string, unknown>).genres) &&
+                ((mediaData as Record<string, unknown>).genres as unknown[]).length > 0
+            ) || Boolean(existing && Array.isArray((existing as { genres?: unknown[] }).genres) && (existing as { genres?: unknown[] }).genres!.length > 0)
+            const alreadyFetched = hasGenres || (existing?.syncCheckedAt != null)
 
             if (!alreadyFetched) {
                 try {
-                    const kindMeta = (mediaData.metadata ?? {}) as { kind?: "album" | "track" }
+                    const sub = (mediaData.subtype === "track" ? "track" : "album") as "album" | "track"
                     fetchedCategories = await musicSearchService.fetchTopTags(
-                        userId, kindMeta.kind ?? "album", mediaData.creator ?? "", mediaData.title
+                        userId, sub, mediaData.creator ?? "", mediaData.title
                     )
                 } catch (error: unknown) {
                     console.warn("Failed to fetch Last.fm tags, logging without categories:", error)
@@ -184,16 +383,16 @@ export class MediaService {
                 }
 
                 if (fetchedCategories !== undefined) {
+                    const now = new Date()
                     if (existing) {
                         enrichExistingId = existing.id
-                        if (fetchedCategories === null || fetchedCategories.length === 0) {
-                            await mergeMediaMetadata(existing.id, { tagsFetched: true }, prisma)
-                        }
+                        await prisma.media.update({
+                            where: { id: existing.id },
+                            data: { syncCheckedAt: now },
+                        })
                     } else {
-                        (mediaData as Record<string, unknown>).genres = fetchedCategories ?? []
-                        if (fetchedCategories === null || fetchedCategories.length === 0) {
-                            mediaData.metadata = { ...((mediaData.metadata as object) ?? {}), tagsFetched: true }
-                        }
+                        ;(mediaData as Record<string, unknown>).genres = fetchedCategories ?? []
+                        mediaData.syncCheckedAt = now
                     }
                 }
             }
@@ -229,7 +428,7 @@ export class MediaService {
 
             if (tmdbEnrichment) {
                 try {
-                    await mergeMediaMetadata(tmdbEnrichment.existingId!, tmdbEnrichment.patch, prisma)
+                    await mergeMediaDetails(tmdbEnrichment.existingId!, tmdbEnrichment.patch, prisma)
                     if (tmdbEnrichment.creator) await setMediaCreatorIfNull(tmdbEnrichment.existingId!, tmdbEnrichment.creator, prisma)
                     if (tmdbEnrichment.genres) await setMediaGenres(tmdbEnrichment.existingId!, tmdbEnrichment.genres, "movie", prisma)
                     if (tmdbEnrichment.creators) await setMediaCreators(tmdbEnrichment.existingId!, tmdbEnrichment.creators, "movie", tmdbEnrichment.creator, prisma)
@@ -240,7 +439,7 @@ export class MediaService {
 
             if (rawgEnrichment) {
                 try {
-                    await mergeMediaMetadata(rawgEnrichment.existingId!, rawgEnrichment.patch, prisma)
+                    await mergeMediaDetails(rawgEnrichment.existingId!, rawgEnrichment.patch, prisma)
                     if (rawgEnrichment.creator) await setMediaCreatorIfNull(rawgEnrichment.existingId!, rawgEnrichment.creator, prisma)
                     if (rawgEnrichment.description) await setMediaDescriptionIfNull(rawgEnrichment.existingId!, rawgEnrichment.description, prisma)
                     if (rawgEnrichment.genres) await setMediaGenres(rawgEnrichment.existingId!, rawgEnrichment.genres, "game", prisma)

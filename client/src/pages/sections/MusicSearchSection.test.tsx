@@ -38,7 +38,8 @@ describe("MusicSearchSection component", () => {
     year: "1991",
     imageUrl: "https://cover.jpg",
     description: "Classic album",
-    metadata: { kind: "album", url: "https://last.fm/music/Loveless" },
+    subtype: "album",
+    details: { url: "https://last.fm/music/Loveless" },
     inLibrary: false,
   }
 
@@ -46,15 +47,13 @@ describe("MusicSearchSection component", () => {
     {
       source: "lastfm",
       mediaType: "music",
+      subtype: "track",
       sourceId: "track-1",
       title: "Only Shallow",
       creator: "my bloody valentine",
       year: "1991",
       imageUrl: null,
-      metadata: {
-        kind: "track",
-        album: "Loveless",
-        trackNumber: 1,
+      details: {
         durationSec: 257,
       },
       inLibrary: false,
@@ -63,21 +62,25 @@ describe("MusicSearchSection component", () => {
     {
       source: "lastfm",
       mediaType: "music",
+      subtype: "track",
       sourceId: "track-2",
       title: "Loomer",
       creator: "my bloody valentine",
       year: "1991",
       imageUrl: null,
-      metadata: {
-        kind: "track",
-        album: "Loveless",
-        trackNumber: 2,
+      details: {
         durationSec: 158,
       },
       inLibrary: false,
       myLog: null,
     },
   ]
+
+  it("credits Last.fm for data and the Cover Art Archive for covers, each with its own link", () => {
+    renderWithProviders(<MusicSearchSection />)
+    expect(screen.getByRole("link", { name: "Data from Last.fm" })).toHaveAttribute("href", "https://www.last.fm")
+    expect(screen.getByRole("link", { name: "Covers from the Cover Art Archive" })).toHaveAttribute("href", "https://coverartarchive.org")
+  })
 
   it("expands tracks disclosure once with aria-expanded toggle", async () => {
     const user = userEvent.setup()

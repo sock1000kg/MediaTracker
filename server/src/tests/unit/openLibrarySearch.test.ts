@@ -61,7 +61,7 @@ describe('isJunkSubject', () => {
 
 describe('mapResults', () => {
     const doc = (subject?: string[] | null) => ({ key: '/works/OL1W', title: 'T', subject })
-    const cats = (subject?: string[] | null) => (svc.mapResults([doc(subject) as never])[0]?.metadata as { categories?: string[] | null }).categories
+    const cats = (subject?: string[] | null) => (svc.mapResults([doc(subject) as never])[0]?.genres ?? null)
 
     it('takes the first 3 after filtering and keeps others unchanged', () => {
         expect(cats(['Accessible book', 'In library', 'Science fiction', 'nyt:x=1', 'Dune', 'Space opera', 'Extra']))

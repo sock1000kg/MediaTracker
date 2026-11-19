@@ -83,6 +83,9 @@ const dateInputSchema = z.preprocess((val: unknown) => {
 }, z.union([z.date(), z.null(), z.undefined()]))
 
 export const progressSchema = z.record(z.string(), z.unknown()).nullable().optional()
+export const progressEpisodesSchema = z.number().int().nonnegative().nullable().optional()
+export const progressChaptersSchema = z.number().int().nonnegative().nullable().optional()
+export const progressVolumesSchema = z.number().int().nonnegative().nullable().optional()
 
 export const tagsSchema = z.array(z.string()).superRefine((items, ctx) => {
     for (let i = 0; i < items.length; i++) {
@@ -148,7 +151,7 @@ function validateLogDateConstraints(
     }
 }
 
-const normalizeDateKeys = (val: unknown) => {
+const normalizeLogKeys = (val: unknown) => {
     if (val && typeof val === "object" && !Array.isArray(val)) {
         const obj = { ...(val as Record<string, unknown>) }
         if (obj.started_at !== undefined && obj.startedAt === undefined) {
@@ -157,6 +160,18 @@ const normalizeDateKeys = (val: unknown) => {
         if (obj.finished_at !== undefined && obj.finishedAt === undefined) {
             obj.finishedAt = obj.finished_at
         }
+        if (obj.progress && typeof obj.progress === "object" && !Array.isArray(obj.progress)) {
+            const p = obj.progress as Record<string, unknown>
+            if (obj.progressEpisodes === undefined && p.watchedEpisodes !== undefined) {
+                obj.progressEpisodes = p.watchedEpisodes
+            }
+            if (obj.progressChapters === undefined && p.readChapters !== undefined) {
+                obj.progressChapters = p.readChapters
+            }
+            if (obj.progressVolumes === undefined && p.readVolumes !== undefined) {
+                obj.progressVolumes = p.readVolumes
+            }
+        }
         return obj
     }
     return val
@@ -164,7 +179,7 @@ const normalizeDateKeys = (val: unknown) => {
 
 //for when creating a log of a searched media (no mediaId cus its not in db yet)
 export const searchLogSchema = z.preprocess(
-    normalizeDateKeys,
+    normalizeLogKeys,
     z.object({ 
         status: statusSchema,
         rating: ratingSchema,
@@ -172,12 +187,15 @@ export const searchLogSchema = z.preprocess(
         startedAt: dateInputSchema.optional(),
         finishedAt: dateInputSchema.optional(),
         progress: progressSchema,
+        progressEpisodes: progressEpisodesSchema,
+        progressChapters: progressChaptersSchema,
+        progressVolumes: progressVolumesSchema,
         tags: tagsSchema,
     }).superRefine(validateLogDateConstraints)
 )
 
 export const createLogSchema = z.preprocess(
-    normalizeDateKeys,
+    normalizeLogKeys,
     z.object({
         mediaId: mediaIdSchema,
         status: statusSchema,
@@ -186,12 +204,15 @@ export const createLogSchema = z.preprocess(
         startedAt: dateInputSchema.optional(),
         finishedAt: dateInputSchema.optional(),
         progress: progressSchema,
+        progressEpisodes: progressEpisodesSchema,
+        progressChapters: progressChaptersSchema,
+        progressVolumes: progressVolumesSchema,
         tags: tagsSchema,
     }).superRefine(validateLogDateConstraints)
 )
 
 export const updateLogSchema = z.preprocess(
-    normalizeDateKeys,
+    normalizeLogKeys,
     z.object({
         status: updateStatusSchema,
         rating: updateRatingSchema,
@@ -199,6 +220,9 @@ export const updateLogSchema = z.preprocess(
         startedAt: dateInputSchema.optional(),
         finishedAt: dateInputSchema.optional(),
         progress: progressSchema,
+        progressEpisodes: progressEpisodesSchema,
+        progressChapters: progressChaptersSchema,
+        progressVolumes: progressVolumesSchema,
         tags: tagsSchema,
     }).superRefine(validateLogDateConstraints)
 )

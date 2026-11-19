@@ -6,6 +6,7 @@ import {
   resultAspect, resultCategories, resultCoverKey, resultDetailParts, resultKindLabel,
   resultOriginalTitle, resultProviderLabel, resultUrl, type ResultKind, type SearchResult,
 } from "@/lib/resultView"
+import { formatBggDescription } from "@/lib/boardGameFormat"
 
 interface ResultRowProps {
   result: SearchResult
@@ -41,7 +42,7 @@ export function ResultRow({ result, kind, isLogged, onLog }: ResultRowProps) {
         {parts.length > 0 && <> · {parts.join(" · ")}</>}
       </p>
 
-      <ClampText text={result.description ?? ""} />
+      <ClampText text={kind === "boardgame" ? formatBggDescription(result.description) : (result.description ?? "")} />
 
       {categories.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1">

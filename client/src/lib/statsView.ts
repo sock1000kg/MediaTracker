@@ -73,7 +73,7 @@ export function formatTimeToFinish(ttf: { count: number; avgDays: number | null;
 }
 
 export function headlineMetric(stats: TypeStatsResult): string {
-  switch (stats.kind) {
+  switch (stats.statType) {
     case "book":
       return stats.pagesRead !== null
         ? `${stats.pagesRead.toLocaleString()} pages`

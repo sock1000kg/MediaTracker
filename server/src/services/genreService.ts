@@ -78,6 +78,7 @@ export function defaultRoleForType(mediaTypeName?: string | null): string {
         case "game": return "developer"
         case "anime": return "studio"
         case "manga": return "author"
+        case "boardgame": return "designer"
         case "tv": return "creator"
         default: return "creator"
     }

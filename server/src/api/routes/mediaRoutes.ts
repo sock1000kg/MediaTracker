@@ -6,6 +6,7 @@ import {
   deleteExistingMedia,
   createMediaAndLog,
   getMediaChildren,
+  refreshMedia,
 } from '@/api/controllers/mediaController.js'
 
 const router = express.Router()
@@ -21,6 +22,9 @@ router.put('/media-log', createMediaAndLog)
 
 // get children of media
 router.get('/:id/children', getMediaChildren)
+
+// refresh media from provider
+router.post('/:id/refresh', refreshMedia)
 
 // update media by id
 router.put('/:id', updateExistingMedia)

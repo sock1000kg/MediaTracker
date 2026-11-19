@@ -37,31 +37,38 @@
         "source": "rawg",
         "sourceId": "game-58764",
         "imageUrl": "https://media.rawg.io/media/games/9f4/9f418898f5415668ca47b5f4ab1ecfeb.jpg",
-        "metadata": {
-          "url": "https://rawg.io/games/outer-wilds",
-          "kind": "game",
+        "genres": [
+          "Adventure",
+          "Indie",
+          "Puzzle",
+          "Space",
+          "Surreal",
+          "vr mod",
+          "planetary"
+        ],
+        "subtype": null,
+        "releaseDate": null,
+        "details": {
           "platforms": [
             "PlayStation 4",
             "Nintendo Switch",
             "Xbox One",
             "PC"
           ],
-          "metacritic": 84,
-          "score": 4.36,
-          "categories": [
-            "Adventure",
-            "Indie",
-            "Puzzle",
-            "Space",
-            "Surreal",
-            "vr mod",
-            "planetary"
-          ],
-          "playtimeHours": 4,
           "publishers": [
             "Annapurna Interactive"
-          ]
-        }
+          ],
+          "score": 4.36,
+          "scoreScale": "rawg_5",
+          "metacritic": 84,
+          "avgPlaytimeHours": 4
+        },
+        "externalIds": [
+          {
+            "provider": "rawg",
+            "externalId": "game-58764"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -89,9 +96,17 @@
         "source": "rawg",
         "sourceId": "game-262382",
         "imageUrl": "https://media.rawg.io/media/games/840/8408ad3811289a6a5830cae60fb0b62a.jpg",
-        "metadata": {
-          "url": "https://rawg.io/games/disco-elysium",
-          "kind": "game",
+        "genres": [
+          "Adventure",
+          "RPG",
+          "Indie",
+          "Story Rich",
+          "role-playing",
+          "Isometric"
+        ],
+        "subtype": null,
+        "releaseDate": null,
+        "details": {
           "platforms": [
             "PC",
             "macOS",
@@ -101,19 +116,17 @@
             "Xbox Series S/X",
             "PlayStation 5"
           ],
-          "metacritic": 91,
           "score": 4.36,
-          "categories": [
-            "Adventure",
-            "RPG",
-            "Indie",
-            "Story Rich",
-            "role-playing",
-            "Isometric"
-          ],
-          "playtimeHours": 6,
-          "publishers": null
-        }
+          "scoreScale": "rawg_5",
+          "metacritic": 91,
+          "avgPlaytimeHours": 6
+        },
+        "externalIds": [
+          {
+            "provider": "rawg",
+            "externalId": "game-262382"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -141,9 +154,21 @@
         "source": "rawg",
         "sourceId": "game-9767",
         "imageUrl": "https://media.rawg.io/media/games/4cf/4cfc6b7f1850590a4634b08bfab308ab.jpg",
-        "metadata": {
-          "url": "https://rawg.io/games/hollow-knight",
-          "kind": "game",
+        "genres": [
+          "Action",
+          "Indie",
+          "Platformer",
+          "Atmospheric",
+          "Great Soundtrack",
+          "Story Rich",
+          "Open World",
+          "2D",
+          "Exploration",
+          "Difficult"
+        ],
+        "subtype": null,
+        "releaseDate": null,
+        "details": {
           "platforms": [
             "PlayStation 4",
             "Linux",
@@ -152,25 +177,20 @@
             "Nintendo Switch",
             "Xbox One"
           ],
-          "metacritic": 88,
-          "score": 4.4,
-          "categories": [
-            "Action",
-            "Indie",
-            "Platformer",
-            "Atmospheric",
-            "Great Soundtrack",
-            "Story Rich",
-            "Open World",
-            "2D",
-            "Exploration",
-            "Difficult"
-          ],
-          "playtimeHours": 7,
           "publishers": [
             "Team Cherry"
-          ]
-        }
+          ],
+          "score": 4.4,
+          "scoreScale": "rawg_5",
+          "metacritic": 88,
+          "avgPlaytimeHours": 7
+        },
+        "externalIds": [
+          {
+            "provider": "rawg",
+            "externalId": "game-9767"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -195,9 +215,21 @@
         "source": "rawg",
         "sourceId": "game-22121",
         "imageUrl": "https://media.rawg.io/media/games/594/59487800889ebac294c7c2c070d02356.jpg",
-        "metadata": {
-          "url": "https://rawg.io/games/celeste",
-          "kind": "game",
+        "genres": [
+          "Indie",
+          "Platformer",
+          "Story Rich",
+          "2D",
+          "Horror",
+          "Female Protagonist",
+          "celeste",
+          "xna",
+          "miniboss",
+          "fna"
+        ],
+        "subtype": null,
+        "releaseDate": null,
+        "details": {
           "platforms": [
             "Xbox One",
             "PC",
@@ -206,25 +238,20 @@
             "PlayStation 4",
             "Linux"
           ],
-          "metacritic": 91,
-          "score": 4.37,
-          "categories": [
-            "Indie",
-            "Platformer",
-            "Story Rich",
-            "2D",
-            "Horror",
-            "Female Protagonist",
-            "celeste",
-            "xna",
-            "miniboss",
-            "fna"
-          ],
-          "playtimeHours": 6,
           "publishers": [
             "Matt Makes Games"
-          ]
-        }
+          ],
+          "score": 4.37,
+          "scoreScale": "rawg_5",
+          "metacritic": 91,
+          "avgPlaytimeHours": 6
+        },
+        "externalIds": [
+          {
+            "provider": "rawg",
+            "externalId": "game-22121"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -251,9 +278,14 @@
         "source": "rawg",
         "sourceId": "game-304247",
         "imageUrl": "https://media.rawg.io/media/games/c38/c38deeb8f331a78c89e64ad71a1db361.jpg",
-        "metadata": {
-          "url": "https://rawg.io/games/a-short-hike",
-          "kind": "game",
+        "genres": [
+          "Adventure",
+          "Indie",
+          "Isometric"
+        ],
+        "subtype": null,
+        "releaseDate": null,
+        "details": {
           "platforms": [
             "Nintendo Switch",
             "Linux",
@@ -261,18 +293,20 @@
             "PC",
             "PlayStation 4"
           ],
-          "metacritic": 84,
-          "score": 4.35,
-          "categories": [
-            "Adventure",
-            "Indie",
-            "Isometric"
-          ],
-          "playtimeHours": 2,
           "publishers": [
             "adamgryu"
-          ]
-        }
+          ],
+          "score": 4.35,
+          "scoreScale": "rawg_5",
+          "metacritic": 84,
+          "avgPlaytimeHours": 2
+        },
+        "externalIds": [
+          {
+            "provider": "rawg",
+            "externalId": "game-304247"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -300,9 +334,21 @@
         "source": "rawg",
         "sourceId": "game-17010",
         "imageUrl": "https://media.rawg.io/media/games/177/1775aacedb915b0e0880476530dc87b4.jpg",
-        "metadata": {
-          "url": "https://rawg.io/games/kentucky-route-zero",
-          "kind": "game",
+        "genres": [
+          "Adventure",
+          "Indie",
+          "Atmospheric",
+          "Great Soundtrack",
+          "Story Rich",
+          "2D",
+          "Horror",
+          "Exploration",
+          "Point & Click",
+          "Mystery"
+        ],
+        "subtype": null,
+        "releaseDate": null,
+        "details": {
           "platforms": [
             "iOS",
             "Nintendo Switch",
@@ -311,27 +357,22 @@
             "macOS",
             "Linux"
           ],
-          "metacritic": 81,
-          "score": 3.98,
-          "categories": [
-            "Adventure",
-            "Indie",
-            "Atmospheric",
-            "Great Soundtrack",
-            "Story Rich",
-            "2D",
-            "Horror",
-            "Exploration",
-            "Point & Click",
-            "Mystery"
-          ],
-          "playtimeHours": 2,
           "publishers": [
             "Annapurna Interactive",
             "Netflix",
             "Cardboard Computer"
-          ]
-        }
+          ],
+          "score": 3.98,
+          "scoreScale": "rawg_5",
+          "metacritic": 81,
+          "avgPlaytimeHours": 2
+        },
+        "externalIds": [
+          {
+            "provider": "rawg",
+            "externalId": "game-17010"
+          }
+        ]
       },
       "log": {
         "status": "in progress",
@@ -352,9 +393,21 @@
         "source": "rawg",
         "sourceId": "game-46508",
         "imageUrl": "https://media.rawg.io/media/games/052/052f9afc7aaeea3e2c5d46eafa92c64e.jpg",
-        "metadata": {
-          "url": "https://rawg.io/games/return-of-the-obra-dinn",
-          "kind": "game",
+        "genres": [
+          "Adventure",
+          "Indie",
+          "Horror",
+          "Gore",
+          "Violent",
+          "Mystery",
+          "Detective",
+          "Pirates",
+          "Time Manipulation",
+          "ship"
+        ],
+        "subtype": null,
+        "releaseDate": null,
+        "details": {
           "platforms": [
             "Nintendo Switch",
             "PlayStation 4",
@@ -362,25 +415,20 @@
             "PC",
             "macOS"
           ],
-          "metacritic": 88,
-          "score": 4.33,
-          "categories": [
-            "Adventure",
-            "Indie",
-            "Horror",
-            "Gore",
-            "Violent",
-            "Mystery",
-            "Detective",
-            "Pirates",
-            "Time Manipulation",
-            "ship"
-          ],
-          "playtimeHours": 5,
           "publishers": [
             "3909"
-          ]
-        }
+          ],
+          "score": 4.33,
+          "scoreScale": "rawg_5",
+          "metacritic": 88,
+          "avgPlaytimeHours": 5
+        },
+        "externalIds": [
+          {
+            "provider": "rawg",
+            "externalId": "game-46508"
+          }
+        ]
       },
       "log": {
         "status": "wishlist",
@@ -401,9 +449,21 @@
         "source": "rawg",
         "sourceId": "game-274755",
         "imageUrl": "https://media.rawg.io/media/games/1f4/1f47a270b8f241e4676b14d39ec620f7.jpg",
-        "metadata": {
-          "url": "https://rawg.io/games/hades-2018",
-          "kind": "game",
+        "genres": [
+          "Action",
+          "Adventure",
+          "RPG",
+          "Indie",
+          "Atmospheric",
+          "Great Soundtrack",
+          "Story Rich",
+          "2D",
+          "Fantasy",
+          "Action-Adventure"
+        ],
+        "subtype": null,
+        "releaseDate": null,
+        "details": {
           "platforms": [
             "PlayStation 5",
             "Xbox Series S/X",
@@ -412,25 +472,20 @@
             "PC",
             "Xbox One"
           ],
-          "metacritic": 93,
-          "score": 4.41,
-          "categories": [
-            "Action",
-            "Adventure",
-            "RPG",
-            "Indie",
-            "Atmospheric",
-            "Great Soundtrack",
-            "Story Rich",
-            "2D",
-            "Fantasy",
-            "Action-Adventure"
-          ],
-          "playtimeHours": 10,
           "publishers": [
             "Supergiant Games"
-          ]
-        }
+          ],
+          "score": 4.41,
+          "scoreScale": "rawg_5",
+          "metacritic": 93,
+          "avgPlaytimeHours": 10
+        },
+        "externalIds": [
+          {
+            "provider": "rawg",
+            "externalId": "game-274755"
+          }
+        ]
       },
       "log": {
         "status": "in progress",
@@ -451,9 +506,15 @@
         "source": "rawg",
         "sourceId": "game-29236",
         "imageUrl": "https://media.rawg.io/media/games/2c1/2c1984e128ac48b89953ed4de4904a3b.jpg",
-        "metadata": {
-          "url": "https://rawg.io/games/tunic",
-          "kind": "game",
+        "genres": [
+          "Action",
+          "Adventure",
+          "Indie",
+          "Isometric"
+        ],
+        "subtype": null,
+        "releaseDate": null,
+        "details": {
           "platforms": [
             "PlayStation 5",
             "PlayStation 4",
@@ -463,19 +524,20 @@
             "Xbox One",
             "Xbox Series S/X"
           ],
-          "metacritic": 86,
-          "score": 4.11,
-          "categories": [
-            "Action",
-            "Adventure",
-            "Indie",
-            "Isometric"
-          ],
-          "playtimeHours": 5,
           "publishers": [
             "Finji"
-          ]
-        }
+          ],
+          "score": 4.11,
+          "scoreScale": "rawg_5",
+          "metacritic": 86,
+          "avgPlaytimeHours": 5
+        },
+        "externalIds": [
+          {
+            "provider": "rawg",
+            "externalId": "game-29236"
+          }
+        ]
       },
       "log": {
         "status": "wishlist",
@@ -496,34 +558,41 @@
         "source": "rawg",
         "sourceId": "game-10141",
         "imageUrl": "https://media.rawg.io/media/games/5a4/5a44112251d70a25291cc33757220fce.jpg",
-        "metadata": {
-          "url": "https://rawg.io/games/nierautomata",
-          "kind": "game",
+        "genres": [
+          "Action",
+          "RPG",
+          "Atmospheric",
+          "Great Soundtrack",
+          "Story Rich",
+          "Open World",
+          "Sci-fi",
+          "Female Protagonist",
+          "Violent",
+          "Anime"
+        ],
+        "subtype": null,
+        "releaseDate": null,
+        "details": {
           "platforms": [
             "PlayStation 4",
             "Nintendo Switch",
             "PC",
             "Xbox One"
           ],
-          "metacritic": 86,
-          "score": 4.37,
-          "categories": [
-            "Action",
-            "RPG",
-            "Atmospheric",
-            "Great Soundtrack",
-            "Story Rich",
-            "Open World",
-            "Sci-fi",
-            "Female Protagonist",
-            "Violent",
-            "Anime"
-          ],
-          "playtimeHours": 13,
           "publishers": [
             "Square Enix"
-          ]
-        }
+          ],
+          "score": 4.37,
+          "scoreScale": "rawg_5",
+          "metacritic": 86,
+          "avgPlaytimeHours": 13
+        },
+        "externalIds": [
+          {
+            "provider": "rawg",
+            "externalId": "game-10141"
+          }
+        ]
       },
       "log": {
         "status": "dropped",
@@ -542,18 +611,23 @@
         "year": null,
         "description": null,
         "source": "lastfm",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/510546e3b6df7504392274c528c77780.png",
+        "imageUrl": "https://coverartarchive.org/release/09a09037-1ebd-3d38-a128-38ab11e6b0fe/front-250",
         "sourceId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe",
-        "metadata": {
-          "url": "https://www.last.fm/music/my+bloody+valentine/Loveless",
-          "kind": "album",
-          "categories": [
-            "shoegaze",
-            "dream pop",
-            "noise pop",
-            "90s"
-          ]
-        }
+        "genres": [
+          "shoegaze",
+          "dream pop",
+          "noise pop",
+          "90s"
+        ],
+        "subtype": "album",
+        "releaseDate": null,
+        "details": null,
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -580,17 +654,22 @@
         "year": null,
         "description": null,
         "source": "lastfm",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.png",
+        "imageUrl": "https://coverartarchive.org/release/07d02411-6722-4071-8130-14fb8512288a/front-250",
         "sourceId": "07d02411-6722-4071-8130-14fb8512288a",
-        "metadata": {
-          "url": "https://www.last.fm/music/Slowdive/Souvlaki",
-          "kind": "album",
-          "categories": [
-            "shoegaze",
-            "dream pop",
-            "90s"
-          ]
-        }
+        "genres": [
+          "shoegaze",
+          "dream pop",
+          "90s"
+        ],
+        "subtype": "album",
+        "releaseDate": null,
+        "details": null,
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "07d02411-6722-4071-8130-14fb8512288a"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -617,19 +696,24 @@
         "year": null,
         "description": null,
         "source": "lastfm",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/c34df33d23f970baafdfea3f846e489f.png",
+        "imageUrl": "https://coverartarchive.org/release/151d2e60-8dad-4934-a8a3-6cccbd2f5d31/front-250",
         "sourceId": "151d2e60-8dad-4934-a8a3-6cccbd2f5d31",
-        "metadata": {
-          "url": "https://www.last.fm/music/Cocteau+Twins/Heaven+or+Las+Vegas",
-          "kind": "album",
-          "categories": [
-            "dream pop",
-            "shoegaze",
-            "ethereal",
-            "ethereal wave",
-            "90s"
-          ]
-        }
+        "genres": [
+          "dream pop",
+          "shoegaze",
+          "ethereal",
+          "ethereal wave",
+          "90s"
+        ],
+        "subtype": "album",
+        "releaseDate": null,
+        "details": null,
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "151d2e60-8dad-4934-a8a3-6cccbd2f5d31"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -655,18 +739,23 @@
         "year": null,
         "description": null,
         "source": "lastfm",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/82ea4f4b490b4e288c9247e2b4ecb58c.png",
+        "imageUrl": "https://coverartarchive.org/release/0041638d-a5fc-3449-91e8-878b48d81815/front-250",
         "sourceId": "0041638d-a5fc-3449-91e8-878b48d81815",
-        "metadata": {
-          "url": "https://www.last.fm/music/Sigur+R%C3%B3s/%C3%81g%C3%A6tis+byrjun",
-          "kind": "album",
-          "categories": [
-            "post-rock",
-            "experimental",
-            "icelandic",
-            "post rock"
-          ]
-        }
+        "genres": [
+          "post-rock",
+          "experimental",
+          "icelandic",
+          "post rock"
+        ],
+        "subtype": "album",
+        "releaseDate": null,
+        "details": null,
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "0041638d-a5fc-3449-91e8-878b48d81815"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -691,19 +780,24 @@
         "year": null,
         "description": null,
         "source": "lastfm",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/9dbcd9399ac3e622b4f508323155b644.png",
+        "imageUrl": "https://coverartarchive.org/release/1475431a-cfd3-43ad-bf09-b3826118446f/front-250",
         "sourceId": "1475431a-cfd3-43ad-bf09-b3826118446f",
-        "metadata": {
-          "url": "https://www.last.fm/music/Radiohead/In+Rainbows",
-          "kind": "album",
-          "categories": [
-            "alternative rock",
-            "alternative",
-            "art rock",
-            "rock",
-            "best of 2007"
-          ]
-        }
+        "genres": [
+          "alternative rock",
+          "alternative",
+          "art rock",
+          "rock",
+          "best of 2007"
+        ],
+        "subtype": "album",
+        "releaseDate": null,
+        "details": null,
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "1475431a-cfd3-43ad-bf09-b3826118446f"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -729,19 +823,24 @@
         "year": null,
         "description": null,
         "source": "lastfm",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/82c92f044b27db86328ed6be3f8a735a.png",
+        "imageUrl": "https://coverartarchive.org/release/08f54f68-7c89-4e22-8a0f-ac2b06e48568/front-250",
         "sourceId": "08f54f68-7c89-4e22-8a0f-ac2b06e48568",
-        "metadata": {
-          "url": "https://www.last.fm/music/Frank+Ocean/Blonde",
-          "kind": "album",
-          "categories": [
-            "alternative rnb",
-            "art pop",
-            "Neo-Soul",
-            "rnb",
-            "ambient pop"
-          ]
-        }
+        "genres": [
+          "alternative rnb",
+          "art pop",
+          "Neo-Soul",
+          "rnb",
+          "ambient pop"
+        ],
+        "subtype": "album",
+        "releaseDate": null,
+        "details": null,
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "08f54f68-7c89-4e22-8a0f-ac2b06e48568"
+          }
+        ]
       },
       "log": {
         "status": "dropped",
@@ -760,18 +859,23 @@
         "year": null,
         "description": null,
         "source": "lastfm",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/ce1ba44449a0b97661a9c2d65fe8568b.png",
+        "imageUrl": "https://coverartarchive.org/release/0331c46f-b9b6-4bb9-8c96-5d94ecbde08a/front-250",
         "sourceId": "0331c46f-b9b6-4bb9-8c96-5d94ecbde08a",
-        "metadata": {
-          "url": "https://www.last.fm/music/Talk+Talk/Spirit+of+Eden",
-          "kind": "album",
-          "categories": [
-            "post-rock",
-            "art rock",
-            "experimental",
-            "80s"
-          ]
-        }
+        "genres": [
+          "post-rock",
+          "art rock",
+          "experimental",
+          "80s"
+        ],
+        "subtype": "album",
+        "releaseDate": null,
+        "details": null,
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "0331c46f-b9b6-4bb9-8c96-5d94ecbde08a"
+          }
+        ]
       },
       "log": {
         "status": "wishlist",
@@ -790,19 +894,24 @@
         "year": null,
         "description": null,
         "source": "lastfm",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/7568c8fa48cc4fb6cf688fe89161f8a5.png",
+        "imageUrl": "https://coverartarchive.org/release/395152c9-1ba2-4c44-80ab-5d1488818344/front-250",
         "sourceId": "395152c9-1ba2-4c44-80ab-5d1488818344",
-        "metadata": {
-          "url": "https://www.last.fm/music/Sufjan+Stevens/Carrie+&+Lowell",
-          "kind": "album",
-          "categories": [
-            "indie folk",
-            "singer-songwriter",
-            "best of 2015",
-            "folk",
-            "chamber folk"
-          ]
-        }
+        "genres": [
+          "indie folk",
+          "singer-songwriter",
+          "best of 2015",
+          "folk",
+          "chamber folk"
+        ],
+        "subtype": "album",
+        "releaseDate": null,
+        "details": null,
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "395152c9-1ba2-4c44-80ab-5d1488818344"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -827,19 +936,24 @@
         "year": null,
         "description": null,
         "source": "lastfm",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/5f863cceffcb45c692e648f11fce5160.png",
+        "imageUrl": "https://coverartarchive.org/release/58a1015b-b297-415e-9581-f889a0e668eb/front-250",
         "sourceId": "58a1015b-b297-415e-9581-f889a0e668eb",
-        "metadata": {
-          "url": "https://www.last.fm/music/Joanna+Newsom/Have+One+on+Me",
-          "kind": "album",
-          "categories": [
-            "folk",
-            "chamber folk",
-            "progressive folk",
-            "best of 2010",
-            "singer-songwriter"
-          ]
-        }
+        "genres": [
+          "folk",
+          "chamber folk",
+          "progressive folk",
+          "best of 2010",
+          "singer-songwriter"
+        ],
+        "subtype": "album",
+        "releaseDate": null,
+        "details": null,
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "58a1015b-b297-415e-9581-f889a0e668eb"
+          }
+        ]
       },
       "log": {
         "status": "wishlist",
@@ -858,19 +972,24 @@
         "year": null,
         "description": null,
         "source": "lastfm",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/83f16d352da8e6e4fd0cb32c49bf9cfc.png",
+        "imageUrl": "https://coverartarchive.org/release/0ae16051-e092-3919-ba51-976dfc027cc0/front-250",
         "sourceId": "0ae16051-e092-3919-ba51-976dfc027cc0",
-        "metadata": {
-          "url": "https://www.last.fm/music/The+Avalanches/Since+I+Left+You",
-          "kind": "album",
-          "categories": [
-            "plunderphonics",
-            "electronic",
-            "dance",
-            "turntablism",
-            "electronica"
-          ]
-        }
+        "genres": [
+          "plunderphonics",
+          "electronic",
+          "dance",
+          "turntablism",
+          "electronica"
+        ],
+        "subtype": "album",
+        "releaseDate": null,
+        "details": null,
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "0ae16051-e092-3919-ba51-976dfc027cc0"
+          }
+        ]
       },
       "log": {
         "status": "in progress",
@@ -888,19 +1007,24 @@
         "year": null,
         "description": null,
         "source": "lastfm",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/dc70139e0457a04d2749fe062647fc79.png",
+        "imageUrl": "https://coverartarchive.org/release/278903c5-465e-4dfe-b278-10e7ce02f0d3/front-250",
         "sourceId": "278903c5-465e-4dfe-b278-10e7ce02f0d3",
-        "metadata": {
-          "url": "https://www.last.fm/music/Nick+Drake/Pink+Moon",
-          "kind": "album",
-          "categories": [
-            "folk",
-            "singer-songwriter",
-            "acoustic",
-            "70s",
-            "contemporary folk"
-          ]
-        }
+        "genres": [
+          "folk",
+          "singer-songwriter",
+          "acoustic",
+          "70s",
+          "contemporary folk"
+        ],
+        "subtype": "album",
+        "releaseDate": null,
+        "details": null,
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "278903c5-465e-4dfe-b278-10e7ce02f0d3"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -926,18 +1050,23 @@
         "year": null,
         "description": null,
         "source": "lastfm",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/77a37724b70842199072e0a0df578130.png",
+        "imageUrl": "https://coverartarchive.org/release/165a3396-c023-42f5-a1fb-174b262ef862/front-250",
         "sourceId": "165a3396-c023-42f5-a1fb-174b262ef862",
-        "metadata": {
-          "url": "https://www.last.fm/music/Macintosh+Plus/Floral+Shoppe",
-          "kind": "album",
-          "categories": [
-            "vaporwave",
-            "electronic",
-            "plunderphonics",
-            "ambient"
-          ]
-        }
+        "genres": [
+          "vaporwave",
+          "electronic",
+          "plunderphonics",
+          "ambient"
+        ],
+        "subtype": "album",
+        "releaseDate": null,
+        "details": null,
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "165a3396-c023-42f5-a1fb-174b262ef862"
+          }
+        ]
       },
       "log": {
         "status": "dropped",
@@ -953,28 +1082,40 @@
       "media": {
         "title": "Only Shallow",
         "creator": "my bloody valentine",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/510546e3b6df7504392274c528c77780.jpg",
+        "imageUrl": "https://coverartarchive.org/release/09a09037-1ebd-3d38-a128-38ab11e6b0fe/front-250",
         "source": "lastfm",
         "sourceId": "lastfm:09a09037-1ebd-3d38-a128-38ab11e6b0fe#1",
         "year": null,
-        "metadata": {
-          "url": "https://www.last.fm/music/my+bloody+valentine/Loveless/Only+Shallow",
-          "kind": "track",
-          "album": "Loveless",
-          "albumSourceId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe",
-          "trackNumber": 1,
+        "genres": [],
+        "position": 1,
+        "subtype": "track",
+        "releaseDate": null,
+        "details": {
           "durationSec": 240
-        }
+        },
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "lastfm:09a09037-1ebd-3d38-a128-38ab11e6b0fe#1"
+          }
+        ]
       },
       "parent": {
         "title": "Loveless",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/510546e3b6df7504392274c528c77780.jpg",
+        "imageUrl": "https://coverartarchive.org/release/09a09037-1ebd-3d38-a128-38ab11e6b0fe/front-250",
         "source": "lastfm",
         "sourceId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe",
         "year": null,
-        "metadata": {
-          "kind": "album"
-        }
+        "genres": [],
+        "subtype": "album",
+        "releaseDate": null,
+        "details": null,
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -994,28 +1135,40 @@
       "media": {
         "title": "Loomer",
         "creator": "my bloody valentine",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/510546e3b6df7504392274c528c77780.jpg",
+        "imageUrl": "https://coverartarchive.org/release/09a09037-1ebd-3d38-a128-38ab11e6b0fe/front-250",
         "source": "lastfm",
         "sourceId": "lastfm:09a09037-1ebd-3d38-a128-38ab11e6b0fe#2",
         "year": null,
-        "metadata": {
-          "url": "https://www.last.fm/music/my+bloody+valentine/Loveless/Loomer",
-          "kind": "track",
-          "album": "Loveless",
-          "albumSourceId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe",
-          "trackNumber": 2,
+        "genres": [],
+        "position": 2,
+        "subtype": "track",
+        "releaseDate": null,
+        "details": {
           "durationSec": 158
-        }
+        },
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "lastfm:09a09037-1ebd-3d38-a128-38ab11e6b0fe#2"
+          }
+        ]
       },
       "parent": {
         "title": "Loveless",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/510546e3b6df7504392274c528c77780.jpg",
+        "imageUrl": "https://coverartarchive.org/release/09a09037-1ebd-3d38-a128-38ab11e6b0fe/front-250",
         "source": "lastfm",
         "sourceId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe",
         "year": null,
-        "metadata": {
-          "kind": "album"
-        }
+        "genres": [],
+        "subtype": "album",
+        "releaseDate": null,
+        "details": null,
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -1032,28 +1185,40 @@
       "media": {
         "title": "Touched",
         "creator": "my bloody valentine",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/510546e3b6df7504392274c528c77780.jpg",
+        "imageUrl": "https://coverartarchive.org/release/09a09037-1ebd-3d38-a128-38ab11e6b0fe/front-250",
         "source": "lastfm",
         "sourceId": "lastfm:09a09037-1ebd-3d38-a128-38ab11e6b0fe#3",
         "year": null,
-        "metadata": {
-          "url": "https://www.last.fm/music/my+bloody+valentine/Loveless/Touched",
-          "kind": "track",
-          "album": "Loveless",
-          "albumSourceId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe",
-          "trackNumber": 3,
+        "genres": [],
+        "position": 3,
+        "subtype": "track",
+        "releaseDate": null,
+        "details": {
           "durationSec": 56
-        }
+        },
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "lastfm:09a09037-1ebd-3d38-a128-38ab11e6b0fe#3"
+          }
+        ]
       },
       "parent": {
         "title": "Loveless",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/510546e3b6df7504392274c528c77780.jpg",
+        "imageUrl": "https://coverartarchive.org/release/09a09037-1ebd-3d38-a128-38ab11e6b0fe/front-250",
         "source": "lastfm",
         "sourceId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe",
         "year": null,
-        "metadata": {
-          "kind": "album"
-        }
+        "genres": [],
+        "subtype": "album",
+        "releaseDate": null,
+        "details": null,
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -1070,28 +1235,40 @@
       "media": {
         "title": "To Here Knows When",
         "creator": "my bloody valentine",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/510546e3b6df7504392274c528c77780.jpg",
+        "imageUrl": "https://coverartarchive.org/release/09a09037-1ebd-3d38-a128-38ab11e6b0fe/front-250",
         "source": "lastfm",
         "sourceId": "lastfm:09a09037-1ebd-3d38-a128-38ab11e6b0fe#4",
         "year": null,
-        "metadata": {
-          "url": "https://www.last.fm/music/my+bloody+valentine/Loveless/To+Here+Knows+When",
-          "kind": "track",
-          "album": "Loveless",
-          "albumSourceId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe",
-          "trackNumber": 4,
+        "genres": [],
+        "position": 4,
+        "subtype": "track",
+        "releaseDate": null,
+        "details": {
           "durationSec": 430
-        }
+        },
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "lastfm:09a09037-1ebd-3d38-a128-38ab11e6b0fe#4"
+          }
+        ]
       },
       "parent": {
         "title": "Loveless",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/510546e3b6df7504392274c528c77780.jpg",
+        "imageUrl": "https://coverartarchive.org/release/09a09037-1ebd-3d38-a128-38ab11e6b0fe/front-250",
         "source": "lastfm",
         "sourceId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe",
         "year": null,
-        "metadata": {
-          "kind": "album"
-        }
+        "genres": [],
+        "subtype": "album",
+        "releaseDate": null,
+        "details": null,
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -1111,28 +1288,40 @@
       "media": {
         "title": "When You Sleep",
         "creator": "my bloody valentine",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/510546e3b6df7504392274c528c77780.jpg",
+        "imageUrl": "https://coverartarchive.org/release/09a09037-1ebd-3d38-a128-38ab11e6b0fe/front-250",
         "source": "lastfm",
         "sourceId": "lastfm:09a09037-1ebd-3d38-a128-38ab11e6b0fe#5",
         "year": null,
-        "metadata": {
-          "url": "https://www.last.fm/music/my+bloody+valentine/Loveless/When+You+Sleep",
-          "kind": "track",
-          "album": "Loveless",
-          "albumSourceId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe",
-          "trackNumber": 5,
+        "genres": [],
+        "position": 5,
+        "subtype": "track",
+        "releaseDate": null,
+        "details": {
           "durationSec": 357
-        }
+        },
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "lastfm:09a09037-1ebd-3d38-a128-38ab11e6b0fe#5"
+          }
+        ]
       },
       "parent": {
         "title": "Loveless",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/510546e3b6df7504392274c528c77780.jpg",
+        "imageUrl": "https://coverartarchive.org/release/09a09037-1ebd-3d38-a128-38ab11e6b0fe/front-250",
         "source": "lastfm",
         "sourceId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe",
         "year": null,
-        "metadata": {
-          "kind": "album"
-        }
+        "genres": [],
+        "subtype": "album",
+        "releaseDate": null,
+        "details": null,
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -1153,28 +1342,40 @@
       "media": {
         "title": "I Only Said",
         "creator": "my bloody valentine",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/510546e3b6df7504392274c528c77780.jpg",
+        "imageUrl": "https://coverartarchive.org/release/09a09037-1ebd-3d38-a128-38ab11e6b0fe/front-250",
         "source": "lastfm",
         "sourceId": "lastfm:09a09037-1ebd-3d38-a128-38ab11e6b0fe#6",
         "year": null,
-        "metadata": {
-          "url": "https://www.last.fm/music/my+bloody+valentine/Loveless/I+Only+Said",
-          "kind": "track",
-          "album": "Loveless",
-          "albumSourceId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe",
-          "trackNumber": 6,
+        "genres": [],
+        "position": 6,
+        "subtype": "track",
+        "releaseDate": null,
+        "details": {
           "durationSec": 394
-        }
+        },
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "lastfm:09a09037-1ebd-3d38-a128-38ab11e6b0fe#6"
+          }
+        ]
       },
       "parent": {
         "title": "Loveless",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/510546e3b6df7504392274c528c77780.jpg",
+        "imageUrl": "https://coverartarchive.org/release/09a09037-1ebd-3d38-a128-38ab11e6b0fe/front-250",
         "source": "lastfm",
         "sourceId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe",
         "year": null,
-        "metadata": {
-          "kind": "album"
-        }
+        "genres": [],
+        "subtype": "album",
+        "releaseDate": null,
+        "details": null,
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "09a09037-1ebd-3d38-a128-38ab11e6b0fe"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -1191,28 +1392,40 @@
       "media": {
         "title": "Alison",
         "creator": "Slowdive",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.jpg",
+        "imageUrl": "https://coverartarchive.org/release/07d02411-6722-4071-8130-14fb8512288a/front-250",
         "source": "lastfm",
         "sourceId": "lastfm:07d02411-6722-4071-8130-14fb8512288a#1",
         "year": null,
-        "metadata": {
-          "url": "https://www.last.fm/music/Slowdive/Souvlaki/Alison",
-          "kind": "track",
-          "album": "Souvlaki",
-          "albumSourceId": "07d02411-6722-4071-8130-14fb8512288a",
-          "trackNumber": 1,
+        "genres": [],
+        "position": 1,
+        "subtype": "track",
+        "releaseDate": null,
+        "details": {
           "durationSec": 203
-        }
+        },
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "lastfm:07d02411-6722-4071-8130-14fb8512288a#1"
+          }
+        ]
       },
       "parent": {
         "title": "Souvlaki",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.jpg",
+        "imageUrl": "https://coverartarchive.org/release/07d02411-6722-4071-8130-14fb8512288a/front-250",
         "source": "lastfm",
         "sourceId": "07d02411-6722-4071-8130-14fb8512288a",
         "year": null,
-        "metadata": {
-          "kind": "album"
-        }
+        "genres": [],
+        "subtype": "album",
+        "releaseDate": null,
+        "details": null,
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "07d02411-6722-4071-8130-14fb8512288a"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -1233,28 +1446,40 @@
       "media": {
         "title": "Machine Gun",
         "creator": "Slowdive",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.jpg",
+        "imageUrl": "https://coverartarchive.org/release/07d02411-6722-4071-8130-14fb8512288a/front-250",
         "source": "lastfm",
         "sourceId": "lastfm:07d02411-6722-4071-8130-14fb8512288a#2",
         "year": null,
-        "metadata": {
-          "url": "https://www.last.fm/music/Slowdive/Souvlaki/Machine+Gun",
-          "kind": "track",
-          "album": "Souvlaki",
-          "albumSourceId": "07d02411-6722-4071-8130-14fb8512288a",
-          "trackNumber": 2,
+        "genres": [],
+        "position": 2,
+        "subtype": "track",
+        "releaseDate": null,
+        "details": {
           "durationSec": 262
-        }
+        },
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "lastfm:07d02411-6722-4071-8130-14fb8512288a#2"
+          }
+        ]
       },
       "parent": {
         "title": "Souvlaki",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.jpg",
+        "imageUrl": "https://coverartarchive.org/release/07d02411-6722-4071-8130-14fb8512288a/front-250",
         "source": "lastfm",
         "sourceId": "07d02411-6722-4071-8130-14fb8512288a",
         "year": null,
-        "metadata": {
-          "kind": "album"
-        }
+        "genres": [],
+        "subtype": "album",
+        "releaseDate": null,
+        "details": null,
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "07d02411-6722-4071-8130-14fb8512288a"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -1271,28 +1496,40 @@
       "media": {
         "title": "40 Days",
         "creator": "Slowdive",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.jpg",
+        "imageUrl": "https://coverartarchive.org/release/07d02411-6722-4071-8130-14fb8512288a/front-250",
         "source": "lastfm",
         "sourceId": "lastfm:07d02411-6722-4071-8130-14fb8512288a#3",
         "year": null,
-        "metadata": {
-          "url": "https://www.last.fm/music/Slowdive/Souvlaki/40+Days",
-          "kind": "track",
-          "album": "Souvlaki",
-          "albumSourceId": "07d02411-6722-4071-8130-14fb8512288a",
-          "trackNumber": 3,
+        "genres": [],
+        "position": 3,
+        "subtype": "track",
+        "releaseDate": null,
+        "details": {
           "durationSec": 194
-        }
+        },
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "lastfm:07d02411-6722-4071-8130-14fb8512288a#3"
+          }
+        ]
       },
       "parent": {
         "title": "Souvlaki",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.jpg",
+        "imageUrl": "https://coverartarchive.org/release/07d02411-6722-4071-8130-14fb8512288a/front-250",
         "source": "lastfm",
         "sourceId": "07d02411-6722-4071-8130-14fb8512288a",
         "year": null,
-        "metadata": {
-          "kind": "album"
-        }
+        "genres": [],
+        "subtype": "album",
+        "releaseDate": null,
+        "details": null,
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "07d02411-6722-4071-8130-14fb8512288a"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -1312,28 +1549,40 @@
       "media": {
         "title": "Sing",
         "creator": "Slowdive",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.jpg",
+        "imageUrl": "https://coverartarchive.org/release/07d02411-6722-4071-8130-14fb8512288a/front-250",
         "source": "lastfm",
         "sourceId": "lastfm:07d02411-6722-4071-8130-14fb8512288a#4",
         "year": null,
-        "metadata": {
-          "url": "https://www.last.fm/music/Slowdive/Souvlaki/Sing",
-          "kind": "track",
-          "album": "Souvlaki",
-          "albumSourceId": "07d02411-6722-4071-8130-14fb8512288a",
-          "trackNumber": 4,
+        "genres": [],
+        "position": 4,
+        "subtype": "track",
+        "releaseDate": null,
+        "details": {
           "durationSec": 288
-        }
+        },
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "lastfm:07d02411-6722-4071-8130-14fb8512288a#4"
+          }
+        ]
       },
       "parent": {
         "title": "Souvlaki",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.jpg",
+        "imageUrl": "https://coverartarchive.org/release/07d02411-6722-4071-8130-14fb8512288a/front-250",
         "source": "lastfm",
         "sourceId": "07d02411-6722-4071-8130-14fb8512288a",
         "year": null,
-        "metadata": {
-          "kind": "album"
-        }
+        "genres": [],
+        "subtype": "album",
+        "releaseDate": null,
+        "details": null,
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "07d02411-6722-4071-8130-14fb8512288a"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -1350,28 +1599,40 @@
       "media": {
         "title": "Here She Comes",
         "creator": "Slowdive",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.jpg",
+        "imageUrl": "https://coverartarchive.org/release/07d02411-6722-4071-8130-14fb8512288a/front-250",
         "source": "lastfm",
         "sourceId": "lastfm:07d02411-6722-4071-8130-14fb8512288a#5",
         "year": null,
-        "metadata": {
-          "url": "https://www.last.fm/music/Slowdive/Souvlaki/Here+She+Comes",
-          "kind": "track",
-          "album": "Souvlaki",
-          "albumSourceId": "07d02411-6722-4071-8130-14fb8512288a",
-          "trackNumber": 5,
+        "genres": [],
+        "position": 5,
+        "subtype": "track",
+        "releaseDate": null,
+        "details": {
           "durationSec": 137
-        }
+        },
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "lastfm:07d02411-6722-4071-8130-14fb8512288a#5"
+          }
+        ]
       },
       "parent": {
         "title": "Souvlaki",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.jpg",
+        "imageUrl": "https://coverartarchive.org/release/07d02411-6722-4071-8130-14fb8512288a/front-250",
         "source": "lastfm",
         "sourceId": "07d02411-6722-4071-8130-14fb8512288a",
         "year": null,
-        "metadata": {
-          "kind": "album"
-        }
+        "genres": [],
+        "subtype": "album",
+        "releaseDate": null,
+        "details": null,
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "07d02411-6722-4071-8130-14fb8512288a"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -1388,28 +1649,40 @@
       "media": {
         "title": "Souvlaki Space Station",
         "creator": "Slowdive",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.jpg",
+        "imageUrl": "https://coverartarchive.org/release/07d02411-6722-4071-8130-14fb8512288a/front-250",
         "source": "lastfm",
         "sourceId": "lastfm:07d02411-6722-4071-8130-14fb8512288a#6",
         "year": null,
-        "metadata": {
-          "url": "https://www.last.fm/music/Slowdive/Souvlaki/Souvlaki+Space+Station",
-          "kind": "track",
-          "album": "Souvlaki",
-          "albumSourceId": "07d02411-6722-4071-8130-14fb8512288a",
-          "trackNumber": 6,
+        "genres": [],
+        "position": 6,
+        "subtype": "track",
+        "releaseDate": null,
+        "details": {
           "durationSec": 359
-        }
+        },
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "lastfm:07d02411-6722-4071-8130-14fb8512288a#6"
+          }
+        ]
       },
       "parent": {
         "title": "Souvlaki",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.jpg",
+        "imageUrl": "https://coverartarchive.org/release/07d02411-6722-4071-8130-14fb8512288a/front-250",
         "source": "lastfm",
         "sourceId": "07d02411-6722-4071-8130-14fb8512288a",
         "year": null,
-        "metadata": {
-          "kind": "album"
-        }
+        "genres": [],
+        "subtype": "album",
+        "releaseDate": null,
+        "details": null,
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "07d02411-6722-4071-8130-14fb8512288a"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -1429,28 +1702,40 @@
       "media": {
         "title": "When the Sun Hits",
         "creator": "Slowdive",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.jpg",
+        "imageUrl": "https://coverartarchive.org/release/07d02411-6722-4071-8130-14fb8512288a/front-250",
         "source": "lastfm",
         "sourceId": "lastfm:07d02411-6722-4071-8130-14fb8512288a#7",
         "year": null,
-        "metadata": {
-          "url": "https://www.last.fm/music/Slowdive/Souvlaki/When+the+Sun+Hits",
-          "kind": "track",
-          "album": "Souvlaki",
-          "albumSourceId": "07d02411-6722-4071-8130-14fb8512288a",
-          "trackNumber": 7,
+        "genres": [],
+        "position": 7,
+        "subtype": "track",
+        "releaseDate": null,
+        "details": {
           "durationSec": 287
-        }
+        },
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "lastfm:07d02411-6722-4071-8130-14fb8512288a#7"
+          }
+        ]
       },
       "parent": {
         "title": "Souvlaki",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/306e566d3bb7cce540dd41d7e6811556.jpg",
+        "imageUrl": "https://coverartarchive.org/release/07d02411-6722-4071-8130-14fb8512288a/front-250",
         "source": "lastfm",
         "sourceId": "07d02411-6722-4071-8130-14fb8512288a",
         "year": null,
-        "metadata": {
-          "kind": "album"
-        }
+        "genres": [],
+        "subtype": "album",
+        "releaseDate": null,
+        "details": null,
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "07d02411-6722-4071-8130-14fb8512288a"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -1475,19 +1760,24 @@
         "year": null,
         "description": null,
         "source": "lastfm",
-        "imageUrl": "https://lastfm-img.freetls.fastly.net/i/u/174s/2a96cbd8b46e442fc41c2b86b821562f.png",
+        "imageUrl": null,
         "sourceId": "076205ee-7f45-3325-a5a4-38d27ceabd61",
-        "metadata": {
-          "url": "https://www.last.fm/music/Aphex+Twin/_/Avril+14th",
-          "kind": "track",
-          "categories": [
-            "piano",
-            "ambient",
-            "instrumental",
-            "electronic",
-            "chillout"
-          ]
-        }
+        "genres": [
+          "piano",
+          "ambient",
+          "instrumental",
+          "electronic",
+          "chillout"
+        ],
+        "subtype": "track",
+        "releaseDate": null,
+        "details": null,
+        "externalIds": [
+          {
+            "provider": "lastfm",
+            "externalId": "076205ee-7f45-3325-a5a4-38d27ceabd61"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -1515,24 +1805,28 @@
         "source": "tmdb",
         "imageUrl": "https://image.tmdb.org/t/p/w342/8BXUZ0nnR3DZsf30DYMFHfuTxxi.jpg",
         "sourceId": "tv:60625:s1",
-        "metadata": {
-          "url": "https://www.themoviedb.org/tv/60625/season/1",
-          "kind": "season",
-          "tmdbId": 60625,
-          "showTitle": "Rick and Morty",
-          "seasonNumber": 1,
-          "episodeCount": 11,
-          "airDate": "2013-12-02",
-          "networks": [
-            "Adult Swim"
-          ],
-          "categories": [
-            "Animation",
-            "Comedy",
-            "Sci-Fi & Fantasy",
-            "Action & Adventure"
-          ]
-        }
+        "genres": [
+          "Animation",
+          "Comedy",
+          "Sci-Fi & Fantasy",
+          "Action & Adventure"
+        ],
+        "position": 1,
+        "subtype": "season",
+        "releaseDate": "2013-12-02",
+        "details": {
+          "episodeCount": 11
+        },
+        "externalIds": [
+          {
+            "provider": "tmdb",
+            "externalId": "tv:60625:s1"
+          },
+          {
+            "provider": "tmdb",
+            "externalId": "60625"
+          }
+        ]
       },
       "parent": {
         "title": "Rick and Morty",
@@ -1542,28 +1836,34 @@
         "source": "tmdb",
         "imageUrl": "https://image.tmdb.org/t/p/w342/owhkU6KRqdXoUQpjV8uyZGPtX58.jpg",
         "sourceId": "tv:60625",
-        "metadata": {
-          "url": "https://www.themoviedb.org/tv/60625",
-          "kind": "show",
-          "tmdbId": 60625,
-          "firstAirDate": "2013-12-02",
-          "categories": [
-            "Animation",
-            "Comedy",
-            "Sci-Fi & Fantasy",
-            "Action & Adventure"
-          ],
-          "originCountry": [
-            "US"
-          ],
+        "genres": [
+          "Animation",
+          "Comedy",
+          "Sci-Fi & Fantasy",
+          "Action & Adventure"
+        ],
+        "subtype": "show",
+        "releaseDate": "2013-12-02",
+        "details": {
           "seasonCount": 9,
-          "episodeCount": 91,
-          "status": "Returning Series",
           "networks": [
             "Adult Swim"
           ],
-          "creator": "Dan Harmon, Justin Roiland"
-        }
+          "country": [
+            "US"
+          ],
+          "airingStatus": "Returning Series"
+        },
+        "externalIds": [
+          {
+            "provider": "tmdb",
+            "externalId": "tv:60625"
+          },
+          {
+            "provider": "tmdb",
+            "externalId": "60625"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -1589,24 +1889,28 @@
         "source": "tmdb",
         "imageUrl": "https://image.tmdb.org/t/p/w342/xOSKU3rvKiKFdKgIs0y6n3zscBJ.jpg",
         "sourceId": "tv:60625:s3",
-        "metadata": {
-          "url": "https://www.themoviedb.org/tv/60625/season/3",
-          "kind": "season",
-          "tmdbId": 60625,
-          "showTitle": "Rick and Morty",
-          "seasonNumber": 3,
-          "episodeCount": 10,
-          "airDate": "2017-04-01",
-          "networks": [
-            "Adult Swim"
-          ],
-          "categories": [
-            "Animation",
-            "Comedy",
-            "Sci-Fi & Fantasy",
-            "Action & Adventure"
-          ]
-        }
+        "genres": [
+          "Animation",
+          "Comedy",
+          "Sci-Fi & Fantasy",
+          "Action & Adventure"
+        ],
+        "position": 3,
+        "subtype": "season",
+        "releaseDate": "2017-04-01",
+        "details": {
+          "episodeCount": 10
+        },
+        "externalIds": [
+          {
+            "provider": "tmdb",
+            "externalId": "tv:60625:s3"
+          },
+          {
+            "provider": "tmdb",
+            "externalId": "60625"
+          }
+        ]
       },
       "parent": {
         "title": "Rick and Morty",
@@ -1616,28 +1920,34 @@
         "source": "tmdb",
         "imageUrl": "https://image.tmdb.org/t/p/w342/owhkU6KRqdXoUQpjV8uyZGPtX58.jpg",
         "sourceId": "tv:60625",
-        "metadata": {
-          "url": "https://www.themoviedb.org/tv/60625",
-          "kind": "show",
-          "tmdbId": 60625,
-          "firstAirDate": "2013-12-02",
-          "categories": [
-            "Animation",
-            "Comedy",
-            "Sci-Fi & Fantasy",
-            "Action & Adventure"
-          ],
-          "originCountry": [
-            "US"
-          ],
+        "genres": [
+          "Animation",
+          "Comedy",
+          "Sci-Fi & Fantasy",
+          "Action & Adventure"
+        ],
+        "subtype": "show",
+        "releaseDate": "2013-12-02",
+        "details": {
           "seasonCount": 9,
-          "episodeCount": 91,
-          "status": "Returning Series",
           "networks": [
             "Adult Swim"
           ],
-          "creator": "Dan Harmon, Justin Roiland"
-        }
+          "country": [
+            "US"
+          ],
+          "airingStatus": "Returning Series"
+        },
+        "externalIds": [
+          {
+            "provider": "tmdb",
+            "externalId": "tv:60625"
+          },
+          {
+            "provider": "tmdb",
+            "externalId": "60625"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -1663,22 +1973,26 @@
         "source": "tmdb",
         "imageUrl": "https://image.tmdb.org/t/p/w342/uS2dQ7ukij2ifLwjMBzTjqEDg2x.jpg",
         "sourceId": "tv:136283:s1",
-        "metadata": {
-          "url": "https://www.themoviedb.org/tv/136283/season/1",
-          "kind": "season",
-          "tmdbId": 136283,
-          "showTitle": "The Glory",
-          "seasonNumber": 1,
-          "episodeCount": 16,
-          "airDate": "2022-12-30",
-          "networks": [
-            "Netflix"
-          ],
-          "categories": [
-            "Drama",
-            "Crime"
-          ]
-        }
+        "genres": [
+          "Drama",
+          "Crime"
+        ],
+        "position": 1,
+        "subtype": "season",
+        "releaseDate": "2022-12-30",
+        "details": {
+          "episodeCount": 16
+        },
+        "externalIds": [
+          {
+            "provider": "tmdb",
+            "externalId": "tv:136283:s1"
+          },
+          {
+            "provider": "tmdb",
+            "externalId": "136283"
+          }
+        ]
       },
       "parent": {
         "title": "The Glory",
@@ -1688,27 +2002,33 @@
         "source": "tmdb",
         "imageUrl": "https://image.tmdb.org/t/p/w342/uUM4LVlPgIrww07OoEKrGWlS1Ej.jpg",
         "sourceId": "tv:136283",
-        "metadata": {
-          "url": "https://www.themoviedb.org/tv/136283",
-          "kind": "show",
-          "tmdbId": 136283,
-          "originalTitle": "더 글로리",
-          "firstAirDate": "2022-12-30",
-          "categories": [
-            "Drama",
-            "Crime"
-          ],
-          "originCountry": [
-            "KR"
-          ],
+        "genres": [
+          "Drama",
+          "Crime"
+        ],
+        "originalTitle": "더 글로리",
+        "subtype": "show",
+        "releaseDate": "2022-12-30",
+        "details": {
           "seasonCount": 1,
-          "episodeCount": 16,
-          "status": "Ended",
           "networks": [
             "Netflix"
           ],
-          "creator": "Kim Eun-sook, An Gil-ho"
-        }
+          "country": [
+            "KR"
+          ],
+          "airingStatus": "Ended"
+        },
+        "externalIds": [
+          {
+            "provider": "tmdb",
+            "externalId": "tv:136283"
+          },
+          {
+            "provider": "tmdb",
+            "externalId": "136283"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -1734,23 +2054,27 @@
         "source": "tmdb",
         "imageUrl": "https://image.tmdb.org/t/p/w342/lFf6LLrQjYldcZItzOkGmMMigP7.jpg",
         "sourceId": "tv:95396:s1",
-        "metadata": {
-          "url": "https://www.themoviedb.org/tv/95396/season/1",
-          "kind": "season",
-          "tmdbId": 95396,
-          "showTitle": "Severance",
-          "seasonNumber": 1,
-          "episodeCount": 9,
-          "airDate": "2022-02-17",
-          "networks": [
-            "Apple TV"
-          ],
-          "categories": [
-            "Drama",
-            "Mystery",
-            "Sci-Fi & Fantasy"
-          ]
-        }
+        "genres": [
+          "Drama",
+          "Mystery",
+          "Sci-Fi & Fantasy"
+        ],
+        "position": 1,
+        "subtype": "season",
+        "releaseDate": "2022-02-17",
+        "details": {
+          "episodeCount": 9
+        },
+        "externalIds": [
+          {
+            "provider": "tmdb",
+            "externalId": "tv:95396:s1"
+          },
+          {
+            "provider": "tmdb",
+            "externalId": "95396"
+          }
+        ]
       },
       "parent": {
         "title": "Severance",
@@ -1760,27 +2084,33 @@
         "source": "tmdb",
         "imageUrl": "https://image.tmdb.org/t/p/w342/pPHpeI2X1qEd1CS1SeyrdhZ4qnT.jpg",
         "sourceId": "tv:95396",
-        "metadata": {
-          "url": "https://www.themoviedb.org/tv/95396",
-          "kind": "show",
-          "tmdbId": 95396,
-          "firstAirDate": "2022-02-17",
-          "categories": [
-            "Drama",
-            "Mystery",
-            "Sci-Fi & Fantasy"
-          ],
-          "originCountry": [
-            "US"
-          ],
+        "genres": [
+          "Drama",
+          "Mystery",
+          "Sci-Fi & Fantasy"
+        ],
+        "subtype": "show",
+        "releaseDate": "2022-02-17",
+        "details": {
           "seasonCount": 3,
-          "episodeCount": 19,
-          "status": "Returning Series",
           "networks": [
             "Apple TV"
           ],
-          "creator": "Dan Erickson"
-        }
+          "country": [
+            "US"
+          ],
+          "airingStatus": "Returning Series"
+        },
+        "externalIds": [
+          {
+            "provider": "tmdb",
+            "externalId": "tv:95396"
+          },
+          {
+            "provider": "tmdb",
+            "externalId": "95396"
+          }
+        ]
       },
       "log": {
         "status": "in progress",
@@ -1805,23 +2135,27 @@
         "source": "tmdb",
         "imageUrl": "https://image.tmdb.org/t/p/w342/6FMWx79iAtZx8WHtOrRj0VlM8Tp.jpg",
         "sourceId": "tv:94605:s1",
-        "metadata": {
-          "url": "https://www.themoviedb.org/tv/94605/season/1",
-          "kind": "season",
-          "tmdbId": 94605,
-          "showTitle": "Arcane",
-          "seasonNumber": 1,
-          "episodeCount": 9,
-          "airDate": "2021-11-06",
-          "networks": [
-            "Netflix"
-          ],
-          "categories": [
-            "Animation",
-            "Action & Adventure",
-            "Sci-Fi & Fantasy"
-          ]
-        }
+        "genres": [
+          "Animation",
+          "Action & Adventure",
+          "Sci-Fi & Fantasy"
+        ],
+        "position": 1,
+        "subtype": "season",
+        "releaseDate": "2021-11-06",
+        "details": {
+          "episodeCount": 9
+        },
+        "externalIds": [
+          {
+            "provider": "tmdb",
+            "externalId": "tv:94605:s1"
+          },
+          {
+            "provider": "tmdb",
+            "externalId": "94605"
+          }
+        ]
       },
       "parent": {
         "title": "Arcane",
@@ -1831,27 +2165,33 @@
         "source": "tmdb",
         "imageUrl": "https://image.tmdb.org/t/p/w342/87C0wecB8bHb1PsrKBI4kJiEkgV.jpg",
         "sourceId": "tv:94605",
-        "metadata": {
-          "url": "https://www.themoviedb.org/tv/94605",
-          "kind": "show",
-          "tmdbId": 94605,
-          "firstAirDate": "2021-11-06",
-          "categories": [
-            "Animation",
-            "Action & Adventure",
-            "Sci-Fi & Fantasy"
-          ],
-          "originCountry": [
-            "US"
-          ],
+        "genres": [
+          "Animation",
+          "Action & Adventure",
+          "Sci-Fi & Fantasy"
+        ],
+        "subtype": "show",
+        "releaseDate": "2021-11-06",
+        "details": {
           "seasonCount": 2,
-          "episodeCount": 18,
-          "status": "Ended",
           "networks": [
             "Netflix"
           ],
-          "creator": "Christian Linke, Alex Yee"
-        }
+          "country": [
+            "US"
+          ],
+          "airingStatus": "Ended"
+        },
+        "externalIds": [
+          {
+            "provider": "tmdb",
+            "externalId": "tv:94605"
+          },
+          {
+            "provider": "tmdb",
+            "externalId": "94605"
+          }
+        ]
       },
       "log": {
         "status": "completed",
@@ -1879,26 +2219,32 @@
         "source": "tmdb",
         "imageUrl": "https://image.tmdb.org/t/p/w342/anFx9aTOOYqgS3v7x3R84Kz67ly.jpg",
         "sourceId": "tv:1396",
-        "metadata": {
-          "url": "https://www.themoviedb.org/tv/1396",
-          "kind": "show",
-          "tmdbId": 1396,
-          "firstAirDate": "2008-01-20",
-          "categories": [
-            "Drama",
-            "Crime"
-          ],
-          "originCountry": [
-            "US"
-          ],
+        "genres": [
+          "Drama",
+          "Crime"
+        ],
+        "subtype": "show",
+        "releaseDate": "2008-01-20",
+        "details": {
           "seasonCount": 5,
-          "episodeCount": 62,
-          "status": "Ended",
           "networks": [
             "AMC"
           ],
-          "creator": "Vince Gilligan"
-        }
+          "country": [
+            "US"
+          ],
+          "airingStatus": "Ended"
+        },
+        "externalIds": [
+          {
+            "provider": "tmdb",
+            "externalId": "tv:1396"
+          },
+          {
+            "provider": "tmdb",
+            "externalId": "1396"
+          }
+        ]
       },
       "log": {
         "status": "completed",

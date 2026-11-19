@@ -16,11 +16,11 @@ function StatefulForm({ initial }: { initial: Partial<Media> }) {
     return <MediaForm formData={formData} setFormData={setFormData} />
 }
 
-describe("MediaForm metadata fields", () => {
+describe("MediaForm details fields", () => {
     it("shows stored genres as a categories field, and removing it keeps it removed", async () => {
         const user = userEvent.setup()
         renderWithProviders(
-            <StatefulForm initial={{ title: "Interstellar", genres: ["Drama", "Space"], metadata: { url: "https://example.com" } }} />,
+            <StatefulForm initial={{ title: "Interstellar", genres: ["Drama", "Space"], details: { url: "https://example.com" } }} />,
         )
 
         expect(await screen.findByDisplayValue("Drama, Space")).toBeInTheDocument()

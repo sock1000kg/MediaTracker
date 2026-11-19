@@ -68,21 +68,23 @@ describe('mapTmdbMovie', () => {
             title: 'Alien', creator: null, year: '1979', description: 'In space.', source: 'tmdb', sourceId: 'movie-348',
             imageUrl: 'https://image.tmdb.org/t/p/w342/p.jpg',
         })
-        expect(r.metadata).toEqual({
-            url: 'https://www.themoviedb.org/movie/348', kind: 'movie', originalLanguage: 'en', score: 8.2,
-            categories: ['Horror', 'Science Fiction'],
+        expect(r.details).toEqual({
+            language: 'en', score: 8.2, scoreScale: 'tmdb_10',
         })
-        expect(searchResultsSchema.parse([r])[0].metadata).toMatchObject({ kind: 'movie' })
+        expect(r.releaseDate).toBe('1979-05-25')
+        expect(r.genres).toEqual(['Horror', 'Science Fiction'])
+        expect(r.externalIds).toEqual([{ provider: 'tmdb', id: '348' }])
+        expect(searchResultsSchema.parse([r])[0].mediaType).toBe('movie')
     })
     it('originalTitle only when it differs', () => {
         const r = mapTmdbMovie({ ...item, title: 'Spirited Away', original_title: '千と千尋の神隠し' })
-        expect(r.metadata).toMatchObject({ originalTitle: '千と千尋の神隠し' })
+        expect(r.originalTitle).toBe('千と千尋の神隠し')
     })
     it('empty release_date / null poster / unknown genres', () => {
         const r = mapTmdbMovie({ ...item, release_date: '', poster_path: null, genre_ids: [999999] })
         expect(r.year).toBeNull()
         expect(r.imageUrl).toBeNull()
-        expect(r.metadata).toMatchObject({ categories: null })
+        expect(r.genres).toBeUndefined()
     })
     it('all-null fields do not throw', () => {
         const r = mapTmdbMovie(tmdbMovieItemSchema.parse({ id: 1 }))

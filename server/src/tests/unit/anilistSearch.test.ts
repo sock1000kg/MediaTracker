@@ -210,24 +210,22 @@ describe('mapAniListMedia', () => {
         const res = mapAniListMedia('anime', animeItem)
         expect(res).toMatchObject({
             title: 'Frieren: Beyond Journey’s End',
+            originalTitle: 'Sousou no Frieren',
             creator: 'MADHOUSE, Aniplex',
             year: '2023',
             description: 'The adventure is over.',
             source: 'anilist',
             sourceId: 'anime-154587',
             imageUrl: 'https://s4.anilist.co/cover/large/bx154587.jpg',
-            metadata: {
-                url: 'https://anilist.co/anime/154587',
-                kind: 'anime',
+            genres: ['Adventure', 'Drama', 'Fantasy', 'Travel', 'Magic', 'Elf', 'Rural'],
+            details: {
                 format: 'TV',
-                episodes: 28,
-                episodeMinutes: 24,
+                episodeCount: 28,
+                durationSec: 1440,
                 score: 90,
-                scoreScale: 'anilist',
-                originalTitle: 'Sousou no Frieren',
-                idMal: 52991,
-                categories: ['Adventure', 'Drama', 'Fantasy', 'Travel', 'Magic', 'Elf', 'Rural'],
+                scoreScale: 'anilist_100',
             },
+            externalIds: [{ provider: 'mal', id: '52991' }],
         })
         const validated = searchResultsSchema.parse([res])
         expect(validated[0].title).toBe('Frieren: Beyond Journey’s End')
@@ -237,24 +235,22 @@ describe('mapAniListMedia', () => {
         const res = mapAniListMedia('manga', mangaItem)
         expect(res).toMatchObject({
             title: 'Solo Leveling',
+            originalTitle: 'Na Honjaman Level Up',
             creator: 'So-Ryeong Gi, Hyeon-Gun, Seong-Rak Jang',
             year: '2018',
             description: 'Hunter Sung Jinwoo.',
             source: 'anilist',
             sourceId: 'manga-105398',
             imageUrl: 'https://s4.anilist.co/cover/solo.jpg',
-            metadata: {
-                url: 'https://anilist.co/manga/105398',
-                kind: 'manga',
+            genres: ['Action', 'Fantasy'],
+            details: {
                 format: 'MANGA',
-                chapters: 200,
-                volumes: 14,
+                chapterCount: 200,
+                volumeCount: 14,
                 score: 84,
-                scoreScale: 'anilist',
-                originalTitle: 'Na Honjaman Level Up',
-                idMal: 121496,
-                categories: ['Action', 'Fantasy'],
+                scoreScale: 'anilist_100',
             },
+            externalIds: [{ provider: 'mal', id: '121496' }],
         })
     })
 
@@ -265,7 +261,7 @@ describe('mapAniListMedia', () => {
         })
         const r1 = mapAniListMedia('anime', noEnglish)
         expect(r1.title).toBe('Sousou no Frieren')
-        expect((r1.metadata as { originalTitle: string | null }).originalTitle).toBe('葬送のフリーレン')
+        expect(r1.originalTitle).toBe('葬送のフリーレン')
 
         const onlyNative = parse({
             ...animeItem,
@@ -273,7 +269,7 @@ describe('mapAniListMedia', () => {
         })
         const r2 = mapAniListMedia('anime', onlyNative)
         expect(r2.title).toBe('葬送のフリーレン')
-        expect((r2.metadata as { originalTitle: string | null }).originalTitle).toBeNull()
+        expect(r2.originalTitle).toBeUndefined()
     })
 
     it('image fallback and https enforcement', () => {
@@ -320,15 +316,7 @@ describe('mapAniListMedia', () => {
             expect(res.year).toBeNull()
             expect(res.description).toBeNull()
             expect(res.imageUrl).toBeNull()
-            expect(res.metadata).toMatchObject({
-                kind: mode,
-                format: null,
-                score: null,
-                scoreScale: 'anilist',
-                originalTitle: null,
-                categories: null,
-                idMal: null,
-            })
+            expect(res.details).toEqual({})
             const out = searchResultsSchema.parse([res])
             expect(out[0].title).toBe('Unknown title')
         }

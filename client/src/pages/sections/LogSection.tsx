@@ -26,7 +26,7 @@ import { ConfirmDeleteDialog } from "@/components/dialogs/ConfirmDeleteDialog"
 import { DataControls } from "@/components/ui/DataControls" 
 import { useDataFilter } from "@/hooks/useDataFilter"
 import { AVAILABLE_SORT_FIELDS_LOGS, type SortCriterion, type SortField } from "@/types/sort"
-import type { DialogName, Log, MediaMetadata } from "@/types/mainTypes"
+import type { DialogName, Log } from "@/types/mainTypes"
 import { RATING_BUCKETS, getCategories, ratingBucket, readStoredString, sourceLabel, writeStoredString } from "@/lib/utils"
 
 const VIEWS = ["list", "grid"] as const
@@ -40,9 +40,9 @@ const getLogSortValue = (log: Log, field: SortField) => {
       case "creator": return log.media.creator
       case "rating": return log.rating ?? null // missing ratings sort last in both directions
       case "date": return new Date(log.logged_at).getTime()
-      case "pageCount": return Number((log.media.metadata as MediaMetadata)?.pageCount ?? 0)
+      case "pageCount": return Number((log.media.details as Record<string, unknown> | undefined)?.pageCount ?? 0)
       case "categories": {
-          const cats = log.media.genres ?? (log.media.metadata as MediaMetadata)?.categories
+          const cats = log.media.genres ?? (log.media.details as Record<string, unknown> | undefined)?.categories
           return Array.isArray(cats) ? cats.join(", ") : String(cats || "")
       }
       default: return ""
@@ -91,7 +91,7 @@ export default function LogsSection() {
   // Case-insensitive unique categories, first spelling seen wins
   const uniqueCategories = useMemo(() => {
     const seen = new Map<string, string>()
-    logs.forEach(l => (l.media.genres ?? getCategories(l.media.metadata)).forEach(c => {
+    logs.forEach(l => (l.media.genres ?? getCategories(l.media.details)).forEach(c => {
       const key = c.toLowerCase()
       if (!seen.has(key)) seen.set(key, c)
     }))
@@ -122,7 +122,7 @@ export default function LogsSection() {
     return [
       { id: "type", field: (log: Log) => log.media.mediaType.name },
       { id: "status", field: (log: Log) => log.status?.trim().toLowerCase() ?? null },
-      { id: "category", field: (log: Log) => (log.media.genres ?? getCategories(log.media.metadata)).map(c => canonicalCat.get(c.toLowerCase()) ?? c) },
+      { id: "category", field: (log: Log) => (log.media.genres ?? getCategories(log.media.details)).map(c => canonicalCat.get(c.toLowerCase()) ?? c) },
       {
         id: "tag",
         field: (log: Log) => {
@@ -131,7 +131,7 @@ export default function LogsSection() {
           return userTags.map(t => canonicalTag.get(t.name.toLowerCase()) ?? t.name)
         }
       },
-      { id: "source", field: (log: Log) => sourceLabel(log.media.source) },
+      { id: "source", field: (log: Log) => sourceLabel(log.media.provider) },
       { id: "rating", field: (log: Log) => ratingBucket(log.rating) },
     ]
   }, [uniqueCategories, uniqueTags])
@@ -182,7 +182,7 @@ export default function LogsSection() {
   [logs])
 
   const uniqueSources = useMemo(() =>
-    Array.from(new Set(logs.map(l => sourceLabel(l.media.source)))).sort(),
+    Array.from(new Set(logs.map(l => sourceLabel(l.media.provider)))).sort(),
   [logs])
 
   const presentRatings = useMemo(() => {

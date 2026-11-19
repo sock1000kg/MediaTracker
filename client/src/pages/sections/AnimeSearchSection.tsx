@@ -10,7 +10,8 @@ import { useProviderSearch } from "@/hooks/useProviderSearch"
 import { useSearchLogging } from "@/hooks/useSearchLogging"
 import { useStoredView } from "@/hooks/useStoredView"
 import { isResultLogged } from "@/lib/utils"
-import { ANILIST_ATTRIBUTION_TEXT, ANILIST_URL, ANIME_SORT_OPTIONS, ANIME_TYPE_OPTIONS } from "@/lib/animeFormat"
+import { ANIME_SORT_OPTIONS, ANIME_TYPE_OPTIONS } from "@/lib/animeFormat"
+import { CLIENT_PROVIDERS } from "@/lib/providers"
 import type { AnimeKind, AnimeResult, AnimeSort } from "@/types/search"
 
 const MODE_OPTIONS: { value: AnimeKind; label: string }[] = [
@@ -50,7 +51,7 @@ export function AnimeSearchSection() {
     <SearchPageShell page="anime">
       <SearchHeader
         title="Anime & manga search"
-        attribution={{ href: ANILIST_URL, text: ANILIST_ATTRIBUTION_TEXT }}
+        attribution={CLIENT_PROVIDERS.anilist.attribution}
         value={inputValue}
         onChange={setInputValue}
         onSearch={handleSearch}
@@ -65,7 +66,7 @@ export function AnimeSearchSection() {
         <ResultList
           results={search.visibleResults}
           view={view}
-          kindOf={(item) => item.metadata.kind}
+          kindOf={(item) => (item.mediaType === "manga" ? "manga" : "anime")}
           isLogged={(item) => isResultLogged(search.logs, item)}
           onLog={(item) => openLog(item)}
         />

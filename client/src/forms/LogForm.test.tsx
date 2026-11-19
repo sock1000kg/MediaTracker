@@ -16,7 +16,7 @@ const dummyMedia: Media = {
   userId: "018f0000-0000-7000-8000-000000000002",
   title: "Test Movie",
   creator: "Director",
-  sourceId: null,
+  providerId: null,
   description: null,
   created_at: "2024-01-01T00:00:00.000Z",
   mediaType: {
@@ -47,6 +47,7 @@ describe("LogForm limits integration", () => {
         imports: { maxFileBytes: 10 * 1024 * 1024 },
         search: { queryMaxLength: 100 },
       },
+      demo: null,
     })
 
     const queryClient = createTestQueryClient()

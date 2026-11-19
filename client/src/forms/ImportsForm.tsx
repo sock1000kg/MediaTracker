@@ -303,7 +303,7 @@ export function ImportsForm({ onNavigateToApiKeys }: ImportsFormProps = {}) {
 
     const tmdbHint = hasNoTmdbKey ? (
         <p className="text-xs text-muted-foreground">
-            No TMDB key found. Unmatched films won&apos;t have posters or metadata. Add one under{" "}
+            No TMDB key found. Unmatched films won&apos;t have posters or details. Add one under{" "}
             <button
                 type="button"
                 onClick={onNavigateToApiKeys}
@@ -344,7 +344,7 @@ export function ImportsForm({ onNavigateToApiKeys }: ImportsFormProps = {}) {
 
                 <ImportCard
                     title="Letterboxd"
-                    formats=".zip"
+                    formats=".zip (ratings, diary, watchlist, likes and your lists)"
                     accept=".zip,application/zip"
                     jobName="import.letterboxd"
                     startImport={startLetterboxdImport}

@@ -32,12 +32,11 @@ export class GoogleBooksService implements ISearchService {
                 imageUrl: v.imageLinks?.thumbnail ?? null,
                 source: "google_books",
                 sourceId: item.id,
-                metadata: {
-                    pageCount: v.pageCount,
-                    categories: v.categories,
-                    publisher: v.publisher,
-                    url: v.infoLink
-                }
+                genres: v.categories ?? undefined,
+                details: {
+                    pageCount: typeof v.pageCount === "number" && v.pageCount > 0 ? v.pageCount : undefined,
+                    publisher: v.publisher ?? undefined,
+                },
             }
         })
     }

@@ -39,7 +39,7 @@ docker compose --env-file server/.env -f docker-compose.yml -f docker-compose.de
 
 On start, the backend runs `prisma migrate deploy` and then the seed, which creates:
 - the `system` user and the built-in media types
-- the `demo` user, with sample logs from `server/src/tests/goodreads_seed.csv` and the committed demo media fixture
+- the `demo` user, with sample logs from `server/src/tests/fixtures/demo/exports/goodreads.csv` and the committed demo media fixture (`server/src/tests/fixtures/demo/demo-media.json`)
 
 Stop it with:
 
@@ -73,8 +73,9 @@ docker compose --env-file server/.env -f docker-compose.yml -f docker-compose.de
 | Music | Last.fm | <https://www.last.fm/api/account/create> |
 | Movies | TMDB (API key or v4 read access token) | <https://www.themoviedb.org/settings/api> |
 | Games | RAWG | <https://rawg.io/apidocs> |
+| Board games | BoardGameGeek (token) | <https://boardgamegeek.com/applications> |
 
-Setting `LASTFM_API_KEY`, `TMDB_API_KEY` or `RAWG_API_KEY` in `server/.env` gives the demo user a key when the seed runs.
+Setting `LASTFM_API_KEY`, `TMDB_API_KEY` or `RAWG_API_KEY` in `server/.env` gives the demo user a key when the seed runs. BoardGameGeek is a per-user key added in the app under **Settings → API Keys**.
 
 ### Demo media fixture
 
@@ -103,11 +104,26 @@ npm test                # builds, then runs Jest (unit + integration) with cover
 
 ### Client tests
 
-The client uses [Vitest](https://vitest.dev) for its pure helpers and the API wrapper. It needs no database or browser:
+The client uses [Vitest](https://vitest.dev) for its pure helpers, UI sections and API wrappers. It needs no database or browser. Run with bounded workers:
 
 ```bash
 cd client
-npm test    # vitest run; tests are src/**/*.test.ts, with the "@/" alias
+npx vitest run --maxWorkers 4   # tests are src/**/*.test.{ts,tsx}
+```
+
+> **Memory notice:** Always run the client and server test suites sequentially (one after the other), never concurrently in parallel, to avoid out-of-memory errors on local development machines.
+
+### Build fallback for EACCES
+
+If `npm run build` or `npx prisma generate` fails with `EACCES: permission denied` on generated files in `server/src/generated/`, build with:
+
+```bash
+cd server && npx tsc && npx tsc-alias && npx copyfiles -u 2 "src/tests/**/*csv" "src/tests/**/*json" "src/tests/**/*xml" "src/tests/**/*zip" dist/tests/
+```
+
+And run Jest directly:
+```bash
+NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules npx jest --runInBand
 ```
 
 Shut the test stack down with:

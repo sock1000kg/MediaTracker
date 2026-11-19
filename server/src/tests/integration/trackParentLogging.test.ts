@@ -28,8 +28,9 @@ describe('Track parent linking and duplicate track names', () => {
         await prisma.media.deleteMany({
             where: {
                 OR: [
-                    { sourceId: { startsWith: 'test-album-' } },
-                    { sourceId: { startsWith: 'test-track-' } },
+                    { providerId: { startsWith: 'test-album-' } },
+                    { providerId: { startsWith: 'test-track-' } },
+                    { providerId: { startsWith: 'tv:95396' } },
                     { title: 'Intro', creator: 'SameArtist' },
                 ],
             },
@@ -46,7 +47,8 @@ describe('Track parent linking and duplicate track names', () => {
                 year: 1991,
                 source: 'lastfm',
                 sourceId: 'test-track-only-shallow',
-                metadata: { kind: 'track', trackNumber: 1, durationSec: 257 },
+                subtype: 'track',
+                details: { trackNumber: 1, durationSec: 257 },
             },
             parent: {
                 title: 'Loveless',
@@ -54,7 +56,8 @@ describe('Track parent linking and duplicate track names', () => {
                 year: 1991,
                 source: 'lastfm',
                 sourceId: 'test-album-loveless',
-                metadata: { kind: 'album' },
+                subtype: 'album',
+                details: {},
             },
             logData: {
                 status: 'completed',
@@ -71,7 +74,7 @@ describe('Track parent linking and duplicate track names', () => {
 
         // Verify album was created under system user
         const album = await prisma.media.findFirst({
-            where: { source: 'lastfm', sourceId: 'test-album-loveless' },
+            where: { provider: 'lastfm', providerId: 'test-album-loveless' },
             include: { logs: true },
         })
         expect(album).not.toBeNull()
@@ -81,7 +84,7 @@ describe('Track parent linking and duplicate track names', () => {
 
         // Verify track was created and linked to album
         const track = await prisma.media.findFirst({
-            where: { source: 'lastfm', sourceId: 'test-track-only-shallow' },
+            where: { provider: 'lastfm', providerId: 'test-track-only-shallow' },
             include: { logs: true },
         })
         expect(track).not.toBeNull()
@@ -102,7 +105,8 @@ describe('Track parent linking and duplicate track names', () => {
                 year: 1991,
                 source: 'lastfm',
                 sourceId: 'test-track-loomer',
-                metadata: { kind: 'track', trackNumber: 2, durationSec: 158 },
+                subtype: 'track',
+                details: { trackNumber: 2, durationSec: 158 },
             },
             parent: {
                 title: 'Loveless',
@@ -110,7 +114,8 @@ describe('Track parent linking and duplicate track names', () => {
                 year: 1991,
                 source: 'lastfm',
                 sourceId: 'test-album-loveless',
-                metadata: { kind: 'album' },
+                subtype: 'album',
+                details: {},
             },
             logData: {
                 status: 'completed',
@@ -126,15 +131,15 @@ describe('Track parent linking and duplicate track names', () => {
         expect(res.statusCode).toBe(201)
 
         const albumCount = await prisma.media.count({
-            where: { source: 'lastfm', sourceId: 'test-album-loveless' },
+            where: { provider: 'lastfm', providerId: 'test-album-loveless' },
         })
         expect(albumCount).toBe(1)
 
         const album = await prisma.media.findFirst({
-            where: { source: 'lastfm', sourceId: 'test-album-loveless' },
+            where: { provider: 'lastfm', providerId: 'test-album-loveless' },
         })
         const track2 = await prisma.media.findFirst({
-            where: { source: 'lastfm', sourceId: 'test-track-loomer' },
+            where: { provider: 'lastfm', providerId: 'test-track-loomer' },
         })
         expect(track2?.parentId).toBe(album?.id)
         expect(track2?.position).toBe(2)
@@ -150,7 +155,8 @@ describe('Track parent linking and duplicate track names', () => {
                 year: 2020,
                 source: 'lastfm',
                 sourceId: 'test-track-intro-album-a',
-                metadata: { kind: 'track', trackNumber: 1 },
+                subtype: 'track',
+                details: { trackNumber: 1 },
             },
             parent: {
                 title: 'Album A',
@@ -158,7 +164,8 @@ describe('Track parent linking and duplicate track names', () => {
                 year: 2020,
                 source: 'lastfm',
                 sourceId: 'test-album-a',
-                metadata: { kind: 'album' },
+                subtype: 'album',
+                details: {},
             },
             logData: { status: 'completed', rating: 80 },
         }
@@ -172,7 +179,8 @@ describe('Track parent linking and duplicate track names', () => {
                 year: 2020,
                 source: 'lastfm',
                 sourceId: 'test-track-intro-album-b',
-                metadata: { kind: 'track', trackNumber: 1 },
+                subtype: 'track',
+                details: { trackNumber: 1 },
             },
             parent: {
                 title: 'Album B',
@@ -180,7 +188,8 @@ describe('Track parent linking and duplicate track names', () => {
                 year: 2020,
                 source: 'lastfm',
                 sourceId: 'test-album-b',
-                metadata: { kind: 'album' },
+                subtype: 'album',
+                details: {},
             },
             logData: { status: 'completed', rating: 85 },
         }
@@ -206,5 +215,108 @@ describe('Track parent linking and duplicate track names', () => {
             },
         })
         expect(savedTracks).toHaveLength(2)
+    })
+
+    it('E2: logging a season from TV search links it to its show when the show is already in the library', async () => {
+        // 1. Show is in the library
+        const showPayload = {
+            mediaData: {
+                title: 'Severance',
+                mediaType: 'tv',
+                creator: 'Dan Erickson',
+                year: 2022,
+                source: 'tmdb',
+                sourceId: 'tv:95396',
+                subtype: 'show',
+                details: { tmdbId: 95396, seasonCount: 2 },
+            },
+            logData: {
+                status: 'completed',
+                rating: 95,
+            },
+        }
+
+        const showRes = await request(app)
+            .put('/media/media-log')
+            .set('Authorization', `Bearer ${token}`)
+            .send(showPayload)
+        expect(showRes.statusCode).toBe(201)
+
+        const show = await prisma.media.findFirst({
+            where: { provider: 'tmdb', providerId: 'tv:95396' },
+        })
+        expect(show).not.toBeNull()
+
+        // 2. Season 1 is logged with parent (from TV search)
+        const season1Payload = {
+            mediaData: {
+                title: 'Severance: Season 1',
+                mediaType: 'tv',
+                creator: 'Dan Erickson',
+                year: 2022,
+                source: 'tmdb',
+                sourceId: 'tv:95396:s1',
+                subtype: 'season',
+                details: { tmdbId: 95396, seasonNumber: 1, showTitle: 'Severance' },
+            },
+            parent: {
+                title: 'Severance',
+                mediaType: 'tv',
+                creator: 'Dan Erickson',
+                year: 2022,
+                source: 'tmdb',
+                sourceId: 'tv:95396',
+                subtype: 'show',
+                details: { tmdbId: 95396 },
+            },
+            logData: {
+                status: 'completed',
+                rating: 98,
+            },
+        }
+
+        const season1Res = await request(app)
+            .put('/media/media-log')
+            .set('Authorization', `Bearer ${token}`)
+            .send(season1Payload)
+        expect(season1Res.statusCode).toBe(201)
+
+        const savedSeason1 = await prisma.media.findFirst({
+            where: { provider: 'tmdb', providerId: 'tv:95396:s1' },
+        })
+        expect(savedSeason1).not.toBeNull()
+        expect(savedSeason1?.parentId).toBe(show!.id)
+        expect(savedSeason1?.position).toBe(1)
+
+        // 3. Season 2 is logged without explicit parent payload (auto-linking by tmdbId)
+        const season2Payload = {
+            mediaData: {
+                title: 'Severance: Season 2',
+                mediaType: 'tv',
+                creator: 'Dan Erickson',
+                year: 2025,
+                source: 'tmdb',
+                sourceId: 'tv:95396:s2',
+                subtype: 'season',
+                details: { tmdbId: 95396, seasonNumber: 2, showTitle: 'Severance' },
+            },
+            logData: {
+                status: 'completed',
+                rating: 90,
+            },
+        }
+
+        const season2Res = await request(app)
+            .put('/media/media-log')
+            .set('Authorization', `Bearer ${token}`)
+            .send(season2Payload)
+        expect(season2Res.statusCode).toBe(201)
+
+        const savedSeason2 = await prisma.media.findFirst({
+            where: { provider: 'tmdb', providerId: 'tv:95396:s2' },
+        })
+        expect(savedSeason2).not.toBeNull()
+        expect(savedSeason2?.parentId).toBe(show!.id)
+        expect(savedSeason2?.position).toBe(2)
     })
 })

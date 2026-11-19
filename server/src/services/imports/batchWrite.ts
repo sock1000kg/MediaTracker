@@ -1,6 +1,7 @@
 import prisma from "@/prismaClient.js"
-import { Prisma, Media, UserLogs } from "@/db.js"
-import { mergeMediaMetadata, findMediaByExternalIds, ExternalIdKey } from "@/repositories/mediaRepository.js"
+import { Prisma, Media, UserLogs, IdSource, toIdSource, toMediaSubtype, toLogStatus } from "@/db.js"
+import { mergeMediaDetails, findMediaByExternalIds, ExternalIdKey } from "@/repositories/mediaRepository.js"
+import { validateDetails } from "@/schemas/detailsSchemas.js"
 import { tagKey, normalizeTagName, sanitizeNotes, sanitizeStatus } from "@/utilities.js"
 import { ImportResult } from "@/api/domain/imports.js"
 import { makeProgressReporter, type ImportProgressCallback } from "./goodreadsImportService.js"
@@ -15,6 +16,18 @@ import {
 
 export const BATCH_CHUNK_SIZE = 200
 
+export function normalizeBatchProvider(p: string | null | undefined): IdSource | null {
+    return toIdSource(p)
+}
+
+export function getBatchProvider(m: BatchRowItem["mediaData"]): IdSource | null {
+    return normalizeBatchProvider(m.provider ?? m.source)
+}
+
+export function getBatchProviderId(m: BatchRowItem["mediaData"]): string | null {
+    return m.providerId ?? m.sourceId ?? null
+}
+
 export interface BatchRowItem {
     rowNum: number
     title: string
@@ -22,11 +35,17 @@ export interface BatchRowItem {
         title: string
         creator: string | null
         year: number | null
-        source: string
-        sourceId: string | null
+        provider?: IdSource | string | null
+        providerId?: string | null
+        source?: string
+        sourceId?: string | null
         description: string | null
         imageUrl: string | null
-        metadata?: Prisma.InputJsonValue | null
+        details?: Prisma.InputJsonValue | null
+        subtype?: string | null
+        releaseDate?: Date | null
+        syncedAt?: Date | string | null
+        syncCheckedAt?: Date | string | null
     }
     logData: {
         status: string | null
@@ -37,10 +56,15 @@ export interface BatchRowItem {
         finishedAt: Date | null
         tags: string[]
         progress?: Prisma.InputJsonValue | null
+        progressEpisodes?: number | null
+        progressChapters?: number | null
+        progressVolumes?: number | null
     }
     idMal?: number | null
     externalIds?: { provider: string; id: string }[]
     kind?: string | null
+    subtype?: string | null
+    releaseDate?: Date | null
     originalTitle?: string | null
     genres?: string[] | null
     creators?: CreatorInput[] | null
@@ -53,6 +77,9 @@ export interface GapFillResult {
         started_at?: Date | null
         notes?: string | null
         status?: string | null
+        progressEpisodes?: number | null
+        progressChapters?: number | null
+        progressVolumes?: number | null
         progress?: Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput
     }
     mediaPatch?: Record<string, Prisma.InputJsonValue | null>
@@ -68,7 +95,7 @@ export type GapFillComputer = (
 
 interface ClassifiedRow {
     item: BatchRowItem
-    kind: "new_media_and_log" | "existing_media_new_log" | "gap_fill" | "skipped"
+    action: "new_media_and_log" | "existing_media_new_log" | "gap_fill" | "skipped"
     mediaId?: string
     logId?: string
     gapFill?: GapFillResult
@@ -113,8 +140,10 @@ export async function executeBatchImport(options: {
     // 1. Pre-load existing Media for this file using MediaExternalId
     const externalKeys: ExternalIdKey[] = []
     for (const it of items) {
-        if (it.mediaData.source && it.mediaData.sourceId) {
-            externalKeys.push({ provider: it.mediaData.source, externalId: it.mediaData.sourceId })
+        const prov = getBatchProvider(it.mediaData)
+        const provId = getBatchProviderId(it.mediaData)
+        if (prov && provId) {
+            externalKeys.push({ provider: prov, externalId: provId })
         }
         if (it.externalIds) {
             for (const x of it.externalIds) {
@@ -125,8 +154,8 @@ export async function executeBatchImport(options: {
         }
         if (typeof it.idMal === "number") {
             externalKeys.push({ provider: "mal", externalId: String(it.idMal) })
-            externalKeys.push({ provider: "jikan", externalId: `anime-${it.idMal}` })
-            externalKeys.push({ provider: "jikan", externalId: `manga-${it.idMal}` })
+            externalKeys.push({ provider: "mal", externalId: `anime-${it.idMal}` })
+            externalKeys.push({ provider: "mal", externalId: `manga-${it.idMal}` })
         }
     }
 
@@ -146,18 +175,19 @@ export async function executeBatchImport(options: {
         allFoundMedia.push(m)
     }
 
-    // Pre-load existing Media for items where sourceId is null
-    const nullSourceItems = items.filter(it => !it.mediaData.sourceId && it.mediaData.title)
+    // Pre-load existing Media for items where providerId is null
+    const nullSourceItems = items.filter(it => !getBatchProviderId(it.mediaData) && it.mediaData.title)
     if (nullSourceItems.length > 0) {
+        const providers = Array.from(new Set(nullSourceItems.map(it => getBatchProvider(it.mediaData)).filter((p): p is IdSource => Boolean(p))))
         const foundNullSource = await prisma.media.findMany({
             where: {
                 mediaTypeId,
-                source: { in: Array.from(new Set(nullSourceItems.map(it => it.mediaData.source))) },
+                ...(providers.length > 0 ? { provider: { in: providers } } : {}),
                 title: { in: Array.from(new Set(nullSourceItems.map(it => it.mediaData.title))) },
             },
         })
         for (const m of foundNullSource) {
-            const key = `null-source:${(m.source ?? "").toLowerCase()}:${m.title.toLowerCase()}:${m.year ?? ""}`
+            const key = `null-source:${(m.provider ?? "").toLowerCase()}:${m.title.toLowerCase()}:${m.year ?? ""}`
             mediaBySourceKey.set(key, m)
             allFoundMedia.push(m)
         }
@@ -199,28 +229,30 @@ export async function executeBatchImport(options: {
             // New media + log
             classifiedRows.push({
                 item,
-                kind: "new_media_and_log",
+                action: "new_media_and_log",
             })
             // Mark a dummy media in map to link any duplicate row later in this import
-            if (item.mediaData.source && item.mediaData.sourceId) {
-                mediaBySourceKey.set(`${item.mediaData.source}:${item.mediaData.sourceId}`, {
+            const prov = getBatchProvider(item.mediaData)
+            const provId = getBatchProviderId(item.mediaData)
+            if (prov && provId) {
+                mediaBySourceKey.set(`${prov}:${provId}`, {
                     id: "__pending__",
-                    source: item.mediaData.source,
-                    sourceId: item.mediaData.sourceId,
+                    provider: prov,
+                    providerId: provId,
                 } as unknown as Media)
-            } else if (item.mediaData.source && !item.mediaData.sourceId) {
-                const key = `null-source:${item.mediaData.source}:${item.mediaData.title.toLowerCase()}:${item.mediaData.year ?? ""}`
+            } else if (prov && !provId) {
+                const key = `null-source:${prov}:${item.mediaData.title.toLowerCase()}:${item.mediaData.year ?? ""}`
                 mediaBySourceKey.set(key, {
                     id: "__pending__",
-                    source: item.mediaData.source,
-                    sourceId: null,
+                    provider: prov,
+                    providerId: null,
                 } as unknown as Media)
             }
             if (typeof item.idMal === "number") {
                 mediaByIdMal.set(item.idMal, {
                     id: "__pending__",
-                    source: item.mediaData.source,
-                    sourceId: item.mediaData.sourceId,
+                    provider: prov,
+                    providerId: provId,
                 } as unknown as Media)
             }
             continue
@@ -228,7 +260,7 @@ export async function executeBatchImport(options: {
 
         // Matches a row queued earlier in this same file: a duplicate row, nothing more to write
         if (matchedMedia.id === "__pending__") {
-            classifiedRows.push({ item, kind: "skipped" })
+            classifiedRows.push({ item, action: "skipped" })
             continue
         }
 
@@ -237,7 +269,7 @@ export async function executeBatchImport(options: {
             // Existing media without a log
             classifiedRows.push({
                 item,
-                kind: "existing_media_new_log",
+                action: "existing_media_new_log",
                 mediaId: matchedMedia.id,
             })
             continue
@@ -249,7 +281,7 @@ export async function executeBatchImport(options: {
         if (gapFill) {
             classifiedRows.push({
                 item,
-                kind: "gap_fill",
+                action: "gap_fill",
                 mediaId: matchedMedia.id,
                 logId: matchedLog.id,
                 gapFill,
@@ -257,7 +289,7 @@ export async function executeBatchImport(options: {
         } else {
             classifiedRows.push({
                 item,
-                kind: "skipped",
+                action: "skipped",
                 mediaId: matchedMedia.id,
                 logId: matchedLog.id,
             })
@@ -275,10 +307,10 @@ export async function executeBatchImport(options: {
 
     for (let i = 0; i < classifiedRows.length; i += BATCH_CHUNK_SIZE) {
         const chunk = classifiedRows.slice(i, i + BATCH_CHUNK_SIZE)
-        const chunkRowsNeedingMedia = chunk.filter(r => r.kind === "new_media_and_log")
-        const chunkRowsNeedingLog = chunk.filter(r => r.kind === "new_media_and_log" || r.kind === "existing_media_new_log")
-        const chunkGapFills = chunk.filter(r => r.kind === "gap_fill" && r.gapFill)
-        const chunkSkipped = chunk.filter(r => r.kind === "skipped")
+        const chunkRowsNeedingMedia = chunk.filter(r => r.action === "new_media_and_log")
+        const chunkRowsNeedingLog = chunk.filter(r => r.action === "new_media_and_log" || r.action === "existing_media_new_log")
+        const chunkGapFills = chunk.filter(r => r.action === "gap_fill" && r.gapFill)
+        const chunkSkipped = chunk.filter(r => r.action === "skipped")
 
         try {
             const tally = await prisma.$transaction(async (tx) => {
@@ -286,28 +318,44 @@ export async function executeBatchImport(options: {
                 if (chunkRowsNeedingMedia.length > 0) {
                     await tx.media.createMany({
                         data: chunkRowsNeedingMedia.map(r => {
-                            const meta = r.item.mediaData.metadata && typeof r.item.mediaData.metadata === "object" && !Array.isArray(r.item.mediaData.metadata)
-                                ? { ...(r.item.mediaData.metadata as Record<string, unknown>) }
-                                : null
-                            const kind = r.item.kind ?? (typeof meta?.kind === "string" ? meta.kind : null)
-                            const originalTitle = r.item.originalTitle ?? (typeof meta?.originalTitle === "string" ? meta.originalTitle : null)
-                            if (meta) {
-                                delete meta.kind
-                                delete meta.originalTitle
-                                delete meta.categories
-                            }
-                            const cleanMeta = meta && Object.keys(meta).length > 0 ? (meta as Prisma.InputJsonValue) : Prisma.JsonNull
+                            const raw = r.item.mediaData.details as Record<string, unknown> | null | undefined
+                            const rawDetails = raw && typeof raw === "object" && !Array.isArray(raw)
+                                ? { ...raw }
+                                : {}
+                            const subtype = toMediaSubtype(r.item.subtype ?? (typeof rawDetails.subtype === "string" ? rawDetails.subtype : null))
+                            const originalTitle = r.item.originalTitle ?? (typeof rawDetails.originalTitle === "string" ? rawDetails.originalTitle : null)
+                            const releaseDate = r.item.releaseDate ?? r.item.mediaData.releaseDate ?? (rawDetails.firstReleaseDate ? new Date(String(rawDetails.firstReleaseDate)) : null)
+                            delete rawDetails.subtype
+                            delete rawDetails.originalTitle
+                            delete rawDetails.categories
+                            delete rawDetails.firstReleaseDate
+                            delete rawDetails.firstAirDate
+                            delete rawDetails.airDate
+                            const prov = getBatchProvider(r.item.mediaData)
+                            const validated = validateDetails(rawDetails, { subtype, mediaTypeName, hasProvider: Boolean(prov) })
+                            const now = new Date()
                             return {
                                 title: r.item.mediaData.title,
                                 creator: r.item.mediaData.creator ?? null,
-                                kind,
+                                subtype,
                                 originalTitle,
+                                releaseDate,
                                 year: r.item.mediaData.year ?? null,
-                                source: r.item.mediaData.source,
-                                sourceId: r.item.mediaData.sourceId ?? null,
+                                provider: prov,
+                                providerId: getBatchProviderId(r.item.mediaData),
                                 description: r.item.mediaData.description ?? null,
                                 imageUrl: r.item.mediaData.imageUrl ?? null,
-                                metadata: cleanMeta,
+                                details: (validated ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+                                syncedAt: r.item.mediaData.syncedAt
+                                    ? new Date(r.item.mediaData.syncedAt)
+                                    : (prov && prov !== "goodreads" && prov !== "mal" && prov !== "letterboxd")
+                                        ? now
+                                        : null,
+                                syncCheckedAt: r.item.mediaData.syncCheckedAt
+                                    ? new Date(r.item.mediaData.syncCheckedAt)
+                                    : (prov && prov !== "goodreads" && prov !== "mal" && prov !== "letterboxd")
+                                        ? now
+                                        : null,
                                 userId: systemUserId,
                                 mediaTypeId,
                             }
@@ -317,11 +365,12 @@ export async function executeBatchImport(options: {
 
                     // Re-select media IDs in one query
                     const queryPairs = chunkRowsNeedingMedia
-                        .filter(r => r.item.mediaData.source && r.item.mediaData.sourceId)
-                        .map(r => ({
-                            source: r.item.mediaData.source,
-                            sourceId: r.item.mediaData.sourceId!,
-                        }))
+                        .map(r => {
+                            const prov = getBatchProvider(r.item.mediaData)
+                            const provId = getBatchProviderId(r.item.mediaData)
+                            return prov && provId ? { provider: prov, providerId: provId } : null
+                        })
+                        .filter((p): p is { provider: IdSource; providerId: string } => Boolean(p))
 
                     const reselected = queryPairs.length > 0 ? await tx.media.findMany({
                         where: {
@@ -331,37 +380,41 @@ export async function executeBatchImport(options: {
 
                     const reselectedMap = new Map<string, Media>()
                     for (const m of reselected) {
-                        if (m.source && m.sourceId) {
-                            reselectedMap.set(`${m.source}:${m.sourceId}`, m)
-                            mediaBySourceKey.set(`${m.source}:${m.sourceId}`, m)
+                        if (m.provider && m.providerId) {
+                            reselectedMap.set(`${m.provider}:${m.providerId}`, m)
+                            mediaBySourceKey.set(`${m.provider}:${m.providerId}`, m)
                         }
                     }
 
                     for (const r of chunkRowsNeedingMedia) {
-                        if (r.item.mediaData.source && r.item.mediaData.sourceId) {
-                            const m = reselectedMap.get(`${r.item.mediaData.source}:${r.item.mediaData.sourceId}`)
+                        const prov = getBatchProvider(r.item.mediaData)
+                        const provId = getBatchProviderId(r.item.mediaData)
+                        if (prov && provId) {
+                            const m = reselectedMap.get(`${prov}:${provId}`)
                             if (m) {
                                 r.mediaId = m.id
                             }
                         }
                     }
 
-                    // Reselect media for rows where sourceId is null
-                    const nullSourceIdRows = chunkRowsNeedingMedia.filter(r => !r.item.mediaData.sourceId)
+                    // Reselect media for rows where providerId is null
+                    const nullSourceIdRows = chunkRowsNeedingMedia.filter(r => !getBatchProviderId(r.item.mediaData))
                     if (nullSourceIdRows.length > 0) {
+                        const providers = Array.from(new Set(nullSourceIdRows.map(r => getBatchProvider(r.item.mediaData)).filter((p): p is IdSource => Boolean(p))))
                         const reselectedNull = await tx.media.findMany({
                             where: {
                                 userId: systemUserId,
                                 mediaTypeId,
-                                source: { in: Array.from(new Set(nullSourceIdRows.map(r => r.item.mediaData.source))) },
+                                ...(providers.length > 0 ? { provider: { in: providers } } : {}),
                                 title: { in: Array.from(new Set(nullSourceIdRows.map(r => r.item.mediaData.title))) },
                             },
                         })
                         for (const r of nullSourceIdRows) {
+                            const prov = getBatchProvider(r.item.mediaData)
                             const m = reselectedNull.find(
                                 sm => sm.title === r.item.mediaData.title &&
                                       sm.year === (r.item.mediaData.year ?? null) &&
-                                      sm.source === r.item.mediaData.source
+                                      sm.provider === prov
                             )
                             if (m) {
                                 r.mediaId = m.id
@@ -370,22 +423,25 @@ export async function executeBatchImport(options: {
                     }
 
                     // Insert into MediaExternalId for newly created media
-                    const extIdData: { mediaId: string; provider: string; externalId: string }[] = []
+                    const extIdData: { mediaId: string; provider: IdSource; externalId: string }[] = []
                     for (const r of chunkRowsNeedingMedia) {
                         if (r.mediaId) {
-                            if (r.item.mediaData.source && r.item.mediaData.sourceId) {
+                            const prov = getBatchProvider(r.item.mediaData)
+                            const provId = getBatchProviderId(r.item.mediaData)
+                            if (prov && provId) {
                                 extIdData.push({
                                     mediaId: r.mediaId,
-                                    provider: r.item.mediaData.source.toLowerCase(),
-                                    externalId: r.item.mediaData.sourceId,
+                                    provider: prov,
+                                    externalId: provId,
                                 })
                             }
                             if (r.item.externalIds) {
                                 for (const x of r.item.externalIds) {
-                                    if (x.provider && x.id) {
+                                    const p = normalizeBatchProvider(x.provider)
+                                    if (p && x.id) {
                                         extIdData.push({
                                             mediaId: r.mediaId,
-                                            provider: x.provider.toLowerCase(),
+                                            provider: p,
                                             externalId: x.id,
                                         })
                                     }
@@ -414,7 +470,7 @@ export async function executeBatchImport(options: {
 
                     for (const r of chunkRowsNeedingMedia) {
                         if (!r.mediaId) continue
-                        const rawCats = r.item.genres ?? ((r.item.mediaData.metadata as Record<string, unknown>)?.categories as string[] | undefined) ?? []
+                        const rawCats = r.item.genres ?? []
                         const cleanCats: { name: string; nameKey: string }[] = []
                         const rowSeen = new Set<string>()
                         const cap = maxGenresForType(mediaTypeName)
@@ -551,15 +607,16 @@ export async function executeBatchImport(options: {
                     }
                 }
 
-                // Ensure external IDs are attached to existing media as well
-                const existingMediaExtIds: { mediaId: string; provider: string; externalId: string }[] = []
+                // Ensure external IDs are attached to existing system-owned media as well
+                const existingMediaExtIds: { mediaId: string; provider: IdSource; externalId: string }[] = []
                 for (const r of chunk) {
-                    if (r.kind !== "new_media_and_log" && r.mediaId && r.item.externalIds) {
+                    if (r.action !== "new_media_and_log" && r.mediaId && r.item.externalIds) {
                         for (const x of r.item.externalIds) {
-                            if (x.provider && x.id) {
+                            const p = normalizeBatchProvider(x.provider)
+                            if (p && x.id) {
                                 existingMediaExtIds.push({
                                     mediaId: r.mediaId,
-                                    provider: x.provider.toLowerCase(),
+                                    provider: p,
                                     externalId: x.id,
                                 })
                             }
@@ -567,27 +624,46 @@ export async function executeBatchImport(options: {
                     }
                 }
                 if (existingMediaExtIds.length > 0) {
-                    await tx.mediaExternalId.createMany({
-                        data: existingMediaExtIds,
-                        skipDuplicates: true,
+                    const systemMediaRows = await tx.media.findMany({
+                        where: {
+                            id: { in: Array.from(new Set(existingMediaExtIds.map(e => e.mediaId))) },
+                            userId: systemUserId,
+                        },
+                        select: { id: true },
                     })
+                    const systemMediaIdSet = new Set(systemMediaRows.map(m => m.id))
+                    const filtered = existingMediaExtIds.filter(e => systemMediaIdSet.has(e.mediaId))
+                    if (filtered.length > 0) {
+                        await tx.mediaExternalId.createMany({
+                            data: filtered,
+                            skipDuplicates: true,
+                        })
+                    }
                 }
 
                 // b. Insert new logs
                 const validRowsNeedingLog = chunkRowsNeedingLog.filter(r => r.mediaId)
                 if (validRowsNeedingLog.length > 0) {
                     await tx.userLogs.createMany({
-                        data: validRowsNeedingLog.map(r => ({
-                            userId,
-                            mediaId: r.mediaId!,
-                            status: sanitizeStatus(r.item.logData.status),
-                            rating: r.item.logData.rating,
-                            notes: sanitizeNotes(r.item.logData.notes),
-                            progress: (r.item.logData.progress as Prisma.InputJsonValue) ?? Prisma.JsonNull,
-                            logged_at: r.item.logData.loggedAt ?? new Date(),
-                            started_at: r.item.logData.startedAt,
-                            finished_at: r.item.logData.finishedAt,
-                        })),
+                        data: validRowsNeedingLog.map(r => {
+                            const rawProg = r.item.logData.progress as Record<string, unknown> | null | undefined
+                            const ep = r.item.logData.progressEpisodes ?? (rawProg?.watchedEpisodes != null ? Number(rawProg.watchedEpisodes) : null)
+                            const ch = r.item.logData.progressChapters ?? (rawProg?.readChapters != null ? Number(rawProg.readChapters) : null)
+                            const vol = r.item.logData.progressVolumes ?? (rawProg?.readVolumes != null ? Number(rawProg.readVolumes) : null)
+                            return {
+                                userId,
+                                mediaId: r.mediaId!,
+                                status: toLogStatus(sanitizeStatus(r.item.logData.status)),
+                                rating: r.item.logData.rating,
+                                notes: sanitizeNotes(r.item.logData.notes),
+                                progressEpisodes: ep,
+                                progressChapters: ch,
+                                progressVolumes: vol,
+                                logged_at: r.item.logData.loggedAt ?? new Date(),
+                                started_at: r.item.logData.startedAt,
+                                finished_at: r.item.logData.finishedAt,
+                            }
+                        }),
                         skipDuplicates: true,
                     })
 
@@ -617,12 +693,13 @@ export async function executeBatchImport(options: {
                 for (const r of chunkGapFills) {
                     if (!r.logId) continue
                     if (r.gapFill?.logUpdates && Object.keys(r.gapFill.logUpdates).length > 0) {
+                        const { progress: _unusedProg, status: _rawStatus, ...restLogUpdates } = r.gapFill.logUpdates
                         await tx.userLogs.update({
                             where: { id: r.logId },
                             data: {
-                                ...r.gapFill.logUpdates,
+                                ...restLogUpdates,
                                 ...("status" in r.gapFill.logUpdates
-                                    ? { status: sanitizeStatus(r.gapFill.logUpdates.status) }
+                                    ? { status: toLogStatus(sanitizeStatus(r.gapFill.logUpdates.status)) }
                                     : {}),
                                 ...(typeof r.gapFill.logUpdates.notes === "string"
                                     ? { notes: sanitizeNotes(r.gapFill.logUpdates.notes) }
@@ -631,7 +708,7 @@ export async function executeBatchImport(options: {
                         })
                     }
                     if (r.mediaId && r.gapFill?.mediaPatch && Object.keys(r.gapFill.mediaPatch).length > 0) {
-                        await mergeMediaMetadata(r.mediaId, r.gapFill.mediaPatch, tx)
+                        await mergeMediaDetails(r.mediaId, r.gapFill.mediaPatch, tx)
                     }
                 }
 

@@ -11,7 +11,9 @@ export interface StatLog {
   logged_at: string
   started_at?: string | null
   finished_at?: string | null
-  progress?: Record<string, unknown> | null
+  progressEpisodes?: number | null
+  progressChapters?: number | null
+  progressVolumes?: number | null
   media: {
     id: string
     title: string
@@ -19,17 +21,19 @@ export interface StatLog {
     creators?: { name: string; role: string }[] | null
     genres?: string[] | null
     imageUrl?: string | null
-    metadata?: Record<string, unknown> | null
+    details?: Record<string, unknown> | null
+    subtype?: string | null
+    releaseDate?: string | null
     mediaType?: { name: string } | null
   }
   tags?: { id: string; name: string }[]
 }
 
 export type StatsRange =
-  | { kind: "all" }
-  | { kind: "year"; year: number }
-  | { kind: "month"; year: number; month: number } // month is 1-12
-  | { kind: "last12" }
+  | { mode: "all" }
+  | { mode: "year"; year: number }
+  | { mode: "month"; year: number; month: number } // month is 1-12
+  | { mode: "last12" }
 
 export const STATUS_KEYS = ["completed", "in progress", "wishlist", "dropped"] as const
 export type StatusKey = (typeof STATUS_KEYS)[number] | "none"
@@ -59,11 +63,11 @@ function avg(values: number[]): number | null {
 // --- ranges & filters ---
 
 export function filterByRange<L extends StatLog>(logs: L[], range: StatsRange, now: Date = new Date()): L[] {
-  if (range.kind === "all") return logs
-  if (range.kind === "year") {
+  if (range.mode === "all") return logs
+  if (range.mode === "year") {
     return logs.filter((l) => dateOf(l)?.getFullYear() === range.year)
   }
-  if (range.kind === "month") {
+  if (range.mode === "month") {
     return logs.filter((l) => {
       const d = dateOf(l)
       return d !== null && d.getFullYear() === range.year && d.getMonth() === range.month - 1
@@ -159,12 +163,12 @@ export function perMonth(logs: StatLog[], range: StatsRange, now: Date = new Dat
 
   let start: number
   let end: number
-  if (range.kind === "month") {
+  if (range.mode === "month") {
     start = end = range.year * 12 + range.month - 1
-  } else if (range.kind === "year") {
+  } else if (range.mode === "year") {
     start = range.year * 12
     end = Math.max(range.year === now.getFullYear() ? nowIdx : range.year * 12 + 11, Math.min(maxLog, range.year * 12 + 11))
-  } else if (range.kind === "last12") {
+  } else if (range.mode === "last12") {
     start = nowIdx - 11
     end = nowIdx
   } else {
@@ -305,7 +309,7 @@ export function topCategories(logs: StatLog[], n = 10): RankedStat[] {
   const groups = new Map<string, { name: string; count: number; ratings: number[] }>()
   for (const l of logs) {
     const seen = new Set<string>()
-    const cats = l.media.genres ?? getCategories(l.media.metadata)
+    const cats = l.media.genres ?? getCategories(l.media.details)
     for (const raw of cats) {
       const c = raw.trim()
       if (!c || seen.has(c.toLowerCase())) continue
@@ -383,24 +387,24 @@ export type Unit = "month" | "year" | "day"
 // --- range <-> string (persisted per device) ---
 
 export function rangeToString(r: StatsRange): string {
-  if (r.kind === "year") return `y:${r.year}`
-  if (r.kind === "month") return `${r.year}-${String(r.month).padStart(2, "0")}`
-  return r.kind
+  if (r.mode === "year") return `y:${r.year}`
+  if (r.mode === "month") return `${r.year}-${String(r.month).padStart(2, "0")}`
+  return r.mode
 }
 
 export function rangeFromString(s: string | null | undefined): StatsRange | null {
-  if (s === "all") return { kind: "all" }
-  if (s === "last12") return { kind: "last12" }
+  if (s === "all") return { mode: "all" }
+  if (s === "last12") return { mode: "last12" }
   const mm = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(s ?? "")
-  if (mm) return { kind: "month", year: Number(mm[1]), month: Number(mm[2]) }
+  if (mm) return { mode: "month", year: Number(mm[1]), month: Number(mm[2]) }
   const m = /^y:(\d{4})$/.exec(s ?? "")
-  return m ? { kind: "year", year: Number(m[1]) } : null
+  return m ? { mode: "year", year: Number(m[1]) } : null
 }
 
 /** Stored range if still valid (a year must be present; a month must have logs), else this year if it has logs, else all time. */
 export function initialRange(logs: StatLog[], stored: string | null, now: Date = new Date()): StatsRange {
   const years = yearsPresent(logs)
   const r = rangeFromString(stored)
-  if (r && (r.kind === "month" ? filterByRange(logs, r).length > 0 : r.kind !== "year" || years.includes(r.year))) return r
-  return years.includes(now.getFullYear()) ? { kind: "year", year: now.getFullYear() } : { kind: "all" }
+  if (r && (r.mode === "month" ? filterByRange(logs, r).length > 0 : r.mode !== "year" || years.includes(r.year))) return r
+  return years.includes(now.getFullYear()) ? { mode: "year", year: now.getFullYear() } : { mode: "all" }
 }

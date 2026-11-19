@@ -413,14 +413,14 @@ export function TypeStatsPanel({
         </span>
       </div>
 
-      {stats.kind === "book" && <BookCard stats={stats} />}
-      {stats.kind === "movie" && <MovieCard stats={stats} />}
-      {stats.kind === "anime" && <AnimeCard stats={stats} />}
-      {stats.kind === "manga" && <MangaCard stats={stats} />}
-      {stats.kind === "game" && <GameCard stats={stats} />}
-      {stats.kind === "music" && <MusicCard stats={stats} />}
-      {stats.kind === "tv" && <TvCard stats={stats} />}
-      {stats.kind === "generic" && <GenericCard stats={stats} />}
+      {stats.statType === "book" && <BookCard stats={stats} />}
+      {stats.statType === "movie" && <MovieCard stats={stats} />}
+      {stats.statType === "anime" && <AnimeCard stats={stats} />}
+      {stats.statType === "manga" && <MangaCard stats={stats} />}
+      {stats.statType === "game" && <GameCard stats={stats} />}
+      {stats.statType === "music" && <MusicCard stats={stats} />}
+      {stats.statType === "tv" && <TvCard stats={stats} />}
+      {stats.statType === "generic" && <GenericCard stats={stats} />}
     </section>
   )
 }
@@ -444,14 +444,14 @@ export function TypeStatsCards({ items }: { items: TypeDetailStat[] }) {
             </span>
           </div>
 
-          {stats.kind === "book" && <BookCard stats={stats} />}
-          {stats.kind === "movie" && <MovieCard stats={stats} />}
-          {stats.kind === "anime" && <AnimeCard stats={stats} />}
-          {stats.kind === "manga" && <MangaCard stats={stats} />}
-          {stats.kind === "game" && <GameCard stats={stats} />}
-          {stats.kind === "music" && <MusicCard stats={stats} />}
-          {stats.kind === "tv" && <TvCard stats={stats} />}
-          {stats.kind === "generic" && <GenericCard stats={stats} />}
+          {stats.statType === "book" && <BookCard stats={stats} />}
+          {stats.statType === "movie" && <MovieCard stats={stats} />}
+          {stats.statType === "anime" && <AnimeCard stats={stats} />}
+          {stats.statType === "manga" && <MangaCard stats={stats} />}
+          {stats.statType === "game" && <GameCard stats={stats} />}
+          {stats.statType === "music" && <MusicCard stats={stats} />}
+          {stats.statType === "tv" && <TvCard stats={stats} />}
+          {stats.statType === "generic" && <GenericCard stats={stats} />}
         </article>
       ))}
     </div>

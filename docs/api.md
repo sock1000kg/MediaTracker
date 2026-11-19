@@ -28,7 +28,7 @@ Base URL: the API origin (e.g. `http://localhost:5000`). Bodies are JSON unless 
 
 | Method | Path | Description |
 | --- | --- | --- |
-| GET | `/config` | Public application configuration and client limits (`Cache-Control: public, max-age=3600`). Returns `{ limits: { notes, tags, collections, imports, search } }`. |
+| GET | `/config` | Public application configuration and client limits (`Cache-Control: public, max-age=3600`). Returns `{ limits: { notes, tags, collections, imports, search }, demo: { username, password } | null }` (`demo` is filled only when `PUBLIC_DEMO=true` and `DEMO_USER_PASSWORD` is set). |
 
 ## Auth
 
@@ -56,8 +56,8 @@ The preferences shape (every key is optional):
 ```json
 {
   "theme": "light | dark | system",
-  "defaultTab": "logs | medias | collections | mediaTypes | stats | settings | bookSearch | musicSearch | animeSearch | movieSearch | gameSearch",
-  "hideLogged": { "books": true, "music": false, "anime": false, "movies": false, "games": false },
+  "defaultTab": "logs | medias | collections | mediaTypes | stats | settings | bookSearch | musicSearch | animeSearch | movieSearch | tvSearch | gameSearch",
+  "hideLogged": { "books": true, "music": false, "anime": false, "movies": false, "tv": false, "games": false },
   "defaultSort": { "logs": [{ "field": "date", "direction": "desc" }], "medias": [] }
 }
 ```
@@ -66,7 +66,7 @@ The preferences shape (every key is optional):
 
 | Method | Path | Description |
 | --- | --- | --- |
-| GET | `/media-type` | Your media types plus the built-in ones (book, music, anime, manga, movie, game). |
+| GET | `/media-type` | Your media types plus the built-in ones (book, music, anime, manga, movie, tv, game, boardgame). |
 | POST | `/media-type` | Create a custom type. |
 | PUT | `/media-type/:name` | Rename one of your types. |
 | DELETE | `/media-type/:name` | Delete one of your types. |
@@ -76,18 +76,19 @@ The preferences shape (every key is optional):
 | Method | Path | Description |
 | --- | --- | --- |
 | GET | `/media` | The media you created yourself. |
-| POST | `/media` | Create custom media (`title`, `mediaType`, optional `creator`, `year`, `description`, `imageUrl`, `metadata`). |
-| PUT | `/media/:id` | Update your own media. |
+| POST | `/media` | Create custom media (`title`, `mediaType`, optional `creator`, `year`, `description`, `imageUrl`, `details`, `subtype`, `releaseDate`). Specifying `provider` or `providerId` returns `400`. |
+| PUT | `/media/:id` | Update your own media. Specifying `provider` or `providerId` returns `400`. |
 | DELETE | `/media/:id` | `{ confirm }`. Without `confirm: true` it returns a warning with the number of logs that would be deleted. |
-| PUT | `/media/media-log` | `{ mediaData, logData }`. Logs a search result: it creates or reuses the media (matched by `source` + `sourceId`) and creates the log in one transaction. `logData` accepts `status`, `rating`, `notes`, `startedAt`, `finishedAt`, and optional `tags: string[]`. Some sources are enriched the first time they're logged: Last.fm tags, the TMDB director/runtime/genres, and the RAWG developers/description. |
+| POST | `/media/:id/refresh` | Re-fetches provider details using the requesting user's key where required, updating only provider fields (title, original title, year, creator, description, image, details, subtype, releaseDate, genres, external ids). Allowed when the user has logged the item (or its parent/child). Rate-limited to once per 10 minutes per item (`429`). Custom media returns `400`. |
+| PUT | `/media/media-log` | `{ mediaData, logData }`. Logs a search result: it creates or reuses the media (matched through external id lookup) and creates the log in one transaction. `logData` accepts `status`, `rating`, `notes`, `startedAt`, `finishedAt`, and optional `tags: string[]`. Some sources are enriched the first time they're logged: Last.fm tags, the TMDB director/runtime/genres, and the RAWG developers/description. |
 
 ## Logs
 
 | Method | Path | Description |
 | --- | --- | --- |
 | GET | `/logs` | Your logs, each with its media and media type, including `started_at`, `finished_at`, `collectionIds: string[] (UUIDs)`, and `tags: [{ id: string (UUID), name }]` sorted by name. |
-| POST | `/logs` | `{ mediaId: string (UUID), status, rating, notes, startedAt, finishedAt, tags }`. `rating` is 0–100 (or `null`), and `status` is one of `completed`, `in progress`, `wishlist` or `dropped` (or `null`). `startedAt` and `finishedAt` are optional dates stored at day precision (noon UTC). When both are set, `finishedAt ≥ startedAt` (otherwise `400 "Finished date can't be before the start date"`), and neither may be more than 1 day in the future (`400`). `tags` is an optional list of tag names (0–20; unknown tags auto-created). |
-| PUT | `/logs/:id` | `{ status, rating, notes, startedAt, finishedAt, tags }`. Omitting dates leaves them unchanged, and `null` clears them. `tags` has set semantics: when present, replaces the log's tags; omitting leaves them unchanged; `[]` clears them. Malformed `:id` returns 400. |
+| POST | `/logs` | `{ mediaId: string (UUID), status, rating, notes, startedAt, finishedAt, progressEpisodes, progressChapters, progressVolumes, tags }`. `rating` is 0–100 (or `null`), and `status` is one of `completed`, `in_progress`, `wishlist` or `dropped` (or `null`). `startedAt` and `finishedAt` are optional dates stored at day precision (noon UTC). When both are set, `finishedAt ≥ startedAt` (otherwise `400 "Finished date can't be before the start date"`), and neither may be more than 1 day in the future (`400`). `tags` is an optional list of tag names (0–20; unknown tags auto-created). |
+| PUT | `/logs/:id` | `{ status, rating, notes, startedAt, finishedAt, progressEpisodes, progressChapters, progressVolumes, tags }`. Omitting dates leaves them unchanged, and `null` clears them. `tags` has set semantics: when present, replaces the log's tags; omitting leaves them unchanged; `[]` clears them. Malformed `:id` returns 400. |
 | DELETE | `/logs/:id` | Delete a log. Malformed `:id` returns 400. |
 
 ## Tags
@@ -119,9 +120,9 @@ Collections are private, ordered lists of your logs. Up to 200 collections per u
 | Method | Path | Description |
 | --- | --- | --- |
 | GET | `/api-key` | Your stored keys. They're encrypted at rest. |
-| POST | `/api-key` | `{ service, key }`. The `service` is `lastfm`, `tmdb` or `rawg`. Keys can be up to 512 characters. |
-| PUT | `/api-key` | `{ service, key }`. Replace a key. |
-| DELETE | `/api-key` | `{ service }` |
+| POST | `/api-key` | `{ service, key }`. The `service` must be one of `ApiKeyService` (`lastfm`, `tmdb`, `rawg`, `bgg`, `google_books`); any unknown or unkeyed service returns `400`. Keys can be up to 512 characters. |
+| PUT | `/api-key` | `{ service, key }`. Replace a key for a valid `ApiKeyService` (`400` if unknown). |
+| DELETE | `/api-key` | `{ service }`. Delete a key for a valid `ApiKeyService` (`400` if unknown). |
 
 ## Search
 
@@ -130,12 +131,13 @@ All search endpoints take `q` (required) and `page` (default 1), and return `{ r
 | Method | Path | Provider | Extra parameters |
 | --- | --- | --- | --- |
 | GET | `/search/books` | Open Library | `author`, `subject`, `language` (ISO 639-2, e.g. `eng`), `yearFrom`, `yearTo`, `sort` = `relevance \| new \| old \| rating` |
-| GET | `/search/music/albums` | Last.fm (key) | none |
-| GET | `/search/music/tracks` | Last.fm (key) | none |
+| GET | `/search/music/albums` | MusicBrainz & Last.fm (key) | none |
+| GET | `/search/music/tracks` | MusicBrainz & Last.fm (key) | none |
 | GET | `/search/anime` | AniList | `type` = `tv \| movie \| ova \| special \| ona \| music`, `sort` = `relevance \| score \| popularity \| newest` |
 | GET | `/search/manga` | AniList | `type` = `manga \| novel \| lightnovel \| oneshot \| manhwa \| manhua`, `sort` as for anime |
 | GET | `/search/movies` | TMDB (key) | `year` |
 | GET | `/search/games` | RAWG (key) | `platform` = `pc \| playstation \| xbox \| nintendo \| ios \| android \| mac \| linux`, `sort` = `relevance \| rating \| newest \| metacritic` |
+| GET | `/search/boardgames` | BoardGameGeek (per-user token) | none |
 
 A search that needs a key and has none returns `404` ("Missing … API Key"). A key the provider rejects returns `400`, never `401`.
 
@@ -146,11 +148,11 @@ A search that needs a key and has none returns `404` ("Missing … API Key"). A 
   "title": "Dune", "creator": "Frank Herbert", "year": "1965",
   "description": "…", "imageUrl": "https://…",
   "source": "open_library", "sourceId": "OL…",
-  "metadata": { "url": "https://…", "categories": ["Science fiction"] }
+  "details": { "categories": ["Science fiction"] }
 }
 ```
 
-The `metadata` field varies by provider. For example: `kind` (`album` / `track` / `anime` / `manga` / `movie` / `game`), `pageCount`, `publisher`, `episodes`, `score` (0–100 on AniList, 0–10 on MAL/TMDB, 0–5 on RAWG), `scoreScale` (`anilist` or `mal`), `platforms`, `metacritic`.
+The `details` field varies by media type and provider. For example: `pageCount`, `publisher`, `episodes`, `score` (0–100 on AniList, 0–10 on MAL/TMDB, 0–5 on RAWG), `scoreScale` (`anilist` or `mal`), `platforms`, `metacritic`, `minPlayers`, `maxPlayers`, `playingTime`, `bggRating`. For music, `subtype` indicates `album` or `track`; for TV, `subtype` indicates `show` or `season`.
 
 ## Imports and jobs
 
@@ -162,4 +164,4 @@ The `metadata` field varies by provider. For example: `kind` (`album` / `track` 
 | GET | `/jobs?name=import.goodreads&limit=10` | Your recent jobs, newest first (`limit` 1–20). Filter by `import.goodreads`, `import.mal`, or `import.letterboxd`. |
 | GET | `/jobs/:id` | `{ id, name, status, progress, result, error, createdAt, finishedAt }`. `status` is `queued`, `active`, `completed` or `failed`, and `progress` is 0–100. Other users' jobs return `404`. |
 
-A finished import's `result` is `{ imported, updated, skipped, failures: [{ row, title, reason }], failuresTruncated, notes, unmatched, liked }`. Failures are capped at 500. Entries that had no AniList match are imported as bare MAL entries without covers and reported in `notes`. Letterboxd films that couldn't be matched to TMDB are imported by title and reported in `unmatched` and `notes`. Letterboxd likes are imported into the "Letterboxd likes" collection; lists are still not imported.
+A finished import's `result` is `{ imported, updated, skipped, failures: [{ row, title, reason }], failuresTruncated, notes, unmatched, liked, lists }`. Failures are capped at 500. Entries that had no AniList match are imported as bare MAL entries without covers and reported in `notes`. Letterboxd films that couldn't be matched to TMDB are imported by title and reported in `unmatched` and `notes`. Letterboxd likes are imported into the "Letterboxd likes" collection; lists are imported as collections (with films not otherwise logged imported as wishlist).

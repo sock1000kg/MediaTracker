@@ -3,10 +3,9 @@ import {
   coverAspect, coverToken, daysToFinish, displayRating, formatLogDate, groupLogs, initialCount, logDateLine, revealState, statusLabel, step, visibleSlice,
 } from "./logView"
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mk = (id: number, type: string, at: string, rating: any = 50, meta: any = {}) => ({
+const mk = (id: number, type: string, at: string, rating: unknown = 50, details: Record<string, unknown> = {}) => ({
   id, status: "completed", rating, notes: "", logged_at: at,
-  media: { id, title: "T" + id, mediaType: { name: type }, metadata: meta },
+  media: { id, title: "T" + id, mediaType: { name: type }, subtype: details.subtype, details },
 }) as never
 
 describe("formatLogDate / statusLabel", () => {
@@ -88,10 +87,10 @@ describe("daysToFinish / logDateLine", () => {
 })
 
 describe("coverAspect / coverToken", () => {
-  it("picks the aspect from type and kind", () => {
+  it("picks the aspect from type and subtype", () => {
     expect(coverAspect(mk(1, "music", "x"))).toBe("square")
-    expect(coverAspect(mk(1, "book", "x", 1, { kind: "album" }))).toBe("square")
-    expect(coverAspect(mk(1, "book", "x", 1, { kind: "track" }))).toBe("square")
+    expect(coverAspect(mk(1, "book", "x", 1, { subtype: "album" }))).toBe("square")
+    expect(coverAspect(mk(1, "book", "x", 1, { subtype: "track" }))).toBe("square")
     expect(coverAspect(mk(1, "game", "x"))).toBe("wide")
     expect(coverAspect(mk(1, "book", "x"))).toBe("portrait")
   })
