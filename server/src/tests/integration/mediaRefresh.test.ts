@@ -1353,6 +1353,25 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
         expect(logAfter.status).toBe("completed")
     })
 
+    test("Goodreads refresh: 409 when another edition already holds the Open Library work", async () => {
+        const bookType = await prisma.mediaType.findFirstOrThrow({ where: { name: "book" } })
+        await prisma.media.create({
+            data: { title: "Held Work", creator: "Author", provider: "openlibrary", providerId: "/works/OLHELDW", mediaTypeId: bookType.id, userId: systemUserId },
+        })
+        const media = await prisma.media.create({
+            data: { title: "Held Work", creator: "Author", provider: "goodreads", providerId: "gr-held-2", mediaTypeId: bookType.id, userId: systemUserId },
+        })
+        await prisma.userLogs.create({ data: { userId: userAId, mediaId: media.id, status: "wishlist" } })
+        jest.spyOn(global, "fetch").mockImplementation(async () =>
+            new Response(JSON.stringify({ numFound: 1, docs: [{ key: "/works/OLHELDW", title: "Held Work" }] }), { status: 200 })
+        )
+
+        const res = await request(app).post(`/media/${media.id}/refresh`).set("Authorization", `Bearer ${tokenA}`)
+        expect(res.statusCode).toBe(409)
+        const after = await prisma.media.findUniqueOrThrow({ where: { id: media.id } })
+        expect(after.provider).toBe("goodreads")
+    })
+
     test("Goodreads refresh (G4): 404 when no match is found, 503 when Open Library is down", async () => {
         const bookType = await prisma.mediaType.findFirstOrThrow({ where: { name: "book" } })
         const media = await prisma.media.create({

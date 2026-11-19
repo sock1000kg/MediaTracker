@@ -6,7 +6,7 @@ import { createUserAgentHeader } from "@/utilities.js"
 import { openLibraryResponseSchema, OpenLibraryBook } from "@/schemas/search/bookSchemas.js"
 import { openLibraryService } from "@/services/search/openLibrarySearchService.js"
 import { setMediaGenres, setMediaCreators, isJunkGenre } from "./genreService.js"
-import { attachExternalIdsToMedia } from "@/repositories/mediaRepository.js"
+import { attachExternalIdsToMedia, findOtherMediaWithProviderId } from "@/repositories/mediaRepository.js"
 import { validateDetails } from "@/schemas/detailsSchemas.js"
 
 export interface OpenLibrarySyncResult {
@@ -168,6 +168,11 @@ export async function syncOpenLibraryBooks(
             }
 
             const now = new Date()
+
+            // Another edition of this book already holds the work: leave this row as Goodreads
+            if (matchedDoc && await findOtherMediaWithProviderId("openlibrary", matchedDoc.key, item.id, db)) {
+                matchedDoc = null
+            }
 
             if (matchedDoc) {
                 const coverUrl = matchedDoc.cover_i

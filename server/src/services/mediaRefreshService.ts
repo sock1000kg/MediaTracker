@@ -2,7 +2,7 @@ import prisma from "@/prismaClient.js"
 import { AppError } from "@/api/domain/error.js"
 import { MEDIA_INCLUDE, formatMedia } from "@/repositories/mediaFormat.js"
 import { setMediaGenres, setMediaCreators, isJunkGenre } from "@/services/genreService.js"
-import { attachExternalIdsToMedia } from "@/repositories/mediaRepository.js"
+import { attachExternalIdsToMedia, findOtherMediaWithProviderId } from "@/repositories/mediaRepository.js"
 import { sanitizeDescription } from "@/utilities.js"
 import { providerFetch } from "@/providers/providerFetch.js"
 import { validateDetails } from "@/schemas/detailsSchemas.js"
@@ -585,6 +585,10 @@ export class MediaRefreshService {
 
         if (!doc) {
             throw new AppError("The provider no longer has this item", 404)
+        }
+
+        if (await findOtherMediaWithProviderId("openlibrary", doc.key, media.id, prisma)) {
+            throw new AppError("Another edition of this book already has its Open Library data", 409)
         }
 
         const now = new Date()

@@ -223,4 +223,24 @@ describe("Open Library background sync job (G2, G3, T1)", () => {
 
         fetchSpy.mockRestore()
     })
+    test("two editions matching the same work: the first takes it, the second stays Goodreads (no crash)", async () => {
+        const kindle = await prisma.media.create({
+            data: { title: "Twin Edition", creator: "Same Author", provider: "goodreads", providerId: "gr-twin-1", mediaTypeId: bookTypeId, userId: systemUserId },
+        })
+        const paperback = await prisma.media.create({
+            data: { title: "Twin Edition", creator: "Same Author", provider: "goodreads", providerId: "gr-twin-2", mediaTypeId: bookTypeId, userId: systemUserId },
+        })
+        const fetchSpy = jest.spyOn(globalThis, "fetch").mockImplementation(async () =>
+            new Response(JSON.stringify({ numFound: 1, docs: [{ key: "/works/OLTWINW", title: "Twin Edition" }] }), { status: 200 })
+        )
+
+        await syncOpenLibraryBooks(prisma)
+
+        const rows = await prisma.media.findMany({ where: { id: { in: [kindle.id, paperback.id] } }, orderBy: { providerId: "asc" } })
+        expect(rows.filter(r => r.provider === "openlibrary").map(r => r.providerId)).toEqual(["/works/OLTWINW"])
+        const left = rows.find(r => r.provider === "goodreads")!
+        expect(left.syncCheckedAt).toBeTruthy() // stamped, so it isn't retried every run
+
+        fetchSpy.mockRestore()
+    })
 })

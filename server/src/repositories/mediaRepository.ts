@@ -189,6 +189,28 @@ export async function attachExternalIdsToMedia(
     })
 }
 
+// Another row already holding this provider id (as its provider or as an external id).
+// Two Goodreads editions of one book match the same Open Library work; until editions
+// merge (task 53), the second one stays as it is instead of breaking the unique index.
+export async function findOtherMediaWithProviderId(
+    provider: IdSource,
+    providerId: string,
+    exceptMediaId: string,
+    client: DbClient = prisma
+): Promise<string | null> {
+    const other = await client.media.findFirst({
+        where: {
+            id: { not: exceptMediaId },
+            OR: [
+                { provider, providerId },
+                { externalIds: { some: { provider, externalId: providerId } } },
+            ],
+        },
+        select: { id: true },
+    })
+    return other?.id ?? null
+}
+
 export async function findMediaByProviderId(
     provider: string | null,
     providerId: string | null,
