@@ -184,13 +184,15 @@ describe("Media Import Routes (Letterboxd)", () => {
 
         const inceptionLog = await prisma.userLogs.findUnique({
             where: { userId_mediaId: { userId, mediaId: inceptionMedia!.id } },
+            include: { entries: true },
         })
         expect(inceptionLog).not.toBeNull()
         expect(inceptionLog!.status).toBe("completed")
         expect(inceptionLog!.rating).toBe(90) // 4.5 * 20
-        expect(inceptionLog!.finished_at).toEqual(new Date(Date.UTC(2024, 0, 10, 12)))
+        expect(inceptionLog!.entries).toHaveLength(1)
+        expect(inceptionLog!.entries[0].finishedAt?.toISOString().slice(0, 10)).toBe("2024-01-10")
 
-        // Verify Dune log (watchlist-only -> wishlist, no rating, no finished_at)
+        // Verify Dune log (watchlist-only -> wishlist, no rating, no entry)
         const duneMedia = await prisma.media.findFirst({
             where: { provider: "tmdb", providerId: "movie-693134" },
         })
@@ -198,11 +200,12 @@ describe("Media Import Routes (Letterboxd)", () => {
 
         const duneLog = await prisma.userLogs.findUnique({
             where: { userId_mediaId: { userId, mediaId: duneMedia!.id } },
+            include: { entries: true },
         })
         expect(duneLog).not.toBeNull()
         expect(duneLog!.status).toBe("wishlist")
         expect(duneLog!.rating).toBeNull()
-        expect(duneLog!.finished_at).toBeNull()
+        expect(duneLog!.entries).toHaveLength(0)
 
         // Verify director creator role was persisted
         const duneCreators = await prisma.mediaCreator.findMany({
@@ -757,5 +760,66 @@ describe("Media Import Routes (Letterboxd)", () => {
         } finally {
             spyFindMany.mockRestore()
         }
+    })
+
+    it("one log per film with an entry per diary row; a re-import changes nothing; an old import upgrades", async () => {
+        const diaryHeader = "Date,Name,Year,Letterboxd URI,Rating,Rewatch,Tags,Watched Date"
+        const reviewHeader = "Date,Name,Year,Letterboxd URI,Rating,Rewatch,Review,Tags,Watched Date"
+        const uri = "https://boxd.it/fc1"
+        const zipBytes = zipSync({
+            "ratings.csv": strToU8(`Date,Name,Year,Letterboxd URI,Rating\n2024-01-11,Fight Club,1999,${uri},4.5\n`),
+            "diary.csv": strToU8([
+                diaryHeader,
+                `2024-01-11,Fight Club,1999,${uri},4,No,,2024-01-10`,
+                `2023-06-02,Fight Club,1999,${uri},4,Yes,,2023-06-01`,
+                `2022-03-05,Fight Club,1999,${uri},3,Yes,,2022-03-04`,
+            ].join("\n") + "\n"),
+            "reviews.csv": strToU8([
+                reviewHeader,
+                `2024-01-11,Fight Club,1999,${uri},4,No,Newest review,,2024-01-10`,
+                `2023-06-02,Fight Club,1999,${uri},4,Yes,Older review,,2023-06-01`,
+            ].join("\n") + "\n"),
+        })
+        jest.spyOn(letterboxdImportService, "importFromLetterboxd").mockImplementation(async (u, files, opts) => {
+            return LetterboxdImportService.prototype.importFromLetterboxd.call(
+                letterboxdImportService, u, files, { ...opts, resolver: mockResolver }
+            )
+        })
+        const day = (d: Date | null) => d?.toISOString().slice(0, 10)
+        const loadLog = async () => {
+            const media = await prisma.media.findFirstOrThrow({ where: { provider: "tmdb", providerId: "movie-550" } })
+            return prisma.userLogs.findUniqueOrThrow({
+                where: { userId_mediaId: { userId, mediaId: media.id } },
+                include: { entries: { orderBy: { finishedAt: "desc" } } },
+            })
+        }
+
+        // first import: one log, three entries, the review on its own date, the rating from ratings.csv
+        const first = await importAndWait(token, Buffer.from(zipBytes))
+        expect(first.job.result).toMatchObject({ imported: 1, updated: 0, skipped: 0, entriesAdded: 3 })
+        const log = await loadLog()
+        expect(log.rating).toBe(90)
+        expect(log.notes).toBe("Newest review")
+        expect(log.entries.map(e => day(e.finishedAt))).toEqual(["2024-01-10", "2023-06-01", "2022-03-04"])
+        // the newest review is the log's notes, so only the older one is an entry note
+        expect(log.entries.map(e => e.note)).toEqual([null, "Older review", null])
+
+        // re-import: nothing changes
+        const again = await importAndWait(token, Buffer.from(zipBytes))
+        expect(again.job.result).toMatchObject({ imported: 0, updated: 0, skipped: 1, entriesAdded: 0 })
+        expect(await prisma.logEntry.count({ where: { logId: log.id } })).toBe(3)
+
+        // upgrade path: an earlier import left one entry at the latest diary date (what the migration makes)
+        await prisma.logEntry.deleteMany({ where: { logId: log.id } })
+        await prisma.logEntry.create({ data: { logId: log.id, startedAt: new Date("2024-01-10"), finishedAt: new Date("2024-01-10") } })
+        const upgraded = await importAndWait(token, Buffer.from(zipBytes))
+        expect(upgraded.job.result).toMatchObject({ imported: 0, updated: 1, skipped: 0, entriesAdded: 2 })
+        const afterUpgrade = await loadLog()
+        expect(afterUpgrade.entries.map(e => day(e.finishedAt))).toEqual(["2024-01-10", "2023-06-01", "2022-03-04"])
+        expect(afterUpgrade.entries[0].id).toBe((await prisma.logEntry.findFirstOrThrow({ where: { logId: log.id }, orderBy: { created_at: "asc" } })).id)
+
+        // and a second re-import after the upgrade changes nothing
+        const settled = await importAndWait(token, Buffer.from(zipBytes))
+        expect(settled.job.result).toMatchObject({ imported: 0, updated: 0, skipped: 1, entriesAdded: 0 })
     })
 })

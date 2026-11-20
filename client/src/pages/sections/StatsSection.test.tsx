@@ -26,8 +26,9 @@ const mockLogs: Log[] = [
     rating: 90,
     status: "completed",
     logged_at: "2026-10-15T12:00:00Z",
-    started_at: "2026-10-10T12:00:00Z",
-    finished_at: "2026-10-15T12:00:00Z",
+    entries: [{ id: "e1", logId: "l1", startedAt: "2026-10-10T12:00:00Z", finishedAt: "2026-10-15T12:00:00Z", progressEpisodes: null, progressChapters: null, progressVolumes: null, note: null, edition: null, created_at: "2026-10-15T12:00:00Z" }],
+    entryCount: 1,
+    displayTitle: "",
     notes: "Great watch",
     tags: [],
     media: {
@@ -50,8 +51,9 @@ const mockLogs: Log[] = [
     rating: 50,
     status: "completed",
     logged_at: "2026-10-20T12:00:00Z",
-    started_at: "2026-10-18T12:00:00Z",
-    finished_at: "2026-10-20T12:00:00Z",
+    entries: [{ id: "e2", logId: "l2", startedAt: "2026-10-18T12:00:00Z", finishedAt: "2026-10-20T12:00:00Z", progressEpisodes: null, progressChapters: null, progressVolumes: null, note: null, edition: null, created_at: "2026-10-20T12:00:00Z" }],
+    entryCount: 1,
+    displayTitle: "",
     notes: "Average book",
     tags: [],
     media: {

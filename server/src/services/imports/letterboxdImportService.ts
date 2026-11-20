@@ -56,6 +56,8 @@ export interface LetterboxdMergedFilm {
     status: "completed" | "wishlist"
     rating: number | null
     finishedAt: Date | null
+    /** One per diary.csv row (else one from watched.csv): the day it was watched and that day's review, when it differs from `notes`. */
+    entries: { watchedAt: Date; note: string | null }[]
     loggedAt: Date | null
     notes: string | null
     tags: string[]
@@ -523,6 +525,25 @@ export function mergeLetterboxdFiles(files: LetterboxdExportFiles): LetterboxdMe
             }
         }
 
+        // Entries: every diary row is a watch. The review for the same film on the same day is its note.
+        const reviewByDay = new Map<string, string>()
+        for (const r of acc.reviews) {
+            const d = parseImportDate(r.watchedDateStr)
+            if (d && r.reviewStr && r.reviewStr.trim() !== "" && !reviewByDay.has(d.toISOString())) {
+                reviewByDay.set(d.toISOString(), r.reviewStr.trim())
+            }
+        }
+        const entries: { watchedAt: Date; note: string | null }[] = []
+        for (const r of acc.diary) {
+            const d = parseImportDate(r.watchedDateStr)
+            if (!d) continue
+            const text = reviewByDay.get(d.toISOString()) ?? null
+            entries.push({ watchedAt: d, note: text && text !== notes ? text : null })
+        }
+        if (entries.length === 0 && finishedAt) {
+            entries.push({ watchedAt: finishedAt, note: null })
+        }
+
         merged.push({
             name: acc.name,
             year: acc.year,
@@ -530,6 +551,7 @@ export function mergeLetterboxdFiles(files: LetterboxdExportFiles): LetterboxdMe
             status,
             rating,
             finishedAt,
+            entries,
             loggedAt,
             notes,
             tags: cleanTags,
@@ -801,11 +823,10 @@ export class LetterboxdImportService {
                     rating: f.rating,
                     notes: f.notes,
                     loggedAt: f.loggedAt,
-                    // Films are watched in one sitting: start on the day they were finished
-                    startedAt: f.finishedAt,
-                    finishedAt: f.finishedAt,
                     tags: f.tags,
                 },
+                // Films are watched in one sitting: each entry starts on the day it was finished
+                entries: f.entries.map(e => ({ startedAt: e.watchedAt, finishedAt: e.watchedAt, note: e.note })),
             })
         }
 
@@ -846,8 +867,6 @@ export class LetterboxdImportService {
                 let filled = false
                 const logUpdates: {
                     rating?: number | null
-                    finished_at?: Date | null
-                    started_at?: Date | null
                     notes?: string | null
                     status?: string | null
                 } = {}
@@ -855,21 +874,6 @@ export class LetterboxdImportService {
 
                 if (log.rating === null && item.logData.rating !== null) {
                     logUpdates.rating = item.logData.rating
-                    filled = true
-                }
-
-                if (log.finished_at === null && item.logData.finishedAt !== null) {
-                    if (!log.started_at || item.logData.finishedAt.getTime() >= log.started_at.getTime()) {
-                        logUpdates.finished_at = item.logData.finishedAt
-                        filled = true
-                    }
-                }
-
-                // Start date: same day as the finish when the existing log has none
-                const finish = logUpdates.finished_at ?? log.finished_at
-                if (log.started_at === null && item.logData.startedAt !== null && finish
-                    && item.logData.startedAt.getTime() <= finish.getTime()) {
-                    logUpdates.started_at = item.logData.startedAt
                     filled = true
                 }
 

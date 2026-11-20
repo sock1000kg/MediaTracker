@@ -30,6 +30,31 @@ export function mainTitle(title: string): string {
         .replace(/^(the|a|an) /, "")
 }
 
+// Open Library language codes (MARC) for the common cases; anything else shows as its code
+const LANGUAGE_NAMES: Record<string, string> = {
+    eng: "English", fre: "French", fra: "French", ger: "German", deu: "German", spa: "Spanish",
+    ita: "Italian", por: "Portuguese", rus: "Russian", jpn: "Japanese", chi: "Chinese", zho: "Chinese",
+    kor: "Korean", dut: "Dutch", nld: "Dutch", swe: "Swedish", pol: "Polish", lat: "Latin", ara: "Arabic",
+    heb: "Hebrew", tur: "Turkish", gre: "Greek", ell: "Greek", hin: "Hindi", vie: "Vietnamese",
+}
+
+/** "/languages/eng" or "eng" → "English" */
+export function languageName(code: string): string {
+    const bare = code.replace(/^\/languages\//, "").trim().toLowerCase()
+    return LANGUAGE_NAMES[bare] ?? bare
+}
+
+// The edition Open Library matched the query to (it lists the best match first)
+function matchedEdition(item: OpenLibraryBook): { title?: string; language?: string } | null {
+    const docs = (item.editions as { docs?: { title?: string; language?: string[] }[] } | undefined)?.docs
+    const first = docs?.[0]
+    if (!first) return null
+    const title = typeof first.title === "string" && first.title.trim() !== "" ? first.title.trim() : undefined
+    const code = Array.isArray(first.language) ? first.language.find(l => typeof l === "string") : undefined
+    const language = code ? languageName(code) : undefined
+    return title || language ? { ...(title ? { title } : {}), ...(language ? { language } : {}) } : null
+}
+
 export class OpenLibraryService implements ISearchService {
     // Open Library uses 'limit' for page size
     limit = 20
@@ -71,6 +96,7 @@ export class OpenLibraryService implements ISearchService {
                         : undefined,
                     publisher: item.publisher && item.publisher[0] ? item.publisher[0] : undefined,
                 },
+                ...(matchedEdition(item) ? { edition: matchedEdition(item) } : {}),
                 ...(item.isbn && item.isbn[0] ? { externalIds: [{ provider: "isbn", id: item.isbn[0] }] } : {}),
             }
         })
@@ -92,7 +118,7 @@ export class OpenLibraryService implements ISearchService {
         url.searchParams.set("page", page.toString())
         url.searchParams.set("limit", this.limit.toString())
         // Fields filtering (optional, but good for performance)
-        url.searchParams.set("fields", "key,title,author_name,first_publish_year,cover_i,number_of_pages_median,publisher,subject,isbn")
+        url.searchParams.set("fields", "key,title,author_name,first_publish_year,cover_i,number_of_pages_median,publisher,subject,isbn,editions,editions.title,editions.language")
         return url
     }
 

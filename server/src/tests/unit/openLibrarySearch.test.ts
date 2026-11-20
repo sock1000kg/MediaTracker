@@ -89,3 +89,23 @@ describe('bookSearchQuerySchema', () => {
         { q: 'dune', author: 'a'.repeat(101) },
     ])('rejects %j', input => expect(bookSearchQuerySchema.safeParse(input).success).toBe(false))
 })
+
+describe('matched edition', () => {
+    const doc = (extra: object) => ({ key: '/works/OL1W', title: "L'étranger", author_name: ['Albert Camus'], ...extra })
+
+    it('requests the edition fields', () => {
+        const fields = build('camus', 1).searchParams.get('fields')!
+        for (const f of ['editions', 'editions.title', 'editions.language']) expect(fields.split(',')).toContain(f)
+    })
+
+    it("carries the best-matching edition's title and language, keeping the work title", () => {
+        const [r] = svc.mapResults([doc({ editions: { docs: [{ title: 'The Stranger', language: ['eng'] }] } })] as never)
+        expect(r.title).toBe("L'étranger")
+        expect(r.edition).toEqual({ title: 'The Stranger', language: 'English' })
+    })
+
+    it('has no edition when Open Library names none', () => {
+        const [r] = svc.mapResults([doc({})] as never)
+        expect(r.edition).toBeUndefined()
+    })
+})

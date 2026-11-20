@@ -37,6 +37,7 @@ describe("LogForm limits integration", () => {
     vi.spyOn(configApi, "fetchConfig").mockResolvedValue({
       limits: {
         notes: { maxLength: 123 },
+        logs: { maxEntriesPerLog: 100, entryNoteMaxLength: 10000 },
         tags: { maxLength: 40, maxPerLog: 20, maxPerUser: 500 },
         collections: {
           nameMaxLength: 80,

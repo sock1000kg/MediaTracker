@@ -24,8 +24,9 @@ const mockLog1: Log = {
   rating: 80,
   status: "completed",
   logged_at: "2026-11-01T12:00:00Z",
-  started_at: "2026-11-01T12:00:00Z",
-  finished_at: "2026-11-02T12:00:00Z",
+  entries: [{ id: "e1", logId: "l1", startedAt: "2026-11-01T12:00:00Z", finishedAt: "2026-11-02T12:00:00Z", progressEpisodes: null, progressChapters: null, progressVolumes: null, note: null, edition: null, created_at: "2026-11-02T12:00:00Z" }],
+  entryCount: 1,
+  displayTitle: "",
   notes: "",
   tags: [],
   media: {
@@ -49,8 +50,9 @@ const mockLog2: Log = {
   rating: 90,
   status: "completed",
   logged_at: "2026-11-03T12:00:00Z",
-  started_at: "2026-11-03T12:00:00Z",
-  finished_at: "2026-11-04T12:00:00Z",
+  entries: [{ id: "e2", logId: "l2", startedAt: "2026-11-03T12:00:00Z", finishedAt: "2026-11-04T12:00:00Z", progressEpisodes: null, progressChapters: null, progressVolumes: null, note: null, edition: null, created_at: "2026-11-04T12:00:00Z" }],
+  entryCount: 1,
+  displayTitle: "",
   notes: "",
   tags: [],
   media: {

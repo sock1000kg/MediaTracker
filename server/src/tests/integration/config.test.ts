@@ -22,6 +22,10 @@ describe("GET /config", () => {
             notes: {
                 maxLength: 50_000,
             },
+            logs: {
+                maxEntriesPerLog: 100,
+                entryNoteMaxLength: 10_000,
+            },
             tags: {
                 maxLength: 40,
                 maxPerLog: 20,

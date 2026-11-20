@@ -7,11 +7,23 @@ import {
     MAX_NOTES_LENGTH,
     allowedStatuses,
     AllowedStatus,
-    toDayPrecision,
     normalizeTagName,
     tagKey,
     MAX_TAGS_PER_LOG,
 } from "@/utilities.js"
+import { LIMITS } from "@/config/limits.js"
+import { entryInputSchema, ENTRY_ONLY_KEYS } from "@/schemas/entrySchemas.js"
+import { AppError } from "@/api/domain/error.js"
+
+/** Dates and progress live on entries; a log body carrying them is a client bug, not something to drop silently. */
+export function rejectEntryKeys(payload: unknown) {
+    if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+        const body = payload as Record<string, unknown>
+        if (ENTRY_ONLY_KEYS.some(k => body[k] !== undefined)) {
+            throw new AppError("Dates belong to an entry", 400)
+        }
+    }
+}
 
 // Sanitizers as transforms
 const statusSchema = z
@@ -74,18 +86,13 @@ const updateNotesSchema = z.preprocess((val: unknown) => {
 
 const mediaIdSchema = uuidSchema
 
-// Day-precision date schema: noon UTC of calendar day, or null, or undefined
-const dateInputSchema = z.preprocess((val: unknown) => {
+const titleSchema = z.preprocess((val: unknown) => {
     if (val === undefined) return undefined
-    if (val === null || val === "") return null
-    const d = toDayPrecision(val)
-    return d ?? "invalid"
-}, z.union([z.date(), z.null(), z.undefined()]))
-
-export const progressSchema = z.record(z.string(), z.unknown()).nullable().optional()
-export const progressEpisodesSchema = z.number().int().nonnegative().nullable().optional()
-export const progressChaptersSchema = z.number().int().nonnegative().nullable().optional()
-export const progressVolumesSchema = z.number().int().nonnegative().nullable().optional()
+    if (val === null) return null
+    if (typeof val !== "string") return val
+    const trimmed = val.trim()
+    return trimmed === "" ? null : trimmed
+}, z.string().max(LIMITS.logs.titleMaxLength, `Name can't exceed ${LIMITS.logs.titleMaxLength} characters`).nullable().optional())
 
 export const tagsSchema = z.array(z.string()).superRefine((items, ctx) => {
     for (let i = 0; i < items.length; i++) {
@@ -120,112 +127,32 @@ export const tagsSchema = z.array(z.string()).superRefine((items, ctx) => {
     }
 }).optional()
 
-function validateLogDateConstraints(
-    data: { startedAt?: Date | null; finishedAt?: Date | null },
-    ctx: z.RefinementCtx
-) {
-    const now = new Date()
-    // Neither more than 1 day in the future (allow up to tomorrow noon UTC for timezone differences)
-    const maxFuture = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 12, 0, 0, 0))
-
-    if (data.startedAt && data.startedAt.getTime() > maxFuture.getTime()) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Date cannot be more than 1 day in the future",
-            path: ["startedAt"]
-        })
-    }
-    if (data.finishedAt && data.finishedAt.getTime() > maxFuture.getTime()) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Date cannot be more than 1 day in the future",
-            path: ["finishedAt"]
-        })
-    }
-    if (data.startedAt && data.finishedAt && data.finishedAt.getTime() < data.startedAt.getTime()) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Finished date can't be before the start date",
-            path: ["finishedAt"]
-        })
-    }
-}
-
-const normalizeLogKeys = (val: unknown) => {
-    if (val && typeof val === "object" && !Array.isArray(val)) {
-        const obj = { ...(val as Record<string, unknown>) }
-        if (obj.started_at !== undefined && obj.startedAt === undefined) {
-            obj.startedAt = obj.started_at
-        }
-        if (obj.finished_at !== undefined && obj.finishedAt === undefined) {
-            obj.finishedAt = obj.finished_at
-        }
-        if (obj.progress && typeof obj.progress === "object" && !Array.isArray(obj.progress)) {
-            const p = obj.progress as Record<string, unknown>
-            if (obj.progressEpisodes === undefined && p.watchedEpisodes !== undefined) {
-                obj.progressEpisodes = p.watchedEpisodes
-            }
-            if (obj.progressChapters === undefined && p.readChapters !== undefined) {
-                obj.progressChapters = p.readChapters
-            }
-            if (obj.progressVolumes === undefined && p.readVolumes !== undefined) {
-                obj.progressVolumes = p.readVolumes
-            }
-        }
-        return obj
-    }
-    return val
-}
-
 //for when creating a log of a searched media (no mediaId cus its not in db yet)
-export const searchLogSchema = z.preprocess(
-    normalizeLogKeys,
-    z.object({ 
-        status: statusSchema,
-        rating: ratingSchema,
-        notes: notesSchema,
-        startedAt: dateInputSchema.optional(),
-        finishedAt: dateInputSchema.optional(),
-        progress: progressSchema,
-        progressEpisodes: progressEpisodesSchema,
-        progressChapters: progressChaptersSchema,
-        progressVolumes: progressVolumesSchema,
-        tags: tagsSchema,
-    }).superRefine(validateLogDateConstraints)
-)
+export const searchLogSchema = z.object({
+    title: titleSchema,
+    status: statusSchema,
+    rating: ratingSchema,
+    notes: notesSchema,
+    tags: tagsSchema,
+})
 
-export const createLogSchema = z.preprocess(
-    normalizeLogKeys,
-    z.object({
-        mediaId: mediaIdSchema,
-        status: statusSchema,
-        rating: ratingSchema,
-        notes: notesSchema,
-        startedAt: dateInputSchema.optional(),
-        finishedAt: dateInputSchema.optional(),
-        progress: progressSchema,
-        progressEpisodes: progressEpisodesSchema,
-        progressChapters: progressChaptersSchema,
-        progressVolumes: progressVolumesSchema,
-        tags: tagsSchema,
-    }).superRefine(validateLogDateConstraints)
-)
+export const createLogSchema = z.object({
+    mediaId: mediaIdSchema,
+    title: titleSchema,
+    status: statusSchema,
+    rating: ratingSchema,
+    notes: notesSchema,
+    tags: tagsSchema,
+    entry: entryInputSchema.optional(),
+})
 
-export const updateLogSchema = z.preprocess(
-    normalizeLogKeys,
-    z.object({
-        status: updateStatusSchema,
-        rating: updateRatingSchema,
-        notes: updateNotesSchema,
-        startedAt: dateInputSchema.optional(),
-        finishedAt: dateInputSchema.optional(),
-        progress: progressSchema,
-        progressEpisodes: progressEpisodesSchema,
-        progressChapters: progressChaptersSchema,
-        progressVolumes: progressVolumesSchema,
-        tags: tagsSchema,
-    }).superRefine(validateLogDateConstraints)
-)
+export const updateLogSchema = z.object({
+    title: titleSchema,
+    status: updateStatusSchema,
+    rating: updateRatingSchema,
+    notes: updateNotesSchema,
+    tags: tagsSchema,
+})
 
 // schema for deletion (optional confirm flag)
 export const deleteLogSchema = z.object({

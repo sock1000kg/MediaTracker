@@ -10,6 +10,7 @@ import {
     preferencesPatchSchema, preferencesSchema, readPreferences, updateProfileSchema,
 } from "@/schemas/userSchemas.js"
 import * as repo from "@/repositories/userRepository.js"
+import { displayTitle, sortEntriesNewestFirst } from "@/services/logEntries.js"
 
 type MediaLike = {
     title: string; creator: string | null; year: number | null; provider: string | null; providerId: string | null
@@ -21,6 +22,10 @@ const mediaJson = (m: MediaLike) => ({
     provider: m.provider, providerId: m.providerId, description: m.description, imageUrl: m.imageUrl,
     details: m.details, subtype: m.subtype ?? null, releaseDate: m.releaseDate ?? null,
 })
+
+function parseEdition(value: unknown): { title?: string; format?: string; language?: string } | null {
+    return value && typeof value === "object" && !Array.isArray(value) ? value as { title?: string; format?: string; language?: string } : null
+}
 
 export class UserService {
     async getMe(userId: string) {
@@ -83,8 +88,8 @@ export class UserService {
         const disposition = (ext: string) => attachmentHeader(`${base}.${ext}`, `${realBase}.${ext}`)
 
         if (format === "csv") {
-            const header = ["title", "creator", "year", "type", "provider", "provider_id", "status", "rating", "notes", "logged_at", "started_at", "finished_at", "categories", "tags", "collections", "url"]
-            const rows = data.logs.map((l) => {
+            const header = ["title", "creator", "year", "type", "provider", "provider_id", "status", "rating", "notes", "logged_at", "log_title", "display_title", "entry_started_at", "entry_finished_at", "entry_note", "edition_title", "edition_format", "edition_language", "categories", "tags", "collections", "url"]
+            const rows = data.logs.flatMap((l) => {
                 const details = (l.media.details && typeof l.media.details === "object" ? l.media.details : {}) as Record<string, unknown>
                 const mediaGenres = (l.media as { genres?: string[] }).genres
                 const cats = Array.isArray(mediaGenres) && mediaGenres.length > 0
@@ -96,14 +101,24 @@ export class UserService {
                 const rawCols = logObj.collectionItems ?? []
                 const colsStr = rawCols.map((c) => c.collection?.name ?? "").filter(Boolean).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })).join("; ")
                 const url = typeof details.url === "string" ? details.url : ""
-                return [
-                    l.media.title, l.media.creator, l.media.year, l.media.mediaType?.name ?? null,
-                    l.media.provider, l.media.providerId, l.status, l.rating, l.notes,
-                    l.logged_at.toISOString(),
-                    l.started_at ? l.started_at.toISOString() : null,
-                    l.finished_at ? l.finished_at.toISOString() : null,
-                    cats, tagsStr, colsStr, url,
-                ]
+                const shown = displayTitle(l, l.media.title)
+                const entries = sortEntriesNewestFirst(l.entries)
+                // One row per entry with the log's fields repeated; a log without entries is one row with empty entry columns
+                const perEntry: (typeof entries[number] | null)[] = entries.length > 0 ? entries : [null]
+                return perEntry.map((e) => {
+                    const ed = e ? parseEdition(e.edition) : null
+                    return [
+                        l.media.title, l.media.creator, l.media.year, l.media.mediaType?.name ?? null,
+                        l.media.provider, l.media.providerId, l.status, l.rating, l.notes,
+                        l.logged_at.toISOString(),
+                        l.title, shown,
+                        e?.startedAt ? e.startedAt.toISOString().slice(0, 10) : null,
+                        e?.finishedAt ? e.finishedAt.toISOString().slice(0, 10) : null,
+                        e?.note ?? null,
+                        ed?.title ?? null, ed?.format ?? null, ed?.language ?? null,
+                        cats, tagsStr, colsStr, url,
+                    ]
+                })
             })
             return { body: toCsv([header, ...rows]), contentType: "text/csv; charset=utf-8", filename: `${base}.csv`, disposition: disposition("csv") }
         }
@@ -133,9 +148,18 @@ export class UserService {
                     status: l.status,
                     rating: l.rating,
                     notes: l.notes,
-                    started_at: l.started_at,
-                    finished_at: l.finished_at,
+                    title: l.title,
+                    displayTitle: displayTitle(l, l.media.title),
                     logged_at: l.logged_at,
+                    entries: sortEntriesNewestFirst(l.entries).map((entry) => ({
+                        startedAt: entry.startedAt,
+                        finishedAt: entry.finishedAt,
+                        progressEpisodes: entry.progressEpisodes,
+                        progressChapters: entry.progressChapters,
+                        progressVolumes: entry.progressVolumes,
+                        note: entry.note,
+                        edition: parseEdition(entry.edition),
+                    })),
                     tags: tagNames,
                     media: mediaJson(l.media),
                 }

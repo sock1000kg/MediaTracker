@@ -2,6 +2,7 @@ import prisma from "@/prismaClient.js"
 import { Prisma } from "@/db.js"
 import { findUserByUsername } from "@/repositories/authRepository.js"
 import { findMediaTypeForUserOrGlobal } from "@/repositories/mediaTypeRepository.js"
+import { compactEdition } from "@/schemas/entrySchemas.js"
 import { GoodReadsRow, goodreadsRowSchema } from "@/schemas/imports/goodReadsSchemas.js"
 import { AppError } from "@/api/domain/error.js"
 import { validateSchema, parseImportDate, toDayPrecision } from "@/utilities.js"
@@ -131,10 +132,16 @@ export class GoodreadsImportService {
                         rating: rating100,
                         notes: record['My Review'] || "",
                         loggedAt: importedLogDate(record),
-                        startedAt: null,
-                        finishedAt: toDayPrecision(record['Date Read']),
                         tags: [],
                     },
+                    // One read, finished on Date Read (Goodreads has no start date). Read Count has no dates, so it adds nothing.
+                    entries: [{
+                        finishedAt: toDayPrecision(record['Date Read']),
+                        edition: compactEdition({
+                            title: record['Title'].slice(0, 300),
+                            ...(record['Binding'] ? { format: record['Binding'].trim().slice(0, 60) } : {}),
+                        }),
+                    }],
                 })
             } catch (error: unknown) {
                 let reason = "Invalid data format"
@@ -173,7 +180,7 @@ export class GoodreadsImportService {
             },
             computeGapFill: (media, log, item) => {
                 let filledGap = false
-                const logUpdates: { rating?: number; finished_at?: Date } = {}
+                const logUpdates: { rating?: number } = {}
                 let mediaPatch: Record<string, Prisma.InputJsonValue | null> | undefined
 
                 const existingDetails = (media.details && typeof media.details === "object" && !Array.isArray(media.details))
@@ -188,14 +195,6 @@ export class GoodreadsImportService {
                 if (!hasPageCount && csvPageCount) {
                     mediaPatch = { pageCount: csvPageCount }
                     filledGap = true
-                }
-
-                const parsedFinishedAt = item.logData.finishedAt
-                if (log.finished_at === null && parsedFinishedAt !== null) {
-                    if (!log.started_at || parsedFinishedAt.getTime() >= log.started_at.getTime()) {
-                        logUpdates.finished_at = parsedFinishedAt
-                        filledGap = true
-                    }
                 }
 
                 if (log.rating === null && item.logData.rating !== null) {

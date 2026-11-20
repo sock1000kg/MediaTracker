@@ -14,10 +14,12 @@ interface LogActionsProps {
   log: Log
   onEdit: (log: Log) => void
   onDelete: (log: Log) => void
+  /** Opens the edit dialog on a new entry. Hidden when a page can't do it. */
+  onAddEntry?: (log: Log) => void
   extraMenuItems?: React.ReactNode
 }
 
-export function LogActions({ log, onEdit, onDelete, extraMenuItems }: LogActionsProps) {
+export function LogActions({ log, onEdit, onDelete, onAddEntry, extraMenuItems }: LogActionsProps) {
   const [collectionDialogOpen, setCollectionDialogOpen] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [errorToast, setErrorToast] = useState<string | null>(null)
@@ -81,6 +83,7 @@ export function LogActions({ log, onEdit, onDelete, extraMenuItems }: LogActions
               )}
             </DropdownMenuItem>
           )}
+          {onAddEntry && <DropdownMenuItem onSelect={() => onAddEntry(log)}>Add entry</DropdownMenuItem>}
           <DropdownMenuItem onSelect={() => onEdit(log)}>Edit log</DropdownMenuItem>
           <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => onDelete(log)}>Delete log</DropdownMenuItem>
         </DropdownMenuContent>

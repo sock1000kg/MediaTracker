@@ -94,9 +94,10 @@ describe("Demo Media Seeding (Integration)", () => {
         }
 
         // Verify dates (finished >= started)
-        for (const l of fixtureLogs) {
-            if (l.started_at && l.finished_at) {
-                expect(l.finished_at.getTime()).toBeGreaterThanOrEqual(l.started_at.getTime())
+        const entries = await prisma.logEntry.findMany({ where: { log: { userId: demoUserId } } })
+        for (const e of entries) {
+            if (e.startedAt && e.finishedAt) {
+                expect(e.finishedAt.getTime()).toBeGreaterThanOrEqual(e.startedAt.getTime())
             }
         }
 

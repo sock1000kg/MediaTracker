@@ -27,6 +27,7 @@ import { DataControls } from "@/components/ui/DataControls"
 import { useDataFilter } from "@/hooks/useDataFilter"
 import { AVAILABLE_SORT_FIELDS_LOGS, type SortCriterion, type SortField } from "@/types/sort"
 import type { DialogName, Log } from "@/types/mainTypes"
+import { logDateOf } from "@/lib/logEntries"
 import { RATING_BUCKETS, getCategories, ratingBucket, readStoredString, sourceLabel, writeStoredString } from "@/lib/utils"
 
 const VIEWS = ["list", "grid"] as const
@@ -36,10 +37,10 @@ const GROUPS = ["month", "type", "none"] as const
 //Helper function for the filters hook
 const getLogSortValue = (log: Log, field: SortField) => {
   switch (field) {
-      case "title": return log.media.title
+      case "title": return log.displayTitle || log.media.title
       case "creator": return log.media.creator
       case "rating": return log.rating ?? null // missing ratings sort last in both directions
-      case "date": return new Date(log.logged_at).getTime()
+      case "date": return new Date(logDateOf(log)).getTime()
       case "pageCount": return Number((log.media.details as Record<string, unknown> | undefined)?.pageCount ?? 0)
       case "categories": {
           const cats = log.media.genres ?? (log.media.details as Record<string, unknown> | undefined)?.categories
@@ -59,6 +60,8 @@ export default function LogsSection() {
   const [loadingLine] = useState(() => pickLoadingLine())
   const [openDialog, setOpenDialog] = useState<DialogName>(null)
   const [targetLog, setTargetLog] = useState<Log | null>(null)
+  // "Add entry" in a log's menu opens the edit dialog with the entry editor already open
+  const [startAdding, setStartAdding] = useState(false)
   
   // View and grouping are purely visual, remembered per device
   const [view, setViewState] = useState<LogView>(() => readStoredString("logs.view", VIEWS, "list"))
@@ -229,6 +232,13 @@ export default function LogsSection() {
   }
 
   const handleEditClick = (log: Log) => {
+    setStartAdding(false)
+    setTargetLog(log)
+    setOpenDialog("logForm")
+  }
+
+  const handleAddEntryClick = (log: Log) => {
+    setStartAdding(true)
     setTargetLog(log)
     setOpenDialog("logForm")
   }
@@ -250,8 +260,8 @@ export default function LogsSection() {
     setFormData: React.Dispatch<React.SetStateAction<Partial<Log>>>
   ) => {
     if (!targetLog) return null
-    return <LogForm formData={formData} setFormData={setFormData} targetMedia={targetLog.media}/>
-  }, [targetLog])
+    return <LogForm formData={formData} setFormData={setFormData} targetMedia={targetLog.media} startAdding={startAdding} />
+  }, [targetLog, startAdding])
 
   return (
     <div className="relative isolate flex flex-col h-full overflow-hidden">
@@ -339,13 +349,13 @@ export default function LogsSection() {
                   {view === "list" ? (
                     <ul ref={reveal.listRef(group.key)} className="flex flex-col gap-3">
                       {visible.map((log) => (
-                        <LogRow key={log.id} log={log} onEdit={handleEditClick} onDelete={handleDeleteClick} onTagClick={handleTagClick} />
+                        <LogRow key={log.id} log={log} onEdit={handleEditClick} onDelete={handleDeleteClick} onTagClick={handleTagClick} onAddEntry={handleAddEntryClick} />
                       ))}
                     </ul>
                   ) : (
                     <ul ref={reveal.listRef(group.key)} className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-x-5 gap-y-7">
                       {visible.map((log) => (
-                        <LogTile key={log.id} log={log} onEdit={handleEditClick} onDelete={handleDeleteClick} onTagClick={handleTagClick} />
+                        <LogTile key={log.id} log={log} onEdit={handleEditClick} onDelete={handleDeleteClick} onTagClick={handleTagClick} onAddEntry={handleAddEntryClick} />
                       ))}
                     </ul>
                   )}

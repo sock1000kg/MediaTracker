@@ -27,8 +27,7 @@ function log(o: Partial<{
     status: o.status === undefined ? "completed" : o.status,
     rating: o.rating === undefined ? null : o.rating,
     logged_at: o.date ?? at(2026, 11),
-    started_at: o.started_at,
-    finished_at: o.finished_at,
+    entries: o.started_at || o.finished_at ? [{ startedAt: o.started_at, finishedAt: o.finished_at }] : undefined,
     tags: o.tags?.map((t, idx) => ({ id: t.id ?? String(idx + 1), name: t.name })),
     media: {
       id, title: o.title ?? `t${id}`, creator: o.creator ?? null,
@@ -42,7 +41,7 @@ function log(o: Partial<{
 const NOW = new Date(2026, 10, 13, 12) // 13 Nov 2026
 
 describe("dateOf / date basis", () => {
-  test("uses finished_at when present, otherwise logged_at", () => {
+  test("uses the entry finish date when present, otherwise logged_at", () => {
     const finishedLog = log({ date: at(2026, 11), finished_at: at(2026, 10, 5) })
     const unfinishedLog = log({ date: at(2026, 11) })
     expect(dateOf(finishedLog)?.toISOString()).toBe(new Date(at(2026, 10, 5)).toISOString())
@@ -355,5 +354,50 @@ describe("filterByType", () => {
       media: { id: "999", title: "No Type", mediaType: null },
     }
     expect(filterByType([l1, l2], "Unknown")).toEqual([l2])
+  })
+})
+
+describe("entries: activity counts entries, ratings count logs", () => {
+  const twoReads = (): StatLog => ({
+    ...log({ rating: 80, type: "movie" }),
+    entries: [
+      { startedAt: "2026-03-01T00:00:00Z", finishedAt: "2026-03-02T00:00:00Z" },
+      { startedAt: "2026-05-10T00:00:00Z", finishedAt: "2026-05-11T00:00:00Z" },
+    ],
+  })
+
+  test("two entries of one log count 2 in perMonth, once in avgRating and the rating histogram", () => {
+    const l = twoReads()
+    const buckets = perMonth([l], { mode: "year", year: 2026 }, NOW)
+    expect(buckets.find((b) => b.key === "2026-03")?.total).toBe(1)
+    expect(buckets.find((b) => b.key === "2026-05")?.total).toBe(1)
+    expect(buckets.reduce((n, b) => n + b.total, 0)).toBe(2)
+
+    const s = summary([l], { mode: "year", year: 2026 }, NOW)
+    expect(s.total).toBe(2) // finished entries
+    expect(s.rated).toBe(1)
+    expect(s.avgRating).toBe(80)
+    const hist = ratingHistogram([l])
+    expect(hist.buckets.reduce((n, b) => n + b.count, 0)).toBe(1)
+    expect(byType([l])).toEqual([{ type: "movie", count: 1, avgRating: 80 }])
+  })
+
+  test("a log is ranged by its newest entry; perYear and perDay count every entry", () => {
+    const l = twoReads()
+    expect(filterByRange([l], { mode: "month", year: 2026, month: 5 }, NOW)).toHaveLength(1)
+    expect(filterByRange([l], { mode: "month", year: 2026, month: 3 }, NOW)).toHaveLength(0)
+    expect(perYear([l], NOW).find((b) => b.key === "2026")?.total).toBe(2)
+    expect(perDay([l], 2026, 3).reduce((n, b) => n + b.total, 0)).toBe(1)
+  })
+
+  test("summary.total counts only finished entries inside the range", () => {
+    const l: StatLog = { ...log({}), entries: [{ startedAt: "2026-03-01T00:00:00Z", finishedAt: "2026-03-02T00:00:00Z" }, { startedAt: "2025-01-01T00:00:00Z" }] }
+    expect(summary([l]).total).toBe(1)
+    expect(summary([l], { mode: "year", year: 2025 }, NOW).total).toBe(0)
+  })
+
+  test("a log without entries counts once for activity, by logged_at", () => {
+    const l = log({ date: at(2026, 4, 5) })
+    expect(perMonth([l], { mode: "year", year: 2026 }, NOW).find((b) => b.key === "2026-04")?.total).toBe(1)
   })
 })

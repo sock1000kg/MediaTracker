@@ -21,6 +21,7 @@ import {
     updateMediaSchema,
     deleteMediaSchema,
 } from "@/schemas/mediaSchemas.js" 
+import { rejectEntryKeys } from "@/schemas/logSchemas.js"
 import { createMediaAndLogSchema } from "@/schemas/search/searchSchemas.js"
 import { AppError } from "@/api/domain/error.js"
 
@@ -176,7 +177,18 @@ export class MediaService {
     }
 
     async createMediaAndLog(userId: string, payload: unknown) {
-        const { mediaData, logData, parent } = validateSchema(createMediaAndLogSchema, payload)
+        const body = typeof payload === "object" && payload !== null ? (payload as Record<string, unknown>) : {}
+        rejectEntryKeys(body.logData)
+        const { mediaData, logData: parsedLog, entry, parent } = validateSchema(createMediaAndLogSchema, payload)
+        // The schema fills unsent fields with null; for an existing log only the fields that were sent may change
+        const sent = new Set(Object.keys((body.logData ?? {}) as Record<string, unknown>))
+        const logData = {
+            title: sent.has("title") ? parsedLog.title : undefined,
+            status: sent.has("status") ? parsedLog.status : undefined,
+            rating: sent.has("rating") ? parsedLog.rating : undefined,
+            notes: sent.has("notes") ? parsedLog.notes : undefined,
+            tags: parsedLog.tags,
+        }
         const { parentMediaId } = await enrichMusicOnLog(mediaData, parent ?? null)
 
         // TMDB search results carry no director/runtime: fetch them once, when first logged
@@ -193,6 +205,7 @@ export class MediaService {
                         mediaTypeName: mediaData.mediaType,
                         mediaData,
                         logData,
+                        entry,
                         parent: parent ?? null,
                         parentMediaId,
                     },

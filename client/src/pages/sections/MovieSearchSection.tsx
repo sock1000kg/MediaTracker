@@ -29,7 +29,7 @@ export function MovieSearchSection() {
     fetchPage: (page) => searchMovies(query, page, { year: year ? Number(year) : undefined }),
     hideLogged,
   })
-  const { openLog, dialog } = useSearchLogging<MovieResult>(search.logs)
+  const { openLog, dialog, entryCountFor } = useSearchLogging<MovieResult>(search.logs)
 
   const handleSearch = () => {
     if (!inputValue.trim()) return
@@ -57,6 +57,8 @@ export function MovieSearchSection() {
           kindOf={() => "movie"}
           isLogged={(item) => isResultLogged(search.logs, item)}
           onLog={(item) => openLog(item)}
+          entryCount={(item) => entryCountFor(item)}
+          onAddEntry={(item) => openLog(item, { addEntry: true })}
         />
       </SearchResults>
 

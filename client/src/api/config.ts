@@ -4,6 +4,10 @@ export interface PublicLimits {
   notes: {
     maxLength: number
   }
+  logs: {
+    maxEntriesPerLog: number
+    entryNoteMaxLength: number
+  }
   tags: {
     maxLength: number
     maxPerLog: number

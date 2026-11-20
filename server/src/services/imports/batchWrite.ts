@@ -4,6 +4,8 @@ import { mergeMediaDetails, findMediaByExternalIds, ExternalIdKey } from "@/repo
 import { validateDetails } from "@/schemas/detailsSchemas.js"
 import { tagKey, normalizeTagName, sanitizeNotes, sanitizeStatus } from "@/utilities.js"
 import { ImportResult } from "@/api/domain/imports.js"
+import { LIMITS } from "@/config/limits.js"
+import { planEntries, EntryPlan, ImportEntry, PoolEntry } from "./entryPlan.js"
 import { makeProgressReporter, type ImportProgressCallback } from "./goodreadsImportService.js"
 import {
     isJunkGenre,
@@ -52,14 +54,10 @@ export interface BatchRowItem {
         rating: number | null
         notes: string | null
         loggedAt: Date | null
-        startedAt: Date | null
-        finishedAt: Date | null
         tags: string[]
-        progress?: Prisma.InputJsonValue | null
-        progressEpisodes?: number | null
-        progressChapters?: number | null
-        progressVolumes?: number | null
     }
+    /** The dated experiences this row brings; matched against the log's existing entries (see planEntries). */
+    entries?: ImportEntry[]
     idMal?: number | null
     externalIds?: { provider: string; id: string }[]
     kind?: string | null
@@ -73,14 +71,8 @@ export interface BatchRowItem {
 export interface GapFillResult {
     logUpdates?: {
         rating?: number | null
-        finished_at?: Date | null
-        started_at?: Date | null
         notes?: string | null
         status?: string | null
-        progressEpisodes?: number | null
-        progressChapters?: number | null
-        progressVolumes?: number | null
-        progress?: Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput
     }
     mediaPatch?: Record<string, Prisma.InputJsonValue | null>
     newTags?: string[]
@@ -99,6 +91,20 @@ interface ClassifiedRow {
     mediaId?: string
     logId?: string
     gapFill?: GapFillResult
+    entryPlan?: EntryPlan
+}
+
+function entryRow(logId: string, entry: ImportEntry) {
+    return {
+        logId,
+        startedAt: entry.startedAt ?? null,
+        finishedAt: entry.finishedAt ?? null,
+        note: entry.note ?? null,
+        edition: entry.edition ? (entry.edition as Prisma.InputJsonValue) : Prisma.JsonNull,
+        progressEpisodes: entry.progressEpisodes ?? null,
+        progressChapters: entry.progressChapters ?? null,
+        progressVolumes: entry.progressVolumes ?? null,
+    }
 }
 
 export async function executeBatchImport(options: {
@@ -205,6 +211,17 @@ export async function executeBatchImport(options: {
         logByMediaId.set(l.mediaId, l)
     }
 
+    // Pre-load existing entries, so a re-import fills them instead of adding duplicates
+    const existingEntries = await prisma.logEntry.findMany({
+        where: { logId: { in: existingLogs.map(l => l.id) } },
+    })
+    const entriesByLogId = new Map<string, PoolEntry[]>()
+    for (const e of existingEntries) {
+        const list = entriesByLogId.get(e.logId) ?? []
+        list.push(e as PoolEntry)
+        entriesByLogId.set(e.logId, list)
+    }
+
     // Pre-load existing log tags
     const existingLogTags = await prisma.logTag.findMany({
         where: { logId: { in: existingLogs.map(l => l.id) } },
@@ -278,13 +295,17 @@ export async function executeBatchImport(options: {
         // Both media and log exist -> compute gap fill
         const currentTags = tagsByLogId.get(matchedLog.id) ?? new Set()
         const gapFill = computeGapFill(matchedMedia, matchedLog, item, currentTags)
-        if (gapFill) {
+        const pool = entriesByLogId.get(matchedLog.id) ?? []
+        entriesByLogId.set(matchedLog.id, pool)
+        const entryPlan = planEntries(pool, item.entries ?? [], LIMITS.logs.maxEntriesPerLog - pool.length)
+        if (gapFill || entryPlan.creates.length > 0 || entryPlan.updates.length > 0) {
             classifiedRows.push({
                 item,
                 action: "gap_fill",
                 mediaId: matchedMedia.id,
                 logId: matchedLog.id,
-                gapFill,
+                gapFill: gapFill ?? {},
+                entryPlan,
             })
         } else {
             classifiedRows.push({
@@ -309,10 +330,11 @@ export async function executeBatchImport(options: {
         const chunk = classifiedRows.slice(i, i + BATCH_CHUNK_SIZE)
         const chunkRowsNeedingMedia = chunk.filter(r => r.action === "new_media_and_log")
         const chunkRowsNeedingLog = chunk.filter(r => r.action === "new_media_and_log" || r.action === "existing_media_new_log")
-        const chunkGapFills = chunk.filter(r => r.action === "gap_fill" && r.gapFill)
+        const chunkGapFills = chunk.filter(r => r.action === "gap_fill")
         const chunkSkipped = chunk.filter(r => r.action === "skipped")
 
         try {
+            let entriesAdded = 0
             const tally = await prisma.$transaction(async (tx) => {
                 // a. Insert new Media
                 if (chunkRowsNeedingMedia.length > 0) {
@@ -645,25 +667,14 @@ export async function executeBatchImport(options: {
                 const validRowsNeedingLog = chunkRowsNeedingLog.filter(r => r.mediaId)
                 if (validRowsNeedingLog.length > 0) {
                     await tx.userLogs.createMany({
-                        data: validRowsNeedingLog.map(r => {
-                            const rawProg = r.item.logData.progress as Record<string, unknown> | null | undefined
-                            const ep = r.item.logData.progressEpisodes ?? (rawProg?.watchedEpisodes != null ? Number(rawProg.watchedEpisodes) : null)
-                            const ch = r.item.logData.progressChapters ?? (rawProg?.readChapters != null ? Number(rawProg.readChapters) : null)
-                            const vol = r.item.logData.progressVolumes ?? (rawProg?.readVolumes != null ? Number(rawProg.readVolumes) : null)
-                            return {
-                                userId,
-                                mediaId: r.mediaId!,
-                                status: toLogStatus(sanitizeStatus(r.item.logData.status)),
-                                rating: r.item.logData.rating,
-                                notes: sanitizeNotes(r.item.logData.notes),
-                                progressEpisodes: ep,
-                                progressChapters: ch,
-                                progressVolumes: vol,
-                                logged_at: r.item.logData.loggedAt ?? new Date(),
-                                started_at: r.item.logData.startedAt,
-                                finished_at: r.item.logData.finishedAt,
-                            }
-                        }),
+                        data: validRowsNeedingLog.map(r => ({
+                            userId,
+                            mediaId: r.mediaId!,
+                            status: toLogStatus(sanitizeStatus(r.item.logData.status)),
+                            rating: r.item.logData.rating,
+                            notes: sanitizeNotes(r.item.logData.notes),
+                            logged_at: r.item.logData.loggedAt ?? new Date(),
+                        })),
                         skipDuplicates: true,
                     })
 
@@ -687,13 +698,32 @@ export async function executeBatchImport(options: {
                             r.logId = lid
                         }
                     }
+
+                    // A new log's entries; skipDuplicates made it a no-op for a log that already existed, so only plan for logs with none
+                    const logsWithEntries = new Set(
+                        (await tx.logEntry.findMany({
+                            where: { logId: { in: Array.from(logMap.values()) } },
+                            select: { logId: true },
+                        })).map(e => e.logId)
+                    )
+                    const newEntryRows: ReturnType<typeof entryRow>[] = []
+                    for (const r of validRowsNeedingLog) {
+                        if (!r.logId || logsWithEntries.has(r.logId)) continue
+                        const plan = planEntries([], r.item.entries ?? [], LIMITS.logs.maxEntriesPerLog)
+                        r.entryPlan = plan
+                        for (const e of plan.creates) newEntryRows.push(entryRow(r.logId, e))
+                    }
+                    if (newEntryRows.length > 0) {
+                        await tx.logEntry.createMany({ data: newEntryRows })
+                        entriesAdded += newEntryRows.length
+                    }
                 }
 
                 // c. Updates for gap-fill rows
                 for (const r of chunkGapFills) {
                     if (!r.logId) continue
                     if (r.gapFill?.logUpdates && Object.keys(r.gapFill.logUpdates).length > 0) {
-                        const { progress: _unusedProg, status: _rawStatus, ...restLogUpdates } = r.gapFill.logUpdates
+                        const { status: _rawStatus, ...restLogUpdates } = r.gapFill.logUpdates
                         await tx.userLogs.update({
                             where: { id: r.logId },
                             data: {
@@ -709,6 +739,19 @@ export async function executeBatchImport(options: {
                     }
                     if (r.mediaId && r.gapFill?.mediaPatch && Object.keys(r.gapFill.mediaPatch).length > 0) {
                         await mergeMediaDetails(r.mediaId, r.gapFill.mediaPatch, tx)
+                    }
+                    if (r.entryPlan) {
+                        for (const u of r.entryPlan.updates) {
+                            const { edition, ...rest } = u.data
+                            await tx.logEntry.update({
+                                where: { id: u.id },
+                                data: { ...rest, ...(edition ? { edition: edition as Prisma.InputJsonValue } : {}) },
+                            })
+                        }
+                        if (r.entryPlan.creates.length > 0) {
+                            await tx.logEntry.createMany({ data: r.entryPlan.creates.map(e => entryRow(r.logId!, e)) })
+                            entriesAdded += r.entryPlan.creates.length
+                        }
                     }
                 }
 
@@ -777,11 +820,12 @@ export async function executeBatchImport(options: {
                     }
                 }
 
-                return { imported: validRowsNeedingLog.length, updated: chunkGapFills.length }
+                return { imported: validRowsNeedingLog.length, updated: chunkGapFills.length, entriesAdded }
             })
             // Counted only after the chunk has committed
             results.imported += tally.imported
             results.updated += tally.updated
+            results.entriesAdded = (results.entriesAdded ?? 0) + tally.entriesAdded
             results.skipped += chunkSkipped.length
         } catch (error: unknown) {
             const reason = error instanceof Error ? error.message : "Chunk transaction failed"

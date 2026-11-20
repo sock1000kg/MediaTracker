@@ -1,4 +1,5 @@
 import type { Media } from "@/types/mainTypes"
+import { newestEntry, type EntryLike } from "@/lib/logEntries"
 import type { AnimeResult } from "@/types/search"
 import { formatRuntime, formatMovieScore } from "@/lib/movieFormat"
 import { formatGamePlatforms, formatMetacritic, formatRawgScore } from "@/lib/gameFormat"
@@ -34,7 +35,7 @@ function animeBranch(
   meta: Meta,
   subtype: "anime" | "manga",
   source?: string,
-  progress?: { progressEpisodes?: number | null; progressChapters?: number | null; progressVolumes?: number | null; progress?: unknown } | null
+  entryProgress?: { progressEpisodes?: number | null; progressChapters?: number | null; progressVolumes?: number | null; progress?: unknown } | null
 ): Branch {
   const cleanEpisodes = num(meta.episodeCount ?? meta["episodes"])
   const cleanChapters = num(meta.chapterCount ?? meta["chapters"])
@@ -75,8 +76,8 @@ function animeBranch(
   const parts: string[] = []
   if (clean.format) parts.push(clean.format)
   if (subtype === "anime") {
-    const rawProg = progress?.progress as Record<string, unknown> | null | undefined
-    const watched = num(progress?.progressEpisodes ?? rawProg?.watchedEpisodes ?? meta["watchedEpisodes"])
+    const rawProg = entryProgress?.progress as Record<string, unknown> | null | undefined
+    const watched = num(entryProgress?.progressEpisodes ?? rawProg?.watchedEpisodes ?? meta["watchedEpisodes"])
     if (watched != null && watched > 0) {
       parts.push(clean.episodeCount ? `${watched}/${clean.episodeCount} eps` : `${watched} eps`)
     } else if (clean.episodeCount) {
@@ -84,9 +85,9 @@ function animeBranch(
     }
     if (epMinutes != null && epMinutes > 0) parts.push(`${epMinutes} min/ep`)
   } else {
-    const rawProg = progress?.progress as Record<string, unknown> | null | undefined
-    const readCh = num(progress?.progressChapters ?? rawProg?.readChapters ?? meta["readChapters"])
-    const readVol = num(progress?.progressVolumes ?? rawProg?.readVolumes ?? meta["readVolumes"])
+    const rawProg = entryProgress?.progress as Record<string, unknown> | null | undefined
+    const readCh = num(entryProgress?.progressChapters ?? rawProg?.readChapters ?? meta["readChapters"])
+    const readVol = num(entryProgress?.progressVolumes ?? rawProg?.readVolumes ?? meta["readVolumes"])
     const ch = readCh != null ? (clean.chapterCount ? `${readCh}/${clean.chapterCount} ch` : `${readCh} ch`) : (clean.chapterCount ? `${clean.chapterCount} ch` : null)
     const vol = readVol != null ? (clean.volumeCount ? `${readVol}/${clean.volumeCount} vol` : `${readVol} vol`) : (clean.volumeCount ? `${clean.volumeCount} vol` : null)
     const both = [ch, vol].filter(Boolean).join(" · ")
@@ -244,14 +245,14 @@ function branchFor(
   meta: Meta,
   subtype?: string | null,
   source?: string,
-  progress?: { progressEpisodes?: number | null; progressChapters?: number | null; progressVolumes?: number | null; progress?: unknown } | null,
+  entryProgress?: { progressEpisodes?: number | null; progressChapters?: number | null; progressVolumes?: number | null; progress?: unknown } | null,
   position?: number | null
 ): Branch {
   switch (subtype) {
     case "album": return { parts: ["Album"], used: new Set() }
     case "track": return trackBranch(meta, position)
     case "anime":
-    case "manga": return animeBranch(meta, subtype, source, progress)
+    case "manga": return animeBranch(meta, subtype, source, entryProgress)
     case "movie": return movieBranch(meta)
     case "tv":
     case "show": return tvBranch(meta, position, false)
@@ -285,12 +286,7 @@ export function formatLogDetails(
     mediaType?: { name?: string | null } | string | null
     position?: number | null
   }) | null | undefined,
-  log?: {
-    progressEpisodes?: number | null
-    progressChapters?: number | null
-    progressVolumes?: number | null
-    progress?: unknown
-  } | null
+  log?: { entries?: EntryLike[] | null } | null
 ): string[] {
   try {
     const raw = media?.details
@@ -305,7 +301,9 @@ export function formatLogDetails(
 
     const effectiveMeta: Meta = effectiveSubtype ? { ...meta, subtype: effectiveSubtype } : meta
     if (Object.keys(effectiveMeta).length === 0) return []
-    const { parts, used } = branchFor(effectiveMeta, effectiveSubtype, media?.provider ?? undefined, log, media?.position)
+    // Progress is per entry: the log shows the newest entry's
+    const newest = newestEntry(log?.entries) as { progressEpisodes?: number | null; progressChapters?: number | null; progressVolumes?: number | null } | null
+    const { parts, used } = branchFor(effectiveMeta, effectiveSubtype, media?.provider ?? undefined, newest, media?.position)
     const out = [...parts]
     // Leftover "key: value" text is only for custom media
     if (media?.provider) return out

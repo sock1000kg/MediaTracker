@@ -96,6 +96,9 @@ NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules npx jest --runInBand
 - **Subtypes:** Music tracks and albums, TV shows and seasons are identified by `Media.subtype` (`track`, `album`, `show`, `season`). Media types without subtypes leave `Media.subtype` null.
 - **Bookkeeping timestamps:** Provider fetch and sync attempts use typed columns (`Media.syncedAt`, `Media.syncCheckedAt`, `Media.purgedAt`).
 - **No sparse fact columns:** Never add individual sparse fact columns to `Media` or put IDs/duplicate columns into `Media.details`.
+- **Log entries:** Dates (`startedAt`, `finishedAt`), progress (`progressEpisodes`, `progressChapters`, `progressVolumes`), per-entry notes and `edition` live on `LogEntry`, never on `UserLogs`. A `UserLogs` row represents the user's relationship with one item (status, one rating, review/notes, tags, collections); dated experiences are entries on that log.
+- **Display title & newest entry helpers:** Always use the display title helper (`displayTitle` on the server, `displayTitleOf` on the client) and the newest-entry helper (`newestEntry`, `sortEntriesNewestFirst`) rather than inspecting raw log dates or titles directly.
+- **Never add version-like media:** An item is whatever the provider counts as one item. Never split or join beyond that. Goodreads editions merge into their canonical Open Library work via `mergeMediaInto`.
 
 ---
 

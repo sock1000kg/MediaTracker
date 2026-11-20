@@ -38,6 +38,7 @@ describe("useLimits hook", () => {
     resolvePromise!({
       limits: {
         notes: { maxLength: 99999 },
+        logs: { maxEntriesPerLog: 50, entryNoteMaxLength: 5000 },
         tags: { maxLength: 50, maxPerLog: 30, maxPerUser: 600 },
         collections: {
           nameMaxLength: 90,
@@ -56,6 +57,7 @@ describe("useLimits hook", () => {
     })
 
     expect(result.current.tags.maxLength).toBe(50)
+    expect(result.current.logs).toEqual({ maxEntriesPerLog: 50, entryNoteMaxLength: 5000 })
     expect(result.current.collections.nameMaxLength).toBe(90)
     expect(result.current.imports.maxFileBytes).toBe(25 * 1024 * 1024)
     expect(result.current.search.queryMaxLength).toBe(150)

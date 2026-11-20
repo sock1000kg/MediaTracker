@@ -47,6 +47,7 @@ export async function getExportData(userId: string, client: DbClient = prisma) {
                 media: { include: { ...MEDIA_INCLUDE } },
                 tags: { include: { tag: true } },
                 collectionItems: { include: { collection: true } },
+                entries: true,
             },
             orderBy: [{ logged_at: "asc" }, { id: "asc" }],
         }),

@@ -148,13 +148,17 @@ describe("Media Import Routes (MyAnimeList)", () => {
         // Verify log in DB
         const log = await prisma.userLogs.findFirst({
             where: { userId, mediaId: media!.id },
-            include: { tags: { include: { tag: true } } },
+            include: { tags: { include: { tag: true } }, entries: true },
         })
         expect(log).not.toBeNull()
         expect(log!.status).toBe("completed")
         expect(log!.rating).toBe(90) // 9 * 10
         expect(log!.notes).toBe("Incredible journey")
-        expect(log!.finished_at).not.toBeNull()
+        // dates (and progress) land on the log's one entry
+        expect(log!.entries).toHaveLength(1)
+        expect(log!.entries[0].finishedAt).not.toBeNull()
+        expect(log!.entries[0].startedAt?.toISOString().slice(0, 10)).toBe("2024-01-10")
+        expect(log!.entries[0].progressEpisodes).toBe(28)
         expect(log!.tags.map(t => t.tag.name).sort()).toEqual(["fantasy", "masterpiece"].sort())
     })
 
@@ -232,13 +236,17 @@ describe("Media Import Routes (MyAnimeList)", () => {
     })
 
     test("Gap-filling updates null fields and unions tags", async () => {
-        // Clear finished_at and notes on log
+        // Clear the entry's finish date and the log's notes
         const media = await prisma.media.findFirst({
             where: { provider: "anilist", providerId: "anime-5010" },
         })
         await prisma.userLogs.updateMany({
             where: { userId, mediaId: media!.id },
-            data: { finished_at: null, notes: null },
+            data: { notes: null },
+        })
+        await prisma.logEntry.updateMany({
+            where: { log: { userId, mediaId: media!.id } },
+            data: { finishedAt: null },
         })
 
         const xmlWithGaps = `<?xml version="1.0" encoding="UTF-8" ?>
@@ -271,10 +279,12 @@ describe("Media Import Routes (MyAnimeList)", () => {
 
         const log = await prisma.userLogs.findFirst({
             where: { userId, mediaId: media!.id },
-            include: { tags: { include: { tag: true } } },
+            include: { tags: { include: { tag: true } }, entries: true },
         })
         expect(log!.notes).toBe("Filled note")
-        expect(log!.finished_at).not.toBeNull()
+        // a finish date no entry has is a new entry (the match rule); the open one stays
+        expect(log!.entries).toHaveLength(2)
+        expect(log!.entries.some(e => e.finishedAt?.toISOString().slice(0, 10) === "2024-03-25")).toBe(true)
         // Union of ["fantasy", "masterpiece"] and ["fantasy", "adventure"]
         const tagNames = log!.tags.map(t => t.tag.name)
         expect(tagNames).toContain("masterpiece")

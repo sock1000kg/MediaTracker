@@ -33,11 +33,13 @@ function makeLog(opts: {
     status: opts.status === undefined ? "completed" : opts.status,
     rating: null,
     logged_at: opts.logged_at ?? "2026-11-13T12:00:00Z",
-    started_at: opts.started_at,
-    finished_at: opts.finished_at,
-    progressEpisodes: opts.progressEpisodes,
-    progressChapters: opts.progressChapters,
-    progressVolumes: opts.progressVolumes,
+    entries: [{
+      startedAt: opts.started_at,
+      finishedAt: opts.finished_at,
+      progressEpisodes: opts.progressEpisodes,
+      progressChapters: opts.progressChapters,
+      progressVolumes: opts.progressVolumes,
+    }],
     media: {
       id,
       title: opts.title ?? `Title ${id}`,

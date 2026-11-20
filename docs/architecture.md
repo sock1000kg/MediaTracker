@@ -28,11 +28,45 @@ The request flow is **route → controller → service → repository** (`server
   - Media created by hand belongs to its creator (with `provider` and `providerId` strictly null; user-created custom media cannot define providers).
   - External IDs (`MediaExternalId`) are keyed by `(provider, value)` and point strictly to shared `system` media. All deduplication and identity lookups (`findMediaByProviderId`, `findMediaByExternalIds`) resolve exclusively through `MediaExternalId` entries.
 - **MediaType**: built-in types (book, music, anime, manga, movie, tv, game, boardgame) belong to `system`. Users can add their own.
-- **UserLogs**: one log per user per media, with typed `status` enum (`wishlist`, `completed`, `in_progress`, `dropped`), rating (0–100), notes, `logged_at`, optional `started_at` / `finished_at` stored at day precision (noon UTC) so time zones never flip the calendar day, and typed progress columns (`progressEpisodes`, `progressChapters`, `progressVolumes`).
+- **UserLogs**: one log per user per media (`@@unique([userId, mediaId])`), with optional custom `title` (the user's own name for this item), typed `status` enum (`wishlist`, `completed`, `in_progress`, `dropped`), one rating (0–100), review notes, `logged_at`, tags, collection items, and a relation to `LogEntry[]`.
+- **LogEntry**: one dated experience of an item (a read, watch, listen or play). Holds optional `startedAt` / `finishedAt` stored at day precision (noon UTC) so time zones never flip the calendar day, typed progress columns (`progressEpisodes`, `progressChapters`, `progressVolumes`), short per-entry `note`, and strict `edition` JSON (`title`, `format`, `language`).
 - **Tag / LogTag**: personal tags on logs (private per user, unique per user case-insensitively, at most 20 tags per log and 500 per user).
 - **Collection / CollectionItem**: private, ordered lists of logs (owned by User, unique nameKey per user case-insensitively, optional description and ranked flag, at most 200 collections per user and 1000 items per collection; dense positions starting from 0, maintained on additions, removals and reorders).
 
 Deleting a user cascades to everything they own. Shared `system` media is never deleted.
+
+## Log and LogEntry model
+
+- A **Log** is a user's relationship with one item: its status, **one rating**, review (notes), tags, and collections. It stays strictly **one per user per item** (`@@unique([userId, mediaId])`).
+- A **LogEntry** is one dated experience of that item: a read, watch, listen, or play. It holds dates (`startedAt`, `finishedAt`), progress, an optional entry note, and the **edition** (which version you experienced that time: its title, format, and language).
+- Multiple entries represent re-reads, rewatches, replays, or plays. Multiple editions mean multiple entries, each naming its own edition.
+- Limits: maximum 100 entries per log (`LIMITS.logs.maxEntriesPerLog`) and maximum 10,000 characters per entry note (`LIMITS.logs.entryNoteMaxLength`), exposed via `/config`. Exceeding either returns `400`.
+
+### Display title
+
+Everywhere the user's log is shown (Logs page rows and tiles, Edit dialog header, collections, export), the title displayed is the **display title**, resolved by precedence:
+1. The log's own `title` (user-named title for their log: e.g. "The Stranger" while the media is "L'étranger");
+2. The newest entry's `edition.title`;
+3. The media title.
+
+When the display title differs from the media title, the media title shows as a small subtitle. Search results and provider pages maintain the provider's canonical title.
+The newest entry is determined by latest `finishedAt ?? startedAt`, with undated entries sorting last and ties broken by `id` descending (`newestEntry` on server and client).
+
+### Status and entry automation rules
+
+`status` is a user-set field on the log, with three automatic rules:
+- **Status → "in progress"**: when the log has no open entry (no entries exist, or the newest entry is finished), creates a new entry with `startedAt` = today.
+- **Status → "completed"**: while the newest entry is open (`startedAt` is set but `finishedAt` is null), sets that entry's `finishedAt` = today, unless that would precede `startedAt`.
+- **"Add entry"**: creates an entry with `startedAt` = today and sets status to "in progress". If both start and finish dates are supplied at once in the UI, status becomes "completed".
+- `wishlist` and `dropped` never create or close entries on their own.
+
+### Entry match rule on re-import
+
+When re-importing data (Goodreads, MAL, Letterboxd) against an existing log:
+1. An entry whose `finishedAt` matches the same **calendar day** → gap-fills it (note, edition, and progress, only where empty).
+2. The import row has no finish date, and there is an open entry (no `finishedAt`) → gap-fills the newest such open entry.
+3. Otherwise, creates a **new entry**.
+A row with neither dates nor progress creates no entry. The log level gap-fills rating when null, notes when empty, tags as a union, and applies today's status rules.
 
 ## Search providers
 

@@ -1,6 +1,24 @@
 import prisma from "@/prismaClient.js"
 import { DbClient, LogStatus, toLogStatus, fromLogStatus } from "@/db.js"
 import { MEDIA_INCLUDE, formatMedia } from "./mediaFormat.js"
+import { sortEntriesNewestFirst, displayTitle, EntryLike } from "@/services/logEntries.js"
+
+type EntryRow = EntryLike & {
+    logId: string
+    progressEpisodes: number | null // entry
+    progressChapters: number | null // entry
+    progressVolumes: number | null // entry
+    note: string | null
+    created_at: Date
+}
+
+/** What every log read includes. */
+export const LOG_INCLUDE = {
+    media: { include: MEDIA_INCLUDE },
+    tags: { include: { tag: true } },
+    collectionItems: { select: { collectionId: true } },
+    entries: true,
+} as const
 
 export type LogTagItem = { id: string; name: string }
 
@@ -10,9 +28,11 @@ export type ChildSummary = {
 }
 
 export function mapLogWithTags<T extends {
+    title?: string | null
     media?: Record<string, unknown> | null
     tags?: { tag: { id: string; name: string } }[]
     collectionItems?: { collectionId: string }[]
+    entries?: EntryRow[]
 }>(log: T) {
     const rawTags = log.tags ?? []
     const tags: LogTagItem[] = rawTags
@@ -25,22 +45,15 @@ export function mapLogWithTags<T extends {
     delete (copy as { collectionItems?: unknown }).collectionItems
     const rawStatus = (copy as { status?: unknown }).status
     const statusStr = typeof rawStatus === "string" ? fromLogStatus(toLogStatus(rawStatus)) : null
-    const progEp = (copy as { progressEpisodes?: number | null }).progressEpisodes ?? null
-    const progCh = (copy as { progressChapters?: number | null }).progressChapters ?? null
-    const progVol = (copy as { progressVolumes?: number | null }).progressVolumes ?? null
-    const progressObj: Record<string, number> = {}
-    if (progEp != null) progressObj.watchedEpisodes = progEp
-    if (progCh != null) progressObj.readChapters = progCh
-    if (progVol != null) progressObj.readVolumes = progVol
-    const progress = Object.keys(progressObj).length > 0 ? progressObj : null
+    const entries = sortEntriesNewestFirst(log.entries ?? [])
+    const mediaTitle = typeof formattedMedia?.title === "string" ? formattedMedia.title : ""
 
     return {
         ...copy,
         status: statusStr,
-        progressEpisodes: progEp,
-        progressChapters: progCh,
-        progressVolumes: progVol,
-        progress,
+        entries,
+        entryCount: entries.length,
+        displayTitle: displayTitle({ title: log.title, entries }, mediaTitle),
         media: formattedMedia,
         genres: formattedMedia?.genres ?? [],
         creators: formattedMedia?.creators ?? [],
@@ -135,43 +148,19 @@ export async function createLog(
     notes: string | null,
     client: DbClient,
     loggedAt?: Date | null,
-    startedAt?: Date | null,
-    finishedAt?: Date | null,
-    progress?: unknown,
-    progressEpisodes?: number | null,
-    progressChapters?: number | null,
-    progressVolumes?: number | null
+    title?: string | null
 ) {
-    const cleanStatus = toLogStatus(status)
-    let ep = progressEpisodes != null ? Number(progressEpisodes) : null
-    let ch = progressChapters != null ? Number(progressChapters) : null
-    let vol = progressVolumes != null ? Number(progressVolumes) : null
-    if (progress && typeof progress === "object" && !Array.isArray(progress)) {
-        const prog = progress as Record<string, unknown>
-        if (ep == null && prog.watchedEpisodes != null) ep = Number(prog.watchedEpisodes)
-        if (ch == null && prog.readChapters != null) ch = Number(prog.readChapters)
-        if (vol == null && prog.readVolumes != null) vol = Number(prog.readVolumes)
-    }
-
     const log = await client.userLogs.create({
         data: {
             userId,
             mediaId,
-            status: cleanStatus,
+            status: toLogStatus(status),
             rating,
             notes,
-            progressEpisodes: ep,
-            progressChapters: ch,
-            progressVolumes: vol,
+            ...(title ? { title } : {}),
             ...(loggedAt ? { logged_at: loggedAt } : {}),
-            ...(startedAt ? { started_at: startedAt } : {}),
-            ...(finishedAt ? { finished_at: finishedAt } : {}),
         },
-        include: {
-            media: { include: MEDIA_INCLUDE },
-            tags: { include: { tag: true } },
-            collectionItems: { select: { collectionId: true } },
-        },
+        include: LOG_INCLUDE,
     })
     return mapLogWithTags(log)
 }
@@ -185,11 +174,7 @@ export async function getAllLogs(userId: string, client: DbClient = prisma) {
             { logged_at: "desc" },
             { id: "asc" },
         ],
-        include: { 
-            media: { include: MEDIA_INCLUDE },
-            tags: { include: { tag: true } },
-            collectionItems: { select: { collectionId: true } },
-        },
+        include: LOG_INCLUDE,
     })
     const mapped = logs.map(mapLogWithTags)
     return attachChildSummaries(mapped, userId, client)
@@ -203,11 +188,7 @@ export async function findLogOfUserByMediaId(userId: string, mediaId: string, cl
                 mediaId 
             } 
         },
-        include: { 
-            media: { include: MEDIA_INCLUDE },
-            tags: { include: { tag: true } },
-            collectionItems: { select: { collectionId: true } },
-        },
+        include: LOG_INCLUDE,
     })
     if (!log) return null
     const mapped = mapLogWithTags(log)
@@ -218,11 +199,7 @@ export async function findLogOfUserByMediaId(userId: string, mediaId: string, cl
 export async function findLogById(logId: string, client: DbClient = prisma) {
     const log = await client.userLogs.findFirst({ 
         where: { id: logId }, 
-        include: { 
-            media: { include: MEDIA_INCLUDE },
-            tags: { include: { tag: true } },
-            collectionItems: { select: { collectionId: true } },
-        } 
+        include: LOG_INCLUDE 
     })
     if (!log) return null
     const mapped = mapLogWithTags(log)
@@ -236,29 +213,9 @@ export async function updateLog(
     newRating: number | null | undefined, 
     newNotes: string | null | undefined,
     client: DbClient,
-    startedAt?: Date | null,
-    finishedAt?: Date | null,
-    progress?: unknown,
-    progressEpisodes?: number | null,
-    progressChapters?: number | null,
-    progressVolumes?: number | null
+    newTitle?: string | null
 ) {
     const cleanStatus = newStatus !== undefined ? toLogStatus(newStatus) : undefined
-    let ep = progressEpisodes !== undefined ? (progressEpisodes != null ? Number(progressEpisodes) : null) : undefined
-    let ch = progressChapters !== undefined ? (progressChapters != null ? Number(progressChapters) : null) : undefined
-    let vol = progressVolumes !== undefined ? (progressVolumes != null ? Number(progressVolumes) : null) : undefined
-    if (progress !== undefined) {
-        if (progress && typeof progress === "object" && !Array.isArray(progress)) {
-            const prog = progress as Record<string, unknown>
-            if (ep === undefined && prog.watchedEpisodes !== undefined) ep = prog.watchedEpisodes != null ? Number(prog.watchedEpisodes) : null
-            if (ch === undefined && prog.readChapters !== undefined) ch = prog.readChapters != null ? Number(prog.readChapters) : null
-            if (vol === undefined && prog.readVolumes !== undefined) vol = prog.readVolumes != null ? Number(prog.readVolumes) : null
-        } else if (progress === null) {
-            if (ep === undefined) ep = null
-            if (ch === undefined) ch = null
-            if (vol === undefined) vol = null
-        }
-    }
 
     const log = await client.userLogs.update({
         where: { id: logId },
@@ -266,17 +223,9 @@ export async function updateLog(
             ...(cleanStatus !== undefined ? { status: cleanStatus } : {}), 
             ...(newRating !== undefined ? { rating: newRating } : {}),
             ...(newNotes !== undefined ? { notes: newNotes } : {}),
-            ...(startedAt !== undefined ? { started_at: startedAt } : {}),
-            ...(finishedAt !== undefined ? { finished_at: finishedAt } : {}),
-            ...(ep !== undefined ? { progressEpisodes: ep } : {}),
-            ...(ch !== undefined ? { progressChapters: ch } : {}),
-            ...(vol !== undefined ? { progressVolumes: vol } : {}),
+            ...(newTitle !== undefined ? { title: newTitle } : {}),
         },
-        include: { 
-            media: { include: MEDIA_INCLUDE },
-            tags: { include: { tag: true } },
-            collectionItems: { select: { collectionId: true } },
-        },
+        include: LOG_INCLUDE,
     })
     return mapLogWithTags(log)
 }

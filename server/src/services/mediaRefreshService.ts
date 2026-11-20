@@ -5,6 +5,7 @@ import { setMediaGenres, setMediaCreators, isJunkGenre } from "@/services/genreS
 import { attachExternalIdsToMedia, findOtherMediaWithProviderId } from "@/repositories/mediaRepository.js"
 import { getStorageProviderForSource, ProviderName } from "@/providers/registry.js"
 import { validateDetails } from "@/schemas/detailsSchemas.js"
+import { mergeMediaInto, inTransaction } from "@/services/mediaMergeService.js"
 import { applySearchResultToMedia } from "@/services/applySearchResult.js"
 import { Prisma } from "@/generated/prisma/client.js"
 
@@ -46,7 +47,7 @@ type RefreshableMedia = NonNullable<Awaited<ReturnType<typeof prisma.media.findU
     },
 }>>>>
 
-type Refresher = (userId: string, media: RefreshableMedia, details: Record<string, unknown>) => Promise<void>
+type Refresher = (userId: string, media: RefreshableMedia, details: Record<string, unknown>) => Promise<void | { mergedInto: string }>
 
 export class MediaRefreshService {
     private readonly refreshers: Partial<Record<ProviderName, Refresher>> = {
@@ -122,14 +123,16 @@ export class MediaRefreshService {
         if (!refresher) {
             throw new AppError("Nothing to refresh", 400)
         }
-        await refresher.call(this, userId, media, details)
+        const outcome = await refresher.call(this, userId, media, details)
 
+        // The row turned out to be another edition of a book we already hold: it merged into that one
+        const survivorId = outcome ? outcome.mergedInto : media.id
         const updated = await prisma.media.findUniqueOrThrow({
-            where: { id: media.id },
+            where: { id: survivorId },
             include: MEDIA_INCLUDE,
         })
 
-        return formatMedia(updated)
+        return outcome ? { ...formatMedia(updated), mergedInto: outcome.mergedInto } : formatMedia(updated)
     }
 
     private async refreshTmdb(userId: string, media: RefreshableMedia, _details: Record<string, unknown>) {
@@ -251,8 +254,11 @@ export class MediaRefreshService {
             throw new AppError("The provider no longer has this item", 404)
         }
 
-        if (await findOtherMediaWithProviderId("openlibrary", doc.key, media.id, prisma)) {
-            throw new AppError("Another edition of this book already has its Open Library data", 409)
+        // Another edition of this book already holds the work: the two become one item
+        const otherId = await findOtherMediaWithProviderId("openlibrary", doc.key, media.id, prisma)
+        if (otherId) {
+            await inTransaction(prisma, (tx) => mergeMediaInto(media.id, otherId, tx))
+            return { mergedInto: otherId }
         }
 
         const now = new Date()

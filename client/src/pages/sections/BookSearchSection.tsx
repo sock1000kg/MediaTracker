@@ -83,7 +83,7 @@ export default function BooksSearchSection() {
     fetchPage: (page) => searchBooks(query, page, appliedFilters),
     hideLogged,
   })
-  const { openLog, dialog } = useSearchLogging<BookResult>(search.logs)
+  const { openLog, dialog, entryCountFor } = useSearchLogging<BookResult>(search.logs)
 
   // Applies the panel's filters together with the typed query
   const handleSearch = () => {
@@ -191,6 +191,8 @@ export default function BooksSearchSection() {
           kindOf={() => "book"}
           isLogged={(item) => isResultLogged(search.logs, item)}
           onLog={(item) => openLog(item)}
+          entryCount={(item) => entryCountFor(item)}
+          onAddEntry={(item) => openLog(item, { addEntry: true })}
         />
       </SearchResults>
 

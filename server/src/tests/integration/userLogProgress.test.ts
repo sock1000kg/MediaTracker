@@ -2,7 +2,7 @@ import request from 'supertest'
 import app from '@/app.js'
 import { prisma } from '@/tests/jest.setup.js'
 
-describe('P7: Per-user progress belongs on UserLogs, not shared Media', () => {
+describe('P7: Per-user progress belongs on a log entry, not shared Media', () => {
     const userA = 'ProgressUserA'
     const userB = 'ProgressUserB'
     let tokenA: string
@@ -72,7 +72,7 @@ describe('P7: Per-user progress belongs on UserLogs, not shared Media', () => {
             .send({
                 mediaId,
                 status: 'in progress',
-                progress: { watchedEpisodes: 14 },
+                entry: { progressEpisodes: 14 },
             })
         expect(resA.statusCode).toBe(201)
 
@@ -83,19 +83,21 @@ describe('P7: Per-user progress belongs on UserLogs, not shared Media', () => {
             .send({
                 mediaId,
                 status: 'completed',
-                progress: { watchedEpisodes: 28 },
+                entry: { progressEpisodes: 28 },
             })
         expect(resB.statusCode).toBe(201)
 
         // Fetch User A logs
         const logsA = await request(app).get('/logs').set('Authorization', `Bearer ${tokenA}`)
         const logA = logsA.body.find((l: { mediaId: string }) => l.mediaId === mediaId)
-        expect(logA.progress).toEqual({ watchedEpisodes: 14 })
+        expect(logA.entries).toHaveLength(1)
+        expect(logA.entries[0].progressEpisodes).toBe(14)
 
         // Fetch User B logs
         const logsB = await request(app).get('/logs').set('Authorization', `Bearer ${tokenB}`)
         const logB = logsB.body.find((l: { mediaId: string }) => l.mediaId === mediaId)
-        expect(logB.progress).toEqual({ watchedEpisodes: 28 })
+        expect(logB.entries).toHaveLength(1)
+        expect(logB.entries[0].progressEpisodes).toBe(28)
 
         // Verify shared Media.details was not polluted
         const mediaInDb = await prisma.media.findUnique({ where: { id: mediaId } })
@@ -103,7 +105,7 @@ describe('P7: Per-user progress belongs on UserLogs, not shared Media', () => {
         expect(details?.watchedEpisodes).toBeUndefined()
     })
 
-    it('stores typed progress columns on UserLogs and formats as progress object in API', async () => {
+    it('stores typed progress columns on the entry and returns them with the log', async () => {
         const systemUser = await prisma.user.findFirst({ where: { username: 'system' } })
         const mangaType = await prisma.mediaType.findFirst({ where: { name: 'manga' } })
 
@@ -126,21 +128,18 @@ describe('P7: Per-user progress belongs on UserLogs, not shared Media', () => {
             .send({
                 mediaId: mangaMedia.id,
                 status: 'in progress',
-                progress: { readChapters: 45, readVolumes: 5 },
+                entry: { progressChapters: 45, progressVolumes: 5 },
             })
         expect(res.statusCode).toBe(201)
 
-        const logInDb = await prisma.userLogs.findUnique({ where: { id: res.body.id } })
-        expect(logInDb?.progressChapters).toBe(45)
-        expect(logInDb?.progressVolumes).toBe(5)
-        expect(logInDb?.progressEpisodes).toBeNull()
+        const entryInDb = await prisma.logEntry.findFirst({ where: { logId: res.body.id } })
+        expect(entryInDb?.progressChapters).toBe(45)
+        expect(entryInDb?.progressVolumes).toBe(5)
+        expect(entryInDb?.progressEpisodes).toBeNull()
 
         const apiLogs = await request(app).get('/logs').set('Authorization', `Bearer ${tokenA}`)
         const apiLog = apiLogs.body.find((l: { id: string }) => l.id === res.body.id)
-        expect(apiLog.progress).toEqual({
-            readChapters: 45,
-            readVolumes: 5,
-        })
+        expect(apiLog.entries[0]).toMatchObject({ progressChapters: 45, progressVolumes: 5, progressEpisodes: null })
 
         // Cleanup
         await prisma.userLogs.deleteMany({ where: { id: res.body.id } })

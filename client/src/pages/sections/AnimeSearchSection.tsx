@@ -35,7 +35,7 @@ export function AnimeSearchSection() {
     fetchPage: (page) => searchAnime(query, page, { type: type || undefined, sort: sort === "relevance" ? undefined : sort }, searchMode),
     hideLogged,
   })
-  const { openLog, dialog } = useSearchLogging<AnimeResult>(search.logs)
+  const { openLog, dialog, entryCountFor } = useSearchLogging<AnimeResult>(search.logs)
 
   const handleSearch = () => {
     if (inputValue.trim()) setQuery(inputValue.trim())
@@ -69,6 +69,8 @@ export function AnimeSearchSection() {
           kindOf={(item) => (item.mediaType === "manga" ? "manga" : "anime")}
           isLogged={(item) => isResultLogged(search.logs, item)}
           onLog={(item) => openLog(item)}
+          entryCount={(item) => entryCountFor(item)}
+          onAddEntry={(item) => openLog(item, { addEntry: true })}
         />
       </SearchResults>
 

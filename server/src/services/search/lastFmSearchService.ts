@@ -386,12 +386,12 @@ export class LastFmSearchService implements ISearchService {
                     userId,
                     mediaId: { in: mediaIds },
                 },
-                select: { id: true, mediaId: true, rating: true, status: true },
+                select: { id: true, mediaId: true, rating: true, status: true, _count: { select: { entries: true } } },
             }) : []
 
-            const logByMediaId = new Map<string, { id: string; rating: number | null; status: string | null }>()
+            const logByMediaId = new Map<string, { id: string; rating: number | null; status: string | null; entryCount: number }>()
             for (const l of userLogs) {
-                logByMediaId.set(l.mediaId, { id: l.id, rating: l.rating, status: l.status })
+                logByMediaId.set(l.mediaId, { id: l.id, rating: l.rating, status: l.status, entryCount: l._count.entries })
             }
 
             for (const track of tracks) {

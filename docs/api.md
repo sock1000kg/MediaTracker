@@ -48,7 +48,7 @@ Base URL: the API origin (e.g. `http://localhost:5000`). Bodies are JSON unless 
 | PUT | `/users/me/password` | `{ currentPassword, newPassword }`. Returns `{ accessToken }` and a new refresh cookie, and signs out other sessions. A wrong current password gives `403`. Rate-limited. |
 | GET | `/users/me/preferences` | The preferences object. |
 | PATCH | `/users/me/preferences` | A partial update. A top-level `null` removes a key, and `hideLogged` / `defaultSort` merge by sub-key. Max 4 KB. |
-| GET | `/users/me/export?format=json\|csv` | A download of your logs, media, media types and collections (no ids, passwords or API keys). JSON includes `collections: [{ name, description, ranked, items: [{ position, title, type }] }]`. CSV columns are `title,creator,year,type,source,source_id,status,rating,notes,logged_at,started_at,finished_at,categories,tags,collections,url` and spreadsheet-safe. |
+| GET | `/users/me/export?format=json\|csv` | A download of your logs, media, media types and collections (no ids, passwords or API keys). JSON includes each log with its `entries: [{ id, startedAt, finishedAt, progressEpisodes, progressChapters, progressVolumes, note, edition }]`. CSV has one row per entry (with the log's fields repeated; a log without entries is one row with empty entry columns); columns are `title,creator,year,type,provider,provider_id,status,rating,notes,logged_at,log_title,display_title,entry_started_at,entry_finished_at,entry_note,edition_title,edition_format,edition_language,categories,tags,collections,url` and spreadsheet-safe. |
 | DELETE | `/users/me` | `{ password, confirmUsername }`. Deletes the account and everything it owns (`204`). Rate-limited. |
 
 The preferences shape (every key is optional):
@@ -79,17 +79,21 @@ The preferences shape (every key is optional):
 | POST | `/media` | Create custom media (`title`, `mediaType`, optional `creator`, `year`, `description`, `imageUrl`, `details`, `subtype`, `releaseDate`). Specifying `provider` or `providerId` returns `400`. |
 | PUT | `/media/:id` | Update your own media. Specifying `provider` or `providerId` returns `400`. |
 | DELETE | `/media/:id` | `{ confirm }`. Without `confirm: true` it returns a warning with the number of logs that would be deleted. |
-| POST | `/media/:id/refresh` | Re-fetches provider details using the requesting user's key where required, updating only provider fields (title, original title, year, creator, description, image, details, subtype, releaseDate, genres, external ids). Allowed when the user has logged the item (or its parent/child). Rate-limited to once per 10 minutes per item (`429`). Custom media returns `400`. |
-| PUT | `/media/media-log` | `{ mediaData, logData }`. Logs a search result: it creates or reuses the media (matched through external id lookup) and creates the log in one transaction. `logData` accepts `status`, `rating`, `notes`, `startedAt`, `finishedAt`, and optional `tags: string[]`. Some sources are enriched the first time they're logged: Last.fm tags, the TMDB director/runtime/genres, and the RAWG developers/description. |
+| GET | `/media/:id/children` | Direct children of an album or show (tracks or seasons). Each child's `log` includes `entryCount` and its newest entry. |
+| POST | `/media/:id/refresh` | Re-fetches provider details using the requesting user's key where required, updating only provider fields (title, original title, year, creator, description, image, details, subtype, releaseDate, genres, external ids). Allowed when the user has logged the item (or its parent/child). Rate-limited to once per 10 minutes per item (`429`). Custom media returns `400`. For Goodreads items, if the matched Open Library work is already held by another row, merges into it and returns `200` with `{ media, mergedInto: string }`. |
+| PUT | `/media/media-log` | `{ mediaData, logData, entry?, parent? }`. Logs a search result: it creates or reuses the media (matched through external id lookup). If the user has no log: creates the log with `entry` as its first entry. If they already do: updates the log fields sent and adds `entry` as a new entry if sent (never overwrites an existing entry). Returns `{ log, media, logCreated: boolean, entryCreated: boolean }`. Some sources are enriched the first time they're logged: Last.fm tags, TMDB director/runtime/genres, and RAWG developers/description. |
 
 ## Logs
 
 | Method | Path | Description |
 | --- | --- | --- |
-| GET | `/logs` | Your logs, each with its media and media type, including `started_at`, `finished_at`, `collectionIds: string[] (UUIDs)`, and `tags: [{ id: string (UUID), name }]` sorted by name. |
-| POST | `/logs` | `{ mediaId: string (UUID), status, rating, notes, startedAt, finishedAt, progressEpisodes, progressChapters, progressVolumes, tags }`. `rating` is 0–100 (or `null`), and `status` is one of `completed`, `in_progress`, `wishlist` or `dropped` (or `null`). `startedAt` and `finishedAt` are optional dates stored at day precision (noon UTC). When both are set, `finishedAt ≥ startedAt` (otherwise `400 "Finished date can't be before the start date"`), and neither may be more than 1 day in the future (`400`). `tags` is an optional list of tag names (0–20; unknown tags auto-created). |
-| PUT | `/logs/:id` | `{ status, rating, notes, startedAt, finishedAt, progressEpisodes, progressChapters, progressVolumes, tags }`. Omitting dates leaves them unchanged, and `null` clears them. `tags` has set semantics: when present, replaces the log's tags; omitting leaves them unchanged; `[]` clears them. Malformed `:id` returns 400. |
-| DELETE | `/logs/:id` | Delete a log. Malformed `:id` returns 400. |
+| GET | `/logs` | Your logs, each with its media, media type, `displayTitle`, `entryCount`, `entries: LogEntry[]` (newest first), `collectionIds: string[] (UUIDs)`, and `tags: [{ id: string (UUID), name }]` sorted by name. The old top-level `started_at`, `finished_at`, and `progress*` columns are removed from the log. |
+| POST | `/logs` | `{ mediaId: string (UUID), title?, status, rating, notes, tags, entry? }`. Creates the log. If `entry` (`startedAt`, `finishedAt`, `progressEpisodes`, `progressChapters`, `progressVolumes`, `note`, `edition: { title?, format?, language? }`) is given, it is created as the first entry. Maximum 1 log per user per media (`409`). |
+| PUT | `/logs/:id` | `{ title?, status, rating, notes, tags }`. Log fields only, with status automation rules. Date or progress fields in the body return `400 "Dates belong to an entry"`. `tags` has set semantics. Malformed `:id` returns 400. |
+| DELETE | `/logs/:id` | Delete a log. Entries cascade. Malformed `:id` returns 400. |
+| POST | `/logs/:id/entries` | `{ startedAt?, finishedAt?, progressEpisodes?, progressChapters?, progressVolumes?, note?, edition? }`. Creates a new entry for the log. Verifies log ownership, checks the 100-entry limit (`400`), validates dates and strict `edition` schema. Returns `201` with `{ entry, log }`. |
+| PUT | `/logs/:id/entries/:entryId` | `{ startedAt?, finishedAt?, progressEpisodes?, progressChapters?, progressVolumes?, note?, edition? }`. Edits an entry. Returns `200` with `{ entry, log }`. |
+| DELETE | `/logs/:id/entries/:entryId` | Deletes an entry (`200`). Returns updated `{ log }`. |
 
 ## Tags
 
@@ -133,6 +137,7 @@ All search endpoints take `q` (required) and `page` (default 1), and return `{ r
 | GET | `/search/books` | Open Library | `author`, `subject`, `language` (ISO 639-2, e.g. `eng`), `yearFrom`, `yearTo`, `sort` = `relevance \| new \| old \| rating` |
 | GET | `/search/music/albums` | MusicBrainz & Last.fm (key) | none |
 | GET | `/search/music/tracks` | MusicBrainz & Last.fm (key) | none |
+| GET | `/search/music/albums/tracks` | MusicBrainz & Last.fm | `sourceId`, `provider`, `title`, `creator` — returns tracklist for an album; tracks include `inLibrary` and `myLog` (including `entryCount` and rating) |
 | GET | `/search/anime` | AniList | `type` = `tv \| movie \| ova \| special \| ona \| music`, `sort` = `relevance \| score \| popularity \| newest` |
 | GET | `/search/manga` | AniList | `type` = `manga \| novel \| lightnovel \| oneshot \| manhwa \| manhua`, `sort` as for anime |
 | GET | `/search/movies` | TMDB (key) | `year` |

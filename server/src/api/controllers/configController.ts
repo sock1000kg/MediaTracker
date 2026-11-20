@@ -17,6 +17,10 @@ export function getPublicConfig(): PublicConfig {
             notes: {
                 maxLength: LIMITS.notes.maxLength,
             },
+            logs: {
+                maxEntriesPerLog: LIMITS.logs.maxEntriesPerLog,
+                entryNoteMaxLength: LIMITS.logs.entryNoteMaxLength,
+            },
             tags: {
                 maxLength: LIMITS.tags.maxLength,
                 maxPerLog: LIMITS.tags.maxPerLog,

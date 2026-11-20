@@ -231,7 +231,7 @@ describe('Tracklist Resolution and Fetching', () => {
         jest.spyOn(prisma.media, 'findMany').mockResolvedValue(fakeMedia as never)
         jest.spyOn(prisma.mediaExternalId, 'findMany').mockResolvedValue(fakeExt as never)
         jest.spyOn(prisma.userLogs, 'findMany').mockResolvedValue([
-            { id: '018f0000-0000-7000-8000-000000000501', mediaId: '018f0000-0000-7000-8000-000000000101', rating: 95, status: 'completed' },
+            { id: '018f0000-0000-7000-8000-000000000501', mediaId: '018f0000-0000-7000-8000-000000000101', rating: 95, status: 'completed', _count: { entries: 3 } },
         ] as never)
 
         const res = await musicSearchService.fetchAlbumTracks('018f0000-0000-7000-8000-000000000042', 'Slowdive', 'Souvlaki')
@@ -243,6 +243,7 @@ describe('Tracklist Resolution and Fetching', () => {
             id: '018f0000-0000-7000-8000-000000000501',
             rating: 95,
             status: 'completed',
+            entryCount: 3,
         })
         // Machine Gun has media in DB but no user log
         expect(res.tracks[1].inLibrary).toBe(false)

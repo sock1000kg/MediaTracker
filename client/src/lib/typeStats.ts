@@ -1,6 +1,7 @@
 import type { StatLog } from "./stats"
 import { num, str, strList } from "./coerce"
 import { daysToFinish } from "./logView"
+import { newestEntry } from "./logEntries"
 
 export interface TimeToFinishStat {
   count: number
@@ -109,14 +110,16 @@ export interface TypeDetailStat {
 }
 
 /**
- * Calculates average and median time to finish over logs with both dates
- * and finished_at >= started_at (same day = 0 days).
+ * Calculates average and median time to finish over entries with both dates
+ * and finishedAt >= startedAt (same day = 0 days).
  */
 export function timeToFinish(logs: StatLog[]): TimeToFinishStat {
   const days: number[] = []
   for (const log of logs) {
-    const d = daysToFinish(log)
-    if (d !== null) days.push(d)
+    for (const entry of log.entries ?? []) {
+      const d = daysToFinish(entry)
+      if (d !== null) days.push(d)
+    }
   }
   if (!days.length) {
     return { count: 0, avgDays: null, medianDays: null }
@@ -197,7 +200,7 @@ export function computeAnimeStats(logs: StatLog[]): AnimeStats {
   let sumEpMins = 0
 
   for (const log of logs) {
-    const eps = num(log.progressEpisodes) ?? num(log.media?.details?.episodeCount) ?? num((log.media?.details as Record<string, unknown> | undefined)?.episodes)
+    const eps = num(newestEntry(log.entries)?.progressEpisodes) ?? num(log.media?.details?.episodeCount) ?? num((log.media?.details as Record<string, unknown> | undefined)?.episodes)
     const epMins = log.media?.details?.durationSec != null
       ? Math.round(Number(log.media.details.durationSec) / 60)
       : num((log.media?.details as Record<string, unknown> | undefined)?.episodeMinutes)
@@ -236,8 +239,8 @@ export function computeMangaStats(logs: StatLog[]): MangaStats {
   let sumVolumes = 0
 
   for (const log of logs) {
-    const ch = num(log.progressChapters) ?? num(log.media?.details?.chapterCount) ?? num((log.media?.details as Record<string, unknown> | undefined)?.chapters)
-    const vol = num(log.progressVolumes) ?? num(log.media?.details?.volumeCount) ?? num((log.media?.details as Record<string, unknown> | undefined)?.volumes)
+    const ch = num(newestEntry(log.entries)?.progressChapters) ?? num(log.media?.details?.chapterCount) ?? num((log.media?.details as Record<string, unknown> | undefined)?.chapters)
+    const vol = num(newestEntry(log.entries)?.progressVolumes) ?? num(log.media?.details?.volumeCount) ?? num((log.media?.details as Record<string, unknown> | undefined)?.volumes)
 
     if (ch !== null && ch > 0) {
       withChapters++

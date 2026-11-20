@@ -96,7 +96,7 @@ export default function StatsSection() {
   // 4. Pure filterByType step
   const filteredLogs = useMemo(() => filterByType(inRange, selectedType), [inRange, selectedType])
 
-  const sum = useMemo(() => summary(filteredLogs), [filteredLogs])
+  const sum = useMemo(() => summary(filteredLogs, range), [filteredLogs, range])
   const unit: Unit = range.mode === "month" ? "day" : range.mode === "all" && granularity === "year" ? "year" : "month"
   const months = useMemo(
     () => range.mode === "month" ? perDay(filteredLogs, range.year, range.month)
@@ -298,7 +298,7 @@ export default function StatsSection() {
       {!isPending && hasLogs && inRange.length > 0 && (
         <div className="flex flex-col gap-5">
           <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-            <Tile label="Logged">{sum.total}</Tile>
+            <Tile label="Finished">{sum.total}</Tile>
             <Tile label="Completed">{sum.byStatus.completed}</Tile>
             <Tile label="In progress">{sum.byStatus["in progress"]}</Tile>
             <Tile label="Wishlist">{sum.byStatus.wishlist}</Tile>

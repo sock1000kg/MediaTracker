@@ -146,7 +146,8 @@ describe("TvSearchSection component", () => {
       expect(mediaApi.createMediaAndLog).toHaveBeenCalledWith(
         expect.objectContaining({ title: "Regular Show", mediaType: "tv" }),
         expect.anything(),
-        undefined
+        undefined,
+        null
       )
     })
   })

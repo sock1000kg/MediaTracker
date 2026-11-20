@@ -1,7 +1,7 @@
 import type { MediaResult } from "@/types/search"
 import { apiFetch } from "./clientWrapper"
 
-import type { Log, Media } from "@/types/mainTypes"
+import type { EntryInput, Log, Media } from "@/types/mainTypes"
 
 export function fetchMedias(): Promise<Media[]> {
   return apiFetch("/media")
@@ -63,20 +63,27 @@ export function editMedia(media: Partial<Media>): Promise<Media> {
   })
 }
 
-export function createMediaAndLog(mediaData: MediaResult, logData: Partial<Log>, parent?: MediaResult): Promise<Log>{
+export interface MediaLogResult {
+    media: Media
+    log: Log
+    logCreated: boolean
+    entryCreated: boolean
+}
+
+export function createMediaAndLog(mediaData: MediaResult, logData: Partial<Log>, parent?: MediaResult, entry?: EntryInput | null): Promise<MediaLogResult>{
     const tags = logData.tags !== undefined ? logData.tags.map((t) => t.name) : undefined
     return apiFetch(`/media/media-log`, {
         method: "PUT",
         body: JSON.stringify({
             mediaData,
             logData: {
-                status: logData.status,
-                rating: logData.rating,
-                notes: logData.notes,
-                startedAt: logData.started_at ? logData.started_at.slice(0, 10) : null,
-                finishedAt: logData.finished_at ? logData.finished_at.slice(0, 10) : null,
+                ...(logData.title !== undefined ? { title: logData.title ?? null } : {}),
+                ...(logData.status !== undefined ? { status: logData.status } : {}),
+                ...(logData.rating !== undefined ? { rating: logData.rating } : {}),
+                ...(logData.notes !== undefined ? { notes: logData.notes } : {}),
                 ...(tags !== undefined ? { tags } : {}),
             },
+            ...(entry ? { entry } : {}),
             ...(parent ? { parent } : {})
         })
     })

@@ -1,19 +1,27 @@
 // Pure helpers behind the Stats page. Everything is computed client-side from GET /logs.
 // Dates are read in local time. Logs with an unparseable date only count in the "all" range
 // (and are skipped by the per-month chart).
+//
+// Activity (per month / year / day, and the "finished" total) counts ENTRIES: a log read three times is three.
+// Everything about ratings or items counts LOGS, once: one rating per item, so a re-read never counts twice.
+// A log without entries counts once for activity, by logged_at.
 
 import { getCategories } from "./utils"
+
+export interface StatEntry {
+  startedAt?: string | null
+  finishedAt?: string | null
+  progressEpisodes?: number | null // entry
+  progressChapters?: number | null // entry
+  progressVolumes?: number | null // entry
+}
 
 export interface StatLog {
   id: string
   status: string | null
   rating: number | null
   logged_at: string
-  started_at?: string | null
-  finished_at?: string | null
-  progressEpisodes?: number | null
-  progressChapters?: number | null
-  progressVolumes?: number | null
+  entries?: StatEntry[] | null
   media: {
     id: string
     title: string
@@ -42,10 +50,33 @@ const UNKNOWN_TYPE = "Unknown"
 
 const typeName = (log: StatLog): string => log.media.mediaType?.name?.trim() || UNKNOWN_TYPE
 
-export function dateOf(log: StatLog): Date | null {
-  const raw = log.finished_at != null && log.finished_at.trim() !== "" ? log.finished_at : log.logged_at
+const parse = (raw: string | null | undefined): Date | null => {
+  if (raw == null || raw.trim() === "") return null
   const d = new Date(raw)
   return Number.isNaN(d.getTime()) ? null : d
+}
+
+/** When an entry happened: finished, else started. */
+export function entryDateOf(e: StatEntry): Date | null {
+  return parse(e.finishedAt) ?? parse(e.startedAt)
+}
+
+/** A log's date for ranges and per-log numbers: its newest entry's date, else when it was logged. */
+export function dateOf(log: StatLog): Date | null {
+  let newest: Date | null = null
+  for (const e of log.entries ?? []) {
+    const d = entryDateOf(e)
+    if (d && (!newest || d.getTime() > newest.getTime())) newest = d
+  }
+  return newest ?? parse(log.logged_at)
+}
+
+/** The dates a log is active on: one per dated entry, else once by logged_at. */
+export function activityDates(log: StatLog): Date[] {
+  const dates = (log.entries ?? []).flatMap((e) => { const d = entryDateOf(e); return d ? [d] : [] })
+  if (dates.length > 0) return dates
+  const logged = parse(log.logged_at)
+  return logged ? [logged] : []
 }
 
 /** A rating counts when it is a finite number (0 is a real rating; unrated is null). */
@@ -115,6 +146,7 @@ export function monthOptions(logs: StatLog[], year: number): MonthOption[] {
 // --- summary ---
 
 export interface Summary {
+  /** Finished entries in the range (a log read twice counts twice). */
   total: number
   byStatus: Record<StatusKey, number>
   rated: number
@@ -122,7 +154,33 @@ export interface Summary {
   completionRate: number | null
 }
 
-export function summary(logs: StatLog[]): Summary {
+function inRange(d: Date, range: StatsRange, now: Date): boolean {
+  if (range.mode === "all") return true
+  if (range.mode === "year") return d.getFullYear() === range.year
+  if (range.mode === "month") return d.getFullYear() === range.year && d.getMonth() === range.month - 1
+  const start = new Date(now.getFullYear(), now.getMonth() - 11, 1).getTime()
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 1).getTime()
+  return d.getTime() >= start && d.getTime() < end
+}
+
+function countFinishedEntries(logs: StatLog[], range: StatsRange, now: Date): number {
+  let n = 0
+  for (const l of logs) {
+    const entries = l.entries ?? []
+    if (entries.length === 0) {
+      const d = parse(l.logged_at)
+      if (d && inRange(d, range, now)) n++
+    } else {
+      for (const e of entries) {
+        const d = parse(e.finishedAt)
+        if (d && inRange(d, range, now)) n++
+      }
+    }
+  }
+  return n
+}
+
+export function summary(logs: StatLog[], range: StatsRange = { mode: "all" }, now: Date = new Date()): Summary {
   const byStatus: Record<StatusKey, number> = { completed: 0, "in progress": 0, wishlist: 0, dropped: 0, none: 0 }
   const ratings: number[] = []
   for (const l of logs) {
@@ -133,7 +191,7 @@ export function summary(logs: StatLog[]): Summary {
   }
   const denom = logs.length - byStatus.wishlist
   return {
-    total: logs.length,
+    total: countFinishedEntries(logs, range, now),
     byStatus,
     rated: ratings.length,
     avgRating: avg(ratings),
@@ -152,10 +210,7 @@ export interface MonthBucket {
 
 /** Ordered months across the range, empty ones included. */
 export function perMonth(logs: StatLog[], range: StatsRange, now: Date = new Date()): MonthBucket[] {
-  const dated = logs.flatMap((l) => {
-    const d = dateOf(l)
-    return d ? [{ d, type: typeName(l) }] : []
-  })
+  const dated = logs.flatMap((l) => activityDates(l).map((d) => ({ d, type: typeName(l) })))
   const idx = (d: Date) => d.getFullYear() * 12 + d.getMonth()
   const nowIdx = idx(now)
   const maxLog = dated.length ? Math.max(...dated.map((x) => idx(x.d))) : -Infinity
@@ -199,7 +254,7 @@ export type Granularity = "month" | "year"
 
 /** All time defaults to by-month while the data spans at most 36 months, by-year beyond that. */
 export function defaultGranularity(logs: StatLog[], now: Date = new Date()): Granularity {
-  const idxs = logs.flatMap((l) => { const d = dateOf(l); return d ? [d.getFullYear() * 12 + d.getMonth()] : [] })
+  const idxs = logs.flatMap((l) => activityDates(l).map((d) => d.getFullYear() * 12 + d.getMonth()))
   if (!idxs.length) return "month"
   const lo = Math.min(Math.min(...idxs), now.getFullYear() * 12 + now.getMonth())
   const hi = Math.max(Math.max(...idxs), now.getFullYear() * 12 + now.getMonth())
@@ -216,7 +271,7 @@ function addTo(b: MonthBucket, type: string) {
 
 /** Every year from the first log (or this year if later) to the latest/now, empty years included. */
 export function perYear(logs: StatLog[], now: Date = new Date()): MonthBucket[] {
-  const dated = logs.flatMap((l) => { const d = dateOf(l); return d ? [{ y: d.getFullYear(), type: typeName(l) }] : [] })
+  const dated = logs.flatMap((l) => activityDates(l).map((d) => ({ y: d.getFullYear(), type: typeName(l) })))
   if (!dated.length) return []
   const start = Math.min(...dated.map((x) => x.y), now.getFullYear())
   const end = Math.max(...dated.map((x) => x.y), now.getFullYear())
@@ -237,8 +292,9 @@ export function perDay(logs: StatLog[], year: number, month: number): MonthBucke
   const out: MonthBucket[] = Array.from({ length: days }, (_, i) =>
     emptyBucket(`${monthKey(year, month - 1)}-${String(i + 1).padStart(2, "0")}`, String(i + 1)))
   for (const l of logs) {
-    const d = dateOf(l)
-    if (d && d.getFullYear() === year && d.getMonth() === month - 1) addTo(out[d.getDate() - 1], typeName(l))
+    for (const d of activityDates(l)) {
+      if (d.getFullYear() === year && d.getMonth() === month - 1) addTo(out[d.getDate() - 1], typeName(l))
+    }
   }
   return out
 }

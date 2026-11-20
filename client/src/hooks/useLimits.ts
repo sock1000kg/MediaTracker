@@ -6,6 +6,10 @@ export const DEFAULT_LIMITS: PublicLimits = {
   notes: {
     maxLength: 50_000,
   },
+  logs: {
+    maxEntriesPerLog: 100,
+    entryNoteMaxLength: 10_000,
+  },
   tags: {
     maxLength: 40,
     maxPerLog: 20,
@@ -39,6 +43,10 @@ export function useLimits(): PublicLimits {
     notes: {
       ...DEFAULT_LIMITS.notes,
       ...(serverLimits?.notes ?? {}),
+    },
+    logs: {
+      ...DEFAULT_LIMITS.logs,
+      ...(serverLimits?.logs ?? {}),
     },
     tags: {
       ...DEFAULT_LIMITS.tags,

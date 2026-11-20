@@ -180,16 +180,12 @@ model MediaType {
 model UserLogs {
   id              String    @id @default(uuid(7)) @db.Uuid
 
-
+  // The user's own name for this item ("The Stranger" while the media is "L'étranger"); max 300
+  title           String?
   status          LogStatus?   // LogStatus enum: wishlist, completed, in_progress, dropped
   rating          Float?    //scale 100
   notes           String?
-  started_at      DateTime?
-  finished_at     DateTime?
   logged_at       DateTime  @default(now())
-  progressEpisodes Int?
-  progressChapters Int?
-  progressVolumes  Int?
 
   userId          String    @db.Uuid
   user            User      @relation(fields: [userId], references: [id], name: "UserLogsToUser", onDelete: Cascade)
@@ -199,8 +195,26 @@ model UserLogs {
 
   tags            LogTag[]  @relation("LogTagsToLog")
   collectionItems CollectionItem[] @relation("CollectionItemsToLog")
+  entries         LogEntry[]
 
   @@unique([userId, mediaId]) //avoid duplicate logs of the same media for the same user
+}
+
+// One dated experience of an item: a read, watch, listen or play
+model LogEntry {
+  id                String    @id @default(uuid(7)) @db.Uuid
+  logId             String    @db.Uuid
+  log               UserLogs  @relation(fields: [logId], references: [id], onDelete: Cascade)
+  startedAt         DateTime? @db.Date
+  finishedAt        DateTime? @db.Date
+  progressEpisodes  Int?
+  progressChapters  Int?
+  progressVolumes   Int?
+  note              String?
+  edition           Json?     // { title?, format?, language? }, validated by editionSchema
+  created_at        DateTime  @default(now())
+
+  @@index([logId, finishedAt])
 }
 
 model Tag {

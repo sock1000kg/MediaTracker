@@ -431,13 +431,16 @@ export class MalImportService {
                     rating: entry.score,
                     notes: entry.comments,
                     loggedAt: importedMalLogDate(entry.startDate, entry.finishDate),
+                    tags: entry.tags,
+                },
+                // One entry: the dates and progress MAL has. my_times_watched/read have no dates, so they add nothing.
+                entries: [{
                     startedAt: entry.startDate,
                     finishedAt: entry.finishDate,
-                    tags: entry.tags,
                     progressEpisodes: kind === "anime" ? (entry.watchedEpisodes ?? null) : null,
                     progressChapters: kind === "manga" ? (entry.readChapters ?? null) : null,
                     progressVolumes: kind === "manga" ? (entry.readVolumes ?? null) : null,
-                },
+                }],
                 idMal: entry.malId,
             })
         }
@@ -467,13 +470,8 @@ export class MalImportService {
                 let filled = false
                 const logUpdates: {
                     rating?: number | null
-                    finished_at?: Date | null
-                    started_at?: Date | null
                     notes?: string | null
                     status?: string | null
-                    progressEpisodes?: number | null
-                    progressChapters?: number | null
-                    progressVolumes?: number | null
                 } = {}
                 let mediaPatch: Record<string, Prisma.InputJsonValue | null> | undefined
                 let newTags: string[] | undefined
@@ -484,38 +482,9 @@ export class MalImportService {
                     filled = true
                 }
 
-                // Dates: fill only if null, preserving constraints
-                if (log.finished_at === null && item.logData.finishedAt !== null) {
-                    if (!log.started_at || item.logData.finishedAt.getTime() >= log.started_at.getTime()) {
-                        logUpdates.finished_at = item.logData.finishedAt
-                        filled = true
-                    }
-                }
-                if (log.started_at === null && item.logData.startedAt !== null) {
-                    const effectiveFinished = logUpdates.finished_at ?? log.finished_at
-                    if (!effectiveFinished || item.logData.startedAt.getTime() <= effectiveFinished.getTime()) {
-                        logUpdates.started_at = item.logData.startedAt
-                        filled = true
-                    }
-                }
-
                 // Notes: fill only if null / empty
                 if ((log.notes === null || log.notes.trim() === "") && (item.logData.notes && item.logData.notes.trim() !== "")) {
                     logUpdates.notes = item.logData.notes
-                    filled = true
-                }
-
-                // Progress gap fill: fill only if null / empty
-                if (log.progressEpisodes == null && item.logData.progressEpisodes != null) {
-                    logUpdates.progressEpisodes = item.logData.progressEpisodes
-                    filled = true
-                }
-                if (log.progressChapters == null && item.logData.progressChapters != null) {
-                    logUpdates.progressChapters = item.logData.progressChapters
-                    filled = true
-                }
-                if (log.progressVolumes == null && item.logData.progressVolumes != null) {
-                    logUpdates.progressVolumes = item.logData.progressVolumes
                     filled = true
                 }
 

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { useMutation, useQueryClient, type QueryKey } from "@tanstack/react-query"
 import EntityDialog from "@/components/dialogs/EntityDialog"
 import { MediaSearchLogForm } from "@/forms/MediaSearchLogForm"
@@ -7,6 +7,7 @@ import { createMediaAndLog } from "@/api/media"
 import { fetchLogsQueryOptions } from "@/queryOptions/fetchLogsQueryOptions"
 import { fetchMediasQueryOptions } from "@/queryOptions/fetchMediasQueryOptions"
 import { findLogForResult } from "@/lib/utils"
+import { hasEntryContent, cleanEntry } from "@/lib/logStatus"
 import type { Log } from "@/types/mainTypes"
 import type { MediaResult } from "@/types/search"
 
@@ -21,6 +22,7 @@ export function useSearchLogging<T extends MediaResult>(logs: Log[], extraInvali
   const [target, setTarget] = useState<T>()
   const [parent, setParent] = useState<MediaResult>()
   const [targetLog, setTargetLog] = useState<Log | null>(null)
+  const [startAdding, setStartAdding] = useState(false)
 
   const refresh = () => {
     queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey })
@@ -31,30 +33,44 @@ export function useSearchLogging<T extends MediaResult>(logs: Log[], extraInvali
 
   const createMutation = useMutation({
     mutationFn: ({ media, logData, parent }: { media: T; logData: Partial<Log>; parent?: MediaResult }) =>
-      createMediaAndLog(media, logData, parent),
+      createMediaAndLog(media, logData, parent, hasEntryContent(logData.entry) ? cleanEntry(logData.entry) : null),
     onSuccess: refresh,
   })
 
   const editMutation = useMutation({ mutationFn: editLog, onSuccess: refresh })
 
-  /** Opens the dialog for `item`; `existing` overrides the log lookup, `parentItem` is the album/show it belongs to. */
-  const openLog = (item: T, opts: { parent?: MediaResult; existing?: Log | null } = {}) => {
+  /**
+   * Opens the dialog for `item`; `existing` overrides the log lookup, `parent` is the album/show it belongs to.
+   * `addEntry` opens a logged item's dialog with the entry editor already open.
+   */
+  const openLog = (item: T, opts: { parent?: MediaResult; existing?: Log | null; addEntry?: boolean } = {}) => {
     setTarget(item)
     setParent(opts.parent)
     setTargetLog(opts.existing ?? findLogForResult(logs, item) ?? null)
+    setStartAdding(Boolean(opts.addEntry))
     setOpen(true)
   }
+
+  /** How many entries the user's log of `item` has (0 when it isn't logged). */
+  const entryCountFor = (item: T): number => findLogForResult(logs, item)?.entryCount ?? 0
 
   const handleSubmit = async (formData: Partial<Log>) => {
     if (targetLog) return editMutation.mutateAsync({ ...targetLog, ...formData })
     if (!target) throw new Error("Cannot create log: Target media data is missing.")
-    return createMutation.mutateAsync({ media: target, logData: formData, parent })
+    const { log } = await createMutation.mutateAsync({ media: target, logData: formData, parent })
+    return log
   }
+
+  // A book search names the edition it matched: it starts the first entry's edition
+  const initialData = useMemo<Partial<Log>>(
+    () => (target?.edition ? { entry: { edition: { ...target.edition } } } : {}),
+    [target]
+  )
 
   const renderForm = useCallback(
     (formData: Partial<Log>, setFormData: React.Dispatch<React.SetStateAction<Partial<Log>>>) =>
-      target ? <MediaSearchLogForm targetMedia={target} formData={formData} setFormData={setFormData} /> : null,
-    [target]
+      target ? <MediaSearchLogForm targetMedia={target} formData={formData} setFormData={setFormData} startAdding={startAdding} /> : null,
+    [target, startAdding]
   )
 
   const dialog = (
@@ -62,11 +78,12 @@ export function useSearchLogging<T extends MediaResult>(logs: Log[], extraInvali
       mode={targetLog ? "edit" : "create"}
       open={open}
       onOpenChange={setOpen}
+      initialData={initialData}
       target={targetLog ?? undefined}
       onSubmit={handleSubmit}
       renderForm={renderForm}
     />
   )
 
-  return { openLog, dialog }
+  return { openLog, dialog, entryCountFor }
 }

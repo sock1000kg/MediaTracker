@@ -132,3 +132,8 @@ export function resultUrl(r: SearchResult): string | null {
   }
   return null
 }
+
+/** "Logged", or "Logged (3)" once a log has more than one entry. */
+export function loggedLabel(entryCount: number): string {
+  return entryCount > 1 ? `Logged (${entryCount})` : "Logged"
+}

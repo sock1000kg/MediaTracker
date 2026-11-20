@@ -28,8 +28,9 @@ describe("LogRow component with children logs", () => {
     status: "completed",
     notes: "Masterpiece",
     logged_at: "2024-01-18T22:00:00.000Z",
-    started_at: null,
-    finished_at: null,
+    entries: [],
+    entryCount: 0,
+    displayTitle: "",
     tags: [],
     media: {
       id: "018f0000-0000-7000-8000-000000000100",
@@ -60,8 +61,9 @@ describe("LogRow component with children logs", () => {
     status: "completed",
     notes: "",
     logged_at: "2024-01-18T22:05:00.000Z",
-    started_at: null,
-    finished_at: null,
+    entries: [],
+    entryCount: 0,
+    displayTitle: "",
     tags: [],
     media: {
       id: "018f0000-0000-7000-8000-000000000101",
@@ -88,8 +90,9 @@ describe("LogRow component with children logs", () => {
     status: "completed",
     notes: "",
     logged_at: "2024-01-18T22:10:00.000Z",
-    started_at: null,
-    finished_at: null,
+    entries: [],
+    entryCount: 0,
+    displayTitle: "",
     tags: [],
     media: {
       id: "018f0000-0000-7000-8000-000000000102",
@@ -194,8 +197,9 @@ describe("LogRow component with children logs", () => {
       status: "completed",
       notes: "",
       logged_at: "2024-01-01T00:00:00.000Z",
-      started_at: null,
-      finished_at: null,
+      entries: [],
+      entryCount: 0,
+      displayTitle: "",
       tags: [],
       media: {
         id: "media-book-1",
@@ -349,8 +353,9 @@ describe("LogRow component with children logs", () => {
         status: "completed",
         notes: "",
         logged_at: "2024-01-18T22:30:00.000Z",
-        started_at: null,
-        finished_at: null,
+        entries: [],
+        entryCount: 0,
+        displayTitle: "",
         tags: [],
         media: {
           id: "media-bonus-track",
@@ -427,8 +432,9 @@ describe("LogRow component with children logs", () => {
         status: "completed",
         notes: "",
         logged_at: "2024-01-01T00:00:00.000Z",
-        started_at: null,
-        finished_at: null,
+        entries: [],
+        entryCount: 0,
+        displayTitle: "",
         tags: [],
         media: {
           id: "media-show-1",
@@ -455,8 +461,9 @@ describe("LogRow component with children logs", () => {
         status: "completed",
         notes: "",
         logged_at: "2024-01-02T00:00:00.000Z",
-        started_at: null,
-        finished_at: null,
+        entries: [],
+        entryCount: 0,
+        displayTitle: "",
         tags: [],
         media: {
           id: "media-season-2",
@@ -517,8 +524,9 @@ describe("LogRow component with children logs", () => {
         status: "completed",
         notes: "",
         logged_at: "2024-01-01T00:00:00.000Z",
-        started_at: null,
-        finished_at: null,
+        entries: [],
+        entryCount: 0,
+        displayTitle: "",
         tags: [],
         media: {
           id: "media-show-0",
@@ -553,5 +561,40 @@ describe("LogRow component with children logs", () => {
 
       expect(await screen.findByText("No seasons")).toBeInTheDocument()
     })
+  })
+})
+
+describe("LogRow display title and entry count", () => {
+  const baseLog = (over: Partial<Log>): Log => ({
+    id: "018f0000-0000-7000-8000-0000000000aa",
+    rating: 80, status: "completed", notes: "", logged_at: "2024-01-01T00:00:00.000Z",
+    entries: [], entryCount: 0, displayTitle: "L'Etranger (work)", tags: [],
+    media: {
+      id: "018f0000-0000-7000-8000-0000000000bb", userId: "u", title: "L'Etranger (work)", creator: "Camus", year: 1942,
+      provider: "openlibrary", providerId: "/works/OL1W", imageUrl: null, description: null, created_at: "2024-01-01T00:00:00.000Z",
+      mediaType: { id: "t", userId: null, name: "book", created_at: "2024-01-01T00:00:00.000Z" },
+    },
+    ...over,
+  })
+
+  it("shows the display title with the media title as a small subtitle, and the entry count from two up", () => {
+    renderWithProviders(<LogRow log={baseLog({ title: "The Stranger", displayTitle: "The Stranger", entryCount: 3 })} onEdit={vi.fn()} onDelete={vi.fn()} />)
+    expect(screen.getByRole("heading", { name: /The Stranger/ })).toHaveTextContent("The Stranger(3)")
+    expect(screen.getByText("L'Etranger (work)")).toBeInTheDocument()
+  })
+
+  it("shows only the media title, and no count, when nothing renames it", () => {
+    renderWithProviders(<LogRow log={baseLog({ entryCount: 1 })} onEdit={vi.fn()} onDelete={vi.fn()} />)
+    expect(screen.getByRole("heading", { name: "L'Etranger (work)" })).toBeInTheDocument()
+    expect(screen.queryByText("(1)")).not.toBeInTheDocument()
+  })
+
+  it("shows the newest entry's dates in the status line", () => {
+    const entries = [
+      { id: "a", logId: "l", startedAt: "2020-01-01T00:00:00.000Z", finishedAt: "2020-01-09T00:00:00.000Z", progressEpisodes: null, progressChapters: null, progressVolumes: null, note: null, edition: null, created_at: "x" },
+      { id: "b", logId: "l", startedAt: "2024-05-01T00:00:00.000Z", finishedAt: "2024-05-03T00:00:00.000Z", progressEpisodes: null, progressChapters: null, progressVolumes: null, note: null, edition: null, created_at: "x" },
+    ]
+    renderWithProviders(<LogRow log={baseLog({ entries, entryCount: 2 })} onEdit={vi.fn()} onDelete={vi.fn()} />)
+    expect(screen.getByText("Completed · Finished 3 May 2024 · took 2 days")).toBeInTheDocument()
   })
 })

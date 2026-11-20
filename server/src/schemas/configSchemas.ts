@@ -4,6 +4,10 @@ export const publicConfigLimitsSchema = z.object({
     notes: z.object({
         maxLength: z.number().int().positive(),
     }),
+    logs: z.object({
+        maxEntriesPerLog: z.number().int().positive(),
+        entryNoteMaxLength: z.number().int().positive(),
+    }),
     tags: z.object({
         maxLength: z.number().int().positive(),
         maxPerLog: z.number().int().positive(),

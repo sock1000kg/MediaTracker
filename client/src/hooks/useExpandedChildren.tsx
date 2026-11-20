@@ -5,6 +5,7 @@ import type { MediaResult, MusicResult, TvResult, TvSeasonResult, MusicTrackResu
 import { getMediaChildren, createMediaAndLog } from "@/api/media"
 import { getAlbumTracks } from "@/api/search"
 import EntityDialog from "@/components/dialogs/EntityDialog"
+import { hasEntryContent, cleanEntry } from "@/lib/logStatus"
 import { MediaSearchLogForm } from "@/forms/MediaSearchLogForm"
 import { fetchLogsQueryOptions } from "@/queryOptions/fetchLogsQueryOptions"
 import { fetchMediasQueryOptions } from "@/queryOptions/fetchMediasQueryOptions"
@@ -383,7 +384,7 @@ export function useExpandedChildren({ log, expanded, childrenLogs }: UseExpanded
 
   const createMutation = useMutation({
     mutationFn: ({ media: itemMedia, logData, parent }: { media: MediaResult; logData: Partial<Log>; parent?: MediaResult }) =>
-      createMediaAndLog(itemMedia, logData, parent),
+      createMediaAndLog(itemMedia, logData, parent, hasEntryContent(logData.entry) ? cleanEntry(logData.entry) : null),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: fetchLogsQueryOptions().queryKey })
       queryClient.invalidateQueries({ queryKey: fetchMediasQueryOptions().queryKey })
@@ -395,11 +396,12 @@ export function useExpandedChildren({ log, expanded, childrenLogs }: UseExpanded
 
   const handleSubmit = async (formData: Partial<Log>): Promise<Log> => {
     if (!targetMedia) throw new Error("Target media missing")
-    return createMutation.mutateAsync({
+    const { log } = await createMutation.mutateAsync({
       media: targetMedia,
       logData: formData,
       parent: targetParent ?? undefined,
     })
+    return log
   }
 
   const renderForm = useCallback(

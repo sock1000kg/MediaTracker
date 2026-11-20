@@ -190,8 +190,7 @@ export async function attachExternalIdsToMedia(
 }
 
 // Another row already holding this provider id (as its provider or as an external id).
-// Two Goodreads editions of one book match the same Open Library work; until editions
-// merge (task 53), the second one stays as it is instead of breaking the unique index.
+// Two Goodreads editions of one book match the same Open Library work: the caller merges them.
 export async function findOtherMediaWithProviderId(
     provider: IdSource,
     providerId: string,
@@ -588,6 +587,7 @@ export async function findMediaChildren(parentId: string, userId: string, client
                 include: {
                     tags: { include: { tag: true } },
                     collectionItems: { select: { collectionId: true } },
+                    entries: true,
                 },
             },
         },

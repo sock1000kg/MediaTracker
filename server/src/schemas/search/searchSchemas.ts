@@ -2,6 +2,7 @@ import { z } from "zod"
 import { uuidSchema } from "@/schemas/common.js"
 import { searchMediaSchema } from "@schemas/mediaSchemas.js"
 import { searchLogSchema } from "@/schemas/logSchemas.js"
+import { entryInputSchema } from "@/schemas/entrySchemas.js"
 import { isStoredAsReceived } from "@/providers/registry.js"
 import { normalizeTypeName, sanitizeDescription } from "@/utilities.js"
 import { bookDetailsSchema } from "./bookSchemas.js"
@@ -30,6 +31,7 @@ export function normalizeDescription(source: string, description: string | null 
 export const createMediaAndLogSchema = z.object({
     mediaData: searchMediaSchema,
     logData: searchLogSchema,
+    entry: entryInputSchema.optional(),
     parent: parentMediaSchema.nullish(),
 }).transform((data) => {
     if (data.parent && !data.parent.mediaType) {
@@ -95,11 +97,17 @@ export const searchResultSchema = z.object({
         id: uuidSchema,
         rating: z.number().nullable(),
         status: z.string().nullable(),
+        entryCount: z.number().int().nonnegative(),
     }).nullable().optional(),
     details: mediaDetailsSchema.nullable().optional(),
     subtype: z.enum(["album", "track", "show", "season"]).nullable().optional(),
     releaseDate: z.string().nullable().optional(),
     originalTitle: z.string().nullable().optional(),
+    // The edition the search matched (books): its title and language, when they are known
+    edition: z.object({
+        title: z.string().optional(),
+        language: z.string().optional(),
+    }).nullable().optional(),
     externalIds: z.array(z.object({
         provider: z.string(),
         id: z.string(),

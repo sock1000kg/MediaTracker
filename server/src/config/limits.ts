@@ -2,6 +2,11 @@ export const LIMITS = {
     notes: {
         maxLength: 50_000,
     },
+    logs: {
+        maxEntriesPerLog: 100,
+        entryNoteMaxLength: 10_000,
+        titleMaxLength: 300,
+    },
     tags: {
         maxLength: 40,
         maxPerLog: 20,

@@ -42,7 +42,7 @@ export function MusicSearchSection() {
     fetchPage: (page) => (searchMode === "tracks" ? searchTracks(query, page) : searchAlbums(query, page)),
     hideLogged,
   })
-  const { openLog, dialog } = useSearchLogging<MusicResult | MusicTrackResult>(search.logs, [["albumTracks"]])
+  const { openLog, dialog, entryCountFor } = useSearchLogging<MusicResult | MusicTrackResult>(search.logs, [["albumTracks"]])
 
   const handleSearch = () => {
     if (inputValue.trim()) setQuery(inputValue.trim())
@@ -94,6 +94,8 @@ export function MusicSearchSection() {
             kindOf={() => "music"}
             isLogged={(item) => isResultLogged(search.logs, item)}
             onLog={(item) => openLog(item)}
+            entryCount={(item) => entryCountFor(item)}
+            onAddEntry={(item) => openLog(item, { addEntry: true })}
           />
         )}
       </SearchResults>

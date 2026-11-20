@@ -5,6 +5,7 @@ import { OpenLibraryBook } from "@/schemas/search/bookSchemas.js"
 import { openLibraryService } from "@/services/search/openLibrarySearchService.js"
 import { setMediaGenres, setMediaCreators, isJunkGenre } from "./genreService.js"
 import { attachExternalIdsToMedia, findOtherMediaWithProviderId } from "@/repositories/mediaRepository.js"
+import { mergeMediaInto, inTransaction } from "@/services/mediaMergeService.js"
 import { validateDetails } from "@/schemas/detailsSchemas.js"
 
 export interface OpenLibrarySyncResult {
@@ -167,9 +168,21 @@ export async function syncOpenLibraryBooks(
 
             const now = new Date()
 
-            // Another edition of this book already holds the work: leave this row as Goodreads
-            if (matchedDoc && await findOtherMediaWithProviderId("openlibrary", matchedDoc.key, item.id, db)) {
-                matchedDoc = null
+            // Another edition of this book already holds the work: the two become one item
+            if (matchedDoc) {
+                const otherId = await findOtherMediaWithProviderId("openlibrary", matchedDoc.key, item.id, db)
+                if (otherId) {
+                    try {
+                        await inTransaction(db, (tx) => mergeMediaInto(item.id, otherId, tx))
+                        totalUpdated++
+                        totalProcessed++
+                        continue
+                    } catch (error: unknown) {
+                        // Can't merge (e.g. the other row isn't system-owned): leave this row as it is
+                        console.warn("Open Library sync could not merge an edition:", error)
+                        matchedDoc = null
+                    }
+                }
             }
 
             if (matchedDoc) {

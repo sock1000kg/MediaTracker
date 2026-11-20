@@ -172,5 +172,17 @@ This document records deliberate design decisions, constraints, and provider qui
   - **One-time Sign-in:** The migration truncates the `RefreshToken` table cleanly rather than attempting to hash existing tokens. Consequently, **everyone signs in once more after upgrading**.
   - **ApiKeyService Enum:** The `UserAPIKey.service` column was previously an unconstrained string, and its schema validation improperly used `toIdSource`, which allowed adding API keys for non-key services (such as `goodreads`). It is now strictly typed as `ApiKeyService` (`lastfm`, `tmdb`, `rawg`, `bgg`). Unknown or unkeyed services are rejected with `400`. Keyed providers in `server/src/providers/registry.ts` are typed to `ApiKeyService | null` to guarantee compile-time alignment.
 
+---
+
+## 21. Log Entries, Editions, and Single-Item Relationships
+
+- **Code:** `server/src/prisma/schema.prisma`, `server/src/services/logEntries.ts`, `server/src/services/mediaMergeService.ts`, `server/src/services/imports/entryPlan.ts`, `client/src/lib/logEntries.ts`.
+- **Context & Why:**
+  - **Entries, Not Multiple Logs:** A user maintains exactly one log per media item (`@@unique([userId, mediaId])`). Multiple dated experiences (re-reads, rewatches, replays) are recorded as `LogEntry` records attached to that log. This prevents "edition vs diary" ambiguity: tags, collections, status, and the user's overall rating stay neatly anchored to the item itself, while dates, progress, short entry notes, and edition details (title, format, language) attach to individual entries.
+  - **An Item is Whatever the Provider Counts as One:** MediaTracker never splits or joins items beyond external provider definitions. The sole exception is Goodreads editions, which join on their matched Open Library work (`openLibraryWorkKey`) because Open Library is the stored provider. During Open Library sync and Goodreads refresh, duplicate items merge via `mergeMediaInto`, preserving all log entries, unioning tags, repacking collection item positions, keeping review notes, and preserving each entry's `edition.title`.
+  - **One Rating Per Item:** A user gives one evaluation for the item as a whole, stored in `UserLogs.rating`. Entries do not duplicate or fragment ratings.
+  - **Read Counts Without Dates Ignored:** Goodreads CSV exports contain `Read Count`, and MyAnimeList XML exports contain `my_times_watched` / `my_times_read`. However, neither provider exports dates for earlier sessions. Fabricating undated dummy entries would corrupt user reading diaries; consequently, re-read counts without dates are omitted.
+
+
 
 

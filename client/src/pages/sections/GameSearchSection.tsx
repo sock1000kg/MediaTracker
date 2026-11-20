@@ -52,7 +52,7 @@ export function GameSearchSection() {
         : searchGames(query, page, { platform: platform || undefined, sort }),
     hideLogged,
   })
-  const { openLog, dialog } = useSearchLogging<GameResult | BoardGameResult>(search.logs)
+  const { openLog, dialog, entryCountFor } = useSearchLogging<GameResult | BoardGameResult>(search.logs)
 
   const handleSearch = () => {
     if (inputValue.trim()) setQuery(inputValue.trim())
@@ -93,6 +93,8 @@ export function GameSearchSection() {
           kindOf={(item) => (item.mediaType === "boardgame" || mode === "board" ? "boardgame" : "game")}
           isLogged={(item) => isResultLogged(search.logs, item)}
           onLog={(item) => openLog(item)}
+          entryCount={(item) => entryCountFor(item)}
+          onAddEntry={(item) => openLog(item, { addEntry: true })}
         />
       </SearchResults>
 

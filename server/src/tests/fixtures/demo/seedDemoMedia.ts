@@ -127,10 +127,15 @@ export async function seedDemoMedia(
                         rating: item.log.rating ?? null,
                         notes: item.log.notes ?? null,
                         loggedAt: item.log.loggedAt ? new Date(item.log.loggedAt) : null,
-                        startedAt: item.log.startedAt ? new Date(item.log.startedAt) : null,
-                        finishedAt: item.log.finishedAt ? new Date(item.log.finishedAt) : null,
                         tags: item.log.tags,
                     },
+                    // The fixture's dates are the log's one dated experience
+                    entry: item.log.startedAt || item.log.finishedAt
+                        ? {
+                              startedAt: item.log.startedAt ? new Date(item.log.startedAt) : null,
+                              finishedAt: item.log.finishedAt ? new Date(item.log.finishedAt) : null,
+                          }
+                        : null,
                 },
                 db
             )

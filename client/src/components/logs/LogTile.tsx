@@ -6,6 +6,7 @@ import { Cover } from "@/components/media-view/Cover"
 import { TileShell } from "@/components/media-view/TileShell"
 import { Button } from "@/components/ui/button"
 import { useExpandedChildren } from "@/hooks/useExpandedChildren"
+import { newestEntry, entryDate } from "@/lib/logEntries"
 import { LogActions } from "./LogActions"
 
 interface LogTileProps {
@@ -17,15 +18,21 @@ interface LogTileProps {
   extraActions?: React.ReactNode
   extraMenuItems?: React.ReactNode
   childrenLogs?: Log[]
+  /** Opens the edit dialog on a new entry. */
+  onAddEntry?: (log: Log) => void
 }
 
-export function LogTile({ log, onEdit, onDelete, onTagClick, badge, extraActions, extraMenuItems, childrenLogs }: LogTileProps) {
+export function LogTile({ log, onEdit, onDelete, onTagClick, badge, extraActions, extraMenuItems, childrenLogs, onAddEntry }: LogTileProps) {
   const [expanded, setExpanded] = useState(false)
   const { media } = log
   const userTags = log.tags ?? []
   const categories = media.genres ?? (Array.isArray(media.details?.categories) ? (media.details.categories as string[]) : [])
   const rating = displayRating(log.rating)
   const status = statusLabel(log.status)
+  const shownTitle = log.displayTitle || media.title
+  const mediaSubtitle = shownTitle !== media.title ? media.title : null
+  const newest = newestEntry(log.entries)
+  const shownDate = (newest && entryDate(newest)) || log.logged_at
   const byline = [media.mediaType?.name, media.creator].filter(Boolean).join(" · ")
 
   const childSummary = media.childSummary
@@ -66,7 +73,11 @@ export function LogTile({ log, onEdit, onDelete, onTagClick, badge, extraActions
       badge={badge !== undefined ? badge : (status || undefined)}
     >
       <div className="flex items-start justify-between gap-2">
-        <h3 className="line-clamp-2 min-w-0 text-sm font-semibold break-words">{media.title}</h3>
+        <h3 className="line-clamp-2 min-w-0 text-sm font-semibold break-words">
+          {shownTitle}
+          {log.entryCount > 1 && <span className="ml-1 font-normal text-muted-foreground">({log.entryCount})</span>}
+        </h3>
+        {mediaSubtitle && <p className="truncate text-xs text-muted-foreground">{mediaSubtitle}</p>}
         <span className="font-display tabular-nums text-primary" aria-label={rating.label}>{rating.text}</span>
       </div>
       {fromSubtitle && <p className="truncate text-xs text-muted-foreground">{fromSubtitle}</p>}
@@ -139,10 +150,10 @@ export function LogTile({ log, onEdit, onDelete, onTagClick, badge, extraActions
         </div>
       )}
       <div className="flex items-center justify-between mt-auto pt-1">
-        <p className="text-xs text-muted-foreground">{formatLogDate(log.finished_at || log.logged_at)}</p>
+        <p className="text-xs text-muted-foreground">{formatLogDate(shownDate)}</p>
         <div className="flex items-center gap-1">
           {extraActions}
-          <LogActions log={log} onEdit={onEdit} onDelete={onDelete} extraMenuItems={extraMenuItems} />
+          <LogActions log={log} onEdit={onEdit} onDelete={onDelete} onAddEntry={onAddEntry} extraMenuItems={extraMenuItems} />
         </div>
       </div>
     </TileShell>

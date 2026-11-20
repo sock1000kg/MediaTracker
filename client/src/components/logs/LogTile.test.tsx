@@ -28,8 +28,9 @@ describe("LogTile component with expanded children", () => {
     status: "completed",
     notes: "Masterpiece",
     logged_at: "2024-01-18T22:00:00.000Z",
-    started_at: null,
-    finished_at: null,
+    entries: [],
+    entryCount: 0,
+    displayTitle: "",
     tags: [],
     media: {
       id: "018f0000-0000-7000-8000-000000000100",
@@ -60,8 +61,9 @@ describe("LogTile component with expanded children", () => {
     status: "completed",
     notes: "",
     logged_at: "2024-01-18T22:05:00.000Z",
-    started_at: null,
-    finished_at: null,
+    entries: [],
+    entryCount: 0,
+    displayTitle: "",
     tags: [],
     media: {
       id: "018f0000-0000-7000-8000-000000000101",

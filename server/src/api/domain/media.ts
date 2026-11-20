@@ -9,6 +9,8 @@ import { setMediaGenres, setMediaCreators, CreatorInput } from "@/services/genre
 import { findMediaTypeForUserOrGlobal } from "@/repositories/mediaTypeRepository.js"
 import { findLogOfUserByMediaId, createLog, updateLog, findLogById } from "@/repositories/logsRepository.js"
 import { tagService } from "@/services/tagService.js"
+import { createEntry, EntryData } from "@/repositories/logEntryRepository.js"
+import { assertRoomForEntries } from "@/services/logService.js"
 
 export type BookMetadata = {
     pageCount?: number | null
@@ -39,18 +41,16 @@ type CreateImportedMediaInput = {
         imageUrl?: string | null
     }
     logData: {
-        status: string | null
+        status?: string | null
         rating?: number | null
         notes?: string | null
+        title?: string | null
         /** Only used when a new log is created; defaults to now. */
         loggedAt?: Date | null
-        startedAt?: Date | null
-        finishedAt?: Date | null
         tags?: string[]
-        progressEpisodes?: number | null
-        progressChapters?: number | null
-        progressVolumes?: number | null
     }
+    /** One dated experience of the item. Added as a new entry; an existing entry is never overwritten. */
+    entry?: EntryData | null
     parent?: {
         title: string
         mediaType?: string
@@ -78,7 +78,7 @@ export async function createImportedMedia(
     input: CreateImportedMediaInput,
     tx: DbClient
 ) {
-    const { userId, mediaTypeName, mediaData, logData, parent, parentMediaId } = input
+    const { userId, mediaTypeName, mediaData, logData, parent, parentMediaId, entry } = input
 
     let parentMedia: { id: string } | null = null
     if (parentMediaId) {
@@ -286,33 +286,29 @@ export async function createImportedMedia(
     const existingLog = await findLogOfUserByMediaId(userId, media.id, tx)
 
     if (existingLog) {
-        const effectiveStartedAt = logData.startedAt !== undefined ? logData.startedAt : existingLog.started_at
-        const effectiveFinishedAt = logData.finishedAt !== undefined ? logData.finishedAt : existingLog.finished_at
-        if (effectiveStartedAt && effectiveFinishedAt && effectiveFinishedAt.getTime() < effectiveStartedAt.getTime()) {
-            throw new AppError("Finished date can't be before the start date", 400)
-        }
+        // Only the log fields that were sent change; a missing field keeps what the log has
         let log = await updateLog(
             existingLog.id,
             logData.status,
-            logData.rating ?? null,
-            logData.notes ?? null,
+            logData.rating,
+            logData.notes,
             tx,
-            logData.startedAt,
-            logData.finishedAt,
-            undefined,
-            logData.progressEpisodes,
-            logData.progressChapters,
-            logData.progressVolumes
+            logData.title
         )
+        let entryCreated = false
+        if (entry) {
+            await assertRoomForEntries(existingLog.id, 1, tx)
+            await createEntry(existingLog.id, entry, tx)
+            entryCreated = true
+        }
         if (logData.tags !== undefined) {
             await tagService.resolveAndSyncTags(userId, existingLog.id, logData.tags, tx)
+        }
+        if (entryCreated || logData.tags !== undefined) {
             log = (await findLogById(existingLog.id, tx))!
         }
-        return { media, log, logCreated: false }
+        return { media, log, logCreated: false, entryCreated }
     } else {
-        if (logData.startedAt && logData.finishedAt && logData.finishedAt.getTime() < logData.startedAt.getTime()) {
-            throw new AppError("Finished date can't be before the start date", 400)
-        }
         let log = await createLog(
             userId,
             media.id,
@@ -321,17 +317,17 @@ export async function createImportedMedia(
             logData.notes ?? null,
             tx,
             logData.loggedAt ?? null,
-            logData.startedAt ?? null,
-            logData.finishedAt ?? null,
-            undefined,
-            logData.progressEpisodes,
-            logData.progressChapters,
-            logData.progressVolumes
+            logData.title ?? null
         )
+        if (entry) {
+            await createEntry(log.id, entry, tx)
+        }
         if (logData.tags !== undefined) {
             await tagService.resolveAndSyncTags(userId, log.id, logData.tags, tx)
+        }
+        if (entry || logData.tags !== undefined) {
             log = (await findLogById(log.id, tx))!
         }
-        return { media, log, logCreated: true }
+        return { media, log, logCreated: true, entryCreated: Boolean(entry) }
     }
 }

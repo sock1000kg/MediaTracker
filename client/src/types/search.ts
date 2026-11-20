@@ -15,7 +15,9 @@ export type MediaResult<T extends string = string> = {
   details?: Record<string, unknown> | null
   externalIds?: Array<{ provider: string; id: string }>
   inLibrary?: boolean
-  myLog?: { id: string; rating: number | null; status: string | null } | null
+  myLog?: { id: string; rating: number | null; status: string | null; entryCount?: number } | null
+  /** Books: the edition the search matched (its title and language). The work title stays `title`. */
+  edition?: { title?: string; language?: string } | null
 }
 
 export type BookResult = MediaResult<"book"> & {
