@@ -9,12 +9,11 @@ import { validateSchema } from "@/utilities.js"
 import { AppError } from "@/api/domain/error.js"
 import { unexpectedShape } from "./providerErrors.js"
 import { providerFetch } from "@/providers/providerFetch.js"
-import { getUserApiKey as getRegistryUserApiKey } from "@/providers/registry.js"
+import { getUserApiKey as getRegistryUserApiKey } from "@/providers/auth.js"
 
 // Host quirk: must use boardgamegeek.com without www; www redirects or fails Cloudflare/token auth for XMLAPI2.
 const BASE_URL = "https://boardgamegeek.com/xmlapi2"
 const PAGE_SIZE = 20
-const TIMEOUT_MS = 8000
 
 
 function parseNum(val: unknown): number | null {
@@ -124,7 +123,6 @@ export class BggSearchService {
         try {
             const res = await providerFetch("bgg", url, {
                 apiKey: token,
-                timeoutMs: TIMEOUT_MS,
                 allowHttpErrors: true,
             })
             if (res.status === 401 || res.status === 403) {
@@ -156,9 +154,14 @@ export class BggSearchService {
         url.searchParams.set("id", String(id))
         url.searchParams.set("stats", "1")
         const xml = await this.fetchXml(url, token)
-        const parsed = parseBggXml(xml)
-        const items = (parsed as { items?: { item?: BggThingItem | BggThingItem[] } }).items?.item
-        const item = Array.isArray(items) ? items[0] : items
+        let checked
+        try {
+            checked = bggThingResponseSchema.safeParse(parseBggXml(xml))
+        } catch {
+            throw new AppError("Provider is unavailable", 503)
+        }
+        if (!checked.success) throw new AppError("Provider is unavailable", 503)
+        const item = checked.data.items?.item?.[0]
         if (!item) {
             throw new AppError("The provider no longer has this item", 404)
         }

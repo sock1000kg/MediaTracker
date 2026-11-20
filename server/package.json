@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "cross-env CHOKIDAR_USEPOLLING=true CHOKIDAR_INTERVAL=1000 tsx watch src/server.ts",
     "prebuild": "prisma generate",
-    "build": "tsc && tsc-alias && copyfiles -u 2 \"src/tests/**/*csv\" \"src/tests/**/*json\" \"src/tests/**/*xml\" \"src/tests/**/*zip\" dist/tests/",
+    "build": "tsc && tsc-alias && copyfiles -u 2 \"src/tests/**/*csv\" \"src/tests/**/*json\" \"src/tests/**/*xml\" \"src/tests/**/*zip\" -e \"src/tests/fixtures/demo/exports/letterboxd-*-utc.zip\" dist/tests/",
     "lint": "eslint .",
+    "backfill": "node dist/scripts/backfill.js",
     "start": "node dist/server.js",
     "test": "npm run build && cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand --coverage",
     "seed": "npm run build && node dist/tests/seed.js",

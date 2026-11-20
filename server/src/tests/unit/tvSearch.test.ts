@@ -1,7 +1,6 @@
 import { jest } from '@jest/globals'
 import type { SpiedFunction } from 'jest-mock'
 import {
-    tmdbAuth,
     buildTmdbTvSearchUrl,
     buildTmdbTvDetailsUrl,
     mapTmdbShow,
@@ -15,45 +14,33 @@ import {
 } from '@/schemas/search/tvSchemas.js'
 import { searchResultsSchema } from '@/schemas/search/searchSchemas.js'
 
-const JWT = (() => {
-    const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString('base64url')
-    const header = b64({ alg: 'HS256', typ: 'JWT' })
-    const payload = b64({
-        aud: 'a'.repeat(32),
-        nbf: 1700000000,
-        sub: '6'.repeat(24),
-        scopes: ['api_read'],
-        version: 1,
-    })
-    return `${header}.${payload}.${'s'.repeat(43)}`
-})()
 
 const V3 = '0123456789abcdef0123456789abcdef'
 
 describe('buildTmdbTvSearchUrl', () => {
-    it('sets base params and v3 api_key', () => {
-        const u = buildTmdbTvSearchUrl({ q: 'rick and morty', page: 2 }, tmdbAuth(V3))
+    it('sets base params and never a key', () => {
+        const u = buildTmdbTvSearchUrl({ q: 'rick and morty', page: 2 })
         expect(u.origin + u.pathname).toBe('https://api.themoviedb.org/3/search/tv')
         expect(u.searchParams.get('query')).toBe('rick and morty')
         expect(u.searchParams.get('page')).toBe('2')
         expect(u.searchParams.get('include_adult')).toBe('false')
         expect(u.searchParams.get('language')).toBe('en-US')
-        expect(u.searchParams.get('api_key')).toBe(V3)
+        expect(u.searchParams.has('api_key')).toBe(false)
         expect(u.searchParams.has('first_air_date_year')).toBe(false)
     })
 
-    it('first_air_date_year only when set; no api_key for JWT', () => {
-        const u = buildTmdbTvSearchUrl({ q: 'severance', year: 2022 }, tmdbAuth(JWT))
+    it('first_air_date_year only when set', () => {
+        const u = buildTmdbTvSearchUrl({ q: 'severance', year: 2022 })
         expect(u.searchParams.get('first_air_date_year')).toBe('2022')
         expect(u.searchParams.get('page')).toBe('1')
         expect(u.searchParams.has('api_key')).toBe(false)
     })
 
     it('details url sets language and path', () => {
-        const u = buildTmdbTvDetailsUrl(60625, tmdbAuth(V3))
+        const u = buildTmdbTvDetailsUrl(60625)
         expect(u.pathname).toBe('/3/tv/60625')
         expect(u.searchParams.get('language')).toBe('en-US')
-        expect(u.searchParams.get('api_key')).toBe(V3)
+        expect(u.searchParams.has('api_key')).toBe(false)
     })
 })
 

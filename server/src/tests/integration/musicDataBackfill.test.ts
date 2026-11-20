@@ -1,6 +1,7 @@
 import { jest } from "@jest/globals"
 import { prisma } from "@/tests/jest.setup.js"
 import { backfillMusicData } from "@/services/musicCoverBackfillService.js"
+import { setMediaGenres } from "@/services/genreService.js"
 import { musicBrainzClient } from "@/services/search/musicBrainzClient.js"
 
 describe("Music data backfill (M4)", () => {
@@ -182,5 +183,70 @@ describe("Music data backfill (M4)", () => {
         const details = untouchedAlbum.details as Record<string, unknown>
         expect(details.format).toBe("Album")
         expect(untouchedAlbum.syncCheckedAt).toBeNull() // not stamped on failure so it can retry later
+    })
+
+    test("clears Last.fm tags on a row it can't resolve, keeps title and artist, and is idempotent", async () => {
+        const musicType = await prisma.mediaType.findFirstOrThrow({ where: { name: "music" } })
+        const album = await prisma.media.create({
+            data: {
+                title: "Unresolvable Album",
+                creator: "Some Artist",
+                provider: "lastfm",
+                providerId: `${testPrefix}album-nores-1`,
+                mediaTypeId: musicType.id,
+                subtype: "album",
+                userId: systemUserId,
+            },
+        })
+        await setMediaGenres(album.id, ["shoegaze", "dream pop"], "music", prisma)
+        expect(await prisma.mediaGenre.count({ where: { mediaId: album.id } })).toBe(2)
+
+        await backfillMusicData(prisma)
+        const after1 = await prisma.media.findUniqueOrThrow({ where: { id: album.id }, include: { genres: true } })
+        expect(after1.provider).toBe("lastfm")
+        expect(after1.title).toBe("Unresolvable Album")
+        expect(after1.creator).toBe("Some Artist")
+        expect(after1.genres).toEqual([])
+
+        await backfillMusicData(prisma)
+        const after2 = await prisma.media.findUniqueOrThrow({ where: { id: album.id }, include: { genres: true } })
+        expect(after2.genres).toEqual([])
+        expect(after2.syncCheckedAt).not.toBeNull()
+    })
+
+    test("converting to MusicBrainz replaces old genres with MusicBrainz's, even none", async () => {
+        const musicType = await prisma.mediaType.findFirstOrThrow({ where: { name: "music" } })
+        const album = await prisma.media.create({
+            data: {
+                title: "Convertible Album",
+                creator: "Some Artist",
+                provider: "lastfm",
+                providerId: `${testPrefix}album-conv-1`,
+                mediaTypeId: musicType.id,
+                subtype: "album",
+                userId: systemUserId,
+                details: { mbid: "rel-conv-1" },
+            },
+        })
+        await setMediaGenres(album.id, ["shoegaze"], "music", prisma)
+        jest.spyOn(musicBrainzClient, "resolveReleaseGroupForRelease").mockResolvedValue({
+            status: "found",
+            releaseGroupId: "rg-conv-1",
+        })
+        jest.spyOn(musicBrainzClient, "getReleaseGroup").mockResolvedValue({
+            id: "rg-conv-1",
+            title: "Convertible Album",
+            "artist-credit": [{ name: "Some Artist" }],
+            "primary-type": "Album",
+            "secondary-types": [],
+            "first-release-date": "2001-01-01",
+            genres: [],
+        })
+
+        await backfillMusicData(prisma)
+
+        const after = await prisma.media.findUniqueOrThrow({ where: { id: album.id }, include: { genres: true } })
+        expect(after.provider).toBe("musicbrainz")
+        expect(after.genres).toEqual([])
     })
 })

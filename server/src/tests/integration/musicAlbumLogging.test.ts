@@ -9,7 +9,6 @@ import {
     buildMusicBrainzRecordingUrl,
     buildLastFmUrl,
 } from "@/services/search/musicBrainzClient.js"
-import { musicSearchService } from "@/services/search/lastFmSearchService.js"
 
 describe("Music album logging and built links (M1, M2, M3)", () => {
     const username = "MusicAlbumUser"
@@ -119,7 +118,7 @@ describe("Music album logging and built links (M1, M2, M3)", () => {
         expect(details?.format).toBe("Album")
     })
 
-    test("M1: with no MusicBrainz genres, falls back to Last.fm top tags", async () => {
+    test("M1: with no MusicBrainz genres, stores none and never asks Last.fm for tags", async () => {
         const rgid = "rg-album-notags"
         jest.spyOn(musicBrainzClient, "resolveReleaseGroupForRelease").mockResolvedValue({
             status: "found",
@@ -134,9 +133,7 @@ describe("Music album logging and built links (M1, M2, M3)", () => {
             "first-release-date": "2000-01-01",
             genres: [], // empty MB genres
         })
-        const tagSpy = jest.spyOn(musicSearchService, "fetchTopTags").mockResolvedValue([
-            "ambient", "drone"
-        ])
+        const fetchSpy = jest.spyOn(global, "fetch").mockImplementation(async () => new Response("{}", { status: 200 }))
 
         const payload = {
             mediaData: {
@@ -161,7 +158,7 @@ describe("Music album logging and built links (M1, M2, M3)", () => {
             .send(payload)
 
         expect(res.statusCode).toBe(201)
-        expect(tagSpy).toHaveBeenCalled()
+        expect(fetchSpy.mock.calls.some(c => String(c[0]).includes("toptags") || String(c[0]).includes("gettoptags"))).toBe(false)
 
         const saved = await prisma.media.findFirst({
             where: { provider: "lastfm", providerId: "test-m1-release-mbid-2" },
@@ -169,17 +166,13 @@ describe("Music album logging and built links (M1, M2, M3)", () => {
         })
 
         const genreNames = saved?.genres.map(g => g.genre.name)
-        expect(genreNames).toEqual(["ambient", "drone"])
+        expect(genreNames).toEqual([])
     })
 
     test("M1: with MusicBrainz failing, logging still succeeds with Last.fm data", async () => {
         jest.spyOn(musicBrainzClient, "resolveReleaseGroupForRelease").mockRejectedValue(
             new Error("MusicBrainz timeout")
         )
-        const tagSpy = jest.spyOn(musicSearchService, "fetchTopTags").mockResolvedValue([
-            "indie rock"
-        ])
-
         const payload = {
             mediaData: {
                 title: "Fallback Album",
@@ -212,8 +205,7 @@ describe("Music album logging and built links (M1, M2, M3)", () => {
         expect(saved?.title).toBe("Fallback Album")
         expect(saved?.creator).toBe("Fallback Artist")
         const genreNames = saved?.genres.map(g => g.genre.name)
-        expect(genreNames).toEqual(["indie rock"])
-        expect(tagSpy).toHaveBeenCalled()
+        expect(genreNames).toEqual([])
     })
 
     test("M2: logging a track stores MusicBrainz recording data and links to parent album", async () => {

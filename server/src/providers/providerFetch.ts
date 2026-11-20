@@ -1,11 +1,8 @@
 import { AppError } from "@/api/domain/error.js"
 import { createUserAgentHeader } from "@/utilities.js"
 import { parseRetryAfter, defaultClock } from "@/services/search/rateLimiter.js"
-import {
-    ProviderName,
-    getProviderEntry,
-    getUserApiKey,
-} from "./registry.js"
+import { ProviderName, getProviderEntry } from "./registry.js"
+import { getAuthStrategy, getUserApiKey } from "./auth.js"
 
 export interface ProviderFetchInit extends RequestInit {
     userId?: string
@@ -16,6 +13,11 @@ export interface ProviderFetchInit extends RequestInit {
     allowHttpErrors?: boolean
 }
 
+function hasHeader(headers: Record<string, string>, name: string): boolean {
+    const target = name.toLowerCase()
+    return Object.keys(headers).some(k => k.toLowerCase() === target)
+}
+
 function setHeader(headers: Record<string, string>, name: string, value: string) {
     const target = name.toLowerCase()
     for (const k of Object.keys(headers)) {
@@ -24,9 +26,14 @@ function setHeader(headers: Record<string, string>, name: string, value: string)
     headers[name] = value
 }
 
-function hasHeader(headers: Record<string, string>, name: string): boolean {
-    const target = name.toLowerCase()
-    return Object.keys(headers).some(k => k.toLowerCase() === target)
+// A key may only ever be sent to the provider's own host (or a subdomain of it)
+function assertProviderHost(name: ProviderName, url: URL) {
+    const entry = getProviderEntry(name)
+    const allowed = [entry.host, ...(entry.hosts ?? [])]
+    const host = url.hostname.toLowerCase()
+    if (!allowed.some(h => host === h || host.endsWith(`.${h}`))) {
+        throw new Error(`providerFetch(${name}): host ${host} is not a ${entry.displayName} host`)
+    }
 }
 
 /**
@@ -34,9 +41,9 @@ function hasHeader(headers: Record<string, string>, name: string): boolean {
  * Applies in order:
  *  1. Limiter
  *  2. User-Agent
- *  3. Auth from user's key (where registry says needed)
+ *  3. Host check, then auth from the user's key (scheme named by the registry)
  *  4. Timeout
- *  5. One Retry-After-aware retry on 429/503
+ *  5. Retry-After-aware retry on the registry's retry statuses
  *  6. Typed errors (missing key -> 404, down -> 503, not found -> 404)
  */
 export async function providerFetch(
@@ -66,40 +73,20 @@ export async function providerFetch(
             if (ua) setHeader(plainHeaders, "User-Agent", ua)
         }
 
-        // 3. Auth
+        // 3. Host check, then auth
         const reqUrl = new URL(url.toString())
-        if (entry.keyService) {
+        assertProviderHost(name, reqUrl)
+        if (entry.auth) {
+            const strategy = getAuthStrategy(entry.auth)
             let key = init?.apiKey ?? init?.userApiKey
             if (!key && init?.userId) {
                 key = await getUserApiKey(name, init.userId)
             }
 
             if (key) {
-                if (name === "tmdb") {
-                    const k = key.trim()
-                    if (k.startsWith("eyJ") && k.split(".").length === 3) {
-                        setHeader(plainHeaders, "Authorization", `Bearer ${k}`)
-                    } else {
-                        reqUrl.searchParams.set("api_key", k)
-                    }
-                } else if (name === "rawg") {
-                    reqUrl.searchParams.set("key", key.trim())
-                } else if (name === "bgg") {
-                    setHeader(plainHeaders, "Authorization", `Bearer ${key.trim()}`)
-                } else if (name === "lastfm") {
-                    reqUrl.searchParams.set("api_key", key.trim())
-                }
-            } else {
-                // Check if auth is already baked into URL or headers
-                const hasParamAuth =
-                    (name === "tmdb" && reqUrl.searchParams.has("api_key")) ||
-                    (name === "rawg" && reqUrl.searchParams.has("key")) ||
-                    (name === "lastfm" && reqUrl.searchParams.has("api_key"))
-                const hasHeaderAuth = hasHeader(plainHeaders, "Authorization") || hasHeader(plainHeaders, "X-BGG-Token")
-
-                if (!hasParamAuth && !hasHeaderAuth) {
-                    throw new AppError(entry.missingKeyMessage ?? "Missing API Key", 404)
-                }
+                strategy.apply(reqUrl, plainHeaders, key)
+            } else if (!strategy.isPresent(reqUrl, plainHeaders)) {
+                throw new AppError(entry.missingKeyMessage ?? "Missing API Key", 404)
             }
         }
 
@@ -124,15 +111,18 @@ export async function providerFetch(
             : reqUrl.toString()
 
         // 5. One Retry-After-aware retry on 429/503
-        let res: Response
-        try {
-            res = await fetch(targetUrl, fetchInit)
-        } catch (err) {
-            if (init?.allowHttpErrors) throw err
-            throw new AppError("Provider is unavailable", 503)
+        const attempt = async (): Promise<Response> => {
+            try {
+                return await fetch(targetUrl, { ...fetchInit, signal: makeSignal() })
+            } catch (err) {
+                if (init?.allowHttpErrors) throw err
+                throw new AppError("Provider is unavailable", 503)
+            }
         }
 
-        if ((res.status === 429 || res.status === 503) && entry.retryPolicy && entry.retryPolicy.retries > 0) {
+        let res = await attempt()
+        const policy = entry.retryPolicy
+        for (let i = 0; policy && i < policy.retries && policy.onStatus.includes(res.status); i++) {
             const delay = parseRetryAfter(res, 1000, 30000)
             if (entry.limiter) {
                 entry.limiter.pause(delay)
@@ -140,16 +130,7 @@ export async function providerFetch(
             } else {
                 await defaultClock.sleep(delay)
             }
-
-            try {
-                res = await fetch(targetUrl, {
-                    ...fetchInit,
-                    signal: makeSignal(),
-                })
-            } catch (err) {
-                if (init?.allowHttpErrors) throw err
-                throw new AppError("Provider is unavailable", 503)
-            }
+            res = await attempt()
         }
 
         // 6. Typed errors

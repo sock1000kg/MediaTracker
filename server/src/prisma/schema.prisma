@@ -50,7 +50,6 @@ enum ApiKeyService {
   tmdb
   rawg
   bgg
-  google_books
 }
 
 model User {

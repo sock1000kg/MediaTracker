@@ -11,8 +11,58 @@ import { providerFetch } from "@/providers/providerFetch.js"
 import { getProviderEntry } from "@/providers/registry.js"
 
 const ANILIST_ENDPOINT = "https://graphql.anilist.co"
-const TIMEOUT_MS = 8000
 const CONNECTION_ERROR_CODES = new Set(["UND_ERR_CONNECT_TIMEOUT", "ECONNREFUSED", "ENOTFOUND", "EAI_AGAIN", "ECONNRESET"])
+
+const ANILIST_BY_ID_QUERY = `query ($id: Int) {
+  Media(id: $id) {
+    id
+    idMal
+    type
+    format
+    title {
+      romaji
+      english
+      native
+    }
+    episodes
+    duration
+    chapters
+    volumes
+    startDate {
+      year
+    }
+    averageScore
+    genres
+    tags {
+      name
+      rank
+      isAdult
+      isGeneralSpoiler
+      isMediaSpoiler
+    }
+    description(asHtml: false)
+    coverImage {
+      large
+      extraLarge
+    }
+    siteUrl
+    studios(isMain: true) {
+      nodes {
+        name
+      }
+    }
+    staff(sort: [RELEVANCE]) {
+      edges {
+        role
+        node {
+          name {
+            full
+          }
+        }
+      }
+    }
+  }
+}`
 
 export const ANILIST_BATCH_MAL_QUERY = `
 query ($ids: [Int], $type: MediaType) {
@@ -413,7 +463,6 @@ export class AniListSearchService implements ISearchService {
                     "Content-Type": "application/json",
                 },
                 body,
-                timeoutMs: TIMEOUT_MS,
                 allowHttpErrors: true,
             })
 
@@ -447,6 +496,21 @@ export class AniListSearchService implements ISearchService {
 
     private async fetchJson(variables: AniListVariables): Promise<unknown> {
         return this.fetchGraphql(ANILIST_GRAPHQL_QUERY, variables)
+    }
+
+    // One media by its AniList id. Throws the standard AppError 404 (gone) / 503 (unavailable).
+    async getById(id: number, mode: AniListMode = "anime"): Promise<SearchResult> {
+        const res = await providerFetch("anilist", ANILIST_ENDPOINT, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({ query: ANILIST_BY_ID_QUERY, variables: { id } }),
+            allow404: true,
+        })
+        if (res.status === 404) throw new AppError("The provider no longer has this item", 404)
+        const raw = await res.json().catch(() => null) as { data?: { Media?: AniListMedia } } | null
+        const item = raw?.data?.Media
+        if (!item) throw new AppError("The provider no longer has this item", 404)
+        return mapAniListMedia(mode, item)
     }
 
     async getByMalIds(ids: number[], mode: AniListMode = "anime"): Promise<Map<number, SearchResult>> {

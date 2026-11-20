@@ -178,7 +178,7 @@ describe("User settings routes", () => {
     test("delete account", async () => {
         const { token, userId } = await registerAndLogin("UserDelF")
         const me = await prisma.user.findUniqueOrThrow({ where: { id: userId } })
-        await prisma.userAPIKey.create({ data: { userId, service: "google_books", key: "enc" } })
+        await prisma.userAPIKey.create({ data: { userId, service: "lastfm", key: "enc" } })
         const type = await prisma.mediaType.create({ data: { name: "mytype", userId } })
         const mine = await prisma.media.create({ data: { title: "Mine", userId, mediaTypeId: type.id } })
         await prisma.userLogs.create({ data: { userId, mediaId: mine.id } })

@@ -90,12 +90,13 @@ Users see their jobs through `GET /jobs` and `GET /jobs/:id`, and only their own
 - **Rotation:** `POST /auth/refresh` swaps the refresh token for a new one. A token that has already been rotated is rejected, without clearing the newer cookie.
 - **The client (`client/src/api/clientWrapper.ts`)** retries a `401` once after a refresh. Refreshes are **single-flight**, within a tab and across tabs (Web Locks), so several requests that fail at once trigger exactly one refresh.
 - **Password change:** signs out other sessions. Account deletion needs the password and the username typed in.
-- **API key services:** API key service identifiers are strictly validated against the `ApiKeyService` enum (`lastfm`, `tmdb`, `rawg`, `bgg`, `google_books`).
+- **API key services:** API key service identifiers are strictly validated against the `ApiKeyService` enum (`lastfm`, `tmdb`, `rawg`, `bgg`).
 
 ## Upgrading to 1.3.0
 
 - Database migration `20261118160000_refresh_tokens_api_keys` drops the raw `token` column on `RefreshToken` and replaces it with `tokenHash` (SHA-256 hex). All existing refresh token records are cleared during migration: **everyone signs in once more after upgrading**.
-- `UserAPIKey.service` is converted to the `ApiKeyService` enum (`lastfm`, `tmdb`, `rawg`, `bgg`, `google_books`). Invalid or legacy non-enum service keys are logged with a notice and pruned.
+- `UserAPIKey.service` is converted to the `ApiKeyService` enum (`lastfm`, `tmdb`, `rawg`, `bgg`). Invalid or legacy non-enum service keys are logged with a notice and pruned. Google Books support is gone: migration `20261120100000_remove_google_books_api_key` deletes any Google Books keys and removes the enum value.
+- One-off backfills (music covers and MusicBrainz data, Open Library sync) no longer run on every boot. **Run `npm run backfill` once after upgrading** (Docker: `docker compose exec backend npm run backfill`). It takes `music`, `openlibrary` or `all` (default), prints counts, and exits non-zero on failure. It also clears Last.fm tags left on music rows: Last.fm data is never stored.
 
 ## Frontend
 

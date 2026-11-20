@@ -1,7 +1,3 @@
-export { TMDB_ATTRIBUTION, TMDB_ATTRIBUTION_TEXT, TMDB_URL, TMDB_LOGO_URL } from "./movieFormat"
-
-export const TMDB_TV_ATTRIBUTION = "This product uses the TMDB API but is not endorsed or certified by TMDB."
-
 export function formatTvShowUrl(tmdbId: number | string): string {
   return `https://www.themoviedb.org/tv/${tmdbId}`
 }

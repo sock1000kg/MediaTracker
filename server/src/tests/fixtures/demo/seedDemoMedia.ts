@@ -4,6 +4,7 @@ import { fileURLToPath } from "url"
 import prisma from "@/prismaClient.js"
 import { DbClient } from "@/db.js"
 import { createImportedMedia } from "@/api/domain/media.js"
+import { normalizeDescription } from "@/schemas/search/searchSchemas.js"
 import {
     findCollectionByNameKey,
     createCollection,
@@ -98,7 +99,7 @@ export async function seedDemoMedia(
                         year: item.media.year ? Number(item.media.year) : null,
                         source: item.media.source,
                         sourceId: item.media.sourceId,
-                        description: item.media.description ?? null,
+                        description: normalizeDescription(item.media.source, item.media.description),
                         imageUrl: item.media.imageUrl ?? null,
                         subtype: item.media.subtype ?? null,
                         releaseDate: item.media.releaseDate ? new Date(item.media.releaseDate) : null,
@@ -111,6 +112,7 @@ export async function seedDemoMedia(
                     parent: item.parent
                         ? ({
                               ...item.parent,
+                              description: normalizeDescription(item.parent.source, item.parent.description),
                               subtype: item.parent.subtype ?? null,
                               year: item.parent.year ? Number(item.parent.year) : null,
                               releaseDate: item.parent.releaseDate ? new Date(item.parent.releaseDate) : null,

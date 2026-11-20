@@ -250,9 +250,8 @@ export async function backfillMusicData(
                         if (item.providerId) {
                             await attachExternalIdsToMedia(item.id, [{ provider: "lastfm", externalId: item.providerId }], db)
                         }
-                        if (mbGenres.length > 0) {
-                            await setMediaGenres(item.id, mbGenres, "music", db)
-                        }
+                        // Replace what's there, even with none: Last.fm tags must not survive the conversion
+                        await setMediaGenres(item.id, mbGenres, "music", db)
                         await attachExternalIdsToMedia(item.id, [{ provider: "musicbrainz", externalId: rgRes.releaseGroupId }], db)
                         totalProcessed++
                         totalUpdated++
@@ -268,6 +267,7 @@ export async function backfillMusicData(
                         syncCheckedAt: now,
                     },
                 })
+                await setMediaGenres(item.id, [], "music", db)
                 totalProcessed++
             } else {
                 // Track row (M2)
@@ -307,6 +307,8 @@ export async function backfillMusicData(
                         extIds.push({ provider: "musicbrainz", externalId: recRes.releaseGroupId })
                     }
                     await attachExternalIdsToMedia(item.id, extIds, db)
+                    // MusicBrainz gives a track no genres: drop anything Last.fm left behind
+                    await setMediaGenres(item.id, [], "music", db)
                     totalProcessed++
                     totalUpdated++
                     continue
@@ -320,6 +322,7 @@ export async function backfillMusicData(
                         syncCheckedAt: now,
                     },
                 })
+                await setMediaGenres(item.id, [], "music", db)
                 totalProcessed++
             }
         }
@@ -336,6 +339,9 @@ export async function backfillMusicData(
             break
         }
     }
+
+    // Rows still on Last.fm (unresolved or lookups failed) keep title and artist only
+    await db.mediaGenre.deleteMany({ where: { media: { provider: "lastfm" } } })
 
     if (updateProgress) {
         await updateProgress(100)

@@ -188,6 +188,33 @@ export class OpenLibraryService implements ISearchService {
         }) ?? null
     }
 
+    // The search doc of one work, by its work key. null when Open Library no longer has it.
+    // Throws the standard AppError 503 when Open Library is unavailable.
+    async findDocByWorkKey(key: string, fields?: string): Promise<OpenLibraryBook | null> {
+        const keyQuery = key.startsWith("/works/") ? key : `/works/${key}`
+        const u = new URL("https://openlibrary.org/search.json")
+        u.searchParams.set("q", `key:"${keyQuery.replace(/["\\]/g, "\\$&")}"`)
+        if (fields) u.searchParams.set("fields", fields)
+        const res = await providerFetch("openlibrary", u, { allow404: true })
+        if (res.status === 404) return null
+        const checked = openLibraryResponseSchema.safeParse(await res.json().catch(() => null))
+        if (!checked.success || checked.data.docs.length === 0) return null
+        return checked.data.docs[0]
+    }
+
+    // The search doc of one edition by ISBN. null when Open Library has none.
+    async findDocByIsbn(isbn: string, fields?: string): Promise<OpenLibraryBook | null> {
+        const u = new URL("https://openlibrary.org/search.json")
+        u.searchParams.set("q", `isbn:${isbn}`)
+        if (fields) u.searchParams.set("fields", fields)
+        u.searchParams.set("limit", "1")
+        const res = await providerFetch("openlibrary", u, { allow404: true })
+        if (res.status === 404) return null
+        const checked = openLibraryResponseSchema.safeParse(await res.json().catch(() => null))
+        if (!checked.success || checked.data.docs.length === 0) return null
+        return checked.data.docs[0]
+    }
+
     async getWork(key: string): Promise<unknown | null> {
         const cleanKey = key.startsWith("/works/") ? key.slice("/works/".length) : (key.startsWith("/") ? key.slice(1) : key)
         const u = new URL(`https://openlibrary.org/works/${cleanKey}.json`)

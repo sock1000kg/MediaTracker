@@ -5,7 +5,7 @@ import { prisma } from "@/tests/jest.setup.js"
 import { tmdbSearchService } from "@/services/search/tmdbSearchService.js"
 import { bggSearchService } from "@/services/search/bggSearchService.js"
 import { musicBrainzClient } from "@/services/search/musicBrainzClient.js"
-import { musicSearchService } from "@/services/search/lastFmSearchService.js"
+import { setMediaGenres } from "@/services/genreService.js"
 
 describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
     let tokenA: string
@@ -723,7 +723,7 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
         expect(logAfter.notes).toBe("My review notes")
     })
 
-    test("Music refresh (album): with no MusicBrainz genres, falls back to Last.fm tags", async () => {
+    test("Music refresh (album): converting to MusicBrainz with no genres clears the old Last.fm tags", async () => {
         const musicType = await prisma.mediaType.findFirstOrThrow({ where: { name: "music" } })
         const rgid = "rg-album-notags-refresh"
         const media = await prisma.media.create({
@@ -762,23 +762,21 @@ describe("Media refresh endpoint POST /media/:id/refresh (F1)", () => {
             genres: [], // Empty MB genres!
         })
 
-        const tagSpy = jest.spyOn(musicSearchService, "fetchTopTags").mockResolvedValue([
-            "dream pop",
-            "slowcore",
-        ])
+        // Tags Last.fm left on the row before the conversion
+        await setMediaGenres(media.id, ["dream pop", "slowcore"], "music", prisma)
 
         const res = await request(app)
             .post(`/media/${media.id}/refresh`)
             .set("Authorization", `Bearer ${tokenA}`)
 
         expect(res.statusCode).toBe(200)
-        expect(tagSpy).toHaveBeenCalled()
 
         const updated = await prisma.media.findUniqueOrThrow({
             where: { id: media.id },
             include: { genres: { include: { genre: true } } },
         })
-        expect(updated.genres.map(g => g.genre.name).sort()).toEqual(["dream pop", "slowcore"])
+        expect(updated.provider).toBe("musicbrainz")
+        expect(updated.genres).toEqual([])
     })
 
     test("Music refresh (album): MusicBrainz failure returns 503 and row is unchanged", async () => {

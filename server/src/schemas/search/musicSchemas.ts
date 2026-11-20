@@ -63,21 +63,6 @@ export const lastFmAlbumSearchResponseSchema = z.object({
     }).optional()
 })
 
-export const lastFmTagSchema = z.object({
-    name: z.string(),
-    count: z.number()
-})
-
-// Last.fm returns a single object instead of an array when there is one tag, and omits `tag` when there are none
-export const lastFmTopTagsResponseSchema = z.object({
-    toptags: z.object({
-        tag: z
-            .union([lastFmTagSchema, z.array(lastFmTagSchema)])
-            .optional()
-            .transform(val => val === undefined ? [] : Array.isArray(val) ? val : [val])
-    }).optional()
-})
-
 export const lastFmAlbumInfoTrackSchema = z.object({
     name: z.string().default("Unknown track"),
     url: z.string().optional().default(""),

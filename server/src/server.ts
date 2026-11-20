@@ -13,10 +13,7 @@ if (process.env.NODE_ENV !== 'test') {
     await getQueue().schedule("demo-reset-weekly", "0 0 * * 0", "demo.reset", {}, { attempts: 3, backoffMs: 60_000 })
     // Daily TMDB data refresh (at 03:00)
     await getQueue().schedule("tmdb-refresh-daily", "0 3 * * *", "tmdb.refresh", {}, { attempts: 3, backoffMs: 60_000 })
-    // Idempotent one-off music cover backfill for existing Last.fm media
-    await getQueue().enqueue("music.coverBackfill", {})
-    // Idempotent Open Library sync for Goodreads media
-    await getQueue().enqueue("openlibrary.sync", {})
+    // One-off backfills (music, Open Library) no longer run on boot: `npm run backfill`
 
     const server = app.listen(PORT, () => {
         console.log(`Server has started on port: ${PORT}, DB_URL: ${redactUrl(process.env.DATABASE_URL)}`)

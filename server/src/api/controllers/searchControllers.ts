@@ -1,3 +1,5 @@
+import { z } from 'zod'
+import { uuidSchema } from '@/schemas/common.js'
 import { NextFunction, Request, Response } from 'express'
 import { searchService } from "@/services/search/searchService.js"
 import { sanitizeQuery } from '@/utilities.js'
@@ -9,7 +11,15 @@ import { gameSearchQuerySchema } from '@/schemas/search/gameSchemas.js'
 import { bookSearchQuerySchema } from '@/schemas/search/bookSchemas.js'
 import { bggSearchQuerySchema } from '@/schemas/search/bggSchemas.js'
 
-// Returns the book info fetched from google books (A media shaped item without media type cus its enforced in frontend)
+const albumTracksIdsSchema = z.object({
+    mbid: uuidSchema.optional(),
+    releaseGroupId: uuidSchema.optional(),
+})
+
+const nonEmptyString = (v: unknown): string | undefined =>
+    typeof v === "string" && v.trim() ? v.trim() : undefined
+
+// Returns books from Open Library (A media shaped item without media type cus its enforced in frontend)
 export const searchBooks = async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId
     if (!userId) {
@@ -64,10 +74,15 @@ export const getAlbumTracks = async (req: Request, res: Response, next: NextFunc
 
     const artist = typeof req.query.artist === "string" ? req.query.artist.trim() : ""
     const album = typeof req.query.album === "string" ? req.query.album.trim() : ""
-    const mbid = typeof req.query.mbid === "string" && req.query.mbid.trim() ? req.query.mbid.trim() : undefined
-    const releaseGroupId = typeof req.query.releaseGroupId === "string" && req.query.releaseGroupId.trim()
-        ? req.query.releaseGroupId.trim()
-        : (typeof req.query.mbReleaseGroupId === "string" && req.query.mbReleaseGroupId.trim() ? req.query.mbReleaseGroupId.trim() : undefined)
+    // These come from the client: they must be MusicBrainz ids (UUIDs), not arbitrary strings
+    const idsQuery = albumTracksIdsSchema.safeParse({
+        mbid: nonEmptyString(req.query.mbid),
+        releaseGroupId: nonEmptyString(req.query.releaseGroupId) ?? nonEmptyString(req.query.mbReleaseGroupId),
+    })
+    if (!idsQuery.success) {
+        return res.status(400).json({ message: "mbid and releaseGroupId must be valid MusicBrainz ids" })
+    }
+    const { mbid, releaseGroupId } = idsQuery.data
 
     if (!releaseGroupId && !mbid && (!artist || !album)) {
         return res.status(400).json({ message: "Artist and album, mbid, or releaseGroupId are required" })

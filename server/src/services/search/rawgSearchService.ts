@@ -5,14 +5,13 @@ import { searchResultsSchema, SearchResult } from "@/schemas/search/searchSchema
 import { sanitizeDescription, validateSchema } from "@/utilities.js"
 import { unexpectedShape } from "./providerErrors.js"
 import { providerFetch } from "@/providers/providerFetch.js"
-import { getUserApiKey as getRegistryUserApiKey } from "@/providers/registry.js"
+import { getUserApiKey as getRegistryUserApiKey } from "@/providers/auth.js"
 import { AppError } from "@/api/domain/error.js"
 import prisma from "@/prismaClient.js"
 import { findMediaByProviderId } from "@/repositories/mediaRepository.js"
 
 const BASE_URL = "https://api.rawg.io/api/games"
 const PAGE_SIZE = 20
-const TIMEOUT_MS = 8000
 const MAX_CATEGORIES = 10
 
 export const RAWG_PLATFORM_IDS: Record<NonNullable<GameSearchFilters["platform"]>, number> = {
@@ -27,13 +26,10 @@ import { isJunkGenre, JUNK_RAWG_TAGS } from "@/services/genreService.js"
 
 export { JUNK_RAWG_TAGS }
 
-// The key is a query parameter: never log or echo this URL
 export function buildRawgSearchUrl(
-    { q, page = 1, platform, sort }: { q: string, page?: number } & GameSearchFilters,
-    key: string
+    { q, page = 1, platform, sort }: { q: string, page?: number } & GameSearchFilters
 ): URL {
     const url = new URL(BASE_URL)
-    url.searchParams.set("key", key)
     url.searchParams.set("search", q)
     url.searchParams.set("page", String(page))
     url.searchParams.set("page_size", String(PAGE_SIZE))
@@ -44,10 +40,8 @@ export function buildRawgSearchUrl(
     return url
 }
 
-export function buildRawgDetailsUrl(id: number, key: string): URL {
-    const url = new URL(`${BASE_URL}/${id}`)
-    url.searchParams.set("key", key)
-    return url
+export function buildRawgDetailsUrl(id: number): URL {
+    return new URL(`${BASE_URL}/${id}`)
 }
 
 type Named = { name?: string | null }
@@ -132,10 +126,10 @@ export class RawgSearchService {
     }
 
     // One request with a single retry after a 429. Routed through providerFetch.
-    private async fetchJson(url: URL): Promise<unknown> {
+    private async fetchJson(url: URL, apiKey: string): Promise<unknown> {
         try {
             const res = await providerFetch("rawg", url, {
-                timeoutMs: TIMEOUT_MS,
+                apiKey,
                 allowHttpErrors: true,
             })
             if (res.status === 401 || res.status === 403) {
@@ -156,27 +150,41 @@ export class RawgSearchService {
         }
     }
 
-    async getGame(id: number, options?: { apiKey?: string; userId?: string }): Promise<GameDetails> {
+    // One game by id, mapped like a search result plus what only the details endpoint has.
+    // Throws the standard AppError 404 (gone) / 503 (unavailable).
+    async getGame(id: number, options?: { apiKey?: string; userId?: string }): Promise<SearchResult> {
         let key = options?.apiKey
         if (!key && options?.userId) {
             key = await this.getUserApiKey(options.userId)
         }
         if (!key) throw new AppError("Missing Game API Key", 404)
 
-        const url = buildRawgDetailsUrl(id, key)
-        const raw = await this.fetchJson(url)
-        const checked = rawgGameDetailsSchema.safeParse(raw)
+        // providerFetch maps 404 -> "no longer has this item" and every other failure -> 503
+        const res = await providerFetch("rawg", buildRawgDetailsUrl(id), { apiKey: key })
+        const checked = rawgGameDetailsSchema.safeParse(await res.json().catch(() => null))
         if (!checked.success) {
-            throw new AppError("RAWG search failed", 502, { cause: unexpectedShape(checked.error) })
+            throw new AppError("Provider is unavailable", 503, { cause: unexpectedShape(checked.error) })
         }
-        return parseRawgDetails(checked.data)
+        const d = checked.data
+        const base = mapRawgGame({ ...d, id, slug: null })
+        const details = parseRawgDetails(d)
+        return {
+            ...base,
+            creator: details.developers.length ? details.developers.join(", ") : null,
+            creators: details.developers.map(name => ({ name, role: "developer" })),
+            description: details.description,
+            details: {
+                ...base.details,
+                publishers: details.publishers.length ? details.publishers : undefined,
+            },
+        } as SearchResult
     }
 
     async searchGamesRawg(userId: string, q: string, page = 1, filters: GameSearchFilters = {}):
         Promise<{ results: SearchResult[], nextStartIndex: number | null }>
     {
         const key = await this.getUserApiKey(userId)
-        const raw = await this.fetchJson(buildRawgSearchUrl({ q, page, ...filters }, key))
+        const raw = await this.fetchJson(buildRawgSearchUrl({ q, page, ...filters }), key)
         const checked = rawgSearchResponseSchema.safeParse(raw)
         if (!checked.success) throw new AppError("RAWG search failed", 502, { cause: unexpectedShape(checked.error) })
         const parsed = checked.data
@@ -191,7 +199,7 @@ export class RawgSearchService {
     // Throws on any failure (callers decide what to do)
     async fetchGameDetails(userId: string, id: number): Promise<GameDetails> {
         const key = await this.getUserApiKey(userId)
-        const raw = await this.fetchJson(buildRawgDetailsUrl(id, key))
+        const raw = await this.fetchJson(buildRawgDetailsUrl(id), key)
         const checked = rawgGameDetailsSchema.safeParse(raw)
         if (!checked.success) throw new AppError("RAWG search failed", 502, { cause: unexpectedShape(checked.error) })
         return parseRawgDetails(checked.data)

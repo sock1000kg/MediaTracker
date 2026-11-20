@@ -1,4 +1,5 @@
-import { getUserApiKey, getProviderEntry, ProviderName } from "@/providers/registry.js"
+import { getUserApiKey } from "@/providers/auth.js"
+import { getProviderEntry, ProviderName } from "@/providers/registry.js"
 import { prisma } from "@/tests/jest.setup.js"
 
 describe("BYO keys only - no env fallback (P1, T1)", () => {

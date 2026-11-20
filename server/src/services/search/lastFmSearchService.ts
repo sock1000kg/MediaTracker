@@ -2,7 +2,6 @@
 import {
     lastFmAlbumInfoResponseSchema,
     lastFmAlbumSearchResponseSchema,
-    lastFmTopTagsResponseSchema,
     LastFmMusicItem,
     lastFmTrackSearchResponseSchema
 } from "@/schemas/search/musicSchemas.js"
@@ -10,7 +9,7 @@ import {
 import { searchResultsSchema, searchResultSchema, SearchResult } from "@/schemas/search/searchSchemas.js"
 import { validateSchema } from "@/utilities.js"
 import { providerFetch } from "@/providers/providerFetch.js"
-import { getUserApiKey as getRegistryUserApiKey } from "@/providers/registry.js"
+import { getUserApiKey as getRegistryUserApiKey } from "@/providers/auth.js"
 import { ZodSchema } from "zod"
 import { ISearchService } from "./searchServiceInterface.js"
 import { musicBrainzService, MusicBrainzRelease } from "./musicBrainzService.js"
@@ -18,26 +17,11 @@ import { musicBrainzClient } from "./musicBrainzClient.js"
 import prisma from "@/prismaClient.js"
 import type { IdSource } from "@/db.js"
 
-import { isJunkGenre, JUNK_MUSIC_TAGS } from "@/services/genreService.js"
+import { JUNK_MUSIC_TAGS } from "@/services/genreService.js"
 
 export { JUNK_MUSIC_TAGS }
-export const JUNK_LASTFM_TAGS = JUNK_MUSIC_TAGS
 
-const MIN_TAG_COUNT = 5
-const MAX_TAGS = 5
-
-export function buildTopTagsUrl(kind: "album" | "track", artist: string, name: string, apiKey: string): URL {
-    const url = new URL("https://ws.audioscrobbler.com/2.0/")
-    url.searchParams.set("method", `${kind}.gettoptags`)
-    url.searchParams.set("artist", artist)
-    url.searchParams.set(kind, name)
-    url.searchParams.set("autocorrect", "1")
-    url.searchParams.set("api_key", apiKey)
-    url.searchParams.set("format", "json")
-    return url
-}
-
-export function buildAlbumInfoUrl(apiKey: string, artist?: string, album?: string, mbid?: string): URL {
+export function buildAlbumInfoUrl(artist?: string, album?: string, mbid?: string): URL {
     const url = new URL("https://ws.audioscrobbler.com/2.0/")
     url.searchParams.set("method", "album.getinfo")
     if (mbid) {
@@ -47,33 +31,8 @@ export function buildAlbumInfoUrl(apiKey: string, artist?: string, album?: strin
         if (album) url.searchParams.set("album", album)
     }
     url.searchParams.set("autocorrect", "1")
-    url.searchParams.set("api_key", apiKey)
     url.searchParams.set("format", "json")
     return url
-}
-
-// Only drops junk, never merges or renames (tags stay as Last.fm returns them, apart from trimming)
-export function cleanLastFmTags(tags: { name: string, count: number }[] | null | undefined, artist: string | null): string[] | null {
-    const artistLower = artist?.trim().toLowerCase() ?? null
-    const seen = new Set<string>()
-    const result: string[] = []
-
-    for (const { name, count } of tags ?? []) {
-        const tag = name.trim()
-        const lower = tag.toLowerCase()
-
-        if (!tag) continue
-        if (isJunkGenre(tag, "music")) continue
-        if (artistLower && lower === artistLower) continue
-        if (count < MIN_TAG_COUNT) continue
-        if (seen.has(lower)) continue
-
-        seen.add(lower)
-        result.push(tag)
-        if (result.length === MAX_TAGS) break
-    }
-
-    return result.length > 0 ? result : null
 }
 
 export class LastFmSearchService implements ISearchService {
@@ -84,8 +43,9 @@ export class LastFmSearchService implements ISearchService {
         return getRegistryUserApiKey("lastfm", userId)
     }
 
-    private async fetchJson<T>(url: URL, schema: ZodSchema<T>, timeoutMs = 8000): Promise<T> {
+    private async fetchJson<T>(url: URL, schema: ZodSchema<T>, key: string, timeoutMs = 8000): Promise<T> {
         const res = await providerFetch("lastfm", url, {
+            apiKey: key,
             timeoutMs,
             allowHttpErrors: true,
         })
@@ -145,16 +105,6 @@ export class LastFmSearchService implements ISearchService {
         return items.length < this.maxResults ? null : page + 1
     }
 
-    // Fetches the top tags of one album/track, cleaned. Throws on any failure (callers decide what to do)
-    async fetchTopTags(userId: string, kind: "album" | "track", artist: string, name: string): Promise<string[] | null> {
-        const key = await this.getUserApiKey(userId)
-        const url = buildTopTagsUrl(kind, artist, name, key)
-
-        const parsed = await this.fetchJson(url, lastFmTopTagsResponseSchema, 5000)
-
-        return cleanLastFmTags(parsed.toptags?.tag ?? [], artist)
-    }
-
     async searchTracksLastFm(userId: string, q: string, page = 1):
         Promise<{ results: SearchResult[], nextStartIndex: number | null}>
     {
@@ -163,12 +113,11 @@ export class LastFmSearchService implements ISearchService {
         const url = new URL(this.baseUrl)
         url.searchParams.set("method", "track.search")
         url.searchParams.set("track", q)
-        url.searchParams.set("api_key", key)
         url.searchParams.set("format", "json")
         url.searchParams.set("limit", this.maxResults.toString())
         url.searchParams.set("page", page.toString())
 
-        const parsed = await this.fetchJson(url, lastFmTrackSearchResponseSchema)
+        const parsed = await this.fetchJson(url, lastFmTrackSearchResponseSchema, key)
 
         const items = parsed.results?.trackmatches?.track ?? []
         const nextPage = this.computePagination(items, page)
@@ -188,12 +137,11 @@ export class LastFmSearchService implements ISearchService {
         const url = new URL(this.baseUrl)
         url.searchParams.set("method", "album.search")
         url.searchParams.set("album", q)
-        url.searchParams.set("api_key", key)
         url.searchParams.set("format", "json")
         url.searchParams.set("limit", this.maxResults.toString())
         url.searchParams.set("page", page.toString())
 
-        const parsed = await this.fetchJson(url, lastFmAlbumSearchResponseSchema)
+        const parsed = await this.fetchJson(url, lastFmAlbumSearchResponseSchema, key)
 
         const items = parsed.results?.albummatches?.album ?? []
         const nextPage = this.computePagination(items, page)
@@ -274,8 +222,8 @@ export class LastFmSearchService implements ISearchService {
         if (tracks.length === 0) {
             try {
                 const key = await this.getUserApiKey(userId)
-                const url = buildAlbumInfoUrl(key, artist, albumName, mbid)
-                const raw = await this.fetchJson(url, lastFmAlbumInfoResponseSchema, 10000)
+                const url = buildAlbumInfoUrl(artist, albumName, mbid)
+                const raw = await this.fetchJson(url, lastFmAlbumInfoResponseSchema, key, 10000)
 
                 const album = raw.album
                 if (album) {

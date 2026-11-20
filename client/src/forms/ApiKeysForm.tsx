@@ -5,7 +5,7 @@ import { fetchApiKeysQueryOptions } from "@/queryOptions/fetchApiKeysQueryOption
 import type { AllowedSource, ApiKey } from "@/types/mainTypes"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
-import { TMDB_ATTRIBUTION, TMDB_LOGO_URL } from "@/lib/movieFormat"
+import { CLIENT_PROVIDERS, TMDB_LOGO_URL } from "@/lib/providers"
 import { RAWG_URL, RAWG_ATTRIBUTION_TEXT } from "@/lib/gameFormat"
 
 interface ServiceConfig {
@@ -24,7 +24,7 @@ const SERVICES: ServiceConfig[] = [
         label: "TMDB",
         labelLogo: TMDB_LOGO_URL,
         placeholder: "TMDB API Key or read access token. Used for movie search.",
-        attribution: <span>{TMDB_ATTRIBUTION}</span>,
+        attribution: <span>{CLIENT_PROVIDERS.tmdb.attribution.text}</span>,
     },
     {
         service: "rawg",

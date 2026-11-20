@@ -120,7 +120,7 @@ Collections are private, ordered lists of your logs. Up to 200 collections per u
 | Method | Path | Description |
 | --- | --- | --- |
 | GET | `/api-key` | Your stored keys. They're encrypted at rest. |
-| POST | `/api-key` | `{ service, key }`. The `service` must be one of `ApiKeyService` (`lastfm`, `tmdb`, `rawg`, `bgg`, `google_books`); any unknown or unkeyed service returns `400`. Keys can be up to 512 characters. |
+| POST | `/api-key` | `{ service, key }`. The `service` must be one of `ApiKeyService` (`lastfm`, `tmdb`, `rawg`, `bgg`); any unknown or unkeyed service returns `400`. Keys can be up to 512 characters. |
 | PUT | `/api-key` | `{ service, key }`. Replace a key for a valid `ApiKeyService` (`400` if unknown). |
 | DELETE | `/api-key` | `{ service }`. Delete a key for a valid `ApiKeyService` (`400` if unknown). |
 

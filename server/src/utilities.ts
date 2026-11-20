@@ -174,29 +174,6 @@ export function sanitizeApiKey(key: string | undefined | null): string | null {
     return trimmed.length > MAX_API_KEY_LENGTH ? null : trimmed
 }
 
-// Fetch and parse API results
-export async function fetchAndParse<T>(
-    url: URL, 
-    responseSchema: ZodSchema<T>, 
-    errMessage: string, 
-    defMessage: string,
-    init?: RequestInit
-): Promise<T> {
-    const res = await fetch(url.toString(), init)
-    // console.log(url.toString(), init)
-
-    if (!res.ok) {
-        const errorBody = await res.json().catch(() => null)
-        throw Object.assign(new Error(defMessage), {
-            status: res.status,
-            message: errorBody?.message ?? errMessage
-        })
-    }
-
-    const raw = await res.json()
-    return validateSchema(responseSchema, raw)
-}
-
 export function sanitizeQuery(query: string | undefined | null): string | null {
     if (!query) return null
 

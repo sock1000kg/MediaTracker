@@ -10,7 +10,6 @@ import { bggSearchService } from "./bggSearchService.js"
 
 export class SearchService {
     async searchBooks(userId: string, q: string, page: number = 1, filters?: BookSearchFilters) {
-        // return googleBooksService.searchBooksGGBooks(userId, q, startIndex)
         return openLibraryService.searchBooksOpenLib(userId, q, page, filters)
     }
 

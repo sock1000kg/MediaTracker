@@ -2,6 +2,7 @@ import { z } from "zod"
 import { uuidSchema } from "@/schemas/common.js"
 import { searchMediaSchema } from "@schemas/mediaSchemas.js"
 import { searchLogSchema } from "@/schemas/logSchemas.js"
+import { isStoredAsReceived } from "@/providers/registry.js"
 import { normalizeTypeName, sanitizeDescription } from "@/utilities.js"
 import { bookDetailsSchema } from "./bookSchemas.js"
 import { albumDetailsSchema, trackDetailsSchema } from "./musicSchemas.js"
@@ -19,6 +20,12 @@ const parentMediaSchema = searchMediaSchema.extend({
         .optional(),
 })
 
+export function normalizeDescription(source: string, description: string | null | undefined): string | null {
+    return isStoredAsReceived(source)
+        ? (description ? String(description).trim() || null : null)
+        : sanitizeDescription(description)
+}
+
 //For when user search up a media and wanna log it
 export const createMediaAndLogSchema = z.object({
     mediaData: searchMediaSchema,
@@ -28,18 +35,9 @@ export const createMediaAndLogSchema = z.object({
     if (data.parent && !data.parent.mediaType) {
         data.parent.mediaType = data.mediaData.mediaType
     }
-    if (data.mediaData.source !== "bgg") {
-        data.mediaData.description = sanitizeDescription(data.mediaData.description)
-    } else {
-        data.mediaData.description = data.mediaData.description ? String(data.mediaData.description).trim() || null : null
-    }
-    if (data.parent) {
-        if (data.parent.source !== "bgg") {
-            data.parent.description = sanitizeDescription(data.parent.description)
-        } else {
-            data.parent.description = data.parent.description ? String(data.parent.description).trim() || null : null
-        }
-    }
+    // Providers whose terms say "store as received" (BGG) are only trimmed; everything else is sanitized
+    data.mediaData.description = normalizeDescription(data.mediaData.source, data.mediaData.description)
+    if (data.parent) data.parent.description = normalizeDescription(data.parent.source, data.parent.description)
     return data
 })
 

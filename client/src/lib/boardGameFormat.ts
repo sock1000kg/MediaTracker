@@ -1,7 +1,5 @@
 export const BGG_URL = "https://boardgamegeek.com"
 export const BGG_ATTRIBUTION_TEXT = "Board game data from BoardGameGeek"
-/** BGG's XML API terms require the "Powered by BGG" logo wherever its data is shown. Don't recolour or edit it. */
-export { default as BGG_LOGO_URL } from "@/assets/powered-by-bgg.svg"
 
 /** "2–4 players" or "4 players": en-dash range when min !== max, single value when equal or one missing. */
 export function formatBoardGamePlayers(min?: number | null, max?: number | null): string | null {

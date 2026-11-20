@@ -87,7 +87,7 @@ a { color: var(--accent); }
       <dl>
         <dt>Terms</dt><dd><a href="https://www.last.fm/api/tos">Last.fm Terms</a> · <a href="https://musicbrainz.org/doc/MusicBrainz_API">MusicBrainz API</a> · <a href="https://coverartarchive.org">Cover Art Archive</a></dd>
         <dt>Search</dt><dd>Last.fm album and track search with per-user API key for ranking. Covers on the results page are fetched by sending release IDs to MusicBrainz in batches (up to 25 per request) and turned into Cover Art Archive links.</dd>
-        <dt>Stored on log</dt><dd><b>MusicBrainz</b> is the primary stored source: release-group title, artist credit, first release year, primary and secondary types, up to 5 genres by vote, and a Cover Art Archive URL. Tracks store recording title, artist, length, and parent release group. Last.fm data is never stored, keeping its 100 MB storage cap out of play. Last.fm and MusicBrainz links are built dynamically from ids.</dd>
+        <dt>Stored on log</dt><dd><b>MusicBrainz</b> is the primary stored source: release-group title, artist credit, first release year, primary and secondary types, up to 5 genres by vote, and a Cover Art Archive URL. Tracks store recording title, artist, length, and parent release group. Last.fm data is never stored, keeping its 100 MB storage cap out of play. If MusicBrainz can't resolve a pick when you log it, the row is saved with the Last.fm id and the title and artist you picked, and nothing else from Last.fm (no tags, no genres); the backfill and Refresh convert it to MusicBrainz later. Last.fm and MusicBrainz links are built dynamically from ids.</dd>
         <dt>Rules &amp; Don'ts</dt><dd>MusicBrainz strict 1 req/s rate limit. Last.fm images are excluded from its licence and never used. Covers come from the Cover Art Archive. Core MusicBrainz data is CC0; curated genres are CC BY-NC-SA.</dd>
         <dt>Attribution</dt><dd>Credit Last.fm and link back to its pages. Credit Cover Art Archive on Music search. Credit MusicBrainz for tracklists and curated genres.</dd>
         <dt>Termination</dt><dd>On termination, delete Last.fm data.</dd>
@@ -145,7 +145,6 @@ a { color: var(--accent); }
   <section style="display:grid;gap:12px">
     <h2>Other services and planned sources</h2>
     <div class="gaps">
-      <div class="gap ok"><b>Google Books (not active):</b> Service code kept, UI disabled. If re-enabled, must follow Google's API terms and "Powered by Google" branding.</div>
       <div class="gap ok"><b>User-uploaded files (Not APIs):</b> Goodreads, MyAnimeList and Letterboxd imports read export files uploaded by the user. We do not call those services' private APIs.</div>
       <div class="gap ok"><b>Planned open data:</b> Wikidata (CC0 structured links and IDs) and Wikipedia (CC BY-SA 4.0 plot/premise text for opt-in local embeddings). Commercial provider text is never embedded.</div>
     </div>
@@ -153,7 +152,7 @@ a { color: var(--accent); }
 
   <section style="display:grid;gap:12px">
     <h2>Central provider registry and rate limits</h2>
-    <p>All provider HTTP requests go through a unified <code>providerFetch</code> function and registry in <code>server/src/providers/</code>. Every call enforces the provider's rate limiter, User-Agent, user auth, timeout, automatic single retry on 429/503 with Retry-After, and typed error mapping.</p>
+    <p>All provider HTTP requests go through a unified <code>providerFetch</code> function and registry in <code>server/src/providers/</code>. Every call enforces the provider's rate limiter, User-Agent, a host check (a key is only ever sent to the provider's own host), user auth, timeout, the registry's retry policy with Retry-After, and typed error mapping. Auth is its own layer (<code>providers/auth.ts</code>): the registry names a scheme per provider (query parameter, bearer, or TMDB's key-or-token) and <code>providerFetch</code> applies it, so URL builders never take keys.</p>
     <div class="tablebox"><table>
       <thead><tr><th>Provider</th><th>Mechanism</th><th>Rate</th><th>Storage rule</th><th>Shared across search, imports and jobs?</th><th>429 handling</th></tr></thead>
       <tbody>
@@ -172,7 +171,7 @@ a { color: var(--accent); }
   <section style="display:grid;gap:12px">
     <h2>Known gaps</h2>
     <div class="gaps">
-      <div class="gap"><b>Limits are per process.</b> With two server replicas every limiter's rate doubles. Production runs one replica today.</div>
+      <div class="gap"><b>Limits are per process.</b> Limits are per process; with N server replicas each provider sees up to N× the rate. Run one replica, or share limits through Valkey (not built yet).</div>
     </div>
   </section>
 </div>

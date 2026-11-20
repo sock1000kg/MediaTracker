@@ -55,25 +55,25 @@ describe("API Key Routes", () => {
     test("POST /apikeys creates API key successfully", async () => {
         const res = await request(app)
             .post(API)
-            .send({ service: "google_books", key: "sk-test-123" })
+            .send({ service: "lastfm", key: "sk-test-123" })
             .set("Authorization", `Bearer ${token}`)
             .set("Content-Type", "application/json")
 
         expect(res.statusCode).toBe(201)
-        expect(res.body).toHaveProperty("service", "google_books")
+        expect(res.body).toHaveProperty("service", "lastfm")
     })
 
     test("POST /apikeys returns 409 if service already exists", async () => {
         // First creation
         await request(app)
             .post(API)
-            .send({ service: "google_books", key: "abc123" })
+            .send({ service: "lastfm", key: "abc123" })
             .set("Authorization", `Bearer ${token}`)
 
         // Duplicate
         const res = await request(app)
             .post(API)
-            .send({ service: "google_books", key: "abc123" })
+            .send({ service: "lastfm", key: "abc123" })
             .set("Authorization", `Bearer ${token}`)
 
         expect(res.statusCode).toBe(409)
@@ -123,6 +123,15 @@ describe("API Key Routes", () => {
         }
     })
 
+    test("POST /apikeys rejects google_books (support was removed)", async () => {
+        const res = await request(app)
+            .post(API)
+            .send({ service: "google_books", key: "gb-key-123" })
+            .set("Authorization", `Bearer ${token}`)
+        expect(res.statusCode).toBe(400)
+        expect(res.body.message).toMatch(/must exist/i)
+    })
+
     test("POST /apikeys with missing fields fails (Zod error)", async () => {
         const res = await request(app)
             .post(API)
@@ -140,16 +149,16 @@ describe("API Key Routes", () => {
         // Create one to update
         await request(app)
             .post(API)
-            .send({ service: "google_books", key: "oldKey" })
+            .send({ service: "lastfm", key: "oldKey" })
             .set("Authorization", `Bearer ${token}`)
 
         const res = await request(app)
             .put(API)
-            .send({ service: "google_books", key: "newKeyValue" })
+            .send({ service: "lastfm", key: "newKeyValue" })
             .set("Authorization", `Bearer ${token}`)
 
         expect(res.statusCode).toBe(200)
-        expect(res.body).toHaveProperty("service", "google_books")
+        expect(res.body).toHaveProperty("service", "lastfm")
     })
 
     test("PUT /apikeys fails if service doesn’t exist", async () => {
@@ -169,12 +178,12 @@ describe("API Key Routes", () => {
         // Create one to delete
         await request(app)
             .post(API)
-            .send({ service: "google_books", key: "123" })
+            .send({ service: "lastfm", key: "123" })
             .set("Authorization", `Bearer ${token}`)
 
         const res = await request(app)
             .delete(API)
-            .send({ service: "google_books" })
+            .send({ service: "lastfm" })
             .set("Authorization", `Bearer ${token}`)
 
         expect(res.statusCode).toBe(200)

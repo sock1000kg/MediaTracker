@@ -1,7 +1,7 @@
 export type DialogName = "mediaForm" | "mediaTypeForm" | "logForm" | "deleteConfirm" | null //Dialogs in homepage tabs
 export type EditableEntity = Log | Media | MediaType
 
-export const allowedSources = ["google_books", "lastfm", "tmdb", "rawg", "bgg"] as const
+export const allowedSources = ["lastfm", "tmdb", "rawg", "bgg"] as const
 export type AllowedSource = (typeof allowedSources)[number]
 
 

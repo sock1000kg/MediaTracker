@@ -11,11 +11,10 @@ import prisma from "@/prismaClient.js"
 import { findMediaByProviderId, attachExternalIdsToMedia } from "@/repositories/mediaRepository.js"
 import { unexpectedShape } from "./providerErrors.js"
 import { providerFetch } from "@/providers/providerFetch.js"
-import { getUserApiKey as getRegistryUserApiKey } from "@/providers/registry.js"
+import { getUserApiKey as getRegistryUserApiKey } from "@/providers/auth.js"
 
 const BASE_URL = "https://api.themoviedb.org/3"
 const IMAGE_BASE = "https://image.tmdb.org/t/p/w342"
-const TIMEOUT_MS = 8000
 
 export function normalizeTitle(s: string): string {
     return s.trim().toLowerCase().replace(/['".,!?:;-]/g, "").replace(/\s+/g, " ")
@@ -47,22 +46,10 @@ export const TMDB_TV_GENRES: Record<number, string> = {
     37: "Western",
 }
 
-export type TmdbAuth = { headers?: Record<string, string>, params?: Record<string, string> }
-
-// A v4 read access token is a JWT (eyJ... with two dots); anything else is treated as a v3 api_key
-export function tmdbAuth(key: string): TmdbAuth {
-    const k = key.trim()
-    if (k.startsWith("eyJ") && k.split(".").length === 3) {
-        return { headers: { Authorization: `Bearer ${k}` } }
-    }
-    return { params: { api_key: k } }
-}
-
 // anyReleaseYear matches a release in any country (TMDB `year`), not only the primary one. Importers need it
 // because Letterboxd uses the premiere year (The Cabin in the Woods: 2011, while its US release is 2012).
 export function buildTmdbSearchUrl(
-    { q, page = 1, year, anyReleaseYear = false }: { q: string, page?: number, year?: number, anyReleaseYear?: boolean },
-    auth: TmdbAuth = {}
+    { q, page = 1, year, anyReleaseYear = false }: { q: string, page?: number, year?: number, anyReleaseYear?: boolean }
 ): URL {
     const url = new URL(`${BASE_URL}/search/movie`)
     url.searchParams.set("query", q)
@@ -70,21 +57,18 @@ export function buildTmdbSearchUrl(
     url.searchParams.set("include_adult", "false")
     url.searchParams.set("language", "en-US")
     if (year != null) url.searchParams.set(anyReleaseYear ? "year" : "primary_release_year", String(year))
-    for (const [k, v] of Object.entries(auth.params ?? {})) url.searchParams.set(k, v)
     return url
 }
 
-export function buildTmdbDetailsUrl(tmdbId: number, auth: TmdbAuth = {}): URL {
+export function buildTmdbDetailsUrl(tmdbId: number): URL {
     const url = new URL(`${BASE_URL}/movie/${tmdbId}`)
     url.searchParams.set("append_to_response", "credits")
     url.searchParams.set("language", "en-US")
-    for (const [k, v] of Object.entries(auth.params ?? {})) url.searchParams.set(k, v)
     return url
 }
 
 export function buildTmdbTvSearchUrl(
-    { q, page = 1, year }: { q: string, page?: number, year?: number },
-    auth: TmdbAuth = {}
+    { q, page = 1, year }: { q: string, page?: number, year?: number }
 ): URL {
     const url = new URL(`${BASE_URL}/search/tv`)
     url.searchParams.set("query", q)
@@ -92,14 +76,12 @@ export function buildTmdbTvSearchUrl(
     url.searchParams.set("include_adult", "false")
     url.searchParams.set("language", "en-US")
     if (year != null) url.searchParams.set("first_air_date_year", String(year))
-    for (const [k, v] of Object.entries(auth.params ?? {})) url.searchParams.set(k, v)
     return url
 }
 
-export function buildTmdbTvDetailsUrl(tmdbId: number, auth: TmdbAuth = {}): URL {
+export function buildTmdbTvDetailsUrl(tmdbId: number): URL {
     const url = new URL(`${BASE_URL}/tv/${tmdbId}`)
     url.searchParams.set("language", "en-US")
-    for (const [k, v] of Object.entries(auth.params ?? {})) url.searchParams.set(k, v)
     return url
 }
 
@@ -193,12 +175,17 @@ export class TmdbSearchService {
         return getRegistryUserApiKey("tmdb", userId)
     }
 
+    private async resolveKey(options?: { apiKey?: string; userId?: string }): Promise<string> {
+        if (options?.apiKey) return options.apiKey
+        if (options?.userId) return this.getUserApiKey(options.userId)
+        throw new AppError("Missing Movie API Key", 404)
+    }
+
     // One request with a single retry after a 429. Routed through providerFetch.
-    private async fetchJson(url: URL, auth: TmdbAuth): Promise<unknown> {
+    private async fetchJson(url: URL, apiKey: string): Promise<unknown> {
         try {
             const res = await providerFetch("tmdb", url, {
-                headers: auth.headers,
-                timeoutMs: TIMEOUT_MS,
+                apiKey,
                 allowHttpErrors: true,
             })
             if (res.status === 401) {
@@ -222,8 +209,8 @@ export class TmdbSearchService {
         }
     }
 
-    async fetchWithAuth(url: URL, auth: TmdbAuth): Promise<unknown> {
-        return this.fetchJson(url, auth)
+    async fetchWithAuth(url: URL, apiKey: string): Promise<unknown> {
+        return this.fetchJson(url, apiKey)
     }
 
     async findMovie(
@@ -231,19 +218,12 @@ export class TmdbSearchService {
         year: number | null | undefined,
         options?: { apiKey?: string; userId?: string }
     ): Promise<SearchResult | null> {
-        let auth: TmdbAuth
-        if (options?.apiKey) {
-            auth = tmdbAuth(options.apiKey)
-        } else if (options?.userId) {
-            auth = tmdbAuth(await this.getUserApiKey(options.userId))
-        } else {
-            throw new AppError("Missing Movie API Key", 404)
-        }
+        const key = await this.resolveKey(options)
 
-        const url = buildTmdbSearchUrl({ q: title, year: year ?? undefined, anyReleaseYear: true }, auth)
+        const url = buildTmdbSearchUrl({ q: title, year: year ?? undefined, anyReleaseYear: true })
         let raw: unknown
         try {
-            raw = await this.fetchJson(url, auth)
+            raw = await this.fetchJson(url, key)
         } catch {
             return null
         }
@@ -294,16 +274,9 @@ export class TmdbSearchService {
     }
 
     async getMovie(id: number, options?: { apiKey?: string; userId?: string }): Promise<SearchResult> {
-        let auth: TmdbAuth
-        if (options?.apiKey) {
-            auth = tmdbAuth(options.apiKey)
-        } else if (options?.userId) {
-            auth = tmdbAuth(await this.getUserApiKey(options.userId))
-        } else {
-            throw new AppError("Missing Movie API Key", 404)
-        }
-        const url = buildTmdbDetailsUrl(id, auth)
-        const raw = await this.fetchJson(url, auth)
+        const key = await this.resolveKey(options)
+        const url = buildTmdbDetailsUrl(id)
+        const raw = await this.fetchWithAuth(url, key)
         const data = tmdbMovieDetailsSchema.parse(raw)
 
         const title = data.title?.trim() || data.original_title?.trim() || "Unknown title"
@@ -346,16 +319,9 @@ export class TmdbSearchService {
     }
 
     async getShow(id: number, options?: { apiKey?: string; userId?: string }): Promise<SearchResult> {
-        let auth: TmdbAuth
-        if (options?.apiKey) {
-            auth = tmdbAuth(options.apiKey)
-        } else if (options?.userId) {
-            auth = tmdbAuth(await this.getUserApiKey(options.userId))
-        } else {
-            throw new AppError("Missing Movie API Key", 404)
-        }
-        const url = buildTmdbTvDetailsUrl(id, auth)
-        const raw = await this.fetchJson(url, auth)
+        const key = await this.resolveKey(options)
+        const url = buildTmdbTvDetailsUrl(id)
+        const raw = await this.fetchWithAuth(url, key)
         const data = tmdbTvShowDetailsSchema.parse(raw)
 
         const showTitle = data.name?.trim() || data.original_name?.trim() || "Unknown title"
@@ -403,16 +369,9 @@ export class TmdbSearchService {
     }
 
     async getSeason(id: number, n: number, options?: { apiKey?: string; userId?: string }): Promise<SearchResult> {
-        let auth: TmdbAuth
-        if (options?.apiKey) {
-            auth = tmdbAuth(options.apiKey)
-        } else if (options?.userId) {
-            auth = tmdbAuth(await this.getUserApiKey(options.userId))
-        } else {
-            throw new AppError("Missing Movie API Key", 404)
-        }
-        const url = buildTmdbTvDetailsUrl(id, auth)
-        const raw = await this.fetchJson(url, auth)
+        const key = await this.resolveKey(options)
+        const url = buildTmdbTvDetailsUrl(id)
+        const raw = await this.fetchWithAuth(url, key)
         const data = tmdbTvShowDetailsSchema.parse(raw)
 
         const seasonItem = (data.seasons ?? []).find(s => s.season_number === n)
@@ -437,6 +396,7 @@ export class TmdbSearchService {
             subtype: "season",
             title,
             creator,
+            genres: (data.genres ?? []).map(g => g.name?.trim()).filter(Boolean) as string[],
             year,
             releaseDate: seasonItem.air_date ?? null,
             description: seasonItem.overview?.trim() || "",
@@ -453,8 +413,8 @@ export class TmdbSearchService {
     async searchMoviesTmdb(userId: string, q: string, page = 1, filters: { year?: number } = {}):
         Promise<{ results: SearchResult[], nextStartIndex: number | null }>
     {
-        const auth = tmdbAuth(await this.getUserApiKey(userId))
-        const raw = await this.fetchJson(buildTmdbSearchUrl({ q, page, year: filters.year }, auth), auth)
+        const key = await this.getUserApiKey(userId)
+        const raw = await this.fetchJson(buildTmdbSearchUrl({ q, page, year: filters.year }), key)
         const checked = tmdbSearchResponseSchema.safeParse(raw)
         if (!checked.success) throw new AppError("TMDB search failed", 502, { cause: unexpectedShape(checked.error) })
         const parsed = checked.data
@@ -468,8 +428,8 @@ export class TmdbSearchService {
 
     // Throws on any failure (callers decide what to do)
     async fetchMovieDetails(userId: string, tmdbId: number): Promise<MovieDetails> {
-        const auth = tmdbAuth(await this.getUserApiKey(userId))
-        const raw = await this.fetchJson(buildTmdbDetailsUrl(tmdbId, auth), auth)
+        const key = await this.getUserApiKey(userId)
+        const raw = await this.fetchJson(buildTmdbDetailsUrl(tmdbId), key)
         const checked = tmdbMovieDetailsSchema.safeParse(raw)
         if (!checked.success) throw new AppError("TMDB search failed", 502, { cause: unexpectedShape(checked.error) })
         return parseTmdbDetails(checked.data)
@@ -478,8 +438,8 @@ export class TmdbSearchService {
     async searchTvTmdb(userId: string, q: string, page = 1, filters: { year?: number } = {}):
         Promise<{ results: SearchResult[], nextStartIndex: number | null }>
     {
-        const auth = tmdbAuth(await this.getUserApiKey(userId))
-        const raw = await this.fetchJson(buildTmdbTvSearchUrl({ q, page, year: filters.year }, auth), auth)
+        const key = await this.getUserApiKey(userId)
+        const raw = await this.fetchJson(buildTmdbTvSearchUrl({ q, page, year: filters.year }), key)
         const checked = tmdbTvSearchResponseSchema.safeParse(raw)
         if (!checked.success) throw new AppError("TMDB search failed", 502, { cause: unexpectedShape(checked.error) })
         const parsed = checked.data
@@ -513,8 +473,8 @@ export class TmdbSearchService {
     }
 
     async fetchTvSeasons(userId: string, tmdbId: number): Promise<{ show: SearchResult, seasons: SearchResult[] }> {
-        const auth = tmdbAuth(await this.getUserApiKey(userId))
-        const raw = await this.fetchJson(buildTmdbTvDetailsUrl(tmdbId, auth), auth)
+        const key = await this.getUserApiKey(userId)
+        const raw = await this.fetchJson(buildTmdbTvDetailsUrl(tmdbId), key)
         const checked = tmdbTvShowDetailsSchema.safeParse(raw)
         if (!checked.success) throw new AppError("TMDB search failed", 502, { cause: unexpectedShape(checked.error) })
         const d = checked.data

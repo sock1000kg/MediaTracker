@@ -123,6 +123,76 @@ describe("providerFetch (P2, T1)", () => {
         })
     })
 
+    describe("Auth schemes (table-driven)", () => {
+        const JWT = "eyJhbGciOi.eyJzdWIiOi.sig"
+        const cases = [
+            { name: "lastfm", url: "https://ws.audioscrobbler.com/2.0/?method=x", key: "k-lastfm", param: "api_key", header: null },
+            { name: "rawg", url: "https://api.rawg.io/api/games?search=z", key: "k-rawg", param: "key", header: null },
+            { name: "tmdb", url: "https://api.themoviedb.org/3/movie/1", key: "k-v3", param: "api_key", header: null },
+            { name: "tmdb", url: "https://api.themoviedb.org/3/movie/1", key: JWT, param: null, header: `Bearer ${JWT}` },
+            { name: "bgg", url: "https://boardgamegeek.com/xmlapi2/thing?id=1", key: "k-bgg", param: null, header: "Bearer k-bgg" },
+        ] as const
+
+        test.each(cases)("$name key $key goes in the right place", async ({ name, url, key, param, header }) => {
+            const fetchMock = jest.fn<typeof globalThis.fetch>().mockResolvedValue(new Response("{}", { status: 200 }))
+            globalThis.fetch = fetchMock
+
+            await providerFetch(name, url, { apiKey: key })
+
+            const [calledUrl, init] = fetchMock.mock.calls[0]
+            const u = new URL(calledUrl.toString())
+            const headers = new Headers(init?.headers)
+            if (param) {
+                expect(u.searchParams.get(param)).toBe(key)
+                expect(headers.get("Authorization")).toBeNull()
+            } else {
+                expect(headers.get("Authorization")).toBe(header)
+                expect(u.searchParams.has("api_key")).toBe(false)
+                expect(u.searchParams.has("key")).toBe(false)
+            }
+        })
+
+        test("a key already on the URL is not duplicated or replaced when no key is supplied", async () => {
+            const fetchMock = jest.fn<typeof globalThis.fetch>().mockResolvedValue(new Response("{}", { status: 200 }))
+            globalThis.fetch = fetchMock
+
+            await providerFetch("rawg", "https://api.rawg.io/api/games?key=baked")
+
+            const u = new URL(fetchMock.mock.calls[0][0].toString())
+            expect(u.searchParams.getAll("key")).toEqual(["baked"])
+        })
+
+        test("no key anywhere -> 404 with the provider's message", async () => {
+            globalThis.fetch = jest.fn<typeof globalThis.fetch>()
+            await expect(providerFetch("rawg", "https://api.rawg.io/api/games")).rejects.toMatchObject({
+                status: 404, message: "Missing Game API Key",
+            })
+        })
+    })
+
+    describe("Host check", () => {
+        test.each([
+            ["rawg", "https://evil.example.com/api/games"],
+            ["tmdb", "https://api.themoviedb.org.evil.example/3/movie/1"],
+            ["bgg", "https://notboardgamegeek.com/xmlapi2/thing"],
+            ["openlibrary", "http://127.0.0.1/search.json"],
+        ] as const)("%s request to %s throws before fetch is called", async (name, url) => {
+            const fetchMock = jest.fn<typeof globalThis.fetch>()
+            globalThis.fetch = fetchMock
+
+            await expect(providerFetch(name, url, { apiKey: "secret" })).rejects.toThrow(/host/)
+            await expect(providerFetch(name, url, { apiKey: "secret" })).rejects.not.toBeInstanceOf(AppError)
+            expect(fetchMock).not.toHaveBeenCalled()
+        })
+
+        test("a subdomain of the provider host is allowed", async () => {
+            const fetchMock = jest.fn<typeof globalThis.fetch>().mockResolvedValue(new Response("{}", { status: 200 }))
+            globalThis.fetch = fetchMock
+            await providerFetch("openlibrary", "https://covers.openlibrary.org/b/id/1-M.jpg")
+            expect(fetchMock).toHaveBeenCalledTimes(1)
+        })
+    })
+
     describe("429 Retry-After single retry", () => {
         test("retries once after seconds Retry-After and succeeds", async () => {
             let attempt = 0

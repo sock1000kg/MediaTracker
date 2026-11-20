@@ -1,8 +1,3 @@
-export const TMDB_URL = "https://www.themoviedb.org"
-export const TMDB_ATTRIBUTION = "This product uses the TMDB API but is not endorsed or certified by TMDB."
-export const TMDB_ATTRIBUTION_TEXT = TMDB_ATTRIBUTION
-export { default as TMDB_LOGO_URL } from "@/assets/tmdb-alt-short-blue.svg"
-
 /** "TMDB 7.8": one decimal, null for missing or zero scores. */
 export function formatMovieScore(score: number | null | undefined): string | null {
   if (score == null || !Number.isFinite(score) || score <= 0) return null

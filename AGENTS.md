@@ -42,7 +42,7 @@ The user's host machine runs out of memory when running suites concurrently.
 
 If `npm run build` or `npx prisma generate` in `server/` fails with `EACCES: permission denied` on files inside `server/src/generated/` (which can happen when containerized builds generate Prisma models as root), use the build fallback that compiles TypeScript and copies test fixtures directly without re-running `prisma generate`:
 ```bash
-cd server && npx tsc && npx tsc-alias && npx copyfiles -u 2 "src/tests/**/*csv" "src/tests/**/*json" "src/tests/**/*xml" "src/tests/**/*zip" dist/tests/
+cd server && npx tsc && npx tsc-alias && npx copyfiles -u 2 "src/tests/**/*csv" "src/tests/**/*json" "src/tests/**/*xml" "src/tests/**/*zip" -e "src/tests/fixtures/demo/exports/letterboxd-*-utc.zip" dist/tests/
 ```
 Then run tests with:
 ```bash

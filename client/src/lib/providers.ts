@@ -1,5 +1,5 @@
-import TMDB_LOGO_URL from "@/assets/tmdb-alt-short-blue.svg"
-import BGG_LOGO_URL from "@/assets/powered-by-bgg.svg"
+import TMDB_LOGO from "@/assets/tmdb-alt-short-blue.svg"
+import BGG_LOGO from "@/assets/powered-by-bgg.svg"
 import { buildLastFmUrl, buildMusicBrainzRecordingUrl, buildMusicBrainzReleaseGroupUrl } from "./musicFormat"
 
 export type LinkMedia = {
@@ -12,6 +12,10 @@ export type LinkMedia = {
   mediaType?: { name?: string | null } | string | null
   externalIds?: Array<{ provider: string; externalId: string }> | null
 }
+
+export const TMDB_LOGO_URL = TMDB_LOGO
+/** BGG's XML API terms require the "Powered by BGG" logo wherever its data is shown. Don't recolour or edit it. */
+export const BGG_LOGO_URL = BGG_LOGO
 
 export interface ProviderAttributionData {
   href: string
