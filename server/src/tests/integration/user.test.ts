@@ -133,7 +133,7 @@ describe("User settings routes", () => {
         await prisma.logTag.create({ data: { logId: firstLog.id, tagId: tag.id } })
         // two entries on the first log: the CSV gets a row per entry, a log without entries stays one row
         await prisma.logEntry.createMany({ data: [
-            { logId: firstLog.id, startedAt: new Date("2024-01-01"), finishedAt: new Date("2024-01-09"), edition: { title: "L'étranger", format: "Paperback" } },
+            { logId: firstLog.id, startedAt: new Date("2024-01-01"), finishedAt: new Date("2024-01-09"), name: "L'étranger", edition: { format: "Paperback" } },
             { logId: firstLog.id, finishedAt: new Date("2025-03-02"), note: "second read" },
         ] })
 
@@ -145,11 +145,10 @@ describe("User settings routes", () => {
         expect(data.version).toBe(1)
         expect(data.logs).toHaveLength(logCount)
         expect(data.logs[0]).toHaveProperty("entries")
-        expect(data.logs[0]).toHaveProperty("displayTitle")
+        expect(data.logs[0]).not.toHaveProperty("displayTitle")
+        expect(data.logs[0]).not.toHaveProperty("title")
         const withEntries = data.logs.find((l: { entries: unknown[] }) => l.entries.length === 2)
-        // the newest entry (2025) names no edition, so the media title shows
-        expect(withEntries.displayTitle).toBe(withEntries.media.title)
-        expect(withEntries.entries.map((e: { edition: unknown }) => e.edition)).toEqual([null, { title: "L'étranger", format: "Paperback" }])
+        expect(withEntries.entries.map((e: { name: unknown; edition: unknown }) => [e.name, e.edition])).toEqual([[null, null], ["L'étranger", { format: "Paperback" }]])
         expect(data.logs[0]).toHaveProperty("tags")
         expect(data.logs.some((l: { tags?: string[] }) => Array.isArray(l.tags) && l.tags.includes("=cmd"))).toBe(true)
         expect(data.logs[0].media).toHaveProperty("title")
@@ -162,12 +161,12 @@ describe("User settings routes", () => {
         expect(c.headers["content-type"]).toMatch(/text\/csv; charset=utf-8/)
         expect(c.headers["content-disposition"]).toMatch(/\.csv"; filename\*=UTF-8''/)
         const rows = parse(c.text.replace(/^\uFEFF/, ""), { columns: true }) as Record<string, string>[]
-        expect(Object.keys(rows[0])).toEqual(["title", "creator", "year", "type", "provider", "provider_id", "status", "rating", "notes", "logged_at", "log_title", "display_title", "entry_started_at", "entry_finished_at", "entry_note", "edition_title", "edition_format", "edition_language", "categories", "tags", "collections", "url"])
+        expect(Object.keys(rows[0])).toEqual(["title", "creator", "year", "type", "provider", "provider_id", "status", "rating", "notes", "logged_at", "entry_name", "entry_started_at", "entry_finished_at", "entry_note", "edition_format", "edition_language", "categories", "tags", "collections", "url"])
         expect(rows).toHaveLength(logCount + 1)
-        const firstTitle = (await prisma.media.findUniqueOrThrow({ where: { id: firstLog.mediaId } })).title
-        const entryRows = rows.filter((r) => r.edition_title === "L'étranger" || r.entry_note === "second read")
+        const entryRows = rows.filter((r) => r.entry_name === "L'étranger" || r.entry_note === "second read")
         expect(entryRows).toHaveLength(2)
-        expect(entryRows.find((r) => r.edition_title === "L'étranger")).toMatchObject({ edition_format: "Paperback", entry_started_at: "2024-01-01", entry_finished_at: "2024-01-09", display_title: /^[=+\-@]/.test(firstTitle) ? `'${firstTitle}` : firstTitle })
+        expect(entryRows.find((r) => r.entry_name === "L'étranger")).toMatchObject({ edition_format: "Paperback", entry_started_at: "2024-01-01", entry_finished_at: "2024-01-09" })
+        expect(rows[0]).not.toHaveProperty("log_title")
         expect(rows.some((r) => r.title.startsWith("'=HYPERLINK"))).toBe(true)
         expect(rows.some((r) => r.tags === "'=cmd")).toBe(true)
         expect(rows.some((r) => r.notes === "line1, with comma\nline2")).toBe(true)

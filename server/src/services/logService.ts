@@ -11,7 +11,7 @@ import {
 import { findMediaForUserById } from "@/repositories/mediaRepository.js"
 import { findMediaTypeForUserOrGlobal } from "@/repositories/mediaTypeRepository.js"
 import { tagService } from "@/services/tagService.js"
-import { createLogSchema, updateLogSchema, deleteLogSchema, rejectEntryKeys } from "@/schemas/logSchemas.js"
+import { createLogSchema, updateLogSchema, deleteLogSchema, rejectEntryKeys, rejectLogTitle, LogEntriesChange } from "@/schemas/logSchemas.js"
 import { entryInputSchema, updateEntrySchema } from "@/schemas/entrySchemas.js"
 import { LIMITS } from "@/config/limits.js"
 import { createEntry, updateEntry, deleteEntry, findEntriesOfLog, findEntry, countEntriesOfLog } from "@/repositories/logEntryRepository.js"
@@ -63,9 +63,10 @@ export class LogService {
 
     async create(userId: string, payload: unknown) {
         rejectEntryKeys(payload)
+        rejectLogTitle(payload)
         // Use a transaction because we might create a MediaType AND a Log
         return await prisma.$transaction(async (tx: DbClient) => {
-            const { mediaId, title, status, rating, notes, tags, entry } = validateSchema(createLogSchema, payload)
+            const { mediaId, status, rating, notes, tags, entry } = validateSchema(createLogSchema, payload)
 
             // Ownership check
             const media = await findMediaForUserById(mediaId, userId, tx)
@@ -85,7 +86,7 @@ export class LogService {
 
             try {
                 //Final Log creation
-                const log = await createLog(userId, mediaId, status, rating, notes, tx, null, title ?? null)
+                const log = await createLog(userId, mediaId, status, rating, notes, tx)
                 if (entry) {
                     await createEntry(log.id, entry, tx)
                 } else {
@@ -106,7 +107,8 @@ export class LogService {
 
     async update(userId: string, logId: string, payload: unknown) {
         rejectEntryKeys(payload)
-        const { title, status, rating, notes, tags } = validateSchema(updateLogSchema, payload)
+        rejectLogTitle(payload)
+        const { status, rating, notes, tags, entries } = validateSchema(updateLogSchema, payload)
 
         return await prisma.$transaction(async (tx: DbClient) => {
             // Ownership check
@@ -122,8 +124,11 @@ export class LogService {
             const statusChanged = status !== undefined && status !== existingLog.status?.trim().toLowerCase()
 
             try {
-                await updateLog(logId, status, rating, notes, tx, title)
-                if (statusChanged) {
+                await updateLog(logId, status, rating, notes, tx)
+                if (entries !== undefined) {
+                    // The dialog already applied the status rules to what it sends, so none run here
+                    await this.applyEntryChanges(logId, entries, tx)
+                } else if (statusChanged) {
                     await applyStatusToEntries(logId, status, tx)
                 }
                 if (tags !== undefined) {
@@ -136,6 +141,41 @@ export class LogService {
                 })
             }
         })
+    }
+
+    /** Deletes, updates, then creates the entries of a log. Throws (rolling the transaction back) on any bad entry. */
+    private async applyEntryChanges(logId: string, change: LogEntriesChange, tx: DbClient) {
+        const toDelete = [...new Set(change.delete ?? [])]
+        const toUpdate = change.update ?? []
+        const toCreate = change.create ?? []
+
+        const existing = await findEntriesOfLog(logId, tx)
+        const byId = new Map(existing.map(e => [e.id, e]))
+        for (const id of [...toDelete, ...toUpdate.map(u => u.id)]) {
+            if (!byId.has(id)) throw new AppError("Entry does not exist", 404)
+        }
+        const deleting = new Set(toDelete)
+        if (toUpdate.some(u => deleting.has(u.id))) {
+            throw new AppError("An entry can't be both changed and deleted", 400)
+        }
+        if (new Set(toUpdate.map(u => u.id)).size !== toUpdate.length) {
+            throw new AppError("An entry can only be changed once per save", 400)
+        }
+        if (existing.length - toDelete.length + toCreate.length > MAX_ENTRIES) {
+            throw new AppError(`A log can't have more than ${MAX_ENTRIES} entries`, 400)
+        }
+
+        for (const id of toDelete) await deleteEntry(id, tx)
+        for (const { id, ...data } of toUpdate) {
+            const current = byId.get(id)!
+            const startedAt = data.startedAt !== undefined ? data.startedAt : current.startedAt
+            const finishedAt = data.finishedAt !== undefined ? data.finishedAt : current.finishedAt
+            if (startedAt && finishedAt && dayKey(finishedAt) < dayKey(startedAt)) {
+                throw new AppError("Finished date can't be before the start date", 400)
+            }
+            await updateEntry(id, data, tx)
+        }
+        for (const data of toCreate) await createEntry(logId, data, tx)
     }
 
     /** The log only when it belongs to the user; someone else's log looks like it doesn't exist. */

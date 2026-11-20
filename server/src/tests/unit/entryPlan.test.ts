@@ -16,9 +16,9 @@ const existing = (id: string, startedAt: string | null, finishedAt: string | nul
 describe('planEntries: the entry match rule on re-import', () => {
     it('1. an entry finished the same day is gap-filled, only where empty', () => {
         const pool = [existing('a', null, '2024-03-02', { note: 'mine' })]
-        const plan = planEntries(pool, [{ finishedAt: d('2024-03-02'), note: 'theirs', edition: { title: "L'étranger" } }], 100)
+        const plan = planEntries(pool, [{ finishedAt: d('2024-03-02'), note: 'theirs', name: "L'étranger", edition: { format: 'Kindle' } }], 100)
         expect(plan.creates).toEqual([])
-        expect(plan.updates).toEqual([{ id: 'a', data: { edition: { title: "L'étranger" } } }])
+        expect(plan.updates).toEqual([{ id: 'a', data: { name: "L'étranger", edition: { format: 'Kindle' } } }])
     })
 
     it('2. a row with no finish date fills the newest entry that has none', () => {
@@ -36,7 +36,7 @@ describe('planEntries: the entry match rule on re-import', () => {
     })
 
     it('a row with no dates and no progress makes no entry', () => {
-        const plan = planEntries([], [{ note: 'hi', edition: { title: 'x' } }], 100)
+        const plan = planEntries([], [{ note: 'hi', name: 'x', edition: { format: 'x' } }], 100)
         expect(plan).toEqual({ creates: [], updates: [] })
     })
 

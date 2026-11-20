@@ -10,7 +10,7 @@ import {
     preferencesPatchSchema, preferencesSchema, readPreferences, updateProfileSchema,
 } from "@/schemas/userSchemas.js"
 import * as repo from "@/repositories/userRepository.js"
-import { displayTitle, sortEntriesNewestFirst } from "@/services/logEntries.js"
+import { sortEntriesNewestFirst } from "@/services/logEntries.js"
 
 type MediaLike = {
     title: string; creator: string | null; year: number | null; provider: string | null; providerId: string | null
@@ -23,8 +23,8 @@ const mediaJson = (m: MediaLike) => ({
     details: m.details, subtype: m.subtype ?? null, releaseDate: m.releaseDate ?? null,
 })
 
-function parseEdition(value: unknown): { title?: string; format?: string; language?: string } | null {
-    return value && typeof value === "object" && !Array.isArray(value) ? value as { title?: string; format?: string; language?: string } : null
+function parseEdition(value: unknown): { format?: string; language?: string } | null {
+    return value && typeof value === "object" && !Array.isArray(value) ? value as { format?: string; language?: string } : null
 }
 
 export class UserService {
@@ -88,7 +88,7 @@ export class UserService {
         const disposition = (ext: string) => attachmentHeader(`${base}.${ext}`, `${realBase}.${ext}`)
 
         if (format === "csv") {
-            const header = ["title", "creator", "year", "type", "provider", "provider_id", "status", "rating", "notes", "logged_at", "log_title", "display_title", "entry_started_at", "entry_finished_at", "entry_note", "edition_title", "edition_format", "edition_language", "categories", "tags", "collections", "url"]
+            const header = ["title", "creator", "year", "type", "provider", "provider_id", "status", "rating", "notes", "logged_at", "entry_name", "entry_started_at", "entry_finished_at", "entry_note", "edition_format", "edition_language", "categories", "tags", "collections", "url"]
             const rows = data.logs.flatMap((l) => {
                 const details = (l.media.details && typeof l.media.details === "object" ? l.media.details : {}) as Record<string, unknown>
                 const mediaGenres = (l.media as { genres?: string[] }).genres
@@ -101,7 +101,6 @@ export class UserService {
                 const rawCols = logObj.collectionItems ?? []
                 const colsStr = rawCols.map((c) => c.collection?.name ?? "").filter(Boolean).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })).join("; ")
                 const url = typeof details.url === "string" ? details.url : ""
-                const shown = displayTitle(l, l.media.title)
                 const entries = sortEntriesNewestFirst(l.entries)
                 // One row per entry with the log's fields repeated; a log without entries is one row with empty entry columns
                 const perEntry: (typeof entries[number] | null)[] = entries.length > 0 ? entries : [null]
@@ -111,11 +110,11 @@ export class UserService {
                         l.media.title, l.media.creator, l.media.year, l.media.mediaType?.name ?? null,
                         l.media.provider, l.media.providerId, l.status, l.rating, l.notes,
                         l.logged_at.toISOString(),
-                        l.title, shown,
+                        e?.name ?? null,
                         e?.startedAt ? e.startedAt.toISOString().slice(0, 10) : null,
                         e?.finishedAt ? e.finishedAt.toISOString().slice(0, 10) : null,
                         e?.note ?? null,
-                        ed?.title ?? null, ed?.format ?? null, ed?.language ?? null,
+                        ed?.format ?? null, ed?.language ?? null,
                         cats, tagsStr, colsStr, url,
                     ]
                 })
@@ -148,8 +147,6 @@ export class UserService {
                     status: l.status,
                     rating: l.rating,
                     notes: l.notes,
-                    title: l.title,
-                    displayTitle: displayTitle(l, l.media.title),
                     logged_at: l.logged_at,
                     entries: sortEntriesNewestFirst(l.entries).map((entry) => ({
                         startedAt: entry.startedAt,
@@ -157,6 +154,7 @@ export class UserService {
                         progressEpisodes: entry.progressEpisodes,
                         progressChapters: entry.progressChapters,
                         progressVolumes: entry.progressVolumes,
+                        name: entry.name,
                         note: entry.note,
                         edition: parseEdition(entry.edition),
                     })),

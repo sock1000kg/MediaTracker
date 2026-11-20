@@ -371,3 +371,46 @@ button.user-tag:hover {
     display: none !important;
   }
 }
+
+/* The log journal dialog: two pages like an open book. Opens with a short fade + scale, closes faster. */
+.journal-dialog[data-slot="dialog-content"] {
+  --journal-gutter: color-mix(in oklab, var(--foreground) 14%, transparent);
+}
+.journal-dialog[data-slot="dialog-content"][data-state="open"] {
+  animation: journal-in 200ms ease-out both;
+}
+.journal-dialog[data-slot="dialog-content"][data-state="closed"] {
+  animation: journal-out 120ms ease-in both;
+}
+.journal-pages {
+  position: relative;
+}
+@media (min-width: 48rem) {
+  /* a centre gutter: a thin divider with a soft inner shadow falling on both pages */
+  .journal-pages::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 41.6667%;
+    width: 1px;
+    z-index: 5;
+    pointer-events: none;
+    background: var(--border);
+    box-shadow: -10px 0 14px -8px var(--journal-gutter), 10px 0 14px -8px var(--journal-gutter);
+  }
+}
+@keyframes journal-in {
+  from { opacity: 0; scale: 0.98; }
+  to { opacity: 1; scale: 1; }
+}
+@keyframes journal-out {
+  from { opacity: 1; scale: 1; }
+  to { opacity: 0; scale: 0.98; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .journal-dialog[data-slot="dialog-content"][data-state="open"],
+  .journal-dialog[data-slot="dialog-content"][data-state="closed"] {
+    animation: none !important;
+  }
+}

@@ -20,10 +20,9 @@ interface LogRowProps {
   extraMenuItems?: React.ReactNode
   childrenLogs?: Log[]
   /** Opens the edit dialog on a new entry. */
-  onAddEntry?: (log: Log) => void
 }
 
-export function LogRow({ log, onEdit, onDelete, onTagClick, leading, extraActions, extraMenuItems, childrenLogs, onAddEntry }: LogRowProps) {
+export function LogRow({ log, onEdit, onDelete, onTagClick, leading, extraActions, extraMenuItems, childrenLogs }: LogRowProps) {
   const [expanded, setExpanded] = useState(false)
   const { media } = log
   const userTags = log.tags ?? []
@@ -35,8 +34,6 @@ export function LogRow({ log, onEdit, onDelete, onTagClick, leading, extraAction
   const rating = displayRating(log.rating)
   const status = logDateLine(log)
   // What the user calls it (or the edition they had); the media title drops to a subtitle when it differs
-  const shownTitle = log.displayTitle || media.title
-  const mediaSubtitle = shownTitle !== media.title ? media.title : null
 
   const childSummary = media.childSummary
   const unit = isMusic
@@ -101,19 +98,18 @@ export function LogRow({ log, onEdit, onDelete, onTagClick, leading, extraAction
           {status && <p className="text-xs text-muted-foreground">{status}</p>}
           <div className="flex items-center justify-end gap-1 max-sm:ml-auto">
             {extraActions}
-            <LogActions log={log} onEdit={onEdit} onDelete={onDelete} onAddEntry={onAddEntry} extraMenuItems={extraMenuItems} />
+            <LogActions log={log} onEdit={onEdit} onDelete={onDelete} extraMenuItems={extraMenuItems} />
           </div>
         </>
       }
     >
       <div className="flex flex-wrap items-baseline gap-x-2">
         <h3 className="font-display text-lg font-semibold break-words">
-          {shownTitle}
+          {media.title}
           {log.entryCount > 1 && <span className="ml-1 text-sm font-normal text-muted-foreground">({log.entryCount})</span>}
         </h3>
         {byline && <span className="text-sm text-muted-foreground">{byline}</span>}
       </div>
-      {mediaSubtitle && <p className="text-xs text-muted-foreground">{mediaSubtitle}</p>}
       {fromSubtitle && <p className="text-xs text-muted-foreground">{fromSubtitle}</p>}
       {originalTitle && <p className="text-xs text-muted-foreground">{originalTitle}</p>}
 

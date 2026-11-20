@@ -51,14 +51,14 @@ describe('Log entries: one log per item, many dated entries', () => {
 
             const created = await request(app).post(`/logs/${log.id}/entries`).set(authA()).send({
                 startedAt: '2026-01-02', finishedAt: '2026-01-20', note: 'first read',
-                progressChapters: 12, edition: { title: "L'étranger", format: 'Paperback', language: 'French' },
+                progressChapters: 12, name: "L'étranger", edition: { format: 'Paperback', language: 'French' },
             })
             expect(created.statusCode).toBe(201)
             expect(created.body.entryCount).toBe(1)
             const entry = created.body.entries[0]
             expect(day(entry.startedAt)).toBe('2026-01-02')
             expect(day(entry.finishedAt)).toBe('2026-01-20')
-            expect(entry).toMatchObject({ note: 'first read', progressChapters: 12, edition: { title: "L'étranger", format: 'Paperback', language: 'French' } })
+            expect(entry).toMatchObject({ note: 'first read', name: "L'étranger", progressChapters: 12, edition: { format: 'Paperback', language: 'French' } })
 
             const edited = await request(app).put(`/logs/${log.id}/entries/${entry.id}`).set(authA())
                 .send({ note: 'changed', finishedAt: '2026-01-25', edition: { format: 'Kindle' } })
@@ -140,6 +140,109 @@ describe('Log entries: one log per item, many dated entries', () => {
         })
     })
 
+    describe('PUT /logs/:id with entries (one atomic save)', () => {
+        const entriesOf = async (logId: string) => prisma.logEntry.findMany({ where: { logId }, orderBy: { id: 'asc' } })
+
+        it('creates, updates and deletes entries together with the log fields', async () => {
+            const media = await newMedia()
+            const log = await newLog(media.id, { status: 'wishlist' })
+            const keep = (await request(app).post(`/logs/${log.id}/entries`).set(authA()).send({ finishedAt: '2024-01-01', name: 'old name' })).body.entries[0]
+            const drop = (await request(app).post(`/logs/${log.id}/entries`).set(authA()).send({ finishedAt: '2023-01-01' })).body.entries.find((e: { finishedAt: string }) => day(e.finishedAt) === '2023-01-01')
+
+            const res = await request(app).put(`/logs/${log.id}`).set(authA()).send({
+                rating: 77,
+                entries: {
+                    create: [{ name: 'New one', note: 'a note', startedAt: '2026-01-01' }],
+                    update: [{ id: keep.id, name: 'renamed' }],
+                    delete: [drop.id],
+                },
+            })
+            expect(res.statusCode).toBe(200)
+            expect(res.body.rating).toBe(77)
+            expect(res.body.entries.map((e: { name: string }) => e.name).sort()).toEqual(['New one', 'renamed'])
+            expect(res.body.entryCount).toBe(2)
+        })
+
+        it('a bad entry answers 400 and nothing changes, not even the log fields', async () => {
+            const media = await newMedia()
+            const log = await newLog(media.id, { status: 'wishlist', rating: 10 })
+            const entry = (await request(app).post(`/logs/${log.id}/entries`).set(authA()).send({ finishedAt: '2024-01-01', name: 'keep' })).body.entries[0]
+
+            const res = await request(app).put(`/logs/${log.id}`).set(authA()).send({
+                rating: 99,
+                entries: {
+                    delete: [entry.id],
+                    create: [{ name: 'fine' }, { startedAt: '2026-05-10', finishedAt: '2026-05-01' }],
+                },
+            })
+            expect(res.statusCode).toBe(400)
+            const after = await entriesOf(log.id)
+            expect(after.map(e => e.name)).toEqual(['keep'])
+            expect((await prisma.userLogs.findUniqueOrThrow({ where: { id: log.id } })).rating).toBe(10)
+
+            // a finish before the stored start fails too, even though the update only sends the finish
+            const started = (await request(app).post(`/logs/${log.id}/entries`).set(authA()).send({ startedAt: '2026-05-10' })).body.entries[0]
+            const late = await request(app).put(`/logs/${log.id}`).set(authA()).send({ rating: 98, entries: { update: [{ id: started.id, finishedAt: '2026-05-01' }] } })
+            expect(late.statusCode).toBe(400)
+            expect((await prisma.userLogs.findUniqueOrThrow({ where: { id: log.id } })).rating).toBe(10)
+        })
+
+        it("another log's entry id is a 404 and nothing changes", async () => {
+            const media = await newMedia()
+            const other = await newLog((await newMedia()).id, { entry: { finishedAt: '2024-01-01', name: 'theirs' } })
+            const log = await newLog(media.id, { rating: 10 })
+            const foreign = other.entries[0].id
+
+            for (const entries of [{ delete: [foreign] }, { update: [{ id: foreign, name: 'stolen' }] }]) {
+                const res = await request(app).put(`/logs/${log.id}`).set(authA()).send({ rating: 55, entries: { ...entries, create: [{ name: 'x' }] } })
+                expect(res.statusCode).toBe(404)
+            }
+            expect(await entriesOf(log.id)).toEqual([])
+            expect((await prisma.logEntry.findUniqueOrThrow({ where: { id: foreign } })).name).toBe('theirs')
+            expect((await prisma.userLogs.findUniqueOrThrow({ where: { id: log.id } })).rating).toBe(10)
+        })
+
+        it('checks the cap on the final count: deleting makes room, over the cap is a 400', async () => {
+            const media = await newMedia()
+            const log = await newLog(media.id)
+            await prisma.logEntry.createMany({ data: Array.from({ length: LIMITS.logs.maxEntriesPerLog }, () => ({ logId: log.id })) })
+            const ids = (await entriesOf(log.id)).map(e => e.id)
+
+            const over = await request(app).put(`/logs/${log.id}`).set(authA()).send({ entries: { create: [{ name: 'one too many' }] } })
+            expect(over.statusCode).toBe(400)
+            expect(await prisma.logEntry.count({ where: { logId: log.id } })).toBe(LIMITS.logs.maxEntriesPerLog)
+
+            const swap = await request(app).put(`/logs/${log.id}`).set(authA()).send({ entries: { delete: [ids[0]], create: [{ name: 'swapped in' }] } })
+            expect(swap.statusCode).toBe(200)
+            expect(swap.body.entryCount).toBe(LIMITS.logs.maxEntriesPerLog)
+        })
+
+        it('applies no automatic status entries when entries is present, and still does without it', async () => {
+            const media = await newMedia()
+            const log = await newLog(media.id, { status: 'wishlist' })
+            const explicit = await request(app).put(`/logs/${log.id}`).set(authA()).send({ status: 'in progress', entries: {} })
+            expect(explicit.statusCode).toBe(200)
+            expect(explicit.body.status).toBe('in progress')
+            expect(explicit.body.entryCount).toBe(0)
+
+            const implicit = await request(app).put(`/logs/${log.id}`).set(authA()).send({ status: 'dropped' })
+            expect(implicit.statusCode).toBe(200)
+            const auto = await request(app).put(`/logs/${log.id}`).set(authA()).send({ status: 'in progress' })
+            expect(auto.body.entryCount).toBe(1)
+        })
+
+        it('rejects a log title, an edition title and an entry name over 300 characters', async () => {
+            const media = await newMedia()
+            const log = await newLog(media.id)
+            expect((await request(app).put(`/logs/${log.id}`).set(authA()).send({ title: 'x' })).statusCode).toBe(400)
+            expect((await request(app).post('/logs').set(authA()).send({ mediaId: (await newMedia()).id, title: 'x' })).statusCode).toBe(400)
+            expect((await request(app).post(`/logs/${log.id}/entries`).set(authA()).send({ edition: { title: 'x' } })).statusCode).toBe(400)
+            expect((await request(app).put(`/logs/${log.id}`).set(authA()).send({ entries: { create: [{ name: 'x'.repeat(301) }] } })).statusCode).toBe(400)
+            expect((await request(app).post(`/logs/${log.id}/entries`).set(authA()).send({ name: 'x'.repeat(301) })).statusCode).toBe(400)
+            expect(await entriesOf(log.id)).toEqual([])
+        })
+    })
+
     describe('status rules', () => {
         it('in progress with no open entry starts one dated today; with an open entry it adds nothing', async () => {
             const media = await newMedia()
@@ -193,28 +296,6 @@ describe('Log entries: one log per item, many dated entries', () => {
         })
     })
 
-    describe('display title', () => {
-        it("the log's own title wins, then the newest entry's edition title, then the media title", async () => {
-            const media = await newMedia("L'Etranger (work)")
-            const log = await newLog(media.id)
-            const show = async () => (await request(app).get('/logs').set(authA())).body.find((l: { id: string }) => l.id === log.id).displayTitle
-
-            expect(await show()).toBe("L'Etranger (work)")
-
-            await request(app).post(`/logs/${log.id}/entries`).set(authA()).send({ finishedAt: '2020-01-01', edition: { title: 'Old edition' } })
-            await request(app).post(`/logs/${log.id}/entries`).set(authA()).send({ finishedAt: '2024-01-01', edition: { title: "L'étranger" } })
-            expect(await show()).toBe("L'étranger")
-
-            const named = await request(app).put(`/logs/${log.id}`).set(authA()).send({ title: 'The Stranger' })
-            expect(named.body.displayTitle).toBe('The Stranger')
-            expect(await show()).toBe('The Stranger')
-
-            const cleared = await request(app).put(`/logs/${log.id}`).set(authA()).send({ title: '' })
-            expect(cleared.body.title).toBeNull()
-            expect(await show()).toBe("L'étranger")
-        })
-    })
-
     describe('PUT /media/media-log', () => {
         const mediaData = (id: string) => ({ title: 'Searched Book', creator: 'Author', year: '2020', mediaType: 'book', source: 'openlibrary', sourceId: id })
 
@@ -223,7 +304,7 @@ describe('Log entries: one log per item, many dated entries', () => {
             const first = await request(app).put('/media/media-log').set(authA()).send({
                 mediaData: mediaData(sourceId),
                 logData: { status: 'completed', rating: 80, notes: 'good' },
-                entry: { startedAt: '2026-06-01', finishedAt: '2026-06-05', edition: { title: 'The Stranger', language: 'English' } },
+                entry: { startedAt: '2026-06-01', finishedAt: '2026-06-05', name: 'The Stranger', edition: { language: 'English' } },
             })
             expect(first.statusCode).toBe(201)
             expect(first.body).toMatchObject({ logCreated: true, entryCreated: true })
@@ -243,7 +324,8 @@ describe('Log entries: one log per item, many dated entries', () => {
             // the first entry is as it was
             const entries = await prisma.logEntry.findMany({ where: { logId: first.body.log.id }, orderBy: { startedAt: 'asc' } })
             expect(entries.map(e => day(e.finishedAt))).toEqual(['2026-06-05', null])
-            expect(entries[0].edition).toEqual({ title: 'The Stranger', language: 'English' })
+            expect(entries[0].name).toBe('The Stranger')
+            expect(entries[0].edition).toEqual({ language: 'English' })
 
             // one media row, one log
             expect(await prisma.media.count({ where: { providerId: sourceId } })).toBe(1)
@@ -288,7 +370,7 @@ describe('Log entries: one log per item, many dated entries', () => {
 
         it('/config exposes the entry limits', async () => {
             const res = await request(app).get('/config')
-            expect(res.body.limits.logs).toEqual({ maxEntriesPerLog: LIMITS.logs.maxEntriesPerLog, entryNoteMaxLength: LIMITS.logs.entryNoteMaxLength })
+            expect(res.body.limits.logs).toEqual({ maxEntriesPerLog: LIMITS.logs.maxEntriesPerLog, entryNoteMaxLength: LIMITS.logs.entryNoteMaxLength, entryNameMaxLength: LIMITS.logs.entryNameMaxLength })
         })
     })
 })

@@ -9,10 +9,9 @@ interface ResultTileProps {
   isLogged: boolean
   entryCount?: number
   onLog: () => void
-  onAddEntry?: () => void
 }
 
-export function ResultTile({ result, kind, isLogged, entryCount = 0, onLog, onAddEntry }: ResultTileProps) {
+export function ResultTile({ result, kind, isLogged, entryCount = 0, onLog }: ResultTileProps) {
   const byline = [resultKindLabel(kind), result.creator].filter(Boolean).join(" · ")
   const shownTitle = result.edition?.title?.trim() || result.title
   const workSubtitle = shownTitle !== result.title ? result.title : null
@@ -26,7 +25,6 @@ export function ResultTile({ result, kind, isLogged, entryCount = 0, onLog, onAd
       {workSubtitle && <p className="truncate text-xs text-muted-foreground">{workSubtitle}</p>}
       <p className="truncate text-xs text-muted-foreground">{byline}</p>
       <div className="mt-auto flex flex-wrap justify-end gap-1 pt-1">
-        {isLogged && onAddEntry && <Button size="sm" variant="outline" onClick={onAddEntry}>Add entry</Button>}
         <Button size="sm" variant="amber" onClick={onLog}>{isLogged ? "Edit log" : "+ Log"}</Button>
       </div>
     </TileShell>

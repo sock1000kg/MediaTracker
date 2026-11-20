@@ -51,20 +51,6 @@ export function isOpenEntry(e: EntryLike): boolean {
   return Boolean(e.startedAt) && !e.finishedAt
 }
 
-/**
- * The title to show for a log: its own name, else the newest entry's edition title, else the media title.
- * The server sends this as `displayTitle`; this twin keeps the UI right between a save and the refetch.
- */
-export function displayTitleOf(
-  log: { title?: string | null; entries?: readonly EntryLike[] | null; displayTitle?: string | null },
-  mediaTitle: string
-): string {
-  if (log.title && log.title.trim() !== "") return log.title
-  const ed = newestEntry(log.entries)?.edition?.title
-  if (ed && ed.trim() !== "") return ed
-  return mediaTitle
-}
-
 /** Per-type format suggestions for an edition. Free text is always allowed. */
 export const FORMAT_SUGGESTIONS: Record<string, string[]> = {
   book: ["Paperback", "Hardcover", "Kindle", "eBook", "Audiobook"],

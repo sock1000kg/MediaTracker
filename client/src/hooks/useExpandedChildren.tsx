@@ -4,9 +4,8 @@ import type { Log, Media } from "@/types/mainTypes"
 import type { MediaResult, MusicResult, TvResult, TvSeasonResult, MusicTrackResult } from "@/types/search"
 import { getMediaChildren, createMediaAndLog } from "@/api/media"
 import { getAlbumTracks } from "@/api/search"
-import EntityDialog from "@/components/dialogs/EntityDialog"
-import { hasEntryContent, cleanEntry } from "@/lib/logStatus"
-import { MediaSearchLogForm } from "@/forms/MediaSearchLogForm"
+import { LogJournalDialog, type JournalSave } from "@/components/logs/LogJournalDialog"
+import { initialEntryOfResult, journalMediaOfResult } from "@/lib/journalDraft"
 import { fetchLogsQueryOptions } from "@/queryOptions/fetchLogsQueryOptions"
 import { fetchMediasQueryOptions } from "@/queryOptions/fetchMediasQueryOptions"
 
@@ -383,8 +382,8 @@ export function useExpandedChildren({ log, expanded, childrenLogs }: UseExpanded
   }, [])
 
   const createMutation = useMutation({
-    mutationFn: ({ media: itemMedia, logData, parent }: { media: MediaResult; logData: Partial<Log>; parent?: MediaResult }) =>
-      createMediaAndLog(itemMedia, logData, parent, hasEntryContent(logData.entry) ? cleanEntry(logData.entry) : null),
+    mutationFn: ({ media: itemMedia, save, parent }: { media: MediaResult; save: JournalSave; parent?: MediaResult }) =>
+      createMediaAndLog(itemMedia, save.log, parent, save.entry ?? null),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: fetchLogsQueryOptions().queryKey })
       queryClient.invalidateQueries({ queryKey: fetchMediasQueryOptions().queryKey })
@@ -394,37 +393,20 @@ export function useExpandedChildren({ log, expanded, childrenLogs }: UseExpanded
     },
   })
 
-  const handleSubmit = async (formData: Partial<Log>): Promise<Log> => {
+  const handleSubmit = async (save: JournalSave) => {
     if (!targetMedia) throw new Error("Target media missing")
-    const { log } = await createMutation.mutateAsync({
-      media: targetMedia,
-      logData: formData,
-      parent: targetParent ?? undefined,
-    })
-    return log
+    return createMutation.mutateAsync({ media: targetMedia, save, parent: targetParent ?? undefined })
   }
 
-  const renderForm = useCallback(
-    (formData: Partial<Log>, setFormData: React.Dispatch<React.SetStateAction<Partial<Log>>>) =>
-      targetMedia ? (
-        <MediaSearchLogForm
-          targetMedia={targetMedia}
-          formData={formData}
-          setFormData={setFormData}
-        />
-      ) : null,
-    [targetMedia]
-  )
-
-  const dialog = (
-    <EntityDialog
-      mode="create"
+  const dialog = targetMedia ? (
+    <LogJournalDialog
       open={dialogOpen}
       onOpenChange={setDialogOpen}
-      onSubmit={handleSubmit}
-      renderForm={renderForm}
+      media={journalMediaOfResult(targetMedia)}
+      initialEntry={initialEntryOfResult(targetMedia)}
+      onSave={handleSubmit}
     />
-  )
+  ) : null
 
   return {
     items,

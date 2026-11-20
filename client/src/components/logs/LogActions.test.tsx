@@ -27,7 +27,6 @@ describe("LogActions component (T2)", () => {
     logged_at: "2024-01-01T00:00:00.000Z",
     entries: [],
     entryCount: 0,
-    displayTitle: "",
     tags: [],
     media: {
       id: "media-provider-1",
@@ -55,7 +54,6 @@ describe("LogActions component (T2)", () => {
     logged_at: "2024-01-01T00:00:00.000Z",
     entries: [],
     entryCount: 0,
-    displayTitle: "",
     tags: [],
     media: {
       id: "media-custom-1",
@@ -77,6 +75,14 @@ describe("LogActions component (T2)", () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  it("the menu has Edit log and no Add entry", async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<LogActions log={providerLog} onEdit={onEdit} onDelete={onDelete} />)
+    await user.click(screen.getByRole("button", { name: "Actions for Inception" }))
+    expect(await screen.findByRole("menuitem", { name: "Edit log" })).toBeInTheDocument()
+    expect(screen.queryByRole("menuitem", { name: "Add entry" })).not.toBeInTheDocument()
   })
 
   it("shows 'Refresh from provider' for provider media and calls the endpoint", async () => {
@@ -141,7 +147,6 @@ describe("LogActions component (T2)", () => {
       logged_at: "2024-01-01T00:00:00.000Z",
       entries: [],
       entryCount: 0,
-      displayTitle: "",
       tags: [],
       media: {
         id: "media-gr-1",

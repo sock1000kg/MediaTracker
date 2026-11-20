@@ -20,6 +20,7 @@ export function getPublicConfig(): PublicConfig {
             logs: {
                 maxEntriesPerLog: LIMITS.logs.maxEntriesPerLog,
                 entryNoteMaxLength: LIMITS.logs.entryNoteMaxLength,
+                entryNameMaxLength: LIMITS.logs.entryNameMaxLength,
             },
             tags: {
                 maxLength: LIMITS.tags.maxLength,

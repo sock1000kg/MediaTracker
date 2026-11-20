@@ -7,6 +7,7 @@ export const publicConfigLimitsSchema = z.object({
     logs: z.object({
         maxEntriesPerLog: z.number().int().positive(),
         entryNoteMaxLength: z.number().int().positive(),
+        entryNameMaxLength: z.number().int().positive(),
     }),
     tags: z.object({
         maxLength: z.number().int().positive(),

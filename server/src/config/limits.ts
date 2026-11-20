@@ -5,7 +5,7 @@ export const LIMITS = {
     logs: {
         maxEntriesPerLog: 100,
         entryNoteMaxLength: 10_000,
-        titleMaxLength: 300,
+        entryNameMaxLength: 300,
     },
     tags: {
         maxLength: 40,

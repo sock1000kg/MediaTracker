@@ -11,8 +11,7 @@ import {
     tagKey,
     MAX_TAGS_PER_LOG,
 } from "@/utilities.js"
-import { LIMITS } from "@/config/limits.js"
-import { entryInputSchema, ENTRY_ONLY_KEYS } from "@/schemas/entrySchemas.js"
+import { entryInputSchema, entryWithIdSchema, ENTRY_ONLY_KEYS } from "@/schemas/entrySchemas.js"
 import { AppError } from "@/api/domain/error.js"
 
 /** Dates and progress live on entries; a log body carrying them is a client bug, not something to drop silently. */
@@ -22,6 +21,13 @@ export function rejectEntryKeys(payload: unknown) {
         if (ENTRY_ONLY_KEYS.some(k => body[k] !== undefined)) {
             throw new AppError("Dates belong to an entry", 400)
         }
+    }
+}
+
+/** A log has no name of its own (entries do): a body carrying `title` is a client bug. */
+export function rejectLogTitle(payload: unknown) {
+    if (payload && typeof payload === "object" && !Array.isArray(payload) && "title" in payload) {
+        throw new AppError("A log has no title; name its entries instead", 400)
     }
 }
 
@@ -86,14 +92,6 @@ const updateNotesSchema = z.preprocess((val: unknown) => {
 
 const mediaIdSchema = uuidSchema
 
-const titleSchema = z.preprocess((val: unknown) => {
-    if (val === undefined) return undefined
-    if (val === null) return null
-    if (typeof val !== "string") return val
-    const trimmed = val.trim()
-    return trimmed === "" ? null : trimmed
-}, z.string().max(LIMITS.logs.titleMaxLength, `Name can't exceed ${LIMITS.logs.titleMaxLength} characters`).nullable().optional())
-
 export const tagsSchema = z.array(z.string()).superRefine((items, ctx) => {
     for (let i = 0; i < items.length; i++) {
         const norm = normalizeTagName(items[i])
@@ -129,7 +127,6 @@ export const tagsSchema = z.array(z.string()).superRefine((items, ctx) => {
 
 //for when creating a log of a searched media (no mediaId cus its not in db yet)
 export const searchLogSchema = z.object({
-    title: titleSchema,
     status: statusSchema,
     rating: ratingSchema,
     notes: notesSchema,
@@ -138,7 +135,6 @@ export const searchLogSchema = z.object({
 
 export const createLogSchema = z.object({
     mediaId: mediaIdSchema,
-    title: titleSchema,
     status: statusSchema,
     rating: ratingSchema,
     notes: notesSchema,
@@ -146,12 +142,20 @@ export const createLogSchema = z.object({
     entry: entryInputSchema.optional(),
 })
 
+/** The entries a log save adds, changes and removes together with the log fields. */
+export const logEntriesChangeSchema = z.object({
+    create: z.array(entryInputSchema).optional(),
+    update: z.array(entryWithIdSchema).optional(),
+    delete: z.array(uuidSchema).optional(),
+}).strict()
+export type LogEntriesChange = z.infer<typeof logEntriesChangeSchema>
+
 export const updateLogSchema = z.object({
-    title: titleSchema,
     status: updateStatusSchema,
     rating: updateRatingSchema,
     notes: updateNotesSchema,
     tags: tagsSchema,
+    entries: logEntriesChangeSchema.optional(),
 })
 
 // schema for deletion (optional confirm flag)

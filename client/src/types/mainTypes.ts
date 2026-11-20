@@ -70,7 +70,6 @@ export type LogStatus = "completed" | "in progress" | "wishlist" | "dropped"
 
 // What the server accepts as an edition (strict: no other keys). Empty is stored as null.
 export interface Edition {
-  title?: string
   format?: string
   language?: string
 }
@@ -84,6 +83,8 @@ export interface LogEntry {
   progressEpisodes: number | null // entry
   progressChapters: number | null // entry
   progressVolumes: number | null // entry
+  /** What you read or watched this time (a title, or any label). */
+  name: string | null
   note: string | null
   edition: Edition | null
   created_at: string
@@ -96,14 +97,20 @@ export interface EntryInput {
   progressEpisodes?: number | null // entry
   progressChapters?: number | null // entry
   progressVolumes?: number | null // entry
+  name?: string | null
   note?: string | null
   edition?: Edition | null
 }
 
+/** What a log save changes among the entries: staged in the journal dialog, committed together with the log. */
+export interface EntriesChange {
+  create?: EntryInput[]
+  update?: (EntryInput & { id: string })[]
+  delete?: string[]
+}
+
 export interface Log {
   id: string
-  /** The user's own name for this item; empty falls back to the newest entry's edition title, then the media title. */
-  title?: string | null
   status: LogStatus
   rating: number | null
   notes: string
@@ -113,8 +120,6 @@ export interface Log {
   entryCount: number
   /** Create form only: the first entry being drafted. Never part of a log from the server. */
   entry?: EntryInput
-  /** Computed on the server so every view agrees. */
-  displayTitle: string
   media: Media
   genres?: string[]
   creators?: MediaCreatorItem[]

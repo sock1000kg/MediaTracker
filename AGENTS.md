@@ -68,6 +68,9 @@ NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules npx jest --runInBand
 - **Database Migrations:**
   - Prisma schema: `server/src/prisma/schema.prisma`.
   - Migrations: `server/src/prisma/migrations/`.
+- **Log journal dialog (create/edit a log and its entries, one Save):**
+  - Dialog: `client/src/components/logs/LogJournalDialog.tsx` (entry cards: `EntryCard.tsx`; staged state and status rules: `client/src/lib/journalDraft.ts`). Used by the Logs page, collections, Media page, search results (`useSearchLogging.tsx`) and expanded album/season children (`useExpandedChildren.tsx`).
+  - Atomic save: `PUT /logs/:id` with an `entries` object, `server/src/services/logService.ts`.
 - **Seed & Demo Fixture:**
   - Database seed logic: `server/src/tests/seed.ts`.
   - Static demo fixture builder & JSON: `server/scripts/build-demo-fixture.ts`, `server/src/tests/fixtures/demo/demo-media.json`.
@@ -97,7 +100,7 @@ NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules npx jest --runInBand
 - **Bookkeeping timestamps:** Provider fetch and sync attempts use typed columns (`Media.syncedAt`, `Media.syncCheckedAt`, `Media.purgedAt`).
 - **No sparse fact columns:** Never add individual sparse fact columns to `Media` or put IDs/duplicate columns into `Media.details`.
 - **Log entries:** Dates (`startedAt`, `finishedAt`), progress (`progressEpisodes`, `progressChapters`, `progressVolumes`), per-entry notes and `edition` live on `LogEntry`, never on `UserLogs`. A `UserLogs` row represents the user's relationship with one item (status, one rating, review/notes, tags, collections); dated experiences are entries on that log.
-- **Display title & newest entry helpers:** Always use the display title helper (`displayTitle` on the server, `displayTitleOf` on the client) and the newest-entry helper (`newestEntry`, `sortEntriesNewestFirst`) rather than inspecting raw log dates or titles directly.
+- **Titles & newest entry helpers:** A log has no title of its own; logs show the item's title and each entry has a `name`. Use the newest-entry helper (`newestEntry`, `sortEntriesNewestFirst`) rather than inspecting raw entry dates directly.
 - **Never add version-like media:** An item is whatever the provider counts as one item. Never split or join beyond that. Goodreads editions merge into their canonical Open Library work via `mergeMediaInto`.
 
 ---

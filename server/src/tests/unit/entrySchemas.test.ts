@@ -3,25 +3,32 @@ import { languageName } from '@/services/search/openLibrarySearchService.js'
 import { LIMITS } from '@/config/limits.js'
 
 describe('edition schema', () => {
-    it('accepts any subset of title, format, language', () => {
-        expect(editionSchema.parse({ title: "L'étranger" })).toEqual({ title: "L'étranger" })
-        expect(editionSchema.parse({ title: 'T', format: 'Paperback', language: 'French' })).toEqual({ title: 'T', format: 'Paperback', language: 'French' })
+    it('accepts any subset of format and language', () => {
+        expect(editionSchema.parse({ format: 'Kindle' })).toEqual({ format: 'Kindle' })
+        expect(editionSchema.parse({ format: 'Paperback', language: 'French' })).toEqual({ format: 'Paperback', language: 'French' })
     })
 
     it('stores an empty object as null', () => {
         expect(editionSchema.parse({})).toBeNull()
-        expect(editionSchema.parse({ title: '  ', format: '' })).toBeNull()
+        expect(editionSchema.parse({ format: '  ', language: '' })).toBeNull()
     })
 
     it('rejects unknown keys and values over the limits', () => {
         expect(editionSchema.safeParse({ publisher: 'x' }).success).toBe(false)
-        expect(editionSchema.safeParse({ title: 'x'.repeat(301) }).success).toBe(false)
+        expect(editionSchema.safeParse({ title: 'The Stranger' }).success).toBe(false)
         expect(editionSchema.safeParse({ format: 'x'.repeat(61) }).success).toBe(false)
         expect(editionSchema.safeParse({ language: 'x'.repeat(36) }).success).toBe(false)
     })
 })
 
 describe('entry input schema', () => {
+    it('takes a name of up to 300 characters, trimmed; blank means none', () => {
+        expect(entryInputSchema.parse({ name: '  The Stranger ' }).name).toBe('The Stranger')
+        expect(entryInputSchema.parse({ name: '   ' }).name).toBeNull()
+        expect(entryInputSchema.safeParse({ name: 'x'.repeat(LIMITS.logs.entryNameMaxLength) }).success).toBe(true)
+        expect(entryInputSchema.safeParse({ name: 'x'.repeat(LIMITS.logs.entryNameMaxLength + 1) }).success).toBe(false)
+    })
+
     it('turns dates into noon UTC of the day', () => {
         const r = entryInputSchema.parse({ startedAt: '2026-05-01', finishedAt: '2026-05-10' })
         expect(r.startedAt?.toISOString()).toBe('2026-05-01T12:00:00.000Z')

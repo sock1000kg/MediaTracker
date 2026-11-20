@@ -54,15 +54,15 @@ describe('mergeMediaInto: editions merge into one item', () => {
 
         const fromLog = await prisma.userLogs.create({
             data: {
-                userId: user, mediaId: from.id, status: 'completed', rating: 90, title: 'Mon étranger', notes: 'From review',
-                entries: { create: [{ finishedAt: new Date('2024-05-05'), note: 'second read', edition: { title: "L'étranger", format: 'Paperback' } }] },
+                userId: user, mediaId: from.id, status: 'completed', rating: 90, notes: 'From review',
+                entries: { create: [{ finishedAt: new Date('2024-05-05'), note: 'second read', name: "L'étranger", edition: { format: 'Paperback' } }] },
                 tags: { create: [{ tagId: tagShared.id }, { tagId: tagFrom.id }] },
             },
         })
         const intoLog = await prisma.userLogs.create({
             data: {
                 userId: user, mediaId: into.id, status: 'in_progress', rating: null, notes: 'Into review',
-                entries: { create: [{ finishedAt: new Date('2022-02-02'), edition: { title: 'The Stranger' } }] },
+                entries: { create: [{ finishedAt: new Date('2022-02-02'), name: 'The Stranger' }] },
                 tags: { create: [{ tagId: tagShared.id }, { tagId: tagInto.id }] },
             },
         })
@@ -85,8 +85,8 @@ describe('mergeMediaInto: editions merge into one item', () => {
         expect(log.id).toBe(intoLog.id)
         expect(await prisma.userLogs.count({ where: { id: fromLog.id } })).toBe(0)
 
-        // both entries, each with its edition title
-        expect(log.entries.map(e => [day(e.finishedAt), (e.edition as { title: string }).title])).toEqual([
+        // both entries, each with its name
+        expect(log.entries.map(e => [day(e.finishedAt), e.name])).toEqual([
             ['2024-05-05', "L'étranger"], ['2022-02-02', 'The Stranger'],
         ])
         // tags unioned
@@ -95,28 +95,27 @@ describe('mergeMediaInto: editions merge into one item', () => {
         expect(log.collectionItems.map(c => c.collectionId).sort()).toEqual([colBoth.id, colFrom.id].sort())
         const both = await prisma.collectionItem.findMany({ where: { collectionId: colBoth.id }, orderBy: { position: 'asc' } })
         expect(both.map(c => [c.logId, c.position])).toEqual([[other.id, 0], [intoLog.id, 1]])
-        // rating and name fall back to from's; into's review stays, from's lands on the newest moved entry
+        // rating falls back to from's; into's review stays, from's lands on the newest moved entry
         expect(log.rating).toBe(90)
-        expect(log.title).toBe('Mon étranger')
         expect(log.notes).toBe('Into review')
         expect(log.entries[0].note).toBe('second read\n\nFrom review')
         // the log whose newest entry is newer (from, 2024) decides the status
         expect(log.status).toBe('completed')
     })
 
-    it("keeps into's rating, name and status when into is the newer log, and an undated entry carries from's review when from had no entries", async () => {
+    it("keeps into's rating and status when into is the newer log, and an undated entry carries from's review when from had no entries", async () => {
         const user = (await prisma.user.create({ data: { username: `merge_keep_${Date.now()}`, password: 'x' } })).id
         const from = await media('Old edition')
         const into = await media('New edition', 'openlibrary')
-        await prisma.userLogs.create({ data: { userId: user, mediaId: from.id, status: 'dropped', rating: 10, title: 'from name', notes: 'Review kept somewhere' } })
+        await prisma.userLogs.create({ data: { userId: user, mediaId: from.id, status: 'dropped', rating: 10, notes: 'Review kept somewhere' } })
         const intoLog = await prisma.userLogs.create({
-            data: { userId: user, mediaId: into.id, status: 'completed', rating: 70, title: 'into name', notes: 'Into review', entries: { create: [{ finishedAt: new Date('2025-01-01') }] } },
+            data: { userId: user, mediaId: into.id, status: 'completed', rating: 70, notes: 'Into review', entries: { create: [{ finishedAt: new Date('2025-01-01') }] } },
         })
 
         await merge(from.id, into.id)
 
         const log = await prisma.userLogs.findUniqueOrThrow({ where: { id: intoLog.id }, include: { entries: true } })
-        expect(log).toMatchObject({ rating: 70, title: 'into name', status: 'completed', notes: 'Into review' })
+        expect(log).toMatchObject({ rating: 70, status: 'completed', notes: 'Into review' })
         // from had no entries: its review text goes on an undated entry
         const undated = log.entries.find(e => e.finishedAt === null && e.startedAt === null)
         expect(undated?.note).toBe('Review kept somewhere')

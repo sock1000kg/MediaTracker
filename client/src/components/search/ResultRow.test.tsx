@@ -11,20 +11,20 @@ const book = (extra: Partial<SearchResult> = {}): SearchResult => ({
 } as SearchResult)
 
 describe("ResultRow", () => {
-  it("shows Logged (2) and an Add entry button for a log with two entries", async () => {
-    const onAddEntry = vi.fn()
+  it("a logged result shows Logged (2) and Edit log, and no Add entry button", async () => {
+    const onLog = vi.fn()
     const user = userEvent.setup()
-    render(<ResultRow result={book()} kind="book" isLogged entryCount={2} onLog={vi.fn()} onAddEntry={onAddEntry} />)
+    render(<ResultRow result={book()} kind="book" isLogged entryCount={2} onLog={onLog} />)
     expect(screen.getByText("Logged (2)")).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Edit log" })).toBeInTheDocument()
-    await user.click(screen.getByRole("button", { name: "Add entry" }))
-    expect(onAddEntry).toHaveBeenCalledTimes(1)
+    expect(screen.queryByRole("button", { name: "Add entry" })).not.toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "Edit log" }))
+    expect(onLog).toHaveBeenCalledTimes(1)
   })
 
   it("shows plain Logged for a single entry, and nothing logged for an unlogged result", () => {
-    const { rerender } = render(<ResultRow result={book()} kind="book" isLogged entryCount={1} onLog={vi.fn()} onAddEntry={vi.fn()} />)
+    const { rerender } = render(<ResultRow result={book()} kind="book" isLogged entryCount={1} onLog={vi.fn()} />)
     expect(screen.getByText("Logged")).toBeInTheDocument()
-    rerender(<ResultRow result={book()} kind="book" isLogged={false} onLog={vi.fn()} onAddEntry={vi.fn()} />)
+    rerender(<ResultRow result={book()} kind="book" isLogged={false} onLog={vi.fn()} />)
     expect(screen.queryByText(/Logged/)).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Add entry" })).not.toBeInTheDocument()
     expect(screen.getByRole("button", { name: "+ Log" })).toBeInTheDocument()

@@ -128,7 +128,6 @@ export async function mergeMediaInto(fromId: string, intoId: string, tx: DbClien
             where: { id: intoLog.id },
             data: {
                 rating: intoLog.rating ?? fromLog.rating,
-                title: intoLog.title ?? fromLog.title,
                 notes,
                 status,
             },

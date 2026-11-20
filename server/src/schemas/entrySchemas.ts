@@ -1,22 +1,21 @@
 import { z } from "zod"
 import { LIMITS } from "@/config/limits.js"
 import { toDayPrecision } from "@/utilities.js"
+import { uuidSchema } from "@/schemas/common.js"
 
 /** Which version of the item you had that time. Every key optional, unknown keys rejected, empty → null. */
 const editionText = (max: number) => z.string().trim().max(max)
 
 export const editionObjectSchema = z.object({
-    title: editionText(300).optional(),
     format: editionText(60).optional(),
     language: editionText(35).optional(),
 }).strict()
 
-export type Edition = { title?: string; format?: string; language?: string }
+export type Edition = { format?: string; language?: string }
 
 /** Drops blank values; an object with nothing left becomes null. */
 export function compactEdition(value: z.infer<typeof editionObjectSchema>): Edition | null {
     const out: Edition = {}
-    if (value.title) out.title = value.title
     if (value.format) out.format = value.format
     if (value.language) out.language = value.language
     return Object.keys(out).length > 0 ? out : null
@@ -34,6 +33,14 @@ export const dateInputSchema = z.preprocess((val: unknown) => {
     const d = toDayPrecision(val)
     return d ?? "invalid"
 }, z.union([z.date(), z.null(), z.undefined()]))
+
+const nameSchema = z.preprocess((val: unknown) => {
+    if (val === undefined) return undefined
+    if (val === null) return null
+    if (typeof val !== "string") return val
+    const trimmed = val.trim()
+    return trimmed === "" ? null : trimmed
+}, z.string().max(LIMITS.logs.entryNameMaxLength, `Entry name can't exceed ${LIMITS.logs.entryNameMaxLength} characters`).nullable().optional())
 
 const progressValue = z.number().int().nonnegative().nullable().optional()
 
@@ -70,6 +77,7 @@ const entryShape = {
     progressEpisodes: progressValue,
     progressChapters: progressValue,
     progressVolumes: progressValue,
+    name: nameSchema,
     note: noteSchema,
     edition: optionalEditionSchema,
 }
@@ -77,6 +85,10 @@ const entryShape = {
 /** One entry, as sent when it is created (alone, or together with its log). */
 export const entryInputSchema = z.object(entryShape).strict().superRefine(validateEntryDates)
 export type EntryInput = z.infer<typeof entryInputSchema>
+
+/** An entry of a log to change in a log save: the entry's id plus the fields to change. */
+export const entryWithIdSchema = z.object({ id: uuidSchema, ...entryShape }).strict().superRefine(validateEntryDates)
+export type EntryWithId = z.infer<typeof entryWithIdSchema>
 
 /** Fields of an existing entry to change; absent keys stay as they are. */
 export const updateEntrySchema = entryInputSchema

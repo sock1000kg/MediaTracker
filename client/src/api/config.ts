@@ -7,6 +7,7 @@ export interface PublicLimits {
   logs: {
     maxEntriesPerLog: number
     entryNoteMaxLength: number
+    entryNameMaxLength: number
   }
   tags: {
     maxLength: number

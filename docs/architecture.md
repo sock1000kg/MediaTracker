@@ -29,7 +29,7 @@ The request flow is **route → controller → service → repository** (`server
   - External IDs (`MediaExternalId`) are keyed by `(provider, value)` and point strictly to shared `system` media. All deduplication and identity lookups (`findMediaByProviderId`, `findMediaByExternalIds`) resolve exclusively through `MediaExternalId` entries.
 - **MediaType**: built-in types (book, music, anime, manga, movie, tv, game, boardgame) belong to `system`. Users can add their own.
 - **UserLogs**: one log per user per media (`@@unique([userId, mediaId])`), with optional custom `title` (the user's own name for this item), typed `status` enum (`wishlist`, `completed`, `in_progress`, `dropped`), one rating (0–100), review notes, `logged_at`, tags, collection items, and a relation to `LogEntry[]`.
-- **LogEntry**: one dated experience of an item (a read, watch, listen or play). Holds optional `startedAt` / `finishedAt` stored at day precision (noon UTC) so time zones never flip the calendar day, typed progress columns (`progressEpisodes`, `progressChapters`, `progressVolumes`), short per-entry `note`, and strict `edition` JSON (`title`, `format`, `language`).
+- **LogEntry**: one dated experience of an item (a read, watch, listen or play). Holds optional `startedAt` / `finishedAt` stored at day precision (noon UTC) so time zones never flip the calendar day, typed progress columns (`progressEpisodes`, `progressChapters`, `progressVolumes`), short per-entry `note`, a `name` (what you read or watched this time: a title, or any label; up to 300 characters) and strict `edition` JSON (`format`, `language`).
 - **Tag / LogTag**: personal tags on logs (private per user, unique per user case-insensitively, at most 20 tags per log and 500 per user).
 - **Collection / CollectionItem**: private, ordered lists of logs (owned by User, unique nameKey per user case-insensitively, optional description and ranked flag, at most 200 collections per user and 1000 items per collection; dense positions starting from 0, maintained on additions, removals and reorders).
 
@@ -38,18 +38,18 @@ Deleting a user cascades to everything they own. Shared `system` media is never 
 ## Log and LogEntry model
 
 - A **Log** is a user's relationship with one item: its status, **one rating**, review (notes), tags, and collections. It stays strictly **one per user per item** (`@@unique([userId, mediaId])`).
-- A **LogEntry** is one dated experience of that item: a read, watch, listen, or play. It holds dates (`startedAt`, `finishedAt`), progress, an optional entry note, and the **edition** (which version you experienced that time: its title, format, and language).
-- Multiple entries represent re-reads, rewatches, replays, or plays. Multiple editions mean multiple entries, each naming its own edition.
+- A **LogEntry** is one dated experience of that item: a read, watch, listen, or play. It holds dates (`startedAt`, `finishedAt`), progress, an optional entry note, a **name**, and the **edition** (which version you experienced that time: its format and language).
+- Multiple entries represent re-reads, rewatches, replays, or plays. Multiple editions mean multiple entries, each with its own name and edition.
 - Limits: maximum 100 entries per log (`LIMITS.logs.maxEntriesPerLog`) and maximum 10,000 characters per entry note (`LIMITS.logs.entryNoteMaxLength`), exposed via `/config`. Exceeding either returns `400`.
 
-### Display title
+### Titles
 
-Everywhere the user's log is shown (Logs page rows and tiles, Edit dialog header, collections, export), the title displayed is the **display title**, resolved by precedence:
-1. The log's own `title` (user-named title for their log: e.g. "The Stranger" while the media is "L'étranger");
-2. The newest entry's `edition.title`;
-3. The media title.
+A log has no name of its own: everywhere the user's log is shown (Logs page rows and tiles, the journal dialog header, collections), the title is the **item's title**. Entries carry the names: each entry's `name` appears only on its card in the journal dialog. Search results and provider pages keep the provider's canonical title.
 
-When the display title differs from the media title, the media title shows as a small subtitle. Search results and provider pages maintain the provider's canonical title.
+### The log journal dialog
+
+One dialog, `client/src/components/logs/LogJournalDialog.tsx`, creates and edits every log (Logs page, collections, Media page, search results, album tracks and seasons). It is a two-page book: the left page holds the log (status, rating, main review, tags, collections), the right page a feed of its entries. Everything is staged; one Save sends a single `PUT /logs/:id` with the changed log fields and an `entries` object (create, update, delete), which the server applies in one transaction. `EntityDialog` stays for media and media types.
+
 The newest entry is determined by latest `finishedAt ?? startedAt`, with undated entries sorting last and ties broken by `id` descending (`newestEntry` on server and client).
 
 ### Status and entry automation rules

@@ -5,6 +5,7 @@ import { compareEntriesNewestFirst } from "@/services/logEntries.js"
 export type ImportEntry = {
     startedAt?: Date | null
     finishedAt?: Date | null
+    name?: string | null
     note?: string | null
     edition?: Edition | null
     progressEpisodes?: number | null
@@ -16,6 +17,7 @@ export type PoolEntry = {
     id: string
     startedAt: Date | null
     finishedAt: Date | null
+    name?: string | null
     note: string | null
     edition: unknown
     progressEpisodes: number | null
@@ -25,6 +27,7 @@ export type PoolEntry = {
 
 export type EntryChanges = Partial<{
     startedAt: Date
+    name: string
     note: string
     edition: Edition
     progressEpisodes: number
@@ -55,6 +58,9 @@ function gapFill(entry: PoolEntry, row: ImportEntry): EntryChanges {
     const changes: EntryChanges = {}
     if (!entry.startedAt && row.startedAt && (!entry.finishedAt || day(row.startedAt) <= day(entry.finishedAt))) {
         changes.startedAt = row.startedAt
+    }
+    if ((entry.name == null || entry.name.trim() === "") && row.name && row.name.trim() !== "") {
+        changes.name = row.name
     }
     if ((entry.note == null || entry.note.trim() === "") && row.note && row.note.trim() !== "") {
         changes.note = row.note
@@ -118,6 +124,7 @@ export function planEntries(pool: PoolEntry[], rows: ImportEntry[], room: number
         const entry: ImportEntry = {
             startedAt: row.startedAt ?? null,
             finishedAt: row.finishedAt ?? null,
+            name: row.name ?? null,
             note: row.note ?? null,
             edition: row.edition ?? null,
             progressEpisodes: row.progressEpisodes ?? null,

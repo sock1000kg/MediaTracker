@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi, beforeEach } from "vitest"
-import { screen, waitFor } from "@testing-library/react"
+import { screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { renderWithProviders } from "@/test/render"
 import CollectionsSection from "./CollectionsSection"
@@ -24,9 +24,8 @@ const mockLog1: Log = {
   rating: 80,
   status: "completed",
   logged_at: "2026-11-01T12:00:00Z",
-  entries: [{ id: "e1", logId: "l1", startedAt: "2026-11-01T12:00:00Z", finishedAt: "2026-11-02T12:00:00Z", progressEpisodes: null, progressChapters: null, progressVolumes: null, note: null, edition: null, created_at: "2026-11-02T12:00:00Z" }],
+  entries: [{ id: "e1", logId: "l1", startedAt: "2026-11-01T12:00:00Z", finishedAt: "2026-11-02T12:00:00Z", progressEpisodes: null, progressChapters: null, progressVolumes: null, name: null, note: null, edition: null, created_at: "2026-11-02T12:00:00Z" }],
   entryCount: 1,
-  displayTitle: "",
   notes: "",
   tags: [],
   media: {
@@ -50,9 +49,8 @@ const mockLog2: Log = {
   rating: 90,
   status: "completed",
   logged_at: "2026-11-03T12:00:00Z",
-  entries: [{ id: "e2", logId: "l2", startedAt: "2026-11-03T12:00:00Z", finishedAt: "2026-11-04T12:00:00Z", progressEpisodes: null, progressChapters: null, progressVolumes: null, note: null, edition: null, created_at: "2026-11-04T12:00:00Z" }],
+  entries: [{ id: "e2", logId: "l2", startedAt: "2026-11-03T12:00:00Z", finishedAt: "2026-11-04T12:00:00Z", progressEpisodes: null, progressChapters: null, progressVolumes: null, name: null, note: null, edition: null, created_at: "2026-11-04T12:00:00Z" }],
   entryCount: 1,
-  displayTitle: "",
   notes: "",
   tags: [],
   media: {
@@ -159,8 +157,9 @@ describe("CollectionsSection component", () => {
     await user.click(editMenuItem)
 
     await waitFor(() => {
-      expect(screen.getByText(/Logging for/i)).toBeInTheDocument()
-      expect(screen.getByText("Alpha Movie")).toBeInTheDocument()
+      const dialog = screen.getByRole("dialog")
+      expect(within(dialog).getByText("Edit log")).toBeInTheDocument()
+      expect(within(dialog).getByRole("heading", { name: /Alpha Movie|Beta Book/ })).toBeInTheDocument()
     })
 
     // Close log edit dialog

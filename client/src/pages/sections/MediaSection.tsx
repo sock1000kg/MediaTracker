@@ -29,7 +29,7 @@ import { unionCI } from "@/lib/filterValues"
 import { MediaForm } from "@/forms/MediaForm"
 import { ConfirmDeleteDialog } from "../../components/dialogs/ConfirmDeleteDialog"
 import EntityDialog from "../../components/dialogs/EntityDialog"
-import { LogForm } from "@/forms/LogForm"
+import { LogJournalDialog, type JournalSave } from "@/components/logs/LogJournalDialog"
 import { AVAILABLE_SORT_FIELDS_MEDIAS, type SortCriterion, type SortField } from "@/types/sort"
 import { useDataFilter } from "@/hooks/useDataFilter"
 import { DataControls } from "@/components/ui/DataControls"
@@ -201,7 +201,8 @@ export default function MediasSection() {
   })
   // LOG
   const createLogMutation = useMutation({
-    mutationFn: createLog,
+    mutationFn: ({ media, save }: { media: Media; save: JournalSave }) =>
+      createLog({ ...save.log, media }, save.entry ?? null),
     onSuccess: () => {
       queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey })
       queryClient.invalidateQueries({ queryKey: ["tags"] })
@@ -209,7 +210,7 @@ export default function MediasSection() {
   })
   
   const editLogMutation = useMutation({
-    mutationFn: editLog,
+    mutationFn: ({ log, save }: { log: Log; save: JournalSave }) => editLog({ id: log.id, ...save.log }, save.entries),
     onSuccess: () => {
       queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey })
       queryClient.invalidateQueries({ queryKey: ["tags"] })
@@ -249,14 +250,6 @@ export default function MediasSection() {
       setFormData: React.Dispatch<React.SetStateAction<Partial<Media>>> //state setter for formData
   ) => (
     <MediaForm formData={formData} setFormData={setFormData}/>
-  )
-
-  //Log form
-  const renderLogForm = (
-        formData: Partial<Log>,
-        setFormData: React.Dispatch<React.SetStateAction<Partial<Log>>> //state setter for formData
-    ) => (
-      <LogForm formData={formData} setFormData={setFormData} targetMedia={targetMediaForLog as Media}/>
   )
 
   return (
@@ -381,16 +374,18 @@ export default function MediasSection() {
         renderForm={renderMediaForm}
       />
 
-      <EntityDialog 
-        mode={targetLog ? "edit" : "create"}
-        open={openDialog === "logForm"}
-        onOpenChange={(isOpen) => setOpenDialog(isOpen ? "logForm" : null)}
-        target={targetLog ?? undefined}
-        onSubmit={targetLog ? 
-          (formData) => editLogMutation.mutateAsync(formData) : 
-          (formData) => createLogMutation.mutateAsync(formData)}
-        renderForm={renderLogForm}
-      />
+      {targetMediaForLog && (
+        <LogJournalDialog
+          open={openDialog === "logForm"}
+          onOpenChange={(isOpen) => setOpenDialog(isOpen ? "logForm" : null)}
+          media={targetMediaForLog}
+          log={targetLog}
+          onSave={(save) =>
+            targetLog
+              ? editLogMutation.mutateAsync({ log: targetLog, save })
+              : createLogMutation.mutateAsync({ media: targetMediaForLog, save })}
+        />
+      )}
     </div>
   )
 }

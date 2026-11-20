@@ -231,8 +231,8 @@ describe("Open Library background sync job (G2, G3, T1)", () => {
             data: { title: "Twin Edition", creator: "Same Author", provider: "goodreads", providerId: "gr-twin-2", mediaTypeId: bookTypeId, userId: systemUserId },
         })
         const reader = await prisma.user.create({ data: { username: `twin_reader_${Date.now()}`, password: "x" } })
-        await prisma.userLogs.create({ data: { userId: reader.id, mediaId: kindle.id, status: "completed", entries: { create: [{ finishedAt: new Date("2024-02-02"), edition: { title: "Twin (Kindle)" } }] } } })
-        await prisma.userLogs.create({ data: { userId: reader.id, mediaId: paperback.id, status: "completed", entries: { create: [{ finishedAt: new Date("2023-02-02"), edition: { title: "Twin (Paperback)" } }] } } })
+        await prisma.userLogs.create({ data: { userId: reader.id, mediaId: kindle.id, status: "completed", entries: { create: [{ finishedAt: new Date("2024-02-02"), name: "Twin (Kindle)" }] } } })
+        await prisma.userLogs.create({ data: { userId: reader.id, mediaId: paperback.id, status: "completed", entries: { create: [{ finishedAt: new Date("2023-02-02"), name: "Twin (Paperback)" }] } } })
         const fetchSpy = jest.spyOn(globalThis, "fetch").mockImplementation(async () =>
             new Response(JSON.stringify({ numFound: 1, docs: [{ key: "/works/OLTWINW", title: "Twin Edition" }] }), { status: 200 })
         )
@@ -245,11 +245,11 @@ describe("Open Library background sync job (G2, G3, T1)", () => {
         const ext = await prisma.mediaExternalId.findMany({ where: { mediaId: rows[0].id } })
         expect(ext.map(e => `${e.provider}:${e.externalId}`)).toEqual(expect.arrayContaining(["goodreads:gr-twin-1", "goodreads:gr-twin-2", "openlibrary:/works/OLTWINW"]))
 
-        // the reader's two logs are one log with both entries, each still naming its edition
+        // the reader's two logs are one log with both entries, each entry keeps its name
         const logs = await prisma.userLogs.findMany({ where: { userId: reader.id }, include: { entries: true } })
         expect(logs).toHaveLength(1)
         expect(logs[0].mediaId).toBe(rows[0].id)
-        expect(logs[0].entries.map(e => (e.edition as { title: string }).title).sort()).toEqual(["Twin (Kindle)", "Twin (Paperback)"])
+        expect(logs[0].entries.map(e => e.name).sort()).toEqual(["Twin (Kindle)", "Twin (Paperback)"])
 
         fetchSpy.mockRestore()
     })

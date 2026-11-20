@@ -77,7 +77,6 @@ export function createMediaAndLog(mediaData: MediaResult, logData: Partial<Log>,
         body: JSON.stringify({
             mediaData,
             logData: {
-                ...(logData.title !== undefined ? { title: logData.title ?? null } : {}),
                 ...(logData.status !== undefined ? { status: logData.status } : {}),
                 ...(logData.rating !== undefined ? { rating: logData.rating } : {}),
                 ...(logData.notes !== undefined ? { notes: logData.notes } : {}),

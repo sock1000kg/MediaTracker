@@ -137,8 +137,8 @@ export class GoodreadsImportService {
                     // One read, finished on Date Read (Goodreads has no start date). Read Count has no dates, so it adds nothing.
                     entries: [{
                         finishedAt: toDayPrecision(record['Date Read']),
+                        name: record['Title'].trim().slice(0, LIMITS.logs.entryNameMaxLength) || null,
                         edition: compactEdition({
-                            title: record['Title'].slice(0, 300),
                             ...(record['Binding'] ? { format: record['Binding'].trim().slice(0, 60) } : {}),
                         }),
                     }],

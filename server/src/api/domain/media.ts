@@ -292,8 +292,7 @@ export async function createImportedMedia(
             logData.status,
             logData.rating,
             logData.notes,
-            tx,
-            logData.title
+            tx
         )
         let entryCreated = false
         if (entry) {
@@ -316,8 +315,7 @@ export async function createImportedMedia(
             logData.rating ?? null,
             logData.notes ?? null,
             tx,
-            logData.loggedAt ?? null,
-            logData.title ?? null
+            logData.loggedAt ?? null
         )
         if (entry) {
             await createEntry(log.id, entry, tx)

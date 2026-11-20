@@ -1,13 +1,14 @@
 import prisma from "@/prismaClient.js"
 import { DbClient, LogStatus, toLogStatus, fromLogStatus } from "@/db.js"
 import { MEDIA_INCLUDE, formatMedia } from "./mediaFormat.js"
-import { sortEntriesNewestFirst, displayTitle, EntryLike } from "@/services/logEntries.js"
+import { sortEntriesNewestFirst, EntryLike } from "@/services/logEntries.js"
 
 type EntryRow = EntryLike & {
     logId: string
     progressEpisodes: number | null // entry
     progressChapters: number | null // entry
     progressVolumes: number | null // entry
+    name: string | null
     note: string | null
     created_at: Date
 }
@@ -28,7 +29,6 @@ export type ChildSummary = {
 }
 
 export function mapLogWithTags<T extends {
-    title?: string | null
     media?: Record<string, unknown> | null
     tags?: { tag: { id: string; name: string } }[]
     collectionItems?: { collectionId: string }[]
@@ -46,14 +46,12 @@ export function mapLogWithTags<T extends {
     const rawStatus = (copy as { status?: unknown }).status
     const statusStr = typeof rawStatus === "string" ? fromLogStatus(toLogStatus(rawStatus)) : null
     const entries = sortEntriesNewestFirst(log.entries ?? [])
-    const mediaTitle = typeof formattedMedia?.title === "string" ? formattedMedia.title : ""
 
     return {
         ...copy,
         status: statusStr,
         entries,
         entryCount: entries.length,
-        displayTitle: displayTitle({ title: log.title, entries }, mediaTitle),
         media: formattedMedia,
         genres: formattedMedia?.genres ?? [],
         creators: formattedMedia?.creators ?? [],
@@ -147,8 +145,7 @@ export async function createLog(
     rating: number | null, 
     notes: string | null,
     client: DbClient,
-    loggedAt?: Date | null,
-    title?: string | null
+    loggedAt?: Date | null
 ) {
     const log = await client.userLogs.create({
         data: {
@@ -157,7 +154,6 @@ export async function createLog(
             status: toLogStatus(status),
             rating,
             notes,
-            ...(title ? { title } : {}),
             ...(loggedAt ? { logged_at: loggedAt } : {}),
         },
         include: LOG_INCLUDE,
@@ -212,8 +208,7 @@ export async function updateLog(
     newStatus: LogStatus | string | null | undefined, 
     newRating: number | null | undefined, 
     newNotes: string | null | undefined,
-    client: DbClient,
-    newTitle?: string | null
+    client: DbClient
 ) {
     const cleanStatus = newStatus !== undefined ? toLogStatus(newStatus) : undefined
 
@@ -223,7 +218,6 @@ export async function updateLog(
             ...(cleanStatus !== undefined ? { status: cleanStatus } : {}), 
             ...(newRating !== undefined ? { rating: newRating } : {}),
             ...(newNotes !== undefined ? { notes: newNotes } : {}),
-            ...(newTitle !== undefined ? { title: newTitle } : {}),
         },
         include: LOG_INCLUDE,
     })

@@ -6,8 +6,9 @@ export type EntryData = {
     progressEpisodes?: number | null // entry
     progressChapters?: number | null // entry
     progressVolumes?: number | null // entry
+    name?: string | null
     note?: string | null
-    edition?: { title?: string; format?: string; language?: string } | null
+    edition?: { format?: string; language?: string } | null
 }
 
 // Json columns take Prisma.JsonNull to clear, not a plain null

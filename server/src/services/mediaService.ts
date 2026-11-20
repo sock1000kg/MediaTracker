@@ -21,7 +21,7 @@ import {
     updateMediaSchema,
     deleteMediaSchema,
 } from "@/schemas/mediaSchemas.js" 
-import { rejectEntryKeys } from "@/schemas/logSchemas.js"
+import { rejectEntryKeys, rejectLogTitle } from "@/schemas/logSchemas.js"
 import { createMediaAndLogSchema } from "@/schemas/search/searchSchemas.js"
 import { AppError } from "@/api/domain/error.js"
 
@@ -179,11 +179,11 @@ export class MediaService {
     async createMediaAndLog(userId: string, payload: unknown) {
         const body = typeof payload === "object" && payload !== null ? (payload as Record<string, unknown>) : {}
         rejectEntryKeys(body.logData)
+        rejectLogTitle(body.logData)
         const { mediaData, logData: parsedLog, entry, parent } = validateSchema(createMediaAndLogSchema, payload)
         // The schema fills unsent fields with null; for an existing log only the fields that were sent may change
         const sent = new Set(Object.keys((body.logData ?? {}) as Record<string, unknown>))
         const logData = {
-            title: sent.has("title") ? parsedLog.title : undefined,
             status: sent.has("status") ? parsedLog.status : undefined,
             rating: sent.has("rating") ? parsedLog.rating : undefined,
             notes: sent.has("notes") ? parsedLog.notes : undefined,

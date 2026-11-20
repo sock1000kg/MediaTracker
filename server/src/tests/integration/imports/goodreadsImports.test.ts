@@ -349,7 +349,7 @@ No Date Rev1,D. Author,3,read,9203,,,0`
         expect(l9203!.entries).toHaveLength(0)
     })
 
-    test("the entry carries the shelved title and the Binding as its edition, and a re-import adds no duplicate", async () => {
+    test("the entry is named after the shelved title and carries the Binding as its edition, and a re-import adds no duplicate", async () => {
         const csv =
 `Title,Author,My Rating,Exclusive Shelf,Book Id,Date Read,Binding
 L'étranger (Folio),Albert Camus,5,read,9500,2023/02/03,Kindle Edition
@@ -359,7 +359,8 @@ Wishlist Edition,Nobody,0,to-read,9501,,Paperback`
 
         const read = await prisma.userLogs.findFirst({ where: { userId, media: { providerId: "9500" } }, include: { entries: true } })
         expect(read!.entries).toHaveLength(1)
-        expect(read!.entries[0].edition).toEqual({ title: "L'étranger (Folio)", format: "Kindle Edition" })
+        expect(read!.entries[0].name).toBe("L'étranger (Folio)")
+        expect(read!.entries[0].edition).toEqual({ format: "Kindle Edition" })
         const wishlist = await prisma.userLogs.findFirst({ where: { userId, media: { providerId: "9501" } }, include: { entries: true } })
         expect(wishlist!.entries).toHaveLength(0)
 

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   ArrowLeft,
@@ -40,9 +40,8 @@ import { ViewControls } from "@/components/media-view/ViewControls"
 import { useStoredView } from "@/hooks/useStoredView"
 import { LogRow } from "@/components/logs/LogRow"
 import { LogTile } from "@/components/logs/LogTile"
-import EntityDialog from "@/components/dialogs/EntityDialog"
+import { LogJournalDialog, type JournalSave } from "@/components/logs/LogJournalDialog"
 import { ConfirmDeleteDialog } from "@/components/dialogs/ConfirmDeleteDialog"
-import { LogForm } from "@/forms/LogForm"
 import { editLog, deleteLog, deleteWarningLog } from "@/api/logs"
 import type {
   CollectionItem,
@@ -174,7 +173,7 @@ export default function CollectionsSection() {
   })
 
   const editLogMutation = useMutation({
-    mutationFn: editLog,
+    mutationFn: ({ log, save }: { log: Log; save: JournalSave }) => editLog({ id: log.id, ...save.log }, save.entries),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["collection", selectedId] })
       queryClient.invalidateQueries({ queryKey: ["collections"] })
@@ -204,17 +203,6 @@ export default function CollectionsSection() {
     setTargetLog(log)
     setOpenLogDialog("deleteConfirm")
   }
-
-  const renderLogForm = useCallback(
-    (
-      formData: Partial<Log>,
-      setFormData: React.Dispatch<React.SetStateAction<Partial<Log>>>
-    ) => {
-      if (!targetLog) return null
-      return <LogForm formData={formData} setFormData={setFormData} targetMedia={targetLog.media} />
-    },
-    [targetLog]
-  )
 
   const handleMove = (index: number, newIndex: number, action = "rank") => {
     if (!selectedId || !optimisticItems) return
@@ -520,14 +508,15 @@ export default function CollectionsSection() {
           </AlertDialogContent>
         </AlertDialog>
 
-        <EntityDialog
-          mode="edit"
-          open={openLogDialog === "logForm"}
-          onOpenChange={(isOpen) => setOpenLogDialog(isOpen ? "logForm" : null)}
-          target={targetLog}
-          onSubmit={(formData) => editLogMutation.mutateAsync(formData)}
-          renderForm={renderLogForm}
-        />
+        {targetLog && (
+          <LogJournalDialog
+            open={openLogDialog === "logForm"}
+            onOpenChange={(isOpen) => setOpenLogDialog(isOpen ? "logForm" : null)}
+            media={targetLog.media}
+            log={targetLog}
+            onSave={(save) => editLogMutation.mutateAsync({ log: targetLog, save })}
+          />
+        )}
 
         <ConfirmDeleteDialog
           open={openLogDialog === "deleteConfirm"}

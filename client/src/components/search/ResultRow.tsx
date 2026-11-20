@@ -15,11 +15,9 @@ interface ResultRowProps {
   /** How many entries the user's log has; shows "Logged (3)" from two up. */
   entryCount?: number
   onLog: () => void
-  /** Opens the log's dialog on a new entry. */
-  onAddEntry?: () => void
 }
 
-export function ResultRow({ result, kind, isLogged, entryCount = 0, onLog, onAddEntry }: ResultRowProps) {
+export function ResultRow({ result, kind, isLogged, entryCount = 0, onLog }: ResultRowProps) {
   const original = resultOriginalTitle(result)
   const byline = [result.creator, result.year].filter(Boolean).join(" · ")
   const parts = resultDetailParts(kind, result)
@@ -36,7 +34,6 @@ export function ResultRow({ result, kind, isLogged, entryCount = 0, onLog, onAdd
         <div className="ml-auto flex flex-col items-end gap-2">
           {isLogged && <p className="text-xs text-muted-foreground">{loggedLabel(entryCount)}</p>}
           <div className="flex flex-wrap justify-end gap-2">
-            {isLogged && onAddEntry && <Button size="sm" variant="outline" onClick={onAddEntry}>Add entry</Button>}
             <Button size="sm" variant="amber" onClick={onLog}>{isLogged ? "Edit log" : "+ Log"}</Button>
           </div>
         </div>

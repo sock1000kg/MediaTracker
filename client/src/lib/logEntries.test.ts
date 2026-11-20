@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
-import { newestEntry, sortEntriesNewestFirst, displayTitleOf, formatSuggestions, logDateOf, isOpenEntry } from "./logEntries"
+import { newestEntry, sortEntriesNewestFirst, formatSuggestions, logDateOf, isOpenEntry } from "./logEntries"
 
-const e = (id: string, startedAt: string | null, finishedAt: string | null, edition?: { title?: string }) => ({ id, startedAt, finishedAt, edition })
+const e = (id: string, startedAt: string | null, finishedAt: string | null, edition?: { format?: string }) => ({ id, startedAt, finishedAt, edition })
 
 describe("newest entry", () => {
   it("is the latest finishedAt ?? startedAt; undated last; ties by id descending", () => {
@@ -19,15 +19,6 @@ describe("newest entry", () => {
   it("a log sorts by its newest entry, else by when it was logged", () => {
     expect(logDateOf({ logged_at: "2026-01-01T00:00:00Z", entries: [e("a", null, "2024-03-03T00:00:00Z")] })).toBe("2024-03-03T00:00:00Z")
     expect(logDateOf({ logged_at: "2026-01-01T00:00:00Z", entries: [] })).toBe("2026-01-01T00:00:00Z")
-  })
-})
-
-describe("display title", () => {
-  const entries = [e("old", null, "2020-01-01", { title: "Old edition" }), e("new", null, "2024-01-01", { title: "L'étranger" })]
-  it("the log's own title, then the newest entry's edition title, then the media title", () => {
-    expect(displayTitleOf({ title: "The Stranger", entries }, "L'Etranger (work)")).toBe("The Stranger")
-    expect(displayTitleOf({ title: null, entries }, "L'Etranger (work)")).toBe("L'étranger")
-    expect(displayTitleOf({ title: "", entries: [] }, "L'Etranger (work)")).toBe("L'Etranger (work)")
   })
 })
 

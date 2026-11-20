@@ -180,8 +180,6 @@ model MediaType {
 model UserLogs {
   id              String    @id @default(uuid(7)) @db.Uuid
 
-  // The user's own name for this item ("The Stranger" while the media is "L'étranger"); max 300
-  title           String?
   status          LogStatus?   // LogStatus enum: wishlist, completed, in_progress, dropped
   rating          Float?    //scale 100
   notes           String?
@@ -211,7 +209,8 @@ model LogEntry {
   progressChapters  Int?
   progressVolumes   Int?
   note              String?
-  edition           Json?     // { title?, format?, language? }, validated by editionSchema
+  name              String?   // what you read or watched this time (a title, or any label)
+  edition           Json?     // { format?, language? }, validated by editionSchema
   created_at        DateTime  @default(now())
 
   @@index([logId, finishedAt])

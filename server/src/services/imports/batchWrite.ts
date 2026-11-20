@@ -99,6 +99,7 @@ function entryRow(logId: string, entry: ImportEntry) {
         logId,
         startedAt: entry.startedAt ?? null,
         finishedAt: entry.finishedAt ?? null,
+        name: entry.name ?? null,
         note: entry.note ?? null,
         edition: entry.edition ? (entry.edition as Prisma.InputJsonValue) : Prisma.JsonNull,
         progressEpisodes: entry.progressEpisodes ?? null,

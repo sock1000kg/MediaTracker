@@ -18,8 +18,7 @@ import { groupLogs, type GroupMode } from "@/lib/logView"
 import { GroupFooter } from "@/components/media-view/GroupFooter"
 import { useGroupReveal } from "@/hooks/useGroupReveal"
 import { step } from "@/lib/logView"
-import EntityDialog from "@/components/dialogs/EntityDialog"
-import { LogForm } from "@/forms/LogForm"
+import { LogJournalDialog, type JournalSave } from "@/components/logs/LogJournalDialog"
 import { ConfirmDeleteDialog } from "@/components/dialogs/ConfirmDeleteDialog"
 
 // --- NEW IMPORTS ---
@@ -37,7 +36,7 @@ const GROUPS = ["month", "type", "none"] as const
 //Helper function for the filters hook
 const getLogSortValue = (log: Log, field: SortField) => {
   switch (field) {
-      case "title": return log.displayTitle || log.media.title
+      case "title": return log.media.title
       case "creator": return log.media.creator
       case "rating": return log.rating ?? null // missing ratings sort last in both directions
       case "date": return new Date(logDateOf(log)).getTime()
@@ -60,8 +59,6 @@ export default function LogsSection() {
   const [loadingLine] = useState(() => pickLoadingLine())
   const [openDialog, setOpenDialog] = useState<DialogName>(null)
   const [targetLog, setTargetLog] = useState<Log | null>(null)
-  // "Add entry" in a log's menu opens the edit dialog with the entry editor already open
-  const [startAdding, setStartAdding] = useState(false)
   
   // View and grouping are purely visual, remembered per device
   const [view, setViewState] = useState<LogView>(() => readStoredString("logs.view", VIEWS, "list"))
@@ -84,7 +81,7 @@ export default function LogsSection() {
   })
 
   const editMutation = useMutation({
-    mutationFn: editLog,
+    mutationFn: ({ log, save }: { log: Log; save: JournalSave }) => editLog({ id: log.id, ...save.log }, save.entries),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: fetchLogsQueryOptions().queryKey })
       queryClient.invalidateQueries({ queryKey: ["tags"] })
@@ -232,13 +229,6 @@ export default function LogsSection() {
   }
 
   const handleEditClick = (log: Log) => {
-    setStartAdding(false)
-    setTargetLog(log)
-    setOpenDialog("logForm")
-  }
-
-  const handleAddEntryClick = (log: Log) => {
-    setStartAdding(true)
     setTargetLog(log)
     setOpenDialog("logForm")
   }
@@ -253,15 +243,6 @@ export default function LogsSection() {
     const year = new Date().getFullYear()
     return logs.filter((l) => new Date(l.logged_at).getFullYear() === year).length
   }, [logs])
-
-  // --- Form Render ---
-  const renderLogForm = useCallback((
-    formData: Partial<Log>,
-    setFormData: React.Dispatch<React.SetStateAction<Partial<Log>>>
-  ) => {
-    if (!targetLog) return null
-    return <LogForm formData={formData} setFormData={setFormData} targetMedia={targetLog.media} startAdding={startAdding} />
-  }, [targetLog, startAdding])
 
   return (
     <div className="relative isolate flex flex-col h-full overflow-hidden">
@@ -349,13 +330,13 @@ export default function LogsSection() {
                   {view === "list" ? (
                     <ul ref={reveal.listRef(group.key)} className="flex flex-col gap-3">
                       {visible.map((log) => (
-                        <LogRow key={log.id} log={log} onEdit={handleEditClick} onDelete={handleDeleteClick} onTagClick={handleTagClick} onAddEntry={handleAddEntryClick} />
+                        <LogRow key={log.id} log={log} onEdit={handleEditClick} onDelete={handleDeleteClick} onTagClick={handleTagClick} />
                       ))}
                     </ul>
                   ) : (
                     <ul ref={reveal.listRef(group.key)} className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-x-5 gap-y-7">
                       {visible.map((log) => (
-                        <LogTile key={log.id} log={log} onEdit={handleEditClick} onDelete={handleDeleteClick} onTagClick={handleTagClick} onAddEntry={handleAddEntryClick} />
+                        <LogTile key={log.id} log={log} onEdit={handleEditClick} onDelete={handleDeleteClick} onTagClick={handleTagClick} />
                       ))}
                     </ul>
                   )}
@@ -374,14 +355,15 @@ export default function LogsSection() {
       </div>
 
       {/* Dialogs */}
-      <EntityDialog
-        mode="edit"
-        open={openDialog === "logForm"}
-        onOpenChange={(isOpen) => setOpenDialog(isOpen ? "logForm" : null)}
-        target={targetLog}
-        onSubmit={(formData) => editMutation.mutateAsync(formData)}
-        renderForm={renderLogForm}
-      />
+      {targetLog && (
+        <LogJournalDialog
+          open={openDialog === "logForm"}
+          onOpenChange={(isOpen) => setOpenDialog(isOpen ? "logForm" : null)}
+          media={targetLog.media}
+          log={targetLog}
+          onSave={(save) => editMutation.mutateAsync({ log: targetLog, save })}
+        />
+      )}
 
       <ConfirmDeleteDialog
         open={openDialog === "deleteConfirm"}

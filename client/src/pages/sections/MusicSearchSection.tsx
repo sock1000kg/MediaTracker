@@ -95,7 +95,6 @@ export function MusicSearchSection() {
             isLogged={(item) => isResultLogged(search.logs, item)}
             onLog={(item) => openLog(item)}
             entryCount={(item) => entryCountFor(item)}
-            onAddEntry={(item) => openLog(item, { addEntry: true })}
           />
         )}
       </SearchResults>

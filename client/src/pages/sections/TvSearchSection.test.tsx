@@ -140,7 +140,7 @@ describe("TvSearchSection component", () => {
     renderWithProviders(<TvSearchSection />)
     await user.type(screen.getByPlaceholderText(SEARCH_PLACEHOLDER), "Regular{enter}")
     await user.click((await screen.findAllByRole("button", { name: "Log show" }))[0])
-    await user.click(await screen.findByRole("button", { name: "Create" }))
+    await user.click(await screen.findByRole("button", { name: "Save" }))
 
     await waitFor(() => {
       expect(mediaApi.createMediaAndLog).toHaveBeenCalledWith(

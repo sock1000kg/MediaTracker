@@ -183,6 +183,11 @@ This document records deliberate design decisions, constraints, and provider qui
   - **One Rating Per Item:** A user gives one evaluation for the item as a whole, stored in `UserLogs.rating`. Entries do not duplicate or fragment ratings.
   - **Read Counts Without Dates Ignored:** Goodreads CSV exports contain `Read Count`, and MyAnimeList XML exports contain `my_times_watched` / `my_times_read`. However, neither provider exports dates for earlier sessions. Fabricating undated dummy entries would corrupt user reading diaries; consequently, re-read counts without dates are omitted.
 
+---
 
+## 22. Entry Names, One Journal Dialog and One Atomic Save
 
-
+- **Code:** `server/src/prisma/migrations/20261120180000_entry_names`, `server/src/services/logService.ts`, `server/src/schemas/logSchemas.ts`, `client/src/components/logs/LogJournalDialog.tsx`, `client/src/lib/journalDraft.ts`.
+- **Context & Why:**
+  - **Entries are named, logs are not:** the "name" the user wanted belongs to each read, watch or play, not to the log. `LogEntry.name` replaces `edition.title` and `UserLogs.title` (and the server `displayTitle`). Logs always show the item's title. The migration moves edition titles to the entry name and a log's old title to its newest unnamed entry (dropped when the log has no entries).
+  - **One Save for everything:** the old dialog saved the log with its Save and each entry with its own button, so a filled-in entry was dropped silently. The journal dialog stages the log fields and every entry change (add, edit, delete) and commits them with one `PUT /logs/:id` carrying an `entries` object, applied in a single transaction. When `entries` is present the server runs no automatic status entries, because the dialog has already applied those rules visibly.

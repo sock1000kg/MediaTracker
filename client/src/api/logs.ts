@@ -1,6 +1,6 @@
 import { apiFetch } from "./clientWrapper"
 
-import type { Log, EntryInput } from "@/types/mainTypes"
+import type { Log, EntryInput, EntriesChange } from "@/types/mainTypes"
 
 export async function fetchLogs(): Promise<Log[]> {
     return apiFetch(`/logs`)
@@ -13,7 +13,6 @@ export async function createLog(log: Partial<Log>, entry?: EntryInput | null): P
         method: "POST",
         body: JSON.stringify({
             mediaId: log.media?.id,
-            title: log.title ?? null,
             status: log.status,
             rating: log.rating,
             notes: log.notes,
@@ -24,16 +23,16 @@ export async function createLog(log: Partial<Log>, entry?: EntryInput | null): P
 }
 
 //Partial cus it's using the same form as creating. Log fields only: dates and progress belong to entries.
-export async function editLog(log: Partial<Log>): Promise<Log> {
+export async function editLog(log: Partial<Log>, entries?: EntriesChange): Promise<Log> {
     const tags = log.tags !== undefined ? log.tags.map((t) => t.name) : undefined
     return apiFetch(`/logs/${log.id}`, {
         method: "PUT",
         body: JSON.stringify({
-            title: log.title !== undefined ? (log.title ?? null) : undefined,
             status: log.status,
             rating: log.rating,
             notes: log.notes,
             ...(tags !== undefined ? { tags } : {}),
+            ...(entries ? { entries } : {}),
         })
     })
 }
