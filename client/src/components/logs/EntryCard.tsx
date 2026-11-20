@@ -1,5 +1,4 @@
 import { useId } from "react"
-import { Pencil, Trash2 } from "lucide-react"
 import type { EntryInput } from "@/types/mainTypes"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -15,12 +14,12 @@ export type EntryMediaInfo = {
 }
 
 /** What progress an entry of this item tracks. */
-function progressFields(media: EntryMediaInfo): { key: "progressEpisodes" | "progressChapters" | "progressVolumes"; label: string }[] { // entry
+function progressFields(media: EntryMediaInfo): { key: "progressEpisodes" | "progressChapters" | "progressVolumes"; label: string }[] {
   const type = (typeof media.mediaType === "string" ? media.mediaType : media.mediaType?.name)?.toLowerCase()
-  if (type === "anime" || media.subtype === "season") return [{ key: "progressEpisodes", label: "Episodes watched" }] // entry
+  if (type === "anime" || media.subtype === "season") return [{ key: "progressEpisodes", label: "Episodes watched" }]
   if (type === "manga") return [
-    { key: "progressChapters", label: "Chapters read" }, // entry
-    { key: "progressVolumes", label: "Volumes read" }, // entry
+    { key: "progressChapters", label: "Chapters read" },
+    { key: "progressVolumes", label: "Volumes read" },
   ]
   return []
 }
@@ -33,8 +32,6 @@ function progressText(d: EntryInput): string | null {
   ].filter(Boolean)
   return parts.length > 0 ? parts.join(" · ") : null
 }
-
-const inputClass = "mt-1 block w-full min-w-0 rounded-md border border-input bg-card px-3 py-2 text-sm focus:ring-2 focus:outline-none"
 
 interface EntryCardProps {
   card: Card
@@ -67,7 +64,7 @@ export function EntryCard({
 
   if (card.deleted) {
     return (
-      <li className="min-w-0 rounded-md border border-dashed border-border bg-muted/40 p-3">
+      <li className="min-w-0 py-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="min-w-0 text-sm text-muted-foreground [overflow-wrap:anywhere]">
             <span className="line-through">{heading ?? dates}</span> · Will be deleted on save
@@ -92,28 +89,28 @@ export function EntryCard({
       : started && finished && finished < started ? "Finished date can't be before the start date" : null
 
     return (
-      <li className="min-w-0 space-y-3 rounded-md border border-border bg-card p-3" aria-label={`Editing entry ${heading ?? dates}`}>
+      <li className="min-w-0 space-y-4 py-2" aria-label={`Editing entry ${heading ?? dates}`}>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-sm font-medium">{card.isNew ? "New entry" : "Edit entry"}</p>
-          {changed && <span className="rounded border border-border px-1.5 py-0.5 text-xs text-muted-foreground">Unsaved</span>}
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">{card.isNew ? "New entry" : "Edit entry"}</p>
+          {changed && <span className="rounded ring-1 ring-border px-1.5 py-0.5 text-xs text-muted-foreground">Unsaved</span>}
         </div>
 
         <div>
-          <label htmlFor={`${id}-name`} className="block text-sm">Name</label>
+          <label htmlFor={`${id}-name`} className="block text-xs uppercase tracking-wider text-muted-foreground">Name</label>
           <input
             id={`${id}-name`}
             type="text"
             value={draft.name ?? ""}
             onChange={(e) => set({ name: e.target.value })}
             maxLength={limits.logs.entryNameMaxLength}
-            className={inputClass}
+            className="journal-field font-display text-[20px] font-semibold mt-1 block w-full min-w-0 py-1 text-foreground placeholder:text-muted-foreground/60 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-xs"
             placeholder="The title you read or watched, or any label"
           />
         </div>
 
-        <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+        <div className="grid min-w-0 gap-4 sm:grid-cols-2">
           <div className="min-w-0">
-            <label htmlFor={`${id}-started`} className="block text-sm">Started</label>
+            <label htmlFor={`${id}-started`} className="block text-xs uppercase tracking-wider text-muted-foreground">Started</label>
             <input
               id={`${id}-started`}
               type="date"
@@ -121,17 +118,17 @@ export function EntryCard({
               max={today}
               onChange={(e) => set({ startedAt: e.target.value || null })}
               aria-describedby={startedError ? `${id}-started-error` : undefined}
-              className={inputClass}
+              className="journal-field mt-1 block w-full min-w-0 py-1.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-xs"
             />
             {startedError && <p id={`${id}-started-error`} className="mt-1 text-xs text-destructive">{startedError}</p>}
           </div>
           <div className="min-w-0">
             <div className="flex items-center justify-between">
-              <label htmlFor={`${id}-finished`} className="text-sm">Finished</label>
+              <label htmlFor={`${id}-finished`} className="text-xs uppercase tracking-wider text-muted-foreground">Finished</label>
               <button
                 type="button"
                 onClick={() => set({ finishedAt: today })}
-                className="rounded border border-border bg-secondary px-2 py-0.5 text-xs text-secondary-foreground hover:bg-secondary/80"
+                className="rounded border border-input bg-transparent px-2 py-0.5 text-xs text-muted-foreground hover:text-foreground"
               >
                 Today
               </button>
@@ -143,33 +140,33 @@ export function EntryCard({
               max={today}
               onChange={(e) => set({ finishedAt: e.target.value || null })}
               aria-describedby={finishedError ? `${id}-finished-error` : undefined}
-              className={inputClass}
+              className="journal-field mt-1 block w-full min-w-0 py-1.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-xs"
             />
             {finishedError && <p id={`${id}-finished-error`} className="mt-1 text-xs text-destructive">{finishedError}</p>}
           </div>
         </div>
 
         {progressInputs.length > 0 && (
-          <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+          <div className="grid min-w-0 gap-4 sm:grid-cols-2">
             {progressInputs.map((p) => (
               <div key={p.key} className="min-w-0">
-                <label htmlFor={`${id}-${p.key}`} className="block text-sm">{p.label}</label>
+                <label htmlFor={`${id}-${p.key}`} className="block text-xs uppercase tracking-wider text-muted-foreground">{p.label}</label>
                 <input
                   id={`${id}-${p.key}`}
                   type="number"
                   min={0}
                   value={draft[p.key] ?? ""}
                   onChange={(e) => set({ [p.key]: e.target.value === "" ? null : Math.max(0, Math.floor(Number(e.target.value))) })}
-                  className={inputClass}
+                  className="journal-field mt-1 block w-full min-w-0 py-1.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-xs"
                 />
               </div>
             ))}
           </div>
         )}
 
-        <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+        <div className="grid min-w-0 gap-4 sm:grid-cols-2">
           <div className="min-w-0">
-            <label htmlFor={`${id}-format`} className="block text-sm">Format</label>
+            <label htmlFor={`${id}-format`} className="block text-xs uppercase tracking-wider text-muted-foreground">Format</label>
             <input
               id={`${id}-format`}
               type="text"
@@ -177,7 +174,7 @@ export function EntryCard({
               value={draft.edition?.format ?? ""}
               onChange={(e) => setEdition({ format: e.target.value })}
               maxLength={60}
-              className={inputClass}
+              className="journal-field mt-1 block w-full min-w-0 py-1.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-xs"
             />
             {suggestions.length > 0 && (
               <datalist id={`${id}-formats`}>
@@ -186,7 +183,7 @@ export function EntryCard({
             )}
           </div>
           <div className="min-w-0">
-            <label htmlFor={`${id}-lang`} className="block text-sm">Language</label>
+            <label htmlFor={`${id}-lang`} className="block text-xs uppercase tracking-wider text-muted-foreground">Language</label>
             <input
               id={`${id}-lang`}
               type="text"
@@ -194,7 +191,7 @@ export function EntryCard({
               value={draft.edition?.language ?? ""}
               onChange={(e) => setEdition({ language: e.target.value })}
               maxLength={35}
-              className={inputClass}
+              className="journal-field mt-1 block w-full min-w-0 py-1.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-xs"
             />
             <datalist id={`${id}-languages`}>
               {COMMON_LANGUAGES.map((l) => <option key={l} value={l} />)}
@@ -203,70 +200,128 @@ export function EntryCard({
         </div>
 
         <div>
-          <label htmlFor={`${id}-note`} className="block text-sm">Note</label>
+          <label htmlFor={`${id}-note`} className="block text-xs uppercase tracking-wider text-muted-foreground">Note</label>
           <textarea
             id={`${id}-note`}
             value={draft.note ?? ""}
             onChange={(e) => set({ note: e.target.value })}
             maxLength={limits.logs.entryNoteMaxLength}
             rows={4}
-            className={cn(inputClass, "max-h-72 min-h-24 resize-none overflow-y-auto [field-sizing:content] [overflow-wrap:anywhere]")}
-            placeholder="Thoughts on this time only (the main review stays on the left page)"
+            className="mt-1 block w-full min-w-0 border-0 border-none bg-transparent font-display text-base leading-[1.7] max-h-72 min-h-24 resize-none overflow-y-auto [field-sizing:content] [overflow-wrap:anywhere] outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-xs placeholder:text-muted-foreground/60"
+            placeholder="Thoughts on this time only (the review stays on the left page)"
           />
           <div className="mt-1 text-right text-xs text-muted-foreground">
             {(draft.note?.length ?? 0)}/{limits.logs.entryNoteMaxLength}
           </div>
         </div>
 
-        <div className="flex flex-wrap justify-end gap-2">
-          {!card.isNew && changed && (
-            <Button type="button" size="sm" variant="outline" onClick={onDiscard}>Discard changes</Button>
-          )}
-          <Button type="button" size="sm" variant="outline" onClick={onDone} disabled={Boolean(dateError)}>Done</Button>
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
+          {canDelete ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={onDelete}
+            >
+              Delete entry
+            </Button>
+          ) : <span />}
+          <div className="flex items-center gap-2">
+            {!card.isNew && changed && (
+              <Button type="button" size="sm" variant="ghost" onClick={onDiscard}>
+                Discard changes
+              </Button>
+            )}
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={onDone}
+              disabled={Boolean(dateError)}
+            >
+              Done
+            </Button>
+          </div>
+        </div>
+      </li>
+    )
+  }
+
+  // Compact line when no name and no note
+  if (!heading && !draft.note?.trim()) {
+    return (
+      <li className="min-w-0 py-1" aria-label={`Entry ${dates}`}>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">{dates}</p>
+            {progress && <span className="text-xs text-muted-foreground">· {progress}</span>}
+            {chips.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1">
+                {chips.map((c, i) => <span key={`${c}-${i}`} className="tag">{c}</span>)}
+              </div>
+            )}
+            {changed && <span className="rounded ring-1 ring-border px-1.5 py-0.5 text-xs text-muted-foreground">Unsaved</span>}
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            aria-label={`Edit entry ${dates}`}
+            onClick={onEdit}
+          >
+            Edit
+          </Button>
         </div>
       </li>
     )
   }
 
   return (
-    <li className="min-w-0 rounded-md border border-border bg-card p-3">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 space-y-1">
-          {heading ? (
-            <p className="font-semibold [overflow-wrap:anywhere]">{heading}</p>
-          ) : null}
-          <p className={cn("tabular-nums [overflow-wrap:anywhere]", heading ? "text-sm text-muted-foreground" : "font-semibold")}>{dates}</p>
-          {(chips.length > 0 || progress) && (
-            <div className="flex flex-wrap items-center gap-1">
-              {chips.map((c, i) => <span key={`${c}-${i}`} className="tag">{c}</span>)}
-              {progress && <span className="text-xs text-muted-foreground">{progress}</span>}
-            </div>
-          )}
-          {changed && <span className="inline-block rounded border border-border px-1.5 py-0.5 text-xs text-muted-foreground">Unsaved</span>}
-        </div>
-        <div className="flex shrink-0 gap-1">
-          <Button type="button" size="icon" variant="ghost" className="size-8" aria-label={`Edit entry ${heading ?? dates}`} onClick={onEdit}>
-            <Pencil className="size-4" />
-          </Button>
-          {canDelete && (
-            <Button type="button" size="icon" variant="ghost" className="size-8 text-destructive" aria-label={`Delete entry ${heading ?? dates}`} onClick={onDelete}>
-              <Trash2 className="size-4" />
-            </Button>
-          )}
-        </div>
+    <li className="min-w-0 space-y-2 py-1" aria-label={heading ? `Entry ${heading}` : `Entry ${dates}`}>
+      {/* 1. Date line */}
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="text-xs uppercase tracking-wider text-muted-foreground">{dates}</p>
+        {progress && <span className="text-xs text-muted-foreground">· {progress}</span>}
+        {changed && <span className="rounded ring-1 ring-border px-1.5 py-0.5 text-xs text-muted-foreground">Unsaved</span>}
       </div>
 
+      {/* 2. Name with Edit button */}
+      <div className="flex items-center justify-between gap-2">
+        <h4 className="font-display text-[20px] font-semibold [overflow-wrap:anywhere]">{heading}</h4>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          aria-label={`Edit entry ${heading ?? dates}`}
+          onClick={onEdit}
+        >
+          Edit
+        </Button>
+      </div>
+
+      {/* 3. Chips */}
+      {chips.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1">
+          {chips.map((c, i) => <span key={`${c}-${i}`} className="tag">{c}</span>)}
+        </div>
+      )}
+
+      {/* 4. Note */}
       {draft.note?.trim() && (
-        <div className="mt-2 min-w-0">
+        <div className="min-w-0">
           <div className="relative">
             <p
               id={`${id}-note-text`}
-              className={cn("max-w-prose whitespace-pre-wrap text-sm [overflow-wrap:anywhere]", long && !expanded && "line-clamp-6")}
+              className={cn(
+                "font-display text-base leading-[1.7] max-w-[62ch] whitespace-pre-wrap [overflow-wrap:anywhere]",
+                long && !expanded && "line-clamp-6"
+              )}
             >
               {draft.note}
             </p>
             {long && !expanded && (
-              <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-card to-transparent" />
+              <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-background to-transparent" />
             )}
           </div>
           {long && (
@@ -277,7 +332,7 @@ export function EntryCard({
               onClick={onToggleExpanded}
               className="mt-1 text-xs text-link underline-offset-4 hover:underline"
             >
-              {expanded ? "Show less" : "Show more"}
+              {expanded ? "Show less" : "Continue reading"}
             </button>
           )}
         </div>

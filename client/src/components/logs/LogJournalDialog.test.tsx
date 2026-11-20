@@ -60,7 +60,7 @@ describe("LogJournalDialog", () => {
     const user = userEvent.setup()
     const { onOpenChange } = renderEdit(baseLog())
 
-    const rating = screen.getByLabelText("Rating")
+    const rating = screen.getByLabelText("Rating out of 100")
     await user.clear(rating)
     await user.type(rating, "85")
 
@@ -97,11 +97,13 @@ describe("LogJournalDialog", () => {
     await user.type(name, "Renamed")
     await user.click(screen.getByRole("button", { name: "Done" }))
 
-    await user.click(screen.getByRole("button", { name: "Delete entry Second read" }))
+    await user.click(screen.getByRole("button", { name: "Edit entry Second read" }))
+    await user.click(screen.getByRole("button", { name: "Delete entry" }))
     expect(screen.getByText(/Will be deleted on save/)).toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: "Undo" }))
     expect(screen.queryByText(/Will be deleted on save/)).not.toBeInTheDocument()
-    await user.click(screen.getByRole("button", { name: "Delete entry Second read" }))
+    await user.click(screen.getByRole("button", { name: "Edit entry Second read" }))
+    await user.click(screen.getByRole("button", { name: "Delete entry" }))
 
     await user.click(screen.getByRole("button", { name: "Save" }))
     await waitFor(() => expect(writes()).toHaveLength(1))
@@ -116,7 +118,8 @@ describe("LogJournalDialog", () => {
     const entries = [entry({ id: "e1", name: "First read" })]
     const user = userEvent.setup()
     const { onOpenChange } = renderEdit(baseLog({ entries }))
-    await user.click(screen.getByRole("button", { name: "Delete entry First read" }))
+    await user.click(screen.getByRole("button", { name: "Edit entry First read" }))
+    await user.click(screen.getByRole("button", { name: "Delete entry" }))
     await user.click(screen.getByRole("button", { name: "Undo" }))
     await user.click(screen.getByRole("button", { name: "Save" }))
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false))
@@ -132,7 +135,7 @@ describe("LogJournalDialog", () => {
 
     const second = vi.fn()
     renderEdit(baseLog(), second)
-    await user.type(screen.getByLabelText("Main review"), " more")
+    await user.type(screen.getByLabelText("Review"), " more")
     await user.click(screen.getByRole("button", { name: "Close" }))
     expect(second).not.toHaveBeenCalled()
     const confirm = await screen.findByRole("alertdialog")
@@ -145,19 +148,19 @@ describe("LogJournalDialog", () => {
     expect(writes()).toHaveLength(0)
   })
 
-  it("a long note starts collapsed and Show more expands it", async () => {
+  it("a long note starts collapsed and Continue reading expands it", async () => {
     const note = Array.from({ length: 12 }, (_, i) => `line ${i + 1}`).join("\n")
     const user = userEvent.setup()
     renderEdit(baseLog({ entries: [entry({ note })] }))
-    const toggle = screen.getByRole("button", { name: "Show more" })
+    const toggle = screen.getByRole("button", { name: "Continue reading" })
     expect(toggle).toHaveAttribute("aria-expanded", "false")
     await user.click(toggle)
     expect(screen.getByRole("button", { name: "Show less" })).toHaveAttribute("aria-expanded", "true")
   })
 
-  it("a short note has no Show more button", () => {
+  it("a short note has no Continue reading button", () => {
     renderEdit(baseLog())
-    expect(screen.queryByRole("button", { name: /Show more/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /Continue reading/ })).not.toBeInTheDocument()
     expect(screen.getByText("liked it more this time")).toBeInTheDocument()
   })
 
@@ -255,7 +258,7 @@ describe("LogJournalDialog", () => {
     const { onOpenChange, unmount } = renderEdit(logWithTag)
 
     // Edit only the rating: PUT body has no tags key
-    const rating = screen.getByLabelText("Rating")
+    const rating = screen.getByLabelText("Rating out of 100")
     await user.clear(rating)
     await user.type(rating, "85")
     await user.click(screen.getByRole("button", { name: "Save" }))
@@ -279,5 +282,62 @@ describe("LogJournalDialog", () => {
     expect(writes()).toHaveLength(1)
     const body2 = bodyOf(writes()[0])
     expect(body2.tags).toEqual(["fiction", "classic"])
+  })
+
+  it("the rating is a textbox named 'Rating out of 100'; typing 85 and saving sends rating: 85; typing 120 blocks Save with the message", async () => {
+    const user = userEvent.setup()
+    const { onOpenChange } = renderEdit(baseLog({ rating: null }))
+
+    const ratingInput = screen.getByRole("textbox", { name: "Rating out of 100" })
+    expect(ratingInput).toBeInTheDocument()
+
+    // typing 120 blocks Save with the message
+    await user.type(ratingInput, "120")
+    expect(screen.getByText("Rating must be between 0 and 100")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled()
+
+    // typing 85 and saving sends rating: 85
+    await user.clear(ratingInput)
+    await user.type(ratingInput, "85")
+    expect(screen.queryByText("Rating must be between 0 and 100")).not.toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "Save" }))
+
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false))
+    expect(writes()).toHaveLength(1)
+    expect(bodyOf(writes()[0]).rating).toBe(85)
+  })
+
+  it("Tags comes after Status in DOM order", () => {
+    renderEdit(baseLog())
+    const statusEl = screen.getByRole("combobox", { name: "Status" })
+    const tagsInput = screen.getByLabelText("Tags")
+    expect(statusEl.compareDocumentPosition(tagsInput) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it("the read view has no delete control; opening Edit shows 'Delete entry', which marks the entry with Undo", async () => {
+    const user = userEvent.setup()
+    renderEdit(baseLog({ entries: [entry({ name: "Single read" })] }))
+
+    // Read view has no delete control
+    expect(screen.queryByRole("button", { name: /Delete/ })).not.toBeInTheDocument()
+
+    // Opening Edit shows "Delete entry"
+    await user.click(screen.getByRole("button", { name: "Edit entry Single read" }))
+    const deleteBtn = screen.getByRole("button", { name: "Delete entry" })
+    expect(deleteBtn).toBeInTheDocument()
+
+    // which marks the entry with Undo
+    await user.click(deleteBtn)
+    expect(screen.getByText(/Will be deleted on save/)).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Undo" })).toBeInTheDocument()
+  })
+
+  it("the close button (named 'Close') is inside the entries page header on desktop", () => {
+    renderEdit(baseLog())
+    const entriesHeading = screen.getByRole("heading", { name: /Entries/ })
+    const entriesHeader = entriesHeading.closest("div")
+    expect(entriesHeader).not.toBeNull()
+    const closeBtn = within(entriesHeader!).getByRole("button", { name: "Close" })
+    expect(closeBtn).toBeInTheDocument()
   })
 })

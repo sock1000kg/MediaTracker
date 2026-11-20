@@ -382,23 +382,45 @@ button.user-tag:hover {
 .journal-dialog[data-slot="dialog-content"][data-state="closed"] {
   animation: journal-out 120ms ease-in both;
 }
-.journal-pages {
-  position: relative;
-}
+/* Mockup D: Left page is bg-card, right page is bg-background with soft inset shadow on left edge */
 @media (min-width: 48rem) {
-  /* a centre gutter: a thin divider with a soft inner shadow falling on both pages */
-  .journal-pages::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 41.6667%;
-    width: 1px;
-    z-index: 5;
-    pointer-events: none;
-    background: var(--border);
-    box-shadow: -10px 0 14px -8px var(--journal-gutter), 10px 0 14px -8px var(--journal-gutter);
+  .journal-right-page {
+    box-shadow: inset 14px 0 18px -14px rgb(0 0 0 / 0.12);
   }
+  .dark .journal-right-page {
+    box-shadow: inset 14px 0 18px -14px rgb(0 0 0 / 0.6);
+  }
+}
+
+/* Journal form field underlines (A6) */
+.journal-field {
+  background: transparent;
+  border-bottom: 1px solid var(--input);
+  transition: border-color var(--dur-fast, 150ms) ease;
+}
+.journal-field:hover {
+  border-bottom-color: var(--foreground);
+}
+.journal-field:focus,
+.journal-field:focus-within {
+  border-bottom-color: var(--primary);
+}
+
+.journal-rating-input {
+  border-bottom: 2px dashed var(--input);
+  transition: border-color var(--dur-fast, 150ms) ease, border-style var(--dur-fast, 150ms) ease;
+}
+.journal-rating-input:hover,
+.journal-rating-input:focus {
+  border-bottom-style: solid;
+  border-bottom-color: var(--primary);
+}
+
+.journal-mobile-footer {
+  box-shadow: 0 -4px 14px -4px rgb(0 0 0 / 0.15);
+}
+.dark .journal-mobile-footer {
+  box-shadow: 0 -4px 14px -4px rgb(0 0 0 / 0.5);
 }
 @keyframes journal-in {
   from { opacity: 0; scale: 0.98; }
