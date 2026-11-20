@@ -179,7 +179,10 @@ export class MediaService {
     }
 
     async createMediaAndLog(userId: string, payload: unknown) {
-        let { mediaData, logData, parent } = validateSchema(createMediaAndLogSchema, payload)
+        const { mediaData, logData, parent } = validateSchema(createMediaAndLogSchema, payload)
+        let parentMediaId: string | null = null
+        // Ids found while enriching ride along on mediaData; createImportedMedia reads them from there
+        const mediaExtIds = mediaData as { externalIds?: { provider: string; externalId?: string; id?: string }[] }
 
         // Last.fm search results carry no tags, so fetch them once when the media is first logged.
         // categories: undefined = never tried, null = tried and found nothing (don't fetch again)
@@ -241,30 +244,19 @@ export class MediaService {
                                     if (durationSec) updatedDetailsPatch.durationSec = durationSec
 
                                     if (recRes.recordingId) {
-                                        const extList = ((mediaData as any).externalIds ?? []) as Array<{ provider: string; externalId?: string; id?: string }>
+                                        const extList = mediaExtIds.externalIds ?? []
                                         if (!extList.some(e => e.provider === "musicbrainz")) {
                                             extList.push({ provider: "musicbrainz", externalId: recRes.recordingId })
                                         }
-                                        ;(mediaData as any).externalIds = extList
+                                        mediaExtIds.externalIds = extList
                                     }
 
-                                    if (!parent && recRes.releaseGroupId) {
+                                    if (!parent && !parentMediaId && recRes.releaseGroupId) {
                                         const parentExt = await prisma.mediaExternalId.findFirst({
                                             where: { provider: "musicbrainz", externalId: recRes.releaseGroupId },
                                             include: { media: true },
                                         })
-                                        if (parentExt?.media) {
-                                            parent = {
-                                                title: parentExt.media.title,
-                                                source: parentExt.media.provider ?? "lastfm",
-                                                sourceId: parentExt.media.providerId ?? "",
-                                                imageUrl: parentExt.media.imageUrl ?? undefined,
-                                                year: parentExt.media.year ? String(parentExt.media.year) : undefined,
-                                                genres: undefined,
-                                                creators: undefined,
-                                                id: parentExt.media.id,
-                                            } as any
-                                        }
+                                        if (parentExt?.media) parentMediaId = parentExt.media.id
                                     }
                                 }
 
@@ -286,7 +278,7 @@ export class MediaService {
                                     mediaData.details = {
                                         ...((mediaData.details as Record<string, unknown>) ?? {}),
                                         ...updatedDetailsPatch,
-                                    } as any
+                                    } as typeof mediaData.details
                                 }
                             } else if (coverRes.status === "none" || recRes.status === "none") {
                                 const now = new Date()
@@ -322,11 +314,11 @@ export class MediaService {
                     }
 
                     if (mbReleaseGroupId) {
-                        const extList = ((mediaData as any).externalIds ?? []) as Array<{ provider: string; externalId?: string; id?: string }>
+                        const extList = mediaExtIds.externalIds ?? []
                         if (!extList.some(e => e.provider === "musicbrainz")) {
                             extList.push({ provider: "musicbrainz", externalId: mbReleaseGroupId })
                         }
-                        ;(mediaData as any).externalIds = extList
+                        mediaExtIds.externalIds = extList
 
                         const rg = await musicBrainzClient.getReleaseGroup(mbReleaseGroupId)
                         if (rg) {
@@ -413,6 +405,7 @@ export class MediaService {
                         mediaData,
                         logData,
                         parent: parent ?? null,
+                        parentMediaId,
                     },
                     tx
                 )

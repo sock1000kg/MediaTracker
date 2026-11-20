@@ -83,7 +83,7 @@ describe("Media refresh for unresolved letterboxd and mal (P9, T1)", () => {
             details: {
                 durationSec: 125 * 60,
             },
-        } as any)
+        } as Awaited<ReturnType<typeof tmdbSearchService.findMovie>>)
 
         const refreshed = await mediaRefreshService.refreshMedia(testUserId, media.id)
 

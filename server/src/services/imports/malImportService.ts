@@ -6,11 +6,9 @@ import { XMLParser } from "fast-xml-parser"
 import { AppError } from "@/api/domain/error.js"
 import { ImportResult } from "@/api/domain/imports.js"
 import { SearchResult } from "@/schemas/search/searchSchemas.js"
-import { AniListMedia, anilistResponseSchema } from "@/schemas/search/animeSchemas.js"
-import { mapAniListMedia, anilistThrottle, anilistSearchService } from "../search/anilistSearchService.js"
-import { anilistLimiter, parseRetryAfter } from "../search/rateLimiter.js"
+import { anilistSearchService } from "../search/anilistSearchService.js"
 import { Media, Prisma } from "@/db.js"
-import { createUserAgentHeader, tagKey } from "@/utilities.js"
+import { tagKey } from "@/utilities.js"
 import { findUserByUsername } from "@/repositories/authRepository.js"
 import { findMediaTypeForUserOrGlobal } from "@/repositories/mediaTypeRepository.js"
 import prisma from "@/prismaClient.js"
@@ -26,9 +24,6 @@ export const MAX_IMPORT_FAILURES = LIMITS.imports.maxFailures
 export const MAX_XML_SIZE = LIMITS.imports.maxFileBytes
 export const MAX_MAL_ENTRIES = LIMITS.imports.malMaxEntries
 
-const ANILIST_ENDPOINT = "https://graphql.anilist.co"
-const BATCH_SIZE = 50
-const TIMEOUT_MS = 8000
 
 export type MalKind = "anime" | "manga"
 
@@ -267,58 +262,6 @@ export function parseMalExport(buffer: Buffer): {
 
     return { exportType: kind, entries }
 }
-
-const BATCH_QUERY = `
-query ($ids: [Int], $type: MediaType) {
-  Page(perPage: 50) {
-    media(idMal_in: $ids, type: $type) {
-      id
-      idMal
-      title {
-        romaji
-        english
-        native
-      }
-      episodes
-      duration
-      chapters
-      volumes
-      startDate {
-        year
-      }
-      averageScore
-      genres
-      tags {
-        name
-        rank
-        isAdult
-        isGeneralSpoiler
-        isMediaSpoiler
-      }
-      studios(isMain: true) {
-        nodes {
-          name
-        }
-      }
-      staff(perPage: 4, sort: RELEVANCE) {
-        edges {
-          role
-          node {
-            name {
-              full
-            }
-          }
-        }
-      }
-      coverImage {
-        large
-        medium
-      }
-      description
-    }
-  }
-}
-`
 
 export async function defaultAniListResolver(
     malIds: number[],

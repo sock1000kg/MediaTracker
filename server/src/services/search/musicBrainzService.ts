@@ -120,9 +120,6 @@ export class MusicBrainzService {
                 const sourceId = trackMbid || `musicbrainz:${release.id}#${trackNumber}`
                 const durationMs = t.length ?? t.recording?.length ?? null
                 const durationSec = durationMs != null ? Math.round(durationMs / 1000) : null
-                const trackUrl = t.recording?.id
-                    ? `https://musicbrainz.org/recording/${t.recording.id}`
-                    : `https://musicbrainz.org/track/${t.id}`
 
                 results.push({
                     mediaType: "music",

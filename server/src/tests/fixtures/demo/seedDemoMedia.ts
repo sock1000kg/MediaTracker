@@ -17,6 +17,8 @@ import type { SearchResult } from "@/schemas/search/searchSchemas.js"
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+type ImportInput = Parameters<typeof createImportedMedia>[0]
+
 export interface DemoFixtureItem {
     mediaTypeName: string
     media: SearchResult
@@ -102,21 +104,21 @@ export async function seedDemoMedia(
                         releaseDate: item.media.releaseDate ? new Date(item.media.releaseDate) : null,
                         genres: item.media.genres ?? undefined,
                         externalIds: item.media.externalIds ?? [],
-                        details: (item.media as any).details ?? null,
+                        details: item.media.details ?? null,
                         syncedAt: item.media.source === "tmdb" ? new Date() : undefined,
                         syncCheckedAt: item.media.source === "tmdb" ? new Date() : undefined,
-                    } as any,
+                    } as ImportInput["mediaData"],
                     parent: item.parent
-                        ? {
+                        ? ({
                               ...item.parent,
                               subtype: item.parent.subtype ?? null,
                               year: item.parent.year ? Number(item.parent.year) : null,
                               releaseDate: item.parent.releaseDate ? new Date(item.parent.releaseDate) : null,
                               genres: item.parent.genres ?? undefined,
-                              details: (item.parent as any).details ?? null,
+                              details: item.parent.details ?? null,
                               syncedAt: item.parent.source === "tmdb" ? new Date() : undefined,
                               syncCheckedAt: item.parent.source === "tmdb" ? new Date() : undefined,
-                          } as any
+                          } as NonNullable<ImportInput["parent"]>)
                         : undefined,
                     logData: {
                         status: item.log.status,

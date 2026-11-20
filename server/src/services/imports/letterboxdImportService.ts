@@ -7,9 +7,7 @@ import prisma from "@/prismaClient.js"
 import { AppError } from "@/api/domain/error.js"
 import { ImportResult } from "@/api/domain/imports.js"
 import { SearchResult } from "@/schemas/search/searchSchemas.js"
-import { tmdbSearchResponseSchema } from "@/schemas/search/movieSchemas.js"
-import { tmdbSearchService, tmdbAuth, buildTmdbSearchUrl, mapTmdbMovie } from "../search/tmdbSearchService.js"
-import { tmdbLimiter, parseRetryAfter } from "../search/rateLimiter.js"
+import { tmdbSearchService } from "../search/tmdbSearchService.js"
 import { findUserByUsername } from "@/repositories/authRepository.js"
 import { findMediaTypeForUserOrGlobal } from "@/repositories/mediaTypeRepository.js"
 import { findMediaByExternalIds } from "@/repositories/mediaRepository.js"
@@ -21,7 +19,7 @@ import {
 } from "@/repositories/collectionRepository.js"
 import { executeBatchImport, BatchRowItem } from "./batchWrite.js"
 import { type ImportProgressCallback } from "./goodreadsImportService.js"
-import { parseImportDate, normalizeTagName, tagKey, createUserAgentHeader, collectionKey, MAX_ITEMS_PER_COLLECTION, sanitizeCollectionDescription } from "@/utilities.js"
+import { parseImportDate, normalizeTagName, tagKey, collectionKey, MAX_ITEMS_PER_COLLECTION, sanitizeCollectionDescription } from "@/utilities.js"
 import { Prisma, Media } from "@/db.js"
 import { LIMITS } from "@/config/limits.js"
 
@@ -205,10 +203,6 @@ export function normalizeLetterboxdUri(rawUri: string): string {
 
 export function letterboxdFilmKey(name: string, year: number | null): string {
     return `${name.trim().toLowerCase()}:::${year ?? ""}`
-}
-
-function normalizeTitle(t: string): string {
-    return t.trim().toLowerCase().replace(/\s+/g, " ")
 }
 
 export function unzipLetterboxdExport(buffer: Buffer): LetterboxdExportFiles {

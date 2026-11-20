@@ -1,5 +1,5 @@
 import prisma from "@/prismaClient.js"
-import { DbClient, Prisma, LogStatus, toLogStatus, fromLogStatus } from "@/db.js"
+import { DbClient, LogStatus, toLogStatus, fromLogStatus } from "@/db.js"
 import { MEDIA_INCLUDE, formatMedia } from "./mediaFormat.js"
 
 export type LogTagItem = { id: string; name: string }

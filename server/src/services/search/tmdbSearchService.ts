@@ -5,20 +5,16 @@ import {
     TmdbTvItem, tmdbTvSearchResponseSchema, tmdbTvShowDetailsSchema
 } from "@/schemas/search/tvSchemas.js"
 import { searchResultsSchema, searchResultSchema, SearchResult } from "@/schemas/search/searchSchemas.js"
-import { createUserAgentHeader, decryptKey, validateSchema } from "@/utilities.js"
-import { findUserById } from "@/repositories/authRepository.js"
+import { validateSchema } from "@/utilities.js"
 import { AppError } from "@/api/domain/error.js"
 import prisma from "@/prismaClient.js"
 import { findMediaByProviderId, attachExternalIdsToMedia } from "@/repositories/mediaRepository.js"
-import { tmdbLimiter, parseRetryAfter } from "./rateLimiter.js"
 import { unexpectedShape } from "./providerErrors.js"
 import { providerFetch } from "@/providers/providerFetch.js"
 import { getUserApiKey as getRegistryUserApiKey } from "@/providers/registry.js"
 
 const BASE_URL = "https://api.themoviedb.org/3"
 const IMAGE_BASE = "https://image.tmdb.org/t/p/w342"
-const DEFAULT_RETRY_MS = 1000
-const MAX_RETRY_MS = 3000
 const TIMEOUT_MS = 8000
 
 export function normalizeTitle(s: string): string {
@@ -191,7 +187,6 @@ export function parseTmdbDetails(raw: unknown): MovieDetails {
     }
 }
 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 export class TmdbSearchService {
     async getUserApiKey(userId: string): Promise<string> {
@@ -436,8 +431,6 @@ export class TmdbSearchService {
         const createdByNames = (data.created_by ?? []).map(c => c.name?.trim()).filter(Boolean) as string[]
         const firstNetwork = data.networks?.[0]?.name?.trim() || null
         const creator = createdByNames.length > 0 ? createdByNames.join(", ") : firstNetwork
-        const networks = (data.networks ?? []).map(n => n.name?.trim()).filter(Boolean) as string[]
-        const genres = (data.genres ?? []).map(g => g.name?.trim()).filter(Boolean) as string[]
 
         return {
             mediaType: "tv",

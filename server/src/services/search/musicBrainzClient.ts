@@ -1,5 +1,4 @@
 import { z } from "zod"
-import { createUserAgentHeader } from "@/utilities.js"
 import { RateLimiter, musicBrainzLimiter } from "./rateLimiter.js"
 import { providerFetch } from "@/providers/providerFetch.js"
 

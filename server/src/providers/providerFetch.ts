@@ -16,14 +16,6 @@ export interface ProviderFetchInit extends RequestInit {
     allowHttpErrors?: boolean
 }
 
-function getHeader(headers: Record<string, string>, name: string): string | undefined {
-    const target = name.toLowerCase()
-    for (const [k, v] of Object.entries(headers)) {
-        if (k.toLowerCase() === target) return v
-    }
-    return undefined
-}
-
 function setHeader(headers: Record<string, string>, name: string, value: string) {
     const target = name.toLowerCase()
     for (const k of Object.keys(headers)) {

@@ -4,8 +4,6 @@ import request from 'supertest'
 import app from '@/app.js'
 import { prisma } from '@/tests/jest.setup.js'
 
-type Meta = { categories?: string[] | null, kind?: string, url?: string }
-
 describe('Media log - Last.fm tag enrichment', () => {
     const users = ['LfmUserA', 'LfmUserB']
     const tokens: string[] = []

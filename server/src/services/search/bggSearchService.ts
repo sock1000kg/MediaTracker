@@ -5,22 +5,17 @@ import {
     BggThingItem,
 } from "@/schemas/search/bggSchemas.js"
 import { searchResultsSchema, SearchResult } from "@/schemas/search/searchSchemas.js"
-import { createUserAgentHeader, decryptKey, validateSchema } from "@/utilities.js"
-import { findUserById } from "@/repositories/authRepository.js"
+import { validateSchema } from "@/utilities.js"
 import { AppError } from "@/api/domain/error.js"
 import { unexpectedShape } from "./providerErrors.js"
-import { bggLimiter, parseRetryAfter } from "./rateLimiter.js"
 import { providerFetch } from "@/providers/providerFetch.js"
 import { getUserApiKey as getRegistryUserApiKey } from "@/providers/registry.js"
 
 // Host quirk: must use boardgamegeek.com without www; www redirects or fails Cloudflare/token auth for XMLAPI2.
 const BASE_URL = "https://boardgamegeek.com/xmlapi2"
 const PAGE_SIZE = 20
-const DEFAULT_RETRY_MS = 1000
-const MAX_RETRY_MS = 3000
 const TIMEOUT_MS = 8000
 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 function parseNum(val: unknown): number | null {
     if (val === null || val === undefined) return null
@@ -162,8 +157,8 @@ export class BggSearchService {
         url.searchParams.set("stats", "1")
         const xml = await this.fetchXml(url, token)
         const parsed = parseBggXml(xml)
-        const parsedAny = parsed as any
-        const item = parsedAny?.items?.item ? (Array.isArray(parsedAny.items.item) ? parsedAny.items.item[0] : parsedAny.items.item) : null
+        const items = (parsed as { items?: { item?: BggThingItem | BggThingItem[] } }).items?.item
+        const item = Array.isArray(items) ? items[0] : items
         if (!item) {
             throw new AppError("The provider no longer has this item", 404)
         }

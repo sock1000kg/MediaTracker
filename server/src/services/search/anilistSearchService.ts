@@ -2,18 +2,15 @@ import {
     AniListMedia, AniListMode, AnimeSearchFilters, anilistResponseSchema
 } from "@/schemas/search/animeSchemas.js"
 import { searchResultsSchema, SearchResult } from "@/schemas/search/searchSchemas.js"
-import { createUserAgentHeader, validateSchema } from "@/utilities.js"
+import { validateSchema } from "@/utilities.js"
 import { ISearchService } from "./searchServiceInterface.js"
 import { AppError } from "@/api/domain/error.js"
 import { unexpectedShape } from "./providerErrors.js"
-import { anilistLimiter, parseRetryAfter } from "./rateLimiter.js"
+import { anilistLimiter } from "./rateLimiter.js"
 import { providerFetch } from "@/providers/providerFetch.js"
 import { getProviderEntry } from "@/providers/registry.js"
 
 const ANILIST_ENDPOINT = "https://graphql.anilist.co"
-const MIN_GAP_MS = 700 // AniList allows ~90 requests/min
-const DEFAULT_RETRY_MS = 1000
-const MAX_RETRY_MS = 3000
 const TIMEOUT_MS = 8000
 const CONNECTION_ERROR_CODES = new Set(["UND_ERR_CONNECT_TIMEOUT", "ECONNREFUSED", "ENOTFOUND", "EAI_AGAIN", "ECONNRESET"])
 
@@ -397,7 +394,6 @@ export function mapAniListMedia(mode: AniListMode, item: AniListMedia): SearchRe
     }
 }
 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 export class AniListSearchService implements ISearchService {
     async getUserApiKey(): Promise<string | undefined> {

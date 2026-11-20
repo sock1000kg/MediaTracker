@@ -143,7 +143,7 @@ export class MediaRefreshService {
         return formatMedia(updated)
     }
 
-    private async refreshTmdb(userId: string, media: RefreshableMedia, details: Record<string, unknown>) {
+    private async refreshTmdb(userId: string, media: RefreshableMedia, _details: Record<string, unknown>) {
         if (media.provider === "letterboxd") {
             const match = await tmdbSearchService.findMovie(media.title, media.year, { userId })
             if (!match) {
@@ -466,7 +466,7 @@ export class MediaRefreshService {
         }
     }
 
-    private async refreshOpenLibrary(userId: string, media: RefreshableMedia, details: Record<string, unknown>) {
+    private async refreshOpenLibrary(userId: string, media: RefreshableMedia, _details: Record<string, unknown>) {
         const sourceId = media.providerId
         if (!sourceId) throw new AppError("The provider no longer has this item", 404)
 
@@ -638,7 +638,7 @@ export class MediaRefreshService {
         }
     }
 
-    private async refreshBgg(userId: string, media: RefreshableMedia, details: Record<string, unknown>) {
+    private async refreshBgg(userId: string, media: RefreshableMedia, _details: Record<string, unknown>) {
         const token = await bggSearchService.getUserApiKey(userId)
         const thingId = media.providerId
         if (!thingId) throw new AppError("The provider no longer has this item", 404)

@@ -20,6 +20,8 @@ export type BookMetadata = {
 
 type CreateImportedMediaInput = {
     userId: string
+    // An existing media to attach to as the parent, already resolved by the caller
+    parentMediaId?: string | null
     mediaTypeName: string
     mediaData: {
         title: string
@@ -77,7 +79,7 @@ export async function createImportedMedia(
     input: CreateImportedMediaInput,
     tx: DbClient
 ) {
-    const { userId, mediaTypeName, mediaData, logData, parent } = input
+    const { userId, mediaTypeName, mediaData, logData, parent, parentMediaId } = input
 
     if (mediaData.source !== "bgg") {
         mediaData.description = sanitizeDescription(mediaData.description)
@@ -94,8 +96,8 @@ export async function createImportedMedia(
     }
 
     let parentMedia: { id: string } | null = null
-    if (parent && (parent as any).id) {
-        parentMedia = { id: (parent as any).id }
+    if (parentMediaId) {
+        parentMedia = { id: parentMediaId }
     } else if (parent && parent.source && parent.sourceId) {
         parentMedia = await findMediaByProviderId(parent.source, parent.sourceId, tx)
         if (!parentMedia) {

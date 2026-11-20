@@ -2,20 +2,16 @@ import {
     RawgGameItem, GameSearchFilters, rawgGameDetailsSchema, rawgSearchResponseSchema
 } from "@/schemas/search/gameSchemas.js"
 import { searchResultsSchema, SearchResult } from "@/schemas/search/searchSchemas.js"
-import { createUserAgentHeader, decryptKey, sanitizeDescription, validateSchema } from "@/utilities.js"
-import { rawgLimiter, parseRetryAfter } from "./rateLimiter.js"
+import { sanitizeDescription, validateSchema } from "@/utilities.js"
 import { unexpectedShape } from "./providerErrors.js"
 import { providerFetch } from "@/providers/providerFetch.js"
 import { getUserApiKey as getRegistryUserApiKey } from "@/providers/registry.js"
-import { findUserById } from "@/repositories/authRepository.js"
 import { AppError } from "@/api/domain/error.js"
 import prisma from "@/prismaClient.js"
 import { findMediaByProviderId } from "@/repositories/mediaRepository.js"
 
 const BASE_URL = "https://api.rawg.io/api/games"
 const PAGE_SIZE = 20
-const DEFAULT_RETRY_MS = 1000
-const MAX_RETRY_MS = 3000
 const TIMEOUT_MS = 8000
 const MAX_CATEGORIES = 10
 
@@ -129,7 +125,6 @@ export function parseRawgDetails(raw: unknown): GameDetails {
     }
 }
 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 export class RawgSearchService {
     async getUserApiKey(userId: string): Promise<string> {

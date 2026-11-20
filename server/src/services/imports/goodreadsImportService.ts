@@ -6,12 +6,9 @@ import { GoodReadsRow, goodreadsRowSchema } from "@/schemas/imports/goodReadsSch
 import { AppError } from "@/api/domain/error.js"
 import { validateSchema, parseImportDate, toDayPrecision } from "@/utilities.js"
 import { parse } from "csv-parse/sync"
-import { BookDetails } from "@/schemas/detailsSchemas.js"
 import { ZodError } from "zod"
 import { ImportResult } from "@/api/domain/imports.js"
 import { executeBatchImport, BatchRowItem } from "./batchWrite.js"
-import { findMediaByExternalIds, ExternalIdKey } from "@/repositories/mediaRepository.js"
-
 import { LIMITS } from "@/config/limits.js"
 
 export const MAX_IMPORT_FAILURES = LIMITS.imports.maxFailures
@@ -63,17 +60,6 @@ export class GoodreadsImportService {
         const bookType = await findMediaTypeForUserOrGlobal("book", userId, prisma)
         if (!systemUser || !bookType) throw new AppError("System config missing", 500)
 
-        const lookupKeys: ExternalIdKey[] = []
-        for (const unvalidRecord of rawRecords) {
-            const raw = unvalidRecord as Record<string, unknown>
-            const bId = raw['Book Id'] ? String(raw['Book Id']).trim() : null
-            if (bId) lookupKeys.push({ provider: "goodreads", externalId: bId })
-            const isbn13 = raw['ISBN13'] ? String(raw['ISBN13']).replace(/["'=]/g, "").trim() : null
-            if (isbn13) lookupKeys.push({ provider: "isbn13", externalId: isbn13 })
-            const isbn = raw['ISBN'] ? String(raw['ISBN']).replace(/["'=]/g, "").trim() : null
-            if (isbn) lookupKeys.push({ provider: "isbn", externalId: isbn })
-        }
-        const existingMediaMap = await findMediaByExternalIds(lookupKeys, prisma)
 
         const validItems: BatchRowItem[] = []
 
@@ -92,7 +78,6 @@ export class GoodreadsImportService {
                 const starRating = record['My Rating']
                 const exclusiveShelf = record['Exclusive Shelf'] || ""
                 const author = additionalAuthors ? `${mainAuthor}, ${additionalAuthors}` : mainAuthor
-                const constructedSourceUrl = sourceId ? `https://www.goodreads.com/book/show/${sourceId}` : ""
 
                 let status = "wishlist"
                 if (exclusiveShelf === 'read') status = "completed"

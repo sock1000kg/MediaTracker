@@ -1,6 +1,5 @@
 import { getUserApiKey, getProviderEntry, ProviderName } from "@/providers/registry.js"
 import { prisma } from "@/tests/jest.setup.js"
-import { AppError } from "@/api/domain/error.js"
 
 describe("BYO keys only - no env fallback (P1, T1)", () => {
     const keyedProviders: ProviderName[] = ["tmdb", "rawg", "lastfm", "bgg"]
