@@ -4,6 +4,7 @@ import { fileURLToPath } from "url"
 import prisma from "@/prismaClient.js"
 import { DbClient } from "@/db.js"
 import { createImportedMedia } from "@/api/domain/media.js"
+import { findMediaByProviderId } from "@/repositories/mediaRepository.js"
 import { normalizeDescription } from "@/schemas/search/searchSchemas.js"
 import {
     findCollectionByNameKey,
@@ -89,6 +90,13 @@ export async function seedDemoMedia(
     // 2. Insert items and logs
     for (const item of fixture.items) {
         try {
+            // Logging an item again adds an entry, so a re-seed must not pass the fixture's dates again
+            const existingMedia = item.media.sourceId
+                ? await findMediaByProviderId(item.media.source, item.media.sourceId, db)
+                : null
+            const alreadyLogged = existingMedia
+                ? await db.userLogs.findUnique({ where: { userId_mediaId: { userId: demoUserId, mediaId: existingMedia.id } } })
+                : null
             const { log } = await createImportedMedia(
                 {
                     userId: demoUserId,
@@ -130,7 +138,7 @@ export async function seedDemoMedia(
                         tags: item.log.tags,
                     },
                     // The fixture's dates are the log's one dated experience
-                    entry: item.log.startedAt || item.log.finishedAt
+                    entry: !alreadyLogged && (item.log.startedAt || item.log.finishedAt)
                         ? {
                               startedAt: item.log.startedAt ? new Date(item.log.startedAt) : null,
                               finishedAt: item.log.finishedAt ? new Date(item.log.finishedAt) : null,

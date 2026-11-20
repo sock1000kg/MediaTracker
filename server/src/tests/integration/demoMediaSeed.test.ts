@@ -170,8 +170,9 @@ describe("Demo Media Seeding (Integration)", () => {
         expect(tagNames.has("shoegaze")).toBe(true)
     })
 
-    it("is idempotent: re-seeding produces no duplicate media or logs", async () => {
+    it("is idempotent: re-seeding produces no duplicate media, logs or entries", async () => {
         const mediaCountBefore = await prisma.media.count()
+        const entryCountBefore = await prisma.logEntry.count({ where: { log: { userId: demoUserId } } })
         const logCountBefore = await prisma.userLogs.count({ where: { userId: demoUserId } })
         const collCountBefore = await prisma.collection.count({ where: { userId: demoUserId } })
         const collItemCountBefore = await prisma.collectionItem.count({
@@ -192,6 +193,7 @@ describe("Demo Media Seeding (Integration)", () => {
         expect(logCountAfter).toBe(logCountBefore)
         expect(collCountAfter).toBe(collCountBefore)
         expect(collItemCountAfter).toBe(collItemCountBefore)
+        expect(await prisma.logEntry.count({ where: { log: { userId: demoUserId } } })).toBe(entryCountBefore)
     })
 
     it("resetDemoUser restores exactly the same state", async () => {
