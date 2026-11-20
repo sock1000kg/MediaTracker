@@ -107,6 +107,8 @@ describe("API Key Routes", () => {
     })
 
     test("POST /apikeys succeeds for all valid ApiKeyService services (lastfm, tmdb, rawg, bgg)", async () => {
+        // Earlier tests leave a lastfm key behind
+        await prisma.userAPIKey.deleteMany({ where: { userId } })
         for (const svc of ["lastfm", "tmdb", "rawg", "bgg"] as const) {
             const res = await request(app)
                 .post(API)

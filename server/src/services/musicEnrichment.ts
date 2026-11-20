@@ -191,28 +191,7 @@ export async function enrichMusicOnLog(mediaData: MusicMediaData, parent: MusicP
         }
     }
 
-    // Music genres come from MusicBrainz only (Last.fm data is never stored). When MusicBrainz had
-    // none, the media simply has none; syncCheckedAt records that enrichment was tried.
-    const existing = await findMediaByProviderId(mediaData.source, mediaData.sourceId, prisma)
-    const hasGenres = Boolean(
-        (mediaData as Record<string, unknown>).genres &&
-        Array.isArray((mediaData as Record<string, unknown>).genres) &&
-        ((mediaData as Record<string, unknown>).genres as unknown[]).length > 0
-    ) || Boolean(existing && Array.isArray((existing as { genres?: unknown[] }).genres) && (existing as { genres?: unknown[] }).genres!.length > 0)
-    const alreadyChecked = hasGenres || (existing?.syncCheckedAt != null)
-
-    if (!alreadyChecked) {
-        const now = new Date()
-        if (existing) {
-            await prisma.media.update({
-                where: { id: existing.id },
-                data: { syncCheckedAt: now },
-            })
-        } else {
-            ;(mediaData as Record<string, unknown>).genres = []
-            mediaData.syncCheckedAt = now
-        }
-    }
-
+    // Genres come from MusicBrainz only (Last.fm data is never stored). syncCheckedAt is stamped by the
+    // MusicBrainz branches above on found/none, never on an error, so a failed lookup is retried later.
     return { parentMediaId }
 }

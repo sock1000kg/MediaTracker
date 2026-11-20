@@ -61,7 +61,6 @@ describe('Media log - Last.fm data is never stored', () => {
         const media = await findMedia('lfm-test-1')
         expect(await genresOf(media!.id)).toEqual([])
         expect(media?.subtype).toBe('album')
-        expect(media?.syncCheckedAt).not.toBeNull()
     })
 
     it('makes no tag request when logged again by another user', async () => {
@@ -97,7 +96,6 @@ describe('Media log - Last.fm data is never stored', () => {
         expect(tagCalls()).toHaveLength(0)
         const media = await findMedia('lfm-test-4')
         expect(await genresOf(media!.id)).toEqual([])
-        expect(media?.syncCheckedAt).not.toBeNull()
     })
 
     it('leaves book logging unchanged', async () => {
