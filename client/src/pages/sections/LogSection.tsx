@@ -20,6 +20,9 @@ import { useGroupReveal } from "@/hooks/useGroupReveal"
 import { step } from "@/lib/logView"
 import { LogJournalDialog, type JournalSave } from "@/components/logs/LogJournalDialog"
 import { ConfirmDeleteDialog } from "@/components/dialogs/ConfirmDeleteDialog"
+import { LettersDialog } from "@/components/letters/LettersDialog"
+import { WaxSeal } from "@/components/letters/WaxSeal"
+import { letterSummaryQueryOptions } from "@/queryOptions/letterQueryOptions"
 
 // --- NEW IMPORTS ---
 import { DataControls } from "@/components/ui/DataControls" 
@@ -71,12 +74,18 @@ export default function LogsSection() {
   // Fetch Data
   const { data: logs = [], error, isPending } = useQuery(fetchLogsQueryOptions())
 
+  const [lettersOpen, setLettersOpen] = useState(false)
+  const { data: letterSummary } = useQuery(letterSummaryQueryOptions())
+  const readyLetters = letterSummary?.ready ?? 0
+
   // Mutations
   const deleteMutation = useMutation({
     mutationFn: deleteLog,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: fetchLogsQueryOptions().queryKey })
       queryClient.invalidateQueries({ queryKey: ["tags"] })
+      // Its letters went with it
+      queryClient.invalidateQueries({ queryKey: ["letters"] })
     },
   })
 
@@ -254,11 +263,26 @@ export default function LogsSection() {
           {/* Title */}
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
              <h1 className="font-display text-3xl sm:text-4xl font-semibold">Your logs</h1>
-             {logs.length > 0 && (
-               <p className="text-sm text-muted-foreground">
-                 {logs.length} {logs.length === 1 ? "log" : "logs"} · {logsThisYear} this year
-               </p>
-             )}
+             <div className="flex items-center gap-3">
+               {logs.length > 0 && (
+                 <p className="text-sm text-muted-foreground">
+                   {logs.length} {logs.length === 1 ? "log" : "logs"} · {logsThisYear} this year
+                 </p>
+               )}
+               <button
+                 type="button"
+                 onClick={() => setLettersOpen(true)}
+                 className="inline-flex h-8 items-center gap-1.5 self-center rounded-full border border-border-strong bg-card px-3 text-sm font-medium hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+               >
+                 <WaxSeal />
+                 Letters
+                 {readyLetters > 0 && (
+                   <span className="min-w-5 rounded-full bg-primary px-1.5 text-xs leading-5 text-primary-foreground tabular-nums">
+                     {readyLetters}<span className="sr-only"> ready</span>
+                   </span>
+                 )}
+               </button>
+             </div>
           </div>
 
           {/* Controls Area */}
@@ -364,6 +388,8 @@ export default function LogsSection() {
           onSave={(save) => editMutation.mutateAsync({ log: targetLog, save })}
         />
       )}
+
+      {lettersOpen && <LettersDialog onClose={() => setLettersOpen(false)} />}
 
       <ConfirmDeleteDialog
         open={openDialog === "deleteConfirm"}

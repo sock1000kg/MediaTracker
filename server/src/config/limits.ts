@@ -7,6 +7,11 @@ export const LIMITS = {
         entryNoteMaxLength: 10_000,
         entryNameMaxLength: 300,
     },
+    letters: {
+        bodyMaxLength: 10_000,
+        maxSealedPerLog: 5,
+        maxPerUser: 500,
+    },
     tags: {
         maxLength: 40,
         maxPerLog: 20,

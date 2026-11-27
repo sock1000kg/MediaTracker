@@ -11,6 +11,11 @@ export const DEFAULT_LIMITS: PublicLimits = {
     entryNoteMaxLength: 10_000,
     entryNameMaxLength: 300,
   },
+  letters: {
+    bodyMaxLength: 10_000,
+    maxSealedPerLog: 5,
+    maxPerUser: 500,
+  },
   tags: {
     maxLength: 40,
     maxPerLog: 20,
@@ -48,6 +53,10 @@ export function useLimits(): PublicLimits {
     logs: {
       ...DEFAULT_LIMITS.logs,
       ...(serverLimits?.logs ?? {}),
+    },
+    letters: {
+      ...DEFAULT_LIMITS.letters,
+      ...(serverLimits?.letters ?? {}),
     },
     tags: {
       ...DEFAULT_LIMITS.tags,

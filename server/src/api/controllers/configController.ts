@@ -22,6 +22,11 @@ export function getPublicConfig(): PublicConfig {
                 entryNoteMaxLength: LIMITS.logs.entryNoteMaxLength,
                 entryNameMaxLength: LIMITS.logs.entryNameMaxLength,
             },
+            letters: {
+                bodyMaxLength: LIMITS.letters.bodyMaxLength,
+                maxSealedPerLog: LIMITS.letters.maxSealedPerLog,
+                maxPerUser: LIMITS.letters.maxPerUser,
+            },
             tags: {
                 maxLength: LIMITS.tags.maxLength,
                 maxPerLog: LIMITS.tags.maxPerLog,

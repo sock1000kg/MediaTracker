@@ -132,6 +132,8 @@ export const POKE_LINES: readonly string[] = [
 ]
 export const ENOUGH_LINE = "ok that's enough. i'm going to sleep"
 export const LATE_NIGHT_LINE = "it's late. revenge me-time?"
+export const LETTER_LINE = "a letter just unsealed!"
+export const LETTER_MS = 5000
 export const POKES_BEFORE_SLEEP = 12
 export const BUBBLE_MS = 3000
 export const LATE_NIGHT_MS = 5000

@@ -189,6 +189,7 @@ export default function CollectionsSection() {
       queryClient.invalidateQueries({ queryKey: ["collection", selectedId] })
       queryClient.invalidateQueries({ queryKey: ["collections"] })
       queryClient.invalidateQueries({ queryKey: ["logs"] })
+      queryClient.invalidateQueries({ queryKey: ["letters"] })
       queryClient.invalidateQueries({ queryKey: ["tags"] })
       setOpenLogDialog(null)
     },

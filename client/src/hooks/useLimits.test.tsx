@@ -39,6 +39,7 @@ describe("useLimits hook", () => {
       limits: {
         notes: { maxLength: 99999 },
         logs: { maxEntriesPerLog: 50, entryNoteMaxLength: 5000, entryNameMaxLength: 200 },
+        letters: { bodyMaxLength: 5000, maxSealedPerLog: 3, maxPerUser: 100 },
         tags: { maxLength: 50, maxPerLog: 30, maxPerUser: 600 },
         collections: {
           nameMaxLength: 90,

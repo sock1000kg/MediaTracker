@@ -71,6 +71,9 @@ export async function mergeMediaInto(fromId: string, intoId: string, tx: DbClien
         // Entries
         await tx.logEntry.updateMany({ where: { logId: fromLog.id }, data: { logId: intoLog.id } })
 
+        // Sealed letters follow the item (deleting from's log below would take them with it)
+        await tx.sealedLetter.updateMany({ where: { logId: fromLog.id }, data: { logId: intoLog.id } })
+
         // Tags: union
         const have = new Set(intoLog.tags.map(t => t.tagId))
         const missing = fromLog.tags.filter(t => !have.has(t.tagId))

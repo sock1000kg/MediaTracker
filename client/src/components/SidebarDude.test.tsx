@@ -1,8 +1,14 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { act, render, screen } from "@testing-library/react"
+import { act, screen } from "@testing-library/react"
+import { renderWithProviders as render } from "@/test/render"
 import SidebarDude from "./SidebarDude"
 import { dudeSay, POKES_BEFORE_SLEEP } from "@/lib/dude"
+
+// Nothing waiting: the letter side of the dude is covered in components/letters
+vi.mock("@/api/letters", () => ({
+  fetchLetterSummary: vi.fn().mockResolvedValue({ sealed: 0, ready: 0, nextOpensAt: null }),
+}))
 
 describe("SidebarDude component", () => {
   beforeEach(() => {

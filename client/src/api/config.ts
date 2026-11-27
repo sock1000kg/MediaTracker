@@ -9,6 +9,11 @@ export interface PublicLimits {
     entryNoteMaxLength: number
     entryNameMaxLength: number
   }
+  letters: {
+    bodyMaxLength: number
+    maxSealedPerLog: number
+    maxPerUser: number
+  }
   tags: {
     maxLength: number
     maxPerLog: number

@@ -160,3 +160,10 @@ export function revealState(total: number, shown: number, initial: number): { re
   const remaining = Math.max(0, total - Math.max(0, Math.floor(shown)))
   return { remaining, canLoadMore: remaining > 0, canCollapse: shown > initial }
 }
+
+/** Logs whose title or creator contains `query` (any case); all of them for a blank query. */
+export function filterLogsByQuery<T extends { media: { title: string; creator?: string | null } }>(logs: T[], query: string): T[] {
+  const q = query.trim().toLowerCase()
+  if (!q) return logs
+  return logs.filter((l) => l.media.title.toLowerCase().includes(q) || (l.media.creator ?? "").toLowerCase().includes(q))
+}

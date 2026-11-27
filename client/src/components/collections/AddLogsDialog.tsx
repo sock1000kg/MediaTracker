@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { fetchLogsQueryOptions } from "@/queryOptions/fetchLogsQueryOptions"
 import { membershipDiff } from "@/lib/collectionHelpers"
+import { filterLogsByQuery } from "@/lib/logView"
 import type { Log } from "@/types/mainTypes"
 
 interface AddLogsDialogProps {
@@ -45,15 +46,7 @@ export function AddLogsDialog({
     }
   }, [open, initialLogIds])
 
-  const filteredLogs = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    if (!q) return allLogs
-    return allLogs.filter((l: Log) => {
-      const title = l.media.title.toLowerCase()
-      const creator = (l.media.creator ?? "").toLowerCase()
-      return title.includes(q) || creator.includes(q)
-    })
-  }, [allLogs, search])
+  const filteredLogs = useMemo(() => filterLogsByQuery(allLogs, search), [allLogs, search])
 
   const toggleLog = (id: string) => {
     setSelected((prev) => {

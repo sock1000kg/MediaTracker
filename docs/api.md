@@ -119,6 +119,22 @@ Collections are private, ordered lists of your logs. Up to 200 collections per u
 | DELETE | `/collections/:id/items/:logId` | Remove a log from the collection (`204`). Remaining items have positions re-densified (0, 1, 2, …). Bumps collection `updated_at`. Malformed `:id` or `:logId` returns 400. |
 | PUT | `/collections/:id/order` | `{ logIds: string[] (UUIDs) }`. Reorder items. `logIds` must be an exact permutation of current items (otherwise `400`). Rewrites positions and bumps collection `updated_at`. Returns `200`. Malformed `:id` returns 400. |
 
+## Letters
+
+"Letters to later": a private note on one of your logs, sealed until **either** a date (`opensAt`) **or** the next time you log the item again (`opensOnRelog`). The server never sends the text of a letter that hasn't been opened. There is no edit route.
+
+An item is `{ id, logId, media: { id, title, mediaType }, created_at, opensAt, opensOnRelog, openedAt, state, body? }`, where `state` is `"sealed" | "ready" | "opened"` and `body` is present only when `state` is `"opened"`. A letter is **ready** when it hasn't been opened and either `opensAt` has passed, or `opensOnRelog` is set and the log has an entry created after the letter.
+
+| Method | Path | Description |
+| --- | --- | --- |
+| GET | `/letters` | All your letters, newest first. |
+| GET | `/letters/summary` | `{ sealed, ready, nextOpensAt }`. `sealed` excludes ready ones; `nextOpensAt` is the earliest `opensAt` among sealed letters, or `null`. |
+| POST | `/letters` | `{ logId, body, opensAt?, opensOnRelog?, today? }`, exactly one of `opensAt` (`YYYY-MM-DD`) and `opensOnRelog: true`. `opensAt` must be after `today` and at most 25 years ahead. `today` is the writer's local date, used when it is within a day of the server's UTC date (otherwise the UTC date counts). `body` is 1–10,000 characters. At most 5 unopened letters per log and 500 letters per user (`400`). Another user's log gives `404`. Returns `201` without `body`. |
+| POST | `/letters/:id/open` | The item with `body`; sets `openedAt` the first time. `409` while still sealed, `404` for another user's letter. Opening again returns it. |
+| DELETE | `/letters/:id` | Tear it up, in any state (`204`). |
+
+Deleting a log deletes its letters; merging duplicate items moves them to the surviving log. Logs from `GET /logs` (and inside `GET /collections/:id`) carry `letters: { sealed, ready }` counts. The JSON account export lists each log's letters, with `body` only for opened ones; the CSV export has no letters.
+
 ## API keys (for search providers)
 
 | Method | Path | Description |

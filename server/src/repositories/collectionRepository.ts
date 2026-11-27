@@ -2,6 +2,7 @@ import prisma from "@/prismaClient.js"
 import { MEDIA_INCLUDE } from "./mediaFormat.js"
 import { DbClient } from "@/db.js"
 import { mapLogWithTags } from "@/repositories/logsRepository.js"
+import { attachLetterCounts } from "@/repositories/letterRepository.js"
 
 export interface CollectionSummary {
     id: string
@@ -75,6 +76,8 @@ export async function findCollectionById(id: string, userId: string, client: DbC
     })
     if (!c) return null
 
+    const logs = await attachLetterCounts(c.items.map((it) => mapLogWithTags(it.log)), userId, client)
+
     return {
         id: c.id,
         name: c.name,
@@ -82,10 +85,10 @@ export async function findCollectionById(id: string, userId: string, client: DbC
         ranked: c.ranked,
         created_at: c.created_at,
         updated_at: c.updated_at,
-        items: c.items.map((it) => ({
+        items: c.items.map((it, i) => ({
             position: it.position,
             added_at: it.added_at,
-            log: mapLogWithTags(it.log),
+            log: logs[i],
         })),
     }
 }

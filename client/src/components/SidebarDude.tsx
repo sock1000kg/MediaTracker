@@ -1,7 +1,11 @@
 import { useEffect, useReducer, useRef, useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 
 import BlueDude from "@/components/BlueDude"
 import SpeechBubble from "@/components/SpeechBubble"
+import { LettersDialog } from "@/components/letters/LettersDialog"
+import { PixelEnvelope } from "@/components/letters/PixelEnvelope"
+import { letterSummaryQueryOptions } from "@/queryOptions/letterQueryOptions"
 import { useReducedMotion } from "@/hooks/useReducedMotion"
 import {
   BUBBLE_MS,
@@ -13,11 +17,16 @@ import {
   dudeReducer,
   initialDudeState,
   isLateNight,
+  LETTER_LINE,
+  LETTER_MS,
   type Glance,
 } from "@/lib/dude"
 
 const LATE_NIGHT_KEY = "dude.lateNight"
 const LATE_NIGHT_DELAY_MS = 300
+const LETTER_KEY = "dude.letter"
+// After the late night line, so the news about the letter is the one that stays
+const LETTER_DELAY_MS = 600
 
 interface SidebarDudeProps {
   glance: Glance
@@ -30,6 +39,28 @@ export default function SidebarDude({ glance, size = 32 }: SidebarDudeProps) {
   const [hopping, setHopping] = useState(false)
   const [slowBlink, setSlowBlink] = useState(0)
   const hopTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const { data: letterSummary } = useQuery(letterSummaryQueryOptions())
+  const holding = (letterSummary?.ready ?? 0) > 0
+  const [lettersOpen, setLettersOpen] = useState(false)
+
+  // Once per session, when something is waiting to be opened
+  useEffect(() => {
+    if (!holding) return
+    try {
+      if (sessionStorage.getItem(LETTER_KEY)) return
+    } catch {
+      // storage unavailable: say it once for this mount
+    }
+    const t = setTimeout(() => {
+      try {
+        sessionStorage.setItem(LETTER_KEY, "1")
+      } catch {
+        // ignore: storage unavailable
+      }
+      dispatch({ type: "say", text: LETTER_LINE, ms: LETTER_MS })
+    }, LETTER_DELAY_MS)
+    return () => clearTimeout(t)
+  }, [holding])
 
   // Bubble lifetime: restarts for every new bubble, cleaned up on replace/unmount.
   const bubble = state.bubble
@@ -97,6 +128,10 @@ export default function SidebarDude({ glance, size = 32 }: SidebarDudeProps) {
   )
 
   const poke = () => {
+    if (holding) {
+      setLettersOpen(true)
+      return
+    }
     if (state.asleep) return
     dispatch({ type: "poke" })
     if (!reduced) {
@@ -117,9 +152,9 @@ export default function SidebarDude({ glance, size = 32 }: SidebarDudeProps) {
       </div>
       <button
         type="button"
-        aria-label={state.asleep ? "The blue guy is asleep" : "Poke the blue guy"}
+        aria-label={holding ? "The blue guy is holding a letter. Open your letters" : state.asleep ? "The blue guy is asleep" : "Poke the blue guy"}
         onClick={poke}
-        className="cursor-pointer rounded-sm p-1 outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        className="relative cursor-pointer rounded-sm p-1 outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
       >
         <span className={hopping ? "dude-hop inline-block" : "inline-block"}>
           <BlueDude
@@ -129,7 +164,9 @@ export default function SidebarDude({ glance, size = 32 }: SidebarDudeProps) {
             slowBlinkKey={slowBlink}
           />
         </span>
+        {holding && <PixelEnvelope scale={Math.max(1, Math.floor(size / 16))} className="absolute -right-1 bottom-0" />}
       </button>
+      {lettersOpen && <LettersDialog onClose={() => setLettersOpen(false)} />}
     </div>
   )
 }

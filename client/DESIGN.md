@@ -159,6 +159,9 @@ AACCCCAAAACCCCAA
 
 Nowhere else. He's a guest, not wallpaper (the landing page is his house, so it doesn't count).
 
+### The envelope (sealed letters)
+While a letter is ready to open, the sidebar dude holds a small envelope, drawn like him: an 11×8 pixel grid (`components/letters/PixelEnvelope.tsx`) as inline SVG, `crispEdges`, at the same integer pixel size as his (2px at 32), overlapping his lower right. Outline `#000`, paper `#efe6d6`, seal `--wax`. No animation of its own.
+
 ---
 
 ## 5. Whimsy catalogue
@@ -178,6 +181,8 @@ Every item here is cheap: CSS, copy, or a few lines of state. They're numbered s
   - "…"
 - **After 12 clicks in one session:** he says "ok that's enough" and falls asleep (sleep eyes) for 60s. Clicking him while he's asleep does nothing. That's the joke.
 - **Late night** (local time 01:00–04:59): the first time the app loads in that window each session, the bubble says "it's late. one more chapter?" without being clicked.
+
+- **A letter is ready** (once per session): "a letter just unsealed!" for 5s, and while he holds the envelope a click opens the letters list (no hop, no poke line, even if he was asleep).
 
 ### 5.2 Theme toggle (required)
 Under the dude: a small ghost button with lucide `Sun`/`Moon` and the label **"Daylight" / "Lamplight"**. Cycles light → dark → system. "System" shows as "Follow the window" with a `Monitor` icon. When switching to dark, the dude blinks once, slowly (400ms).
@@ -235,6 +240,18 @@ A giant blue dude sits behind the Logs page and, since task 17, every search pag
 **Use your own photo:** drop a file named `backdrop-<page>.jpg`, `.png` or `.webp` (page = `books`, `music`, `anime`, `movies`, `tv`, `games`; Logs keeps `logs-backdrop.*`) into `client/src/assets/` and rebuild or restart the dev server. It replaces the dude on that page only, as a cover-fit, centred, 30% grayscale background at the same opacity. It is optional, resolved at build time (`import.meta.glob`), and not committed; don't add one to the repo.
 
 **Turn it off:** Settings → Preferences → "Page backdrops (the giant blue dude)" turns off Logs and all search pages. The choice is stored per device in `localStorage` (`logs.backdrop`, default on), not synced to the server.
+
+### 5.10 Letters to later (the wax seal)
+Whimsy at the edges: a small seal on a log, never a banner.
+
+| Token | Light | Dark | Use |
+|---|---|---|---|
+| `--wax` | `#a8391f` | `#d0603f` | the seal |
+| `--wax-dark` | `#6e2412` | `#8a3320` | the ring pressed into it |
+
+Contrast: `--wax` against `--card` is 6.1 (light) and 4.1 (dark), against `--tag` 5.1 and 3.4 (needs 3:1). Chip text is `--tag-foreground` on `--tag` (5.9 / 8.0); the "Letter ready" chip is `--primary` on `--card` (5.5 / 6.0). The mockup's dark wax `#b5462e` was lightened: 2.9:1 on the card.
+
+The seal is `components/letters/WaxSeal.tsx`. Rows: seal + "Letter sealed" / "2 letters sealed" beside the title; tiles: the seal alone with an accessible name. "Letter ready" is a button.
 
 ### 5.8 Things we will *not* do
 Confetti, sound, cursor trails, parallax, animated backgrounds, mascot walking around the screen, emoji, rainbow anything, achievement popups, dark-mode stars.

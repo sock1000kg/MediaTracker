@@ -127,6 +127,8 @@ export interface Log {
   tags?: TagItem[]
   collectionIds?: string[]
   childSummary?: ChildSummary
+  /** Letters to later on this log that haven't been opened. */
+  letters?: { sealed: number; ready: number }
 }
 
 export interface CollectionSummary {

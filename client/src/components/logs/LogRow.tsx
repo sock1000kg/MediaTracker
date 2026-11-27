@@ -9,6 +9,7 @@ import { ClampText } from "@/components/media-view/ClampText"
 import { Button } from "@/components/ui/button"
 import { useExpandedChildren } from "@/hooks/useExpandedChildren"
 import { LogActions } from "./LogActions"
+import { LetterChip } from "@/components/letters/LetterChip"
 
 interface LogRowProps {
   log: Log
@@ -101,6 +102,7 @@ export function LogRow({ log, onEdit, onDelete, onTagClick, leading, extraAction
           {log.entryCount > 1 && <span className="ml-1 text-sm font-normal text-muted-foreground">({log.entryCount})</span>}
         </h3>
         {byline && <span className="text-sm text-muted-foreground">{byline}</span>}
+        <LetterChip log={log} />
       </div>
       {fromSubtitle && <p className="text-xs text-muted-foreground">{fromSubtitle}</p>}
       {originalTitle && <p className="text-xs text-muted-foreground">{originalTitle}</p>}

@@ -159,6 +159,14 @@ export class UserService {
                         edition: parseEdition(entry.edition),
                     })),
                     tags: tagNames,
+                    // Only opened letters carry their text: an export must not unseal anything
+                    letters: l.letters.map((letter) => ({
+                        created_at: letter.created_at,
+                        opensAt: letter.opensAt,
+                        opensOnRelog: letter.opensOnRelog,
+                        openedAt: letter.openedAt,
+                        ...(letter.openedAt ? { body: letter.body } : {}),
+                    })),
                     media: mediaJson(l.media),
                 }
             }),

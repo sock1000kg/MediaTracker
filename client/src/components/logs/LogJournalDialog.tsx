@@ -1,4 +1,5 @@
 import { Fragment, useCallback, useState, useSyncExternalStore } from "react"
+import { useQueryClient } from "@tanstack/react-query"
 import { X } from "lucide-react"
 import type { EntriesChange, EntryInput, Log, LogStatus } from "@/types/mainTypes"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
@@ -12,6 +13,10 @@ import { TagInput } from "@/components/tags/TagInput"
 import { Cover } from "@/components/media-view/Cover"
 import { AddToCollectionDialog } from "@/components/collections/AddToCollectionDialog"
 import { EntryCard, type EntryMediaInfo } from "@/components/logs/EntryCard"
+import { WriteLetterDialog } from "@/components/letters/WriteLetterDialog"
+import { RelogPrompt } from "@/components/letters/RelogPrompt"
+import { lettersQueryOptions } from "@/queryOptions/letterQueryOptions"
+import type { Letter } from "@/types/letters"
 import { aspectForMedia } from "@/lib/mediaView"
 import { cleanEntry, hasEntryContent } from "@/lib/logStatus"
 import { formatLogDate } from "@/lib/logView"
@@ -91,6 +96,7 @@ export function LogJournalDialog(props: LogJournalDialogProps) {
 
 function JournalBook({ open, onOpenChange, media, log, initialEntry, onSave }: LogJournalDialogProps) {
   const limits = useLimits()
+  const queryClient = useQueryClient()
   const isPhone = useIsPhone()
   const isEdit = Boolean(log)
   const today = getTodayString()
@@ -106,6 +112,8 @@ function JournalBook({ open, onOpenChange, media, log, initialEntry, onSave }: L
   const [saveError, setSaveError] = useState<string | null>(null)
   const [confirmDiscard, setConfirmDiscard] = useState(false)
   const [collectionsOpen, setCollectionsOpen] = useState(false)
+  const [writingLetter, setWritingLetter] = useState(false)
+  const [relogLetter, setRelogLetter] = useState<Letter | null>(null)
 
   const snapshot = useCallback(
     () => JSON.stringify({
@@ -147,6 +155,20 @@ function JournalBook({ open, onOpenChange, media, log, initialEntry, onSave }: L
     setTab("entries")
   }
 
+  /** After a save that added an entry: was a letter waiting for exactly that? */
+  const lookForRelogLetter = async (logId: string) => {
+    try {
+      await queryClient.invalidateQueries({ queryKey: ["letters"] })
+      const letters = await queryClient.fetchQuery({ ...lettersQueryOptions(), staleTime: 0 })
+      const waiting = Array.isArray(letters)
+        ? letters.find((l) => l.logId === logId && l.opensOnRelog && l.state === "ready")
+        : undefined
+      if (waiting) setRelogLetter(waiting)
+    } catch {
+      // The save went through; the letter stays ready and the chip will say so
+    }
+  }
+
   const save = async () => {
     if (blocker || saving) return
     setSaving(true)
@@ -163,6 +185,9 @@ function JournalBook({ open, onOpenChange, media, log, initialEntry, onSave }: L
         const entries = entriesChange(cards)
         if (Object.keys(changed).length > 0 || entries) {
           await onSave({ log: changed, ...(entries ? { entries } : {}) })
+          // The page that saved refetches the logs; the letters are refreshed here
+          if (entries?.create?.length) void lookForRelogLetter(log.id)
+          else void queryClient.invalidateQueries({ queryKey: ["letters"] })
         }
       } else {
         const first = cards[0]?.draft
@@ -292,13 +317,20 @@ function JournalBook({ open, onOpenChange, media, log, initialEntry, onSave }: L
 
       {/* Collections (B5): link-style text button in text-primary */}
       {log && (
-        <div>
+        <div className="flex flex-col items-start gap-2">
           <button
             type="button"
             onClick={() => setCollectionsOpen(true)}
             className="text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xs"
           >
             Collections ({log.collectionIds?.length ?? 0}) · Add to collection…
+          </button>
+          <button
+            type="button"
+            onClick={() => setWritingLetter(true)}
+            className="text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xs"
+          >
+            Seal a letter…
           </button>
         </div>
       )}
@@ -484,6 +516,8 @@ function JournalBook({ open, onOpenChange, media, log, initialEntry, onSave }: L
       </AlertDialog>
 
       {log && <AddToCollectionDialog log={log} open={collectionsOpen} onOpenChange={setCollectionsOpen} />}
+      {log && writingLetter && <WriteLetterDialog log={{ id: log.id, media }} onClose={() => setWritingLetter(false)} />}
+      {relogLetter && <RelogPrompt letter={relogLetter} onClose={() => setRelogLetter(null)} />}
     </>
   )
 }

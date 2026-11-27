@@ -69,6 +69,7 @@ model User {
   apiKeys         UserAPIKey[]  @relation("APIToUser")
   tags            Tag[]         @relation("TagsToUser")
   collections     Collection[]  @relation("CollectionsToUser")
+  letters         SealedLetter[]
 }
 
 model Media {
@@ -194,6 +195,7 @@ model UserLogs {
   tags            LogTag[]  @relation("LogTagsToLog")
   collectionItems CollectionItem[] @relation("CollectionItemsToLog")
   entries         LogEntry[]
+  letters         SealedLetter[]
 
   @@unique([userId, mediaId]) //avoid duplicate logs of the same media for the same user
 }
@@ -214,6 +216,24 @@ model LogEntry {
   created_at        DateTime  @default(now())
 
   @@index([logId, finishedAt])
+}
+
+// A private note to your future self about one log. Exactly one of opensAt / opensOnRelog is set
+// (also a check constraint in the migration). Whether it is ready is computed, never stored.
+model SealedLetter {
+  id            String    @id @default(uuid(7)) @db.Uuid
+  userId        String    @db.Uuid
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logId         String    @db.Uuid
+  log           UserLogs  @relation(fields: [logId], references: [id], onDelete: Cascade)
+  body          String
+  opensAt       DateTime?
+  opensOnRelog  Boolean   @default(false)
+  openedAt      DateTime? // first time the user opened it
+  created_at    DateTime  @default(now())
+
+  @@index([userId, openedAt])
+  @@index([logId])
 }
 
 model Tag {

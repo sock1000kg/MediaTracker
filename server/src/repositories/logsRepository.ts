@@ -2,6 +2,7 @@ import prisma from "@/prismaClient.js"
 import { DbClient, LogStatus, toLogStatus, fromLogStatus } from "@/db.js"
 import { MEDIA_INCLUDE, formatMedia } from "./mediaFormat.js"
 import { sortEntriesNewestFirst, EntryLike } from "@/services/logEntries.js"
+import { attachLetterCounts } from "./letterRepository.js"
 
 type EntryRow = EntryLike & {
     logId: string
@@ -173,7 +174,7 @@ export async function getAllLogs(userId: string, client: DbClient = prisma) {
         include: LOG_INCLUDE,
     })
     const mapped = logs.map(mapLogWithTags)
-    return attachChildSummaries(mapped, userId, client)
+    return attachLetterCounts(await attachChildSummaries(mapped, userId, client), userId, client)
 }
 
 export async function findLogOfUserByMediaId(userId: string, mediaId: string, client: DbClient) {
@@ -189,7 +190,8 @@ export async function findLogOfUserByMediaId(userId: string, mediaId: string, cl
     if (!log) return null
     const mapped = mapLogWithTags(log)
     const [withSummary] = await attachChildSummaries([mapped], userId, client)
-    return withSummary
+    const [withLetters] = await attachLetterCounts([withSummary], userId, client)
+    return withLetters
 }
 
 export async function findLogById(logId: string, client: DbClient = prisma) {
@@ -200,7 +202,8 @@ export async function findLogById(logId: string, client: DbClient = prisma) {
     if (!log) return null
     const mapped = mapLogWithTags(log)
     const [withSummary] = await attachChildSummaries([mapped], log.userId, client)
-    return withSummary
+    const [withLetters] = await attachLetterCounts([withSummary], log.userId, client)
+    return withLetters
 }
 
 export async function updateLog(

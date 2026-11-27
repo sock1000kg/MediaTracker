@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { providerLinks } from "@/lib/providerLinks"
 import { AddToCollectionDialog } from "@/components/collections/AddToCollectionDialog"
+import { WriteLetterDialog } from "@/components/letters/WriteLetterDialog"
 import { refreshMedia } from "@/api/media"
 import { fetchLogsQueryOptions } from "@/queryOptions/fetchLogsQueryOptions"
 import { fetchMediasQueryOptions } from "@/queryOptions/fetchMediasQueryOptions"
@@ -19,6 +20,7 @@ interface LogActionsProps {
 
 export function LogActions({ log, onEdit, onDelete, extraMenuItems }: LogActionsProps) {
   const [collectionDialogOpen, setCollectionDialogOpen] = useState(false)
+  const [writingLetter, setWritingLetter] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [errorToast, setErrorToast] = useState<string | null>(null)
   const queryClient = useQueryClient()
@@ -62,6 +64,7 @@ export function LogActions({ log, onEdit, onDelete, extraMenuItems }: LogActions
           ))}
           {links.length > 0 && <DropdownMenuSeparator />}
           <DropdownMenuItem onSelect={() => setCollectionDialogOpen(true)}>Add to collection…</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setWritingLetter(true)}>Write a letter to later…</DropdownMenuItem>
           {extraMenuItems}
           {!isCustom && (
             <DropdownMenuItem
@@ -102,6 +105,8 @@ export function LogActions({ log, onEdit, onDelete, extraMenuItems }: LogActions
           </button>
         </div>
       )}
+
+      {writingLetter && <WriteLetterDialog log={log} onClose={() => setWritingLetter(false)} />}
 
       <AddToCollectionDialog
         log={log}

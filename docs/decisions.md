@@ -192,3 +192,16 @@ This document records deliberate design decisions, constraints, and provider qui
   - **Entries are named, logs are not:** the "name" the user wanted belongs to each read, watch or play, not to the log. `LogEntry.name` replaces `edition.title` and `UserLogs.title` (and the server `displayTitle`). Logs always show the item's title. The migration moves edition titles to the entry name and a log's old title to its newest unnamed entry (dropped when the log has no entries).
   - **One Save for everything:** the old dialog saved the log with its Save and each entry with its own button, so a filled-in entry was dropped silently. The journal dialog stages the log fields and every entry change (add, edit, delete) and commits them with one `PUT /logs/:id` carrying an `entries` object, applied in a single transaction. When `entries` is present the server runs no automatic status entries, because the dialog has already applied those rules visibly.
   - **Dialog layout follows mockup D:** no header band; the rating is the number; tags under status; entries separated by `· · ·`.
+
+---
+
+## 23. Sealed Letters ("Letters to Later")
+
+- **Code:** `server/src/services/letterState.ts`, `server/src/services/letterService.ts`, `server/src/repositories/letterRepository.ts`, `server/src/schemas/letterSchemas.ts`, `client/src/components/letters/`.
+- **Context & Why:**
+  - **The server withholds the text:** a seal the client enforces is only a hidden element; the words would sit in the network tab and the query cache. `body` leaves the server only through `POST /letters/:id/open` on a ready letter, and afterwards. The export follows the same rule, so it can't be used to unseal. This is not encryption: whoever runs the database can read it.
+  - **No editing:** a letter you can rewrite isn't from the past. You can only tear it up.
+  - **Ready is computed, never stored:** `letterState` is the one rule. No job has to flip a flag, and a date letter is ready the moment its date passes (`opensAt` is stored at noon UTC of the chosen day, like other calendar dates).
+  - **"When I log this again":** an entry counts only if it was *created* after the letter, whatever dates it carries. Entries that already existed never open it. Adding an entry any way (journal, status change, import) counts.
+  - **No notifications:** the app only says so when you're in it: the chip on the log, the badge on "Letters", the dude holding an envelope, and a prompt right after you log the item again.
+

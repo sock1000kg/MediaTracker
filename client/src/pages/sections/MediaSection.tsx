@@ -189,6 +189,8 @@ export default function MediasSection() {
     onSuccess: () => {
       queryClient.refetchQueries({queryKey: fetchMediasQueryOptions().queryKey})
       queryClient.refetchQueries({queryKey: fetchLogsQueryOptions().queryKey})
+      // A deleted item takes its log, and the log its letters
+      queryClient.invalidateQueries({queryKey: ["letters"]})
     }
   })
   

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { useExpandedChildren } from "@/hooks/useExpandedChildren"
 import { newestEntry, entryDate } from "@/lib/logEntries"
 import { LogActions } from "./LogActions"
+import { LetterChip } from "@/components/letters/LetterChip"
 
 interface LogTileProps {
   log: Log
@@ -148,6 +149,7 @@ export function LogTile({ log, onEdit, onDelete, onTagClick, badge, extraActions
       <div className="flex items-center justify-between mt-auto pt-1">
         <p className="text-xs text-muted-foreground">{formatLogDate(shownDate)}</p>
         <div className="flex items-center gap-1">
+          <LetterChip log={log} compact />
           {extraActions}
           <LogActions log={log} onEdit={onEdit} onDelete={onDelete} extraMenuItems={extraMenuItems} />
         </div>

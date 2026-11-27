@@ -9,6 +9,11 @@ export const publicConfigLimitsSchema = z.object({
         entryNoteMaxLength: z.number().int().positive(),
         entryNameMaxLength: z.number().int().positive(),
     }),
+    letters: z.object({
+        bodyMaxLength: z.number().int().positive(),
+        maxSealedPerLog: z.number().int().positive(),
+        maxPerUser: z.number().int().positive(),
+    }),
     tags: z.object({
         maxLength: z.number().int().positive(),
         maxPerLog: z.number().int().positive(),
