@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { ChevronDown, ChevronUp } from "lucide-react"
+import { useId, useState } from "react"
+import { ChevronRight } from "lucide-react"
 import type { Log } from "@/types/mainTypes"
 import { formatLogDetails } from "@/lib/logDetails"
 import { displayRating, coverAspect, logDateLine } from "@/lib/logView"
@@ -24,6 +24,7 @@ interface LogRowProps {
 
 export function LogRow({ log, onEdit, onDelete, onTagClick, leading, extraActions, extraMenuItems, childrenLogs }: LogRowProps) {
   const [expanded, setExpanded] = useState(false)
+  const childrenId = useId()
   const { media } = log
   const userTags = log.tags ?? []
   const categories = media.genres ?? (Array.isArray(media.details?.categories) ? (media.details.categories as string[]) : [])
@@ -43,6 +44,7 @@ export function LogRow({ log, onEdit, onDelete, onTagClick, leading, extraAction
   const summaryLine = childSummary != null && childSummary.rated > 0
     ? `${childSummary.rated} ${unit} rated · avg ${avgStr}`
     : null
+  const shortSummary = childSummary != null && childSummary.rated > 0 ? `${childSummary.rated} rated, avg ${avgStr}` : null
   const isChild = Boolean(media.parentId || media.subtype === "track" || media.subtype === "season")
   const parentTitle = (typeof media.parent?.title === "string" && media.parent.title.trim())
     || (typeof media.details?.album === "string" && (media.details.album as string).trim())
@@ -83,23 +85,13 @@ export function LogRow({ log, onEdit, onDelete, onTagClick, leading, extraAction
             {rating.text}
             {rating.text !== "–" && <span className="text-xs text-muted-foreground">/100</span>}
           </p>
-          {canExpand && (
-            <Button
-              size="sm"
-              variant="outline"
-              aria-expanded={expanded}
-              onClick={() => setExpanded(!expanded)}
-              className="h-6 px-2 text-xs gap-1"
-            >
-              {expanded ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
-              {expanded ? "Hide" : "Expand"}
-            </Button>
-          )}
           {status && <p className="text-xs text-muted-foreground">{status}</p>}
-          <div className="flex items-center justify-end gap-1 max-sm:ml-auto">
-            {extraActions}
-            <LogActions log={log} onEdit={onEdit} onDelete={onDelete} extraMenuItems={extraMenuItems} />
-          </div>
+        </>
+      }
+      actions={
+        <>
+          {extraActions}
+          <LogActions log={log} onEdit={onEdit} onDelete={onDelete} extraMenuItems={extraMenuItems} />
         </>
       }
     >
@@ -118,10 +110,24 @@ export function LogRow({ log, onEdit, onDelete, onTagClick, leading, extraAction
         {metaParts.length > 0 && <> · {metaParts.join(" · ")}</>}
       </p>
 
-      {summaryLine && <p className="mt-1 text-xs text-muted-foreground">{summaryLine}</p>}
+      {canExpand ? (
+        <button
+          type="button"
+          aria-expanded={expanded}
+          aria-controls={childrenId}
+          onClick={() => setExpanded(!expanded)}
+          className="mt-1 -ml-1 inline-flex items-center gap-1 rounded px-1 py-0.5 text-xs font-medium text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <ChevronRight className={`size-3.5 shrink-0 motion-safe:transition-transform ${expanded ? "rotate-90" : ""}`} aria-hidden="true" />
+          {expanded ? "Hide" : "Show"} {isTvShow ? "seasons" : "tracks"}
+          {shortSummary && <span className="font-normal text-muted-foreground">· {shortSummary}</span>}
+        </button>
+      ) : (
+        summaryLine && <p className="mt-1 text-xs text-muted-foreground">{summaryLine}</p>
+      )}
 
       {expanded && canExpand && (
-        <div className="mt-2 border-t border-border pt-2 flex flex-col gap-1">
+        <div id={childrenId} className="mt-2 border-t border-border pt-2 flex flex-col gap-1">
           {childrenLoading && <p className="text-xs text-muted-foreground animate-pulse">Loading...</p>}
           {errorNote && <p className="text-xs text-muted-foreground">{errorNote}</p>}
           {!childrenLoading && emptyMessage && (

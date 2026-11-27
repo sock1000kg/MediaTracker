@@ -123,9 +123,7 @@ describe("LogRow component with children logs", () => {
     )
 
     expect(screen.getByText("Loveless")).toBeInTheDocument()
-    expect(screen.getByText("2 tracks rated · avg 96")).toBeInTheDocument()
-
-    const expandBtn = screen.getByRole("button", { name: /expand/i })
+    const expandBtn = screen.getByRole("button", { name: /show tracks\s*· 2 rated, avg 96/i })
     expect(expandBtn).toHaveAttribute("aria-expanded", "false")
 
     // Children not visible initially
@@ -170,12 +168,12 @@ describe("LogRow component with children logs", () => {
     expect(screen.getByText("from Loveless")).toBeInTheDocument()
   })
 
-  it("an album with no rated tracks can still be expanded; a book has no Expand", async () => {
+  it("an album with no rated tracks can still be expanded; a book has no 'Show tracks'", async () => {
     const user = userEvent.setup()
     const unratedAlbum: Log = { ...parentAlbumLog, media: { ...parentAlbumLog.media, childSummary: undefined } }
     renderWithProviders(<LogRow log={unratedAlbum} onEdit={onEdit} onDelete={onDelete} childrenLogs={[]} />)
     expect(screen.queryByText(/tracks rated/)).toBeNull()
-    await user.click(screen.getByRole("button", { name: /expand/i }))
+    await user.click(screen.getByRole("button", { name: /^show tracks$/i }))
     expect(screen.getByText("No tracks logged yet.")).toBeTruthy()
 
     const book: Log = {
@@ -184,7 +182,7 @@ describe("LogRow component with children logs", () => {
       media: { ...parentAlbumLog.media, id: "018f0000-0000-7000-8000-000000000999", details: {}, subtype: null, childSummary: undefined, mediaType: { ...dummyMediaType, name: "book" } },
     }
     renderWithProviders(<LogRow log={book} onEdit={onEdit} onDelete={onDelete} />)
-    expect(screen.getAllByRole("button", { name: /expand|hide/i })).toHaveLength(1)
+    expect(screen.getAllByRole("button", { name: /^(show|hide) (tracks|seasons)/i })).toHaveLength(1)
   })
 
   it("T2: renders categories from media.genres for a synced Goodreads book", () => {
@@ -312,7 +310,7 @@ describe("LogRow component with children logs", () => {
         />
       )
 
-      const expandBtn = screen.getByRole("button", { name: /expand/i })
+      const expandBtn = screen.getByRole("button", { name: /^(show|hide) (tracks|seasons)/i })
       await user.click(expandBtn)
 
       // 5 track titles
@@ -380,7 +378,7 @@ describe("LogRow component with children logs", () => {
         />
       )
 
-      await user.click(screen.getByRole("button", { name: /expand/i }))
+      await user.click(screen.getByRole("button", { name: /^(show|hide) (tracks|seasons)/i }))
 
       // 5 tracklist tracks
       expect(await screen.findByText(/1\. Only Shallow/)).toBeInTheDocument()
@@ -408,7 +406,7 @@ describe("LogRow component with children logs", () => {
         />
       )
 
-      await user.click(screen.getByRole("button", { name: /expand/i }))
+      await user.click(screen.getByRole("button", { name: /^(show|hide) (tracks|seasons)/i }))
 
       expect(await screen.findByText(/Couldn't load the full tracklist/i)).toBeInTheDocument()
       expect(screen.getByText(/1\. Only Shallow/)).toBeInTheDocument()
@@ -487,7 +485,7 @@ describe("LogRow component with children logs", () => {
         />
       )
 
-      const expandBtn = screen.getByRole("button", { name: /expand/i })
+      const expandBtn = screen.getByRole("button", { name: /^(show|hide) (tracks|seasons)/i })
       await user.click(expandBtn)
 
       // Shows 3 rows: Season 1, Season 2, Season 3
@@ -548,7 +546,7 @@ describe("LogRow component with children logs", () => {
         />
       )
 
-      const expandBtn = screen.getByRole("button", { name: /expand/i })
+      const expandBtn = screen.getByRole("button", { name: /^(show|hide) (tracks|seasons)/i })
       await user.click(expandBtn)
 
       expect(await screen.findByText("No seasons")).toBeInTheDocument()

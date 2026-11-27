@@ -40,11 +40,9 @@ export function MediaRow({ media, log, onEdit, onDelete, onLog }: MediaRowProps)
           ) : (
               <Button size="sm" variant="amber" className="sm:mt-1" onClick={() => onLog(media)}>+ Log</Button>
           )}
-          <div className="max-sm:ml-auto">
-            <MediaActions media={media} logged={!!log} onEdit={onEdit} onDelete={onDelete} onLog={onLog} />
-          </div>
         </>
       }
+      actions={<MediaActions media={media} logged={!!log} onEdit={onEdit} onDelete={onDelete} onLog={onLog} />}
     >
       <div className="flex flex-wrap items-baseline gap-x-2">
         <h3 className="font-display text-lg font-semibold break-words">{media.title}</h3>
