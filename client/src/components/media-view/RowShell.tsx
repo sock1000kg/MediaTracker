@@ -18,7 +18,7 @@ export function RowShell({ cover, children, aside, actions }: RowShellProps) {
       {cover}
       <div className="min-w-0 flex-1">{children}</div>
       {(aside || actions) && (
-        <div className={`flex basis-full flex-wrap items-center gap-x-3 gap-y-1 border-t border-border/60 pt-2 sm:block sm:basis-auto sm:flex-none sm:min-w-28 sm:border-0 sm:pt-0 sm:text-right${actions ? " sm:pb-9" : ""}`}>
+        <div className={`flex basis-full flex-wrap items-center gap-x-3 gap-y-1 border-t border-border/60 pt-2 sm:block sm:basis-auto sm:flex-none sm:min-w-28 sm:border-0 sm:pt-0 sm:text-right ${actions ? "sm:pb-9" : ""}`}>
           {aside}
           {actions && (
             <div className="flex items-center justify-end gap-1 max-sm:ml-auto sm:absolute sm:bottom-2 sm:right-2">
