@@ -13,6 +13,7 @@ import { PageBackdrop } from "@/components/media-view/PageBackdrop"
 import { GroupHeading } from "@/components/media-view/GroupHeading"
 import { ViewControls } from "@/components/media-view/ViewControls"
 import { LogRow } from "@/components/logs/LogRow"
+import { MiniPile } from "@/components/logs/MiniPile"
 import { LogTile } from "@/components/logs/LogTile"
 import { groupLogs, type GroupMode } from "@/lib/logView"
 import { GroupFooter } from "@/components/media-view/GroupFooter"
@@ -284,6 +285,9 @@ export default function LogsSection() {
                </button>
              </div>
           </div>
+
+          {/* This month, whatever the search, filters and sort say */}
+          {logs.length > 0 && <MiniPile logs={logs} />}
 
           {/* Controls Area */}
           <div className="flex flex-col items-start gap-3">

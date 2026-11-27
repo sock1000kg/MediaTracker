@@ -489,3 +489,8 @@ All six search pages are thin: state + a `fetchPage` + their own controls. Every
 ## 18. Board games (task 40)
 
 - Games search includes a Board games mode powered by BoardGameGeek with square covers, player counts, playtime, and BGG ratings.
+
+## 19. This month's mini pile (task 57)
+
+A card above the Logs controls (`components/logs/MiniPile.tsx`), shown once the user has any log. It counts the logs whose date (`logDateOf`) falls in the current local calendar month, ignoring search, filters and sort; the title reads "{Month}'s pile · {count}", or "{Month}'s pile is empty so far" over a bare ground. One decorative object per log (newest 40, newest on top), by media type: book (and custom types) a slab, wider with more pages; manga a thin slab; movie/TV a case with a dotted left edge; anime a grey disc edge-on; music a record; game a cartridge; board game a box. Colours come from `--cover-1`…`--cover-6`; the ground is `--ground` (light `#e4dacb`, dark `#2a241f`). The layout (`lib/miniPile.ts`) is deterministic: position, size and tilt are seeded from the log id and objects stack on a height map. The SVG is `aria-hidden`, with no animation, hover or click; the list below is the real UI.
+
