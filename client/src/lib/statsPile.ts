@@ -114,7 +114,7 @@ export function pileBodies(logs: readonly Log[]): PileBody[] {
   if (ordered.length === 0) return []
 
   const n = ordered.length
-  const s = Math.max(0.4, Math.min(1, Math.sqrt(30 / n)))
+  const s = Math.max(0.6, Math.min(1.35, Math.sqrt(55 / n)))
 
   return ordered.map((log) => {
     const random = seeded(hash(log.id))
