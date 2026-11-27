@@ -59,6 +59,8 @@ describe("Stats pile", () => {
 
   afterEach(() => {
     vi.useRealTimers()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
   })
 
   it("on the Stats page: shows the selected period and count for only that period's logs, and switching type tab updates count and appends the type", async () => {
@@ -123,12 +125,153 @@ describe("Stats pile", () => {
     expect(screen.getByText(`${month} · 1`)).toBeInTheDocument()
   })
 
-  it("draws anime discs with a dark bottom edge strip", () => {
+  it("draws anime discs with a dark bottom edge strip", async () => {
     const logs = [makeLog("1", "Akira", "anime", new Date(2026, 10, 5, 12))]
     const { container } = renderWithProviders(<StatsPile logs={logs} range={{ mode: "all" }} />)
+    await waitFor(() => {
+      expect(container.querySelector("[data-pile-body]")).toBeInTheDocument()
+    })
     // Slabs and discs have the 28% black edge rect
     const edgeRect = container.querySelector('rect[fill="rgb(0 0 0 / 0.28)"]')
     expect(edgeRect).toBeInTheDocument()
+  })
+
+  it("with reduced motion, shows one positioned object per drawn log once matter-js loads", async () => {
+    vi.spyOn(window, "matchMedia").mockImplementation((query: string) => ({
+      matches: query.includes("prefers-reduced-motion"),
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(() => false),
+    }) as unknown as MediaQueryList)
+
+    const logs = [
+      makeLog("1", "Dune", "book", new Date(2026, 10, 5, 12)),
+      makeLog("2", "Akira", "anime", new Date(2026, 10, 6, 12)),
+    ]
+    const { container } = renderWithProviders(<StatsPile logs={logs} range={{ mode: "all" }} />)
+
+    await waitFor(() => {
+      const groups = container.querySelectorAll("[data-pile-body]")
+      expect(groups).toHaveLength(2)
+      for (const group of groups) {
+        expect(group.getAttribute("transform")).toMatch(/^translate\(/)
+        expect(group.getAttribute("visibility")).toBe("visible")
+      }
+    })
+  })
+
+  it("with motion allowed, runs frames until the pile is done and then stops", async () => {
+    vi.spyOn(window, "matchMedia").mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(() => false),
+    }) as unknown as MediaQueryList)
+
+    let nextId = 1
+    const pending = new Map<number, FrameRequestCallback>()
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+      const id = nextId
+      nextId += 1
+      pending.set(id, cb)
+      return id
+    })
+    vi.stubGlobal("cancelAnimationFrame", (id: number) => { pending.delete(id) })
+
+    const logs = [
+      makeLog("1", "Dune", "book", new Date(2026, 10, 5, 12)),
+      makeLog("2", "Akira", "anime", new Date(2026, 10, 6, 12)),
+    ]
+    const { container } = renderWithProviders(<StatsPile logs={logs} range={{ mode: "all" }} />)
+
+    await waitFor(() => expect(pending.size).toBeGreaterThan(0))
+
+    let frames = 0
+    while (pending.size > 0 && frames < 2000) {
+      const [id, cb] = pending.entries().next().value as [number, FrameRequestCallback]
+      pending.delete(id)
+      cb(0)
+      frames += 1
+    }
+
+    // The loop stopped on its own, well before the step cap
+    expect(frames).toBeGreaterThan(0)
+    expect(frames).toBeLessThan(1500)
+    expect(pending.size).toBe(0)
+    for (const group of container.querySelectorAll("[data-pile-body]")) {
+      expect(group.getAttribute("transform")).toMatch(/^translate\(/)
+      expect(group.getAttribute("visibility")).toBe("visible")
+    }
+  })
+
+  it("hides the whole old pile when the selection changes, then shows each object as it enters", async () => {
+    vi.spyOn(window, "matchMedia").mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(() => false),
+    }) as unknown as MediaQueryList)
+
+    let nextId = 1
+    const pending = new Map<number, FrameRequestCallback>()
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+      const id = nextId
+      nextId += 1
+      pending.set(id, cb)
+      return id
+    })
+    vi.stubGlobal("cancelAnimationFrame", (id: number) => { pending.delete(id) })
+
+    const runFrames = () => {
+      let frames = 0
+      while (pending.size > 0 && frames < 2000) {
+        const [id, cb] = pending.entries().next().value as [number, FrameRequestCallback]
+        pending.delete(id)
+        cb(0)
+        frames += 1
+      }
+      return frames
+    }
+
+    const shared = makeLog("1", "Dune", "book", new Date(2026, 10, 5, 12))
+    const dropped = makeLog("2", "Akira", "anime", new Date(2026, 10, 6, 12))
+    const { container, rerender } = renderWithProviders(
+      <StatsPile logs={[shared, dropped]} range={{ mode: "all" }} />,
+    )
+
+    await waitFor(() => expect(pending.size).toBeGreaterThan(0))
+    runFrames()
+    expect(pending.size).toBe(0)
+    for (const group of container.querySelectorAll("[data-pile-body]")) {
+      expect(group.getAttribute("visibility")).toBe("visible")
+    }
+
+    // The new selection shares log 1 and adds log 3, so the shared node survives.
+    const added = makeLog("3", "Neuromancer", "book", new Date(2026, 10, 7, 12))
+    rerender(<StatsPile logs={[shared, added]} range={{ mode: "all" }} />)
+
+    // Before running any new frame, nothing from the old pile may still show.
+    expect(pending.size).toBeGreaterThan(0)
+    for (const group of container.querySelectorAll("[data-pile-body]")) {
+      expect(group.getAttribute("visibility")).not.toBe("visible")
+    }
+
+    runFrames()
+    for (const group of container.querySelectorAll("[data-pile-body]")) {
+      expect(group.getAttribute("visibility")).toBe("visible")
+    }
   })
 })
 

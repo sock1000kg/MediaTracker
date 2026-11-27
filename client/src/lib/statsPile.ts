@@ -1,4 +1,5 @@
-// The pile on the Stats page: layout of objects in a 600x160 area. Pure and deterministic.
+// The pile on the Stats page: bodies that fall into place in a 600x160 area. Pure and deterministic.
+import type * as MatterModule from "matter-js"
 import { logDateOf } from "@/lib/logEntries"
 import { coverToken } from "@/lib/mediaView"
 import type { StatsRange } from "@/lib/stats"
@@ -8,6 +9,15 @@ export const PILE_WIDTH = 600
 export const PILE_HEIGHT = 160
 export const PILE_GROUND = 10
 export const PILE_MAX = 150
+
+const GROUND_TOP = PILE_HEIGHT - PILE_GROUND
+const STEP_MS = 1000 / 60
+const MAX_STEPS = 1500
+const SPAWN_Y = -20
+const SPREAD_SD = 110
+const MAX_SPAWN_ANGLE = 0.5
+
+type Matter = typeof MatterModule
 
 export function pilePeriodLabel(range: StatsRange): string {
   switch (range.mode) {
@@ -24,23 +34,33 @@ export function pilePeriodLabel(range: StatsRange): string {
   }
 }
 
-const COLUMN = 2
-const SPREAD_SD = 110
-const MAX_TILT = 6
-
 export type PileShape = "book" | "manga" | "case" | "disc" | "record" | "cartridge" | "box"
 
-export interface PileObject {
+export interface PileBody {
   id: string
   shape: PileShape
-  /** Top-left corner and size in SVG units, before rotation (about the centre). */
-  x: number
-  y: number
+  /** Already scaled by `s`, in SVG units. */
   width: number
   height: number
-  rotate: number
+  /** Where the body enters, centred on the body. */
+  spawnX: number
+  /** Radians, -0.5..0.5. */
+  spawnAngle: number
   /** 1..6, the `--cover-N` token. */
   cover: number
+}
+
+export interface PilePosition {
+  id: string
+  x: number
+  y: number
+  angle: number
+}
+
+export interface PileWorld {
+  engine: MatterModule.Engine
+  step(): void
+  readonly done: boolean
 }
 
 const SHAPES: Record<string, PileShape> = {
@@ -99,10 +119,10 @@ function sizeOf(shape: PileShape, log: Log, random: () => number): { width: numb
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v))
 
 /**
- * The newest 150 logs, stacked oldest first on a height map.
- * Same input, same layout.
+ * The newest 150 logs as physics bodies, oldest first.
+ * Position and tilt are seeded from the log id, so the same logs always spawn the same way.
  */
-export function layoutPile(logs: readonly Log[], width = PILE_WIDTH, height = PILE_HEIGHT): PileObject[] {
+export function pileBodies(logs: readonly Log[]): PileBody[] {
   const ordered = [...logs]
     .sort((a, b) => logTime(a) - logTime(b) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
     .slice(-PILE_MAX)
@@ -112,52 +132,89 @@ export function layoutPile(logs: readonly Log[], width = PILE_WIDTH, height = PI
   const n = ordered.length
   const s = Math.max(0.4, Math.min(1, Math.sqrt(30 / n)))
 
-  // Height of the pile above the bottom of the drawing, per column
-  const heights = new Array<number>(Math.ceil(width / COLUMN)).fill(PILE_GROUND)
-  const result: PileObject[] = []
-
-  for (const log of ordered) {
+  return ordered.map((log) => {
     const random = seeded(hash(log.id))
     const shape = SHAPES[(log.media.mediaType?.name ?? "").toLowerCase()] ?? "book"
     const baseSize = sizeOf(shape, log, random)
-    const size = { width: baseSize.width * s, height: baseSize.height * s }
-    const rotate = (random() * 2 - 1) * MAX_TILT
+    const width = baseSize.width * s
+    const height = baseSize.height * s
+    const spawnAngle = (random() * 2 - 1) * MAX_SPAWN_ANGLE
 
-    // Half extents of the rotated object, so a tilted corner stays inside the drawing too
-    const rad = shape === "record" ? 0 : (Math.abs(rotate) * Math.PI) / 180
-    const halfW = (size.width * Math.cos(rad) + size.height * Math.sin(rad)) / 2
-    const halfH = (size.width * Math.sin(rad) + size.height * Math.cos(rad)) / 2
+    // Half extents of the rotated body, so a tilted corner stays inside the drawing too
+    const rad = shape === "record" ? 0 : Math.abs(spawnAngle)
+    const halfW = (width * Math.cos(rad) + height * Math.sin(rad)) / 2
 
     // Box-Muller: a roughly normal spread around the middle (300)
     const normal = Math.sqrt(-2 * Math.log(1 - random())) * Math.cos(2 * Math.PI * random())
-    const centreX = clamp(width / 2 + normal * SPREAD_SD, halfW, width - halfW)
-    const x = centreX - size.width / 2
+    const spawnX = clamp(PILE_WIDTH / 2 + normal * SPREAD_SD, halfW, PILE_WIDTH - halfW)
 
-    const from = clamp(Math.floor(x / COLUMN), 0, heights.length - 1)
-    const to = clamp(Math.ceil((x + size.width) / COLUMN), from + 1, heights.length)
-    const resting = Math.max(...heights.slice(from, to))
-
-    // centreY above the bottom
-    const centreY = resting + size.height / 2
-    // Objects whose top would go above the drawing's top are skipped (no clamp at top)
-    if (centreY + halfH > height) {
-      continue
-    }
-
-    const bottom = resting
-    heights.fill(bottom + size.height, from, to)
-
-    result.push({
+    return {
       id: log.id,
       shape,
-      x,
-      y: height - bottom - size.height,
-      width: size.width,
-      height: size.height,
-      rotate,
+      width,
+      height,
+      spawnX,
+      spawnAngle,
       cover: coverToken(log.id),
-    })
-  }
+    }
+  })
+}
 
-  return result
+/**
+ * Build a matter-js world for the given bodies. Static ground and side walls are added up
+ * front; log bodies enter one every two steps, oldest first, then settle.
+ */
+export function createPileWorld(Matter: Matter, bodies: readonly PileBody[]): PileWorld {
+  const engine = Matter.Engine.create({ enableSleeping: true })
+  engine.gravity.y = 1
+
+  const ground = Matter.Bodies.rectangle(PILE_WIDTH / 2, GROUND_TOP + 500, 800, 1000, { isStatic: true })
+  const leftWall = Matter.Bodies.rectangle(-50, GROUND_TOP - 500, 100, 1000, { isStatic: true })
+  const rightWall = Matter.Bodies.rectangle(PILE_WIDTH + 50, GROUND_TOP - 500, 100, 1000, { isStatic: true })
+  Matter.Composite.add(engine.world, [ground, leftWall, rightWall])
+
+  const options = { friction: 0.8, frictionStatic: 1, restitution: 0.05, density: 0.002 }
+  const bodyOptions = { ...options, chamfer: { radius: 1 } }
+
+  const logBodies = bodies.map((body) => {
+    const created = body.shape === "record"
+      ? Matter.Bodies.circle(body.spawnX, SPAWN_Y, body.width / 2, options)
+      : Matter.Bodies.rectangle(body.spawnX, SPAWN_Y, body.width, body.height, bodyOptions)
+    created.label = body.id
+    Matter.Body.setAngle(created, body.spawnAngle)
+    return created
+  })
+
+  let steps = 0
+  let added = 0
+  const allAsleep = () => added === logBodies.length && logBodies.every((body) => body.isSleeping)
+
+  return {
+    engine,
+    step() {
+      if (added < logBodies.length && steps % 2 === 0) {
+        Matter.Composite.add(engine.world, logBodies[added])
+        added += 1
+      }
+      Matter.Engine.update(engine, STEP_MS)
+      steps += 1
+    },
+    get done() {
+      return steps >= MAX_STEPS || allAsleep()
+    },
+  }
+}
+
+/** Run the world to rest and return each body's final position (reduced motion and tests). */
+export function settlePile(Matter: Matter, bodies: readonly PileBody[]): PilePosition[] {
+  const world = createPileWorld(Matter, bodies)
+  while (!world.done) world.step()
+
+  const positions = world.engine.world.bodies
+    .filter((body) => !body.isStatic)
+    .map((body) => ({ id: body.label, x: body.position.x, y: body.position.y, angle: body.angle }))
+
+  Matter.Engine.clear(world.engine)
+  Matter.World.clear(world.engine.world, false)
+  return positions
 }
