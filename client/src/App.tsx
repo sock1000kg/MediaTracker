@@ -3,7 +3,7 @@ import { Routes, Route, useNavigate, Navigate } from "react-router-dom"
 import { setNavigate, setOnLogout } from "@/api/clientWrapper"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
-import { fetchConfig } from "@/api/config"
+import { fetchConfigQueryOptions } from "@/queryOptions/fetchConfigQueryOptions"
 
 
 import Login from "@/pages/auth/Login"
@@ -40,12 +40,7 @@ export default function App() {
 
   // Prefetch server limits once at app start
   useEffect(() => {
-    queryClient.prefetchQuery({
-      queryKey: ["config"],
-      queryFn: fetchConfig,
-      staleTime: Infinity,
-      gcTime: Infinity,
-    })
+    queryClient.prefetchQuery(fetchConfigQueryOptions())
   }, [queryClient])
 
   // Never show the previous user's cached data after a logout

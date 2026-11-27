@@ -6,19 +6,14 @@ import { Label } from "@/components/ui/label"
 import { useRef, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { fetchConfig } from "@/api/config"
+import { fetchConfigQueryOptions } from "@/queryOptions/fetchConfigQueryOptions"
 
 export default function Login() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const passwordRef = useRef<HTMLInputElement>(null)
 
-  const { data: config } = useQuery({
-    queryKey: ["config"],
-    queryFn: fetchConfig,
-    staleTime: Infinity,
-    gcTime: Infinity,
-  })
+  const { data: config } = useQuery(fetchConfigQueryOptions())
   const demo = config?.demo
 
   const [username, setUsername] = useState("")

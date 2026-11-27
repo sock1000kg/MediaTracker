@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
-import { fetchConfig, type PublicLimits } from "@/api/config"
+import type { PublicLimits } from "@/api/config"
+import { fetchConfigQueryOptions } from "@/queryOptions/fetchConfigQueryOptions"
 
 // The server stays the enforcer. DEFAULT_LIMITS is only a fallback for the moment before the fetch finishes, or if it fails.
 export const DEFAULT_LIMITS: PublicLimits = {
@@ -36,12 +37,7 @@ export const DEFAULT_LIMITS: PublicLimits = {
 }
 
 export function useLimits(): PublicLimits {
-  const { data } = useQuery({
-    queryKey: ["config"],
-    queryFn: fetchConfig,
-    staleTime: Infinity,
-    gcTime: Infinity,
-  })
+  const { data } = useQuery(fetchConfigQueryOptions())
 
   const serverLimits = data?.limits
 
