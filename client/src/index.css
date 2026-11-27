@@ -91,6 +91,10 @@ html {
   --cover-6: #8b8f7a;
   --cover-ink: #1d1916;
   --ground: #e4dacb;
+  --pile-low: #b0432a;
+  --pile-mid: #cf8a2e;
+  --pile-high: #e2bb3c;
+  --pile-unrated: #b3aa9d;
   --dude: #29c7df;
   --dude-shade: #327d8d;
   --wax: #a8391f;
@@ -154,6 +158,10 @@ html {
   --cover-6: #53574a;
   --cover-ink: #f5ece0;
   --ground: #2a241f;
+  --pile-low: #c0563a;
+  --pile-mid: #c98a35;
+  --pile-high: #e2c25a;
+  --pile-unrated: #5d574f;
   --dude: #29c7df;
   --dude-shade: #327d8d;
   --wax: #d0603f;

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import Matter from "matter-js"
 import {
-  PILE_GROUND, PILE_HEIGHT, PILE_MAX, PILE_WIDTH, createPileWorld, pileBodies, settlePile, type PileBody,
+  PILE_GROUND, PILE_HEIGHT, PILE_MAX, PILE_WIDTH, createPileWorld, pileBodies, pileTone, settlePile, type PileBody,
 } from "./statsPile"
 import type { Log } from "@/types/mainTypes"
 
@@ -22,6 +22,13 @@ function halfWidth(b: PileBody) {
   const a = b.shape === "record" ? 0 : Math.abs(b.spawnAngle)
   return (Math.abs(b.width * Math.cos(a)) + Math.abs(b.height * Math.sin(a))) / 2
 }
+
+describe("pileTone", () => {
+  it("bands ratings at 50 and 80, with no rating as neutral", () => {
+    expect([0, 49, 50, 79, 80, 100].map(pileTone)).toEqual(["low", "low", "mid", "mid", "high", "high"])
+    expect(pileTone(null)).toBe("unrated")
+  })
+})
 
 describe("pileBodies", () => {
   it("gives the same bodies for the same logs, whatever order they arrive in", () => {

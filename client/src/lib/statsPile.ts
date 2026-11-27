@@ -1,7 +1,6 @@
 // The pile on the Stats page: bodies that fall into place in a 480x200 area. Pure and deterministic.
 import type * as MatterModule from "matter-js"
 import { logDateOf } from "@/lib/logEntries"
-import { coverToken } from "@/lib/mediaView"
 import type { Log } from "@/types/mainTypes"
 
 export const PILE_WIDTH = 480
@@ -30,8 +29,8 @@ export interface PileBody {
   spawnX: number
   /** Radians, -0.5..0.5. */
   spawnAngle: number
-  /** 1..6, the `--cover-N` token. */
-  cover: number
+  /** The rating band, drawn with the `--pile-<tone>` colour. */
+  tone: PileTone
 }
 
 export interface PilePosition {
@@ -56,6 +55,16 @@ const SHAPES: Record<string, PileShape> = {
   music: "record",
   game: "cartridge",
   boardgame: "box",
+}
+
+export type PileTone = "low" | "mid" | "high" | "unrated"
+
+/** Rating (0–100) to colour band: red under 50, amber 50–79, yellow 80 and up, neutral when unrated. */
+export function pileTone(rating: number | null | undefined): PileTone {
+  if (typeof rating !== "number" || !Number.isFinite(rating)) return "unrated"
+  if (rating >= 80) return "high"
+  if (rating >= 50) return "mid"
+  return "low"
 }
 
 const logTime = (log: Log) => new Date(logDateOf(log)).getTime()
@@ -141,7 +150,7 @@ export function pileBodies(logs: readonly Log[], limit = PILE_MAX): PileBody[] {
       height,
       spawnX,
       spawnAngle,
-      cover: coverToken(log.id),
+      tone: pileTone(log.rating),
     }
   })
 }

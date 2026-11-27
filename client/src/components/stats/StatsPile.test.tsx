@@ -130,15 +130,30 @@ describe("Stats pile", () => {
     expect(screen.queryByRole("region", { name: "This month's pile" })).not.toBeInTheDocument()
   })
 
-  it("draws anime discs with a dark bottom edge strip", async () => {
-    const logs = [makeLog("1", "Akira", "anime", new Date(2026, 10, 5, 12))]
+  it("colours each object by its rating: red low, amber mid, yellow high, neutral unrated", async () => {
+    const day = new Date(2026, 10, 5, 12)
+    const logs = [
+      makeLog("1", "Low", "book", day, { rating: 30 }),
+      makeLog("2", "Mid", "book", day, { rating: 65 }),
+      makeLog("3", "High", "book", day, { rating: 90 }),
+      makeLog("4", "None", "book", day),
+    ]
     const { container } = renderWithProviders(<StatsPile logs={logs} />)
-    await waitFor(() => {
-      expect(container.querySelector("[data-pile-body]")).toBeInTheDocument()
-    })
-    // Slabs and discs have the 28% black edge rect
-    const edgeRect = container.querySelector('rect[fill="rgb(0 0 0 / 0.28)"]')
-    expect(edgeRect).toBeInTheDocument()
+    await waitFor(() => expect(container.querySelectorAll("[data-pile-body]")).toHaveLength(4))
+    const fillOf = (id: string) =>
+      container.querySelector(`[data-pile-body="${id}"] rect`)?.getAttribute("fill")
+    expect(fillOf("1")).toBe("var(--pile-low)")
+    expect(fillOf("2")).toBe("var(--pile-mid)")
+    expect(fillOf("3")).toBe("var(--pile-high)")
+    expect(fillOf("4")).toBe("var(--pile-unrated)")
+  })
+
+  it("keeps anime discs grey with the rating colour on their edge strip", async () => {
+    const logs = [makeLog("1", "Akira", "anime", new Date(2026, 10, 5, 12), { rating: 90 })]
+    const { container } = renderWithProviders(<StatsPile logs={logs} />)
+    await waitFor(() => expect(container.querySelector("[data-pile-body]")).toBeInTheDocument())
+    const fills = [...container.querySelectorAll("[data-pile-body] rect")].map((r) => r.getAttribute("fill"))
+    expect(fills).toEqual(["#c9c6c0", "var(--pile-high)"])
   })
 
   it("with reduced motion, shows one positioned object per drawn log once matter-js loads", async () => {

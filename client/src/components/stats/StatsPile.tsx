@@ -2,24 +2,24 @@ import { useEffect, useId, useMemo, useRef, useState } from "react"
 import type * as MatterModule from "matter-js"
 import {
   PILE_GROUND, PILE_HEIGHT, PILE_MAX, PILE_WIDTH, createPileWorld, pileBodies, settlePile,
-  type PileBody,
+  type PileBody, type PileTone,
 } from "@/lib/statsPile"
 import type { Log } from "@/types/mainTypes"
 
 type Matter = typeof MatterModule
 
 const EDGE = "rgb(0 0 0 / 0.28)"
-const COVERS = [1, 2, 3, 4, 5, 6]
+const TONES: PileTone[] = ["low", "mid", "high", "unrated"]
 const REDUCED_MOTION = "(prefers-reduced-motion: reduce)"
 
 function PileShapeSvg({ body, labelId }: { body: PileBody; labelId: string }) {
-  const { shape, width, height, cover } = body
-  const fill = `var(--cover-${cover})`
+  const { shape, width, height, tone } = body
+  const fill = `var(--pile-${tone})`
   const halfW = width / 2
   const halfH = height / 2
 
   if (shape === "record") {
-    return <circle cx={0} cy={0} r={halfW} fill={`url(#${labelId}-${cover})`} />
+    return <circle cx={0} cy={0} r={halfW} fill={`url(#${labelId}-${tone})`} />
   }
   if (shape === "cartridge") {
     const band = Math.min(11, height * (11 / 26))
@@ -38,9 +38,11 @@ function PileShapeSvg({ body, labelId }: { body: PileBody; labelId: string }) {
   return (
     <g>
       <rect x={-halfW} y={-halfH} width={width} height={height} rx={2} fill={shape === "disc" ? "#c9c6c0" : fill} />
-      {(shape === "book" || shape === "manga" || shape === "box" || shape === "disc") && (
+      {(shape === "book" || shape === "manga" || shape === "box") && (
         <rect x={-halfW} y={halfH - edgeH} width={width} height={edgeH} fill={EDGE} />
       )}
+      {/* Discs stay grey; their edge strip carries the rating colour */}
+      {shape === "disc" && <rect x={-halfW} y={halfH - edgeH} width={width} height={edgeH} fill={fill} />}
       {shape === "case" && (
         <line x1={-halfW + 2} y1={-halfH + 1} x2={-halfW + 2} y2={halfH - 1} stroke="rgb(0 0 0 / 0.4)" strokeWidth={4} strokeDasharray="2 2" />
       )}
@@ -136,9 +138,9 @@ export function StatsPile({ logs, dropKey = "", drawAll = false }: {
     <section aria-label="Your pile" className="relative h-full rounded-xl bg-card p-3 shadow-paper">
       <svg viewBox={`0 0 ${PILE_WIDTH} ${PILE_HEIGHT}`} aria-hidden="true" className="block w-full lg:absolute lg:top-3 lg:left-3 lg:h-[calc(100%-1.5rem)] lg:w-[calc(100%-1.5rem)]" preserveAspectRatio="xMidYMax meet">
         <defs>
-          {COVERS.map((n) => (
-            <radialGradient key={n} id={`${labelId}-${n}`}>
-              <stop offset="38%" style={{ stopColor: `var(--cover-${n})` }} />
+          {TONES.map((tone) => (
+            <radialGradient key={tone} id={`${labelId}-${tone}`}>
+              <stop offset="38%" style={{ stopColor: `var(--pile-${tone})` }} />
               <stop offset="41%" stopColor="#0e0d0c" />
             </radialGradient>
           ))}
