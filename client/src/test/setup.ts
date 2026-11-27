@@ -33,3 +33,10 @@ if (typeof window !== "undefined") {
   window.HTMLElement.prototype.releasePointerCapture = () => {}
   window.HTMLElement.prototype.scrollIntoView = () => {}
 }
+
+// Unit tests never reach a real server: an unmocked request (e.g. GET /config from useLimits)
+// used to hit the dev backend and use up its rate limit. Tests that need fetch stub it themselves.
+globalThis.fetch = ((input: RequestInfo | URL) => {
+  const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url
+  return Promise.reject(new Error(`Unmocked fetch in a unit test: ${url}`))
+}) as typeof fetch
