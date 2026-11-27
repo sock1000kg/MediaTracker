@@ -1,7 +1,8 @@
 import { useId } from "react"
 import {
-  MINI_PILE_GROUND, MINI_PILE_HEIGHT, MINI_PILE_WIDTH, layoutMiniPile, logsOfMonth, type PileObject,
-} from "@/lib/miniPile"
+  PILE_GROUND, PILE_HEIGHT, PILE_WIDTH, layoutPile, pilePeriodLabel, type PileObject,
+} from "@/lib/statsPile"
+import type { StatsRange } from "@/lib/stats"
 import type { Log } from "@/types/mainTypes"
 
 const EDGE = "rgb(0 0 0 / 0.28)"
@@ -16,7 +17,7 @@ function PileShapeSvg({ object, labelId }: { object: PileObject; labelId: string
     return <circle cx={x + width / 2} cy={y + height / 2} r={width / 2} fill={`url(#${labelId}-${cover})`} />
   }
   if (shape === "cartridge") {
-    const band = 11
+    const band = Math.min(11, height * (11 / 26))
     return (
       <g transform={transform}>
         {/* Rounder at the top than at the bottom */}
@@ -28,11 +29,12 @@ function PileShapeSvg({ object, labelId }: { object: PileObject; labelId: string
       </g>
     )
   }
+  const edgeH = Math.min(3, height)
   return (
     <g transform={transform}>
       <rect x={x} y={y} width={width} height={height} rx={2} fill={shape === "disc" ? "#c9c6c0" : fill} />
-      {(shape === "book" || shape === "manga" || shape === "box") && (
-        <rect x={x} y={y + height - 3} width={width} height={3} fill={EDGE} />
+      {(shape === "book" || shape === "manga" || shape === "box" || shape === "disc") && (
+        <rect x={x} y={y + height - edgeH} width={width} height={edgeH} fill={EDGE} />
       )}
       {shape === "case" && (
         <line x1={x + 2} y1={y + 1} x2={x + 2} y2={y + height - 1} stroke="rgb(0 0 0 / 0.4)" strokeWidth={4} strokeDasharray="2 2" />
@@ -41,19 +43,29 @@ function PileShapeSvg({ object, labelId }: { object: PileObject; labelId: string
   )
 }
 
-/** This calendar month's logs as a little heap, one object per log. Decorative: the list below is the real UI. */
-export function MiniPile({ logs }: { logs: readonly Log[] }) {
+/**
+ * Filtered logs as a pile on the Stats page, one object per log (at most 150 drawn).
+ * Decorative: the charts and tables below are the real UI.
+ */
+export function StatsPile({
+  logs,
+  range,
+  sectionSuffix = "",
+}: {
+  logs: readonly Log[]
+  range: StatsRange
+  sectionSuffix?: string
+}) {
   const labelId = `pile-record-${useId().replace(/[^a-zA-Z0-9]/g, "")}`
-  const now = new Date()
-  const monthLogs = logsOfMonth(logs, now)
-  const objects = layoutMiniPile(monthLogs)
-  const month = new Intl.DateTimeFormat(undefined, { month: "long" }).format(now)
+  const objects = layoutPile(logs)
+  const title = logs.length === 0
+    ? "Nothing logged in this period"
+    : `${pilePeriodLabel(range)} · ${logs.length}${sectionSuffix}`
 
   return (
-    <section aria-label="This month's pile" className="flex flex-wrap items-end gap-5 rounded-xl bg-card px-5 pt-4 shadow-paper">
-      <svg viewBox={`0 0 ${MINI_PILE_WIDTH} ${MINI_PILE_HEIGHT}`} aria-hidden="true" className="block w-full max-w-[300px]">
+    <section aria-label="Your pile" className="flex flex-wrap items-end gap-5 rounded-xl bg-card px-5 pt-4 shadow-paper">
+      <svg viewBox={`0 0 ${PILE_WIDTH} ${PILE_HEIGHT}`} aria-hidden="true" className="block w-full max-w-[600px]">
         <defs>
-          {/* A record: coloured label in the middle of dark vinyl */}
           {COVERS.map((n) => (
             <radialGradient key={n} id={`${labelId}-${n}`}>
               <stop offset="38%" style={{ stopColor: `var(--cover-${n})` }} />
@@ -61,16 +73,14 @@ export function MiniPile({ logs }: { logs: readonly Log[] }) {
             </radialGradient>
           ))}
         </defs>
-        <rect x={0} y={MINI_PILE_HEIGHT - MINI_PILE_GROUND} width={MINI_PILE_WIDTH} height={MINI_PILE_GROUND} fill="var(--ground)" />
+        <rect x={0} y={PILE_HEIGHT - PILE_GROUND} width={PILE_WIDTH} height={PILE_GROUND} fill="var(--ground)" />
         {objects.map((object) => (
           <PileShapeSvg key={object.id} object={object} labelId={labelId} />
         ))}
       </svg>
       <div className="flex flex-col gap-1 pb-[18px]">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">This month</p>
-        <p className="font-display text-[22px]">
-          {monthLogs.length > 0 ? `${month}'s pile · ${monthLogs.length}` : `${month}'s pile is empty so far`}
-        </p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Your pile</p>
+        <p className="font-display text-[22px]">{title}</p>
       </div>
     </section>
   )

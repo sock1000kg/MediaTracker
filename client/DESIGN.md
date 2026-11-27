@@ -248,6 +248,15 @@ Whimsy at the edges: a small seal on a log, never a banner.
 |---|---|---|---|
 | `--wax` | `#a8391f` | `#d0603f` | the seal |
 | `--wax-dark` | `#6e2412` | `#8a3320` | the ring pressed into it |
+| `--gold` | `#a87a12` | `#e3b04b` | a letter that's ready to open |
+| `--gold-dark` | `#5e4208` | `#8a5f14` | the ring on the gold seal |
+
+`WaxSeal` has three tones:
+- **sealed:** `--wax` with a `--wax-dark` ring;
+- **ready:** `--gold` with a `--gold-dark` ring and a small white shine (the amber `--primary` was too close to the wax, `#a8481f` vs `#a8391f`);
+- **opened:** no fill, outline and ring in `--muted-foreground`, an empty broken seal that steps back so ready ones stand out.
+
+`--gold` against `--card` is 3.6 (light, `#fbf8f2`) and 8.0 (dark, `#26211d`), above 3:1.
 
 Contrast: `--wax` against `--card` is 6.1 (light) and 4.1 (dark), against `--tag` 5.1 and 3.4 (needs 3:1). Chip text is `--tag-foreground` on `--tag` (5.9 / 8.0); the "Letter ready" chip is `--primary` on `--card` (5.5 / 6.0). The mockup's dark wax `#b5462e` was lightened: 2.9:1 on the card.
 
@@ -490,7 +499,7 @@ All six search pages are thin: state + a `fetchPage` + their own controls. Every
 
 - Games search includes a Board games mode powered by BoardGameGeek with square covers, player counts, playtime, and BGG ratings.
 
-## 19. This month's mini pile (task 57)
+## 19. The pile on the Stats page (task 58)
 
-A card above the Logs controls (`components/logs/MiniPile.tsx`), shown once the user has any log. It counts the logs whose date (`logDateOf`) falls in the current local calendar month, ignoring search, filters and sort; the title reads "{Month}'s pile · {count}", or "{Month}'s pile is empty so far" over a bare ground. One decorative object per log (newest 40, newest on top), by media type: book (and custom types) a slab, wider with more pages; manga a thin slab; movie/TV a case with a dotted left edge; anime a grey disc edge-on; music a record; game a cartridge; board game a box. Colours come from `--cover-1`…`--cover-6`; the ground is `--ground` (light `#e4dacb`, dark `#2a241f`). The layout (`lib/miniPile.ts`) is deterministic: position, size and tilt are seeded from the log id and objects stack on a height map. The SVG is `aria-hidden`, with no animation, hover or click; the list below is the real UI.
+The first block of the Stats page body (`components/stats/StatsPile.tsx`), shown once the user has any log. It reflects the Stats controls (`filteredLogs` by period and type tab). The card text shows "Your pile" and "{period} · {count}{suffix}" (e.g. "November 2026 · 142", "2026 · 40 · Books", "All time · 326", "Last 12 months · 164"), or "Nothing logged in this period" when the selection is empty. One decorative object per log (at most the newest 150 drawn, oldest first on a height map), by media type: book (and custom types) a slab, wider with more pages; manga a thin slab; movie/TV a case with a dotted left edge; anime a grey disc edge-on with a dark bottom edge; music a record; game a cartridge; board game a box. Object dimensions scale by `s = max(0.4, min(1, sqrt(30 / n)))` where `n` is the number of objects drawn. Objects whose top would go above the 600×160 viewBox top are skipped (no clamping at the top). Colours come from `--cover-1`…`--cover-6`; the ground is `--ground`. The layout (`lib/statsPile.ts`) is deterministic: position, size and tilt are seeded from the log id. The SVG is `aria-hidden`, with no animation, hover or click; the charts and tables below are the real UI.
 

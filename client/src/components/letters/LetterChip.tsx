@@ -27,7 +27,7 @@ export function LetterChip({ log, compact = false }: { log: Log; compact?: boole
           aria-label={compact ? `${text}: ${log.media.title}` : undefined}
           className={`${shape} border border-primary bg-card font-semibold text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
         >
-          <WaxSeal />
+          <WaxSeal tone="ready" />
           {!compact && text}
         </button>
       ) : sealed > 0 ? (

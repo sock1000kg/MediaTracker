@@ -1,15 +1,31 @@
-// This month's mini pile (Logs page): which logs count and where each object sits. Pure and deterministic.
+// The pile on the Stats page: layout of objects in a 600x160 area. Pure and deterministic.
 import { logDateOf } from "@/lib/logEntries"
 import { coverToken } from "@/lib/mediaView"
+import type { StatsRange } from "@/lib/stats"
 import type { Log } from "@/types/mainTypes"
 
-export const MINI_PILE_WIDTH = 300
-export const MINI_PILE_HEIGHT = 130
-export const MINI_PILE_GROUND = 10
-export const MINI_PILE_MAX = 40
+export const PILE_WIDTH = 600
+export const PILE_HEIGHT = 160
+export const PILE_GROUND = 10
+export const PILE_MAX = 150
+
+export function pilePeriodLabel(range: StatsRange): string {
+  switch (range.mode) {
+    case "month": {
+      const d = new Date(range.year, range.month - 1, 1)
+      return new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" }).format(d)
+    }
+    case "year":
+      return String(range.year)
+    case "all":
+      return "All time"
+    case "last12":
+      return "Last 12 months"
+  }
+}
 
 const COLUMN = 2
-const SPREAD_SD = 55
+const SPREAD_SD = 110
 const MAX_TILT = 6
 
 export type PileShape = "book" | "manga" | "case" | "disc" | "record" | "cartridge" | "box"
@@ -17,7 +33,7 @@ export type PileShape = "book" | "manga" | "case" | "disc" | "record" | "cartrid
 export interface PileObject {
   id: string
   shape: PileShape
-  /** Top-left corner and size in SVG units, before the rotation (about the centre). */
+  /** Top-left corner and size in SVG units, before rotation (about the centre). */
   x: number
   y: number
   width: number
@@ -39,14 +55,6 @@ const SHAPES: Record<string, PileShape> = {
 }
 
 const logTime = (log: Log) => new Date(logDateOf(log)).getTime()
-
-/** The logs dated in `now`'s calendar month, in local time. */
-export function logsOfMonth(logs: readonly Log[], now: Date): Log[] {
-  return logs.filter((log) => {
-    const d = new Date(logDateOf(log))
-    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
-  })
-}
 
 /** FNV-1a. */
 function hash(text: string): number {
@@ -90,19 +98,29 @@ function sizeOf(shape: PileShape, log: Log, random: () => number): { width: numb
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v))
 
-/** The newest 40 logs, stacked oldest first on a height map. Same input, same layout. */
-export function layoutMiniPile(logs: readonly Log[], width = MINI_PILE_WIDTH): PileObject[] {
+/**
+ * The newest 150 logs, stacked oldest first on a height map.
+ * Same input, same layout.
+ */
+export function layoutPile(logs: readonly Log[], width = PILE_WIDTH, height = PILE_HEIGHT): PileObject[] {
   const ordered = [...logs]
     .sort((a, b) => logTime(a) - logTime(b) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
-    .slice(-MINI_PILE_MAX)
+    .slice(-PILE_MAX)
+
+  if (ordered.length === 0) return []
+
+  const n = ordered.length
+  const s = Math.max(0.4, Math.min(1, Math.sqrt(30 / n)))
 
   // Height of the pile above the bottom of the drawing, per column
-  const heights = new Array<number>(Math.ceil(width / COLUMN)).fill(MINI_PILE_GROUND)
+  const heights = new Array<number>(Math.ceil(width / COLUMN)).fill(PILE_GROUND)
+  const result: PileObject[] = []
 
-  return ordered.map((log) => {
+  for (const log of ordered) {
     const random = seeded(hash(log.id))
     const shape = SHAPES[(log.media.mediaType?.name ?? "").toLowerCase()] ?? "book"
-    const size = sizeOf(shape, log, random)
+    const baseSize = sizeOf(shape, log, random)
+    const size = { width: baseSize.width * s, height: baseSize.height * s }
     const rotate = (random() * 2 - 1) * MAX_TILT
 
     // Half extents of the rotated object, so a tilted corner stays inside the drawing too
@@ -110,7 +128,7 @@ export function layoutMiniPile(logs: readonly Log[], width = MINI_PILE_WIDTH): P
     const halfW = (size.width * Math.cos(rad) + size.height * Math.sin(rad)) / 2
     const halfH = (size.width * Math.sin(rad) + size.height * Math.cos(rad)) / 2
 
-    // Box-Muller: a roughly normal spread around the middle
+    // Box-Muller: a roughly normal spread around the middle (300)
     const normal = Math.sqrt(-2 * Math.log(1 - random())) * Math.cos(2 * Math.PI * random())
     const centreX = clamp(width / 2 + normal * SPREAD_SD, halfW, width - halfW)
     const x = centreX - size.width / 2
@@ -118,20 +136,28 @@ export function layoutMiniPile(logs: readonly Log[], width = MINI_PILE_WIDTH): P
     const from = clamp(Math.floor(x / COLUMN), 0, heights.length - 1)
     const to = clamp(Math.ceil((x + size.width) / COLUMN), from + 1, heights.length)
     const resting = Math.max(...heights.slice(from, to))
-    // A full stack is clamped at the top
-    const centreY = Math.min(resting + size.height / 2, MINI_PILE_HEIGHT - halfH)
-    const bottom = centreY - size.height / 2
+
+    // centreY above the bottom
+    const centreY = resting + size.height / 2
+    // Objects whose top would go above the drawing's top are skipped (no clamp at top)
+    if (centreY + halfH > height) {
+      continue
+    }
+
+    const bottom = resting
     heights.fill(bottom + size.height, from, to)
 
-    return {
+    result.push({
       id: log.id,
       shape,
       x,
-      y: MINI_PILE_HEIGHT - bottom - size.height,
+      y: height - bottom - size.height,
       width: size.width,
       height: size.height,
       rotate,
       cover: coverToken(log.id),
-    }
-  })
+    })
+  }
+
+  return result
 }

@@ -71,7 +71,7 @@ NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules npx jest --runInBand
 - **Log journal dialog (create/edit a log and its entries, one Save):**
   - Dialog: `client/src/components/logs/LogJournalDialog.tsx` (entry cards: `EntryCard.tsx`; staged state and status rules: `client/src/lib/journalDraft.ts`). Used by the Logs page, collections, Media page, search results (`useSearchLogging.tsx`) and expanded album/season children (`useExpandedChildren.tsx`).
   - Atomic save: `PUT /logs/:id` with an `entries` object, `server/src/services/logService.ts`.
-- **This month's mini pile (Logs page):** `client/src/components/logs/MiniPile.tsx`, layout in `client/src/lib/miniPile.ts` (client-only; `client/DESIGN.md` §19).
+- **Stats pile (Stats page):** `client/src/components/stats/StatsPile.tsx`, layout in `client/src/lib/statsPile.ts` (client-only; `client/DESIGN.md` §19).
 - **Sealed letters:** server `services/letterState.ts` (the ready rule), `letterService.ts`, `/letters` routes; client `components/letters/` (docs: `docs/decisions.md` §23).
 - **Seed & Demo Fixture:**
   - Database seed logic: `server/src/tests/seed.ts`.

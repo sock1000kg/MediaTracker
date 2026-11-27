@@ -143,7 +143,7 @@ describe("the wax seal on a log", () => {
 
     await user.click(screen.getByRole("button", { name: "Letter ready" }))
 
-    const dialog = await screen.findByRole("dialog", { name: "Sealed letters" })
+    const dialog = await screen.findByRole("dialog", { name: "Letters" })
     expect(await within(dialog).findByRole("button", { name: "Open" })).toBeInTheDocument()
     expect(within(dialog).queryByText("Arrival")).not.toBeInTheDocument()
   })
@@ -227,6 +227,41 @@ describe("the letters list", () => {
     expect(summaryLine({ sealed: 0, ready: 0, nextOpensAt: null }, now)).toBe("0 sealed · 0 ready")
   })
 
+  it("groups letters into Ready to open, Opened, and Still sealed in that order, omitting empty groups", async () => {
+    const user = userEvent.setup()
+    server.letters = [
+      letter({ id: "l-ready", state: "ready", media: { id: "m1", title: "Dune", mediaType: "book" } }),
+      letter({ id: "l-opened", state: "opened", body: "secret opened text", openedAt: "2026-10-01T10:00:00.000Z", media: { id: "m2", title: "Neuromancer", mediaType: "book" } }),
+      letter({ id: "l-sealed", state: "sealed", opensAt: "2027-01-01T12:00:00.000Z", opensOnRelog: false, media: { id: "m3", title: "Snow Crash", mediaType: "book" } }),
+    ]
+    renderWithProviders(<LettersDialog onClose={vi.fn()} />)
+
+    expect(await screen.findByRole("heading", { name: "Letters" })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: "Ready to open" })).toBeInTheDocument()
+
+    const headings = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)
+    expect(headings).toEqual(["Ready to open", "Opened", "Still sealed"])
+
+    // The opened row offers "Read", and clicking it shows the text
+    const openedRow = screen.getByText("Neuromancer").closest("li")!
+    const readBtn = within(openedRow).getByRole("button", { name: "Read" })
+    expect(readBtn).toBeInTheDocument()
+    await user.click(readBtn)
+    expect(await screen.findByText("secret opened text")).toBeInTheDocument()
+  })
+
+  it("omits empty group headings", async () => {
+    server.letters = [
+      letter({ id: "l-sealed", state: "sealed", opensAt: null, opensOnRelog: true, media: { id: "m3", title: "Snow Crash", mediaType: "book" } }),
+    ]
+    renderWithProviders(<LettersDialog onClose={vi.fn()} />)
+
+    expect(await screen.findByRole("heading", { name: "Letters" })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: "Still sealed" })).toBeInTheDocument()
+    expect(screen.queryByText("Ready to open")).not.toBeInTheDocument()
+    expect(screen.queryByText("Opened")).not.toBeInTheDocument()
+  })
+
   it("shows when each opens, offers Open only when ready, and opening shows the text", async () => {
     const user = userEvent.setup()
     server.summary = { sealed: 2, ready: 1, nextOpensAt: null }
@@ -296,6 +331,6 @@ describe("the dude's envelope", () => {
     expect(await screen.findByText("a letter just unsealed!")).toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: "The blue guy is holding a letter. Open your letters" }))
 
-    expect(await screen.findByRole("dialog", { name: "Sealed letters" })).toBeInTheDocument()
+    expect(await screen.findByRole("dialog", { name: "Letters" })).toBeInTheDocument()
   })
 })

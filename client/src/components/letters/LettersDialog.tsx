@@ -26,15 +26,15 @@ function LogPicker({ onPick, onCancel }: { onPick: (log: Log) => void; onCancel:
   const [search, setSearch] = useState("")
   const found = filterLogsByQuery(logs, search)
   return (
-    <div className="space-y-2">
-      <div className="relative">
+    <div className="min-w-0 w-full space-y-2">
+      <div className="relative w-full">
         <Search className="pointer-events-none absolute top-2.5 left-3 size-4 text-muted-foreground" aria-hidden="true" />
-        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search logs by title or creator…" className="pl-9" aria-label="Search logs" />
+        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search logs by title or creator…" className="w-full pl-9" aria-label="Search logs" />
       </div>
-      <ul className="max-h-60 space-y-1 overflow-y-auto">
+      <ul className="w-full max-h-60 space-y-1 overflow-y-auto">
         {found.map((log) => (
-          <li key={log.id}>
-            <button type="button" onClick={() => onPick(log)} className="w-full rounded-md p-2 text-left hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <li key={log.id} className="min-w-0 w-full">
+            <button type="button" onClick={() => onPick(log)} className="w-full min-w-0 rounded-md p-2 text-left hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
               <span className="block truncate text-sm font-medium">{log.media.title}</span>
               {log.media.creator && <span className="block truncate text-xs text-muted-foreground">{log.media.creator}</span>}
             </button>
@@ -76,12 +76,37 @@ export function LettersDialog({ logId, onClose }: { logId?: string; onClose: () 
   const shown = (letters.data ?? []).filter((l) => !logId || l.logId === logId)
   const error = letters.error ?? open.error ?? tear.error
 
+  const readyLetters = shown
+    .filter((l) => l.state === "ready")
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+  const openedLetters = shown
+    .filter((l) => l.state === "opened")
+    .sort((a, b) => new Date(b.openedAt ?? 0).getTime() - new Date(a.openedAt ?? 0).getTime())
+
+  const sealedLetters = shown
+    .filter((l) => l.state === "sealed")
+    .sort((a, b) => {
+      if (a.opensAt && b.opensAt) {
+        return new Date(a.opensAt).getTime() - new Date(b.opensAt).getTime()
+      }
+      if (a.opensAt) return -1
+      if (b.opensAt) return 1
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    })
+
+  const groups = [
+    { key: "ready", title: "Ready to open", letters: readyLetters },
+    { key: "opened", title: "Opened", letters: openedLetters },
+    { key: "sealed", title: "Still sealed", letters: sealedLetters },
+  ].filter((g) => g.letters.length > 0)
+
   return (
     <>
       <Dialog open onOpenChange={(next) => { if (!next) onClose() }}>
-        <DialogContent className="max-h-[85dvh] content-start overflow-y-auto sm:max-w-md">
+        <DialogContent className="max-h-[85dvh] content-start overflow-y-auto overflow-x-hidden [&>*]:min-w-0 sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-display">Sealed letters</DialogTitle>
+            <DialogTitle className="font-display">Letters</DialogTitle>
             <DialogDescription>
               {logId ? "The letters in this log." : summary.data ? summaryLine(summary.data) : "Letters to yourself, for later."}
             </DialogDescription>
@@ -102,40 +127,47 @@ export function LettersDialog({ logId, onClose }: { logId?: string; onClose: () 
               ) : shown.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No letters yet.</p>
               ) : (
-                <ul className="divide-y divide-border">
-                  {shown.map((letter) => (
-                    <li key={letter.id} className="flex items-center gap-3 py-3">
-                      <WaxSeal size={26} />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold">{letter.media.title}</p>
-                        <p className={`text-xs ${letter.state === "ready" ? "text-primary" : "text-muted-foreground"}`}>{whenLine(letter)}</p>
-                        <p className="text-xs text-muted-foreground">Written {formatLogDate(letter.created_at)}</p>
-                      </div>
-                      {letter.state === "ready" && (
-                        <Button type="button" size="sm" variant="amber" className="rounded-full" disabled={open.isPending} onClick={() => open.mutate(letter.id)}>
-                          Open
-                        </Button>
-                      )}
-                      {letter.state === "opened" && (
-                        <Button type="button" size="sm" variant="outline" className="rounded-full" onClick={() => setReading(letter)}>
-                          Read
-                        </Button>
-                      )}
-                      <DropdownMenu modal={false}>
-                        <DropdownMenuTrigger asChild>
-                          <Button type="button" size="icon" variant="ghost" className="text-muted-foreground" aria-label={`Actions for the letter about ${letter.media.title}`}>
-                            <MoreHorizontal />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => setTearing(letter)}>
-                            Tear it up
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </li>
+                <div className="space-y-4">
+                  {groups.map((group) => (
+                    <div key={group.key} className="space-y-1">
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{group.title}</h3>
+                      <ul className="divide-y divide-border">
+                        {group.letters.map((letter) => (
+                          <li key={letter.id} className="flex items-center gap-3 py-3">
+                            <WaxSeal size={26} tone={letter.state} />
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-semibold">{letter.media.title}</p>
+                              <p className={`text-xs ${letter.state === "ready" ? "text-primary" : "text-muted-foreground"}`}>{whenLine(letter)}</p>
+                              <p className="text-xs text-muted-foreground">Written {formatLogDate(letter.created_at)}</p>
+                            </div>
+                            {letter.state === "ready" && (
+                              <Button type="button" size="sm" variant="amber" className="rounded-full" disabled={open.isPending} onClick={() => open.mutate(letter.id)}>
+                                Open
+                              </Button>
+                            )}
+                            {letter.state === "opened" && (
+                              <Button type="button" size="sm" variant="outline" className="rounded-full" onClick={() => setReading(letter)}>
+                                Read
+                              </Button>
+                            )}
+                            <DropdownMenu modal={false}>
+                              <DropdownMenuTrigger asChild>
+                                <Button type="button" size="icon" variant="ghost" className="text-muted-foreground" aria-label={`Actions for the letter about ${letter.media.title}`}>
+                                  <MoreHorizontal />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => setTearing(letter)}>
+                                  Tear it up
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   ))}
-                </ul>
+                </div>
               )}
             </>
           )}
