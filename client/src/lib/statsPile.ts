@@ -1,12 +1,11 @@
-// The pile on the Stats page: bodies that fall into place in a 600x160 area. Pure and deterministic.
+// The pile on the Stats page: bodies that fall into place in a 480x200 area. Pure and deterministic.
 import type * as MatterModule from "matter-js"
 import { logDateOf } from "@/lib/logEntries"
 import { coverToken } from "@/lib/mediaView"
-import type { StatsRange } from "@/lib/stats"
 import type { Log } from "@/types/mainTypes"
 
-export const PILE_WIDTH = 600
-export const PILE_HEIGHT = 160
+export const PILE_WIDTH = 480
+export const PILE_HEIGHT = 200
 export const PILE_GROUND = 10
 export const PILE_MAX = 150
 
@@ -14,25 +13,10 @@ const GROUND_TOP = PILE_HEIGHT - PILE_GROUND
 const STEP_MS = 1000 / 60
 const MAX_STEPS = 1500
 const SPAWN_Y = -20
-const SPREAD_SD = 110
+const SPREAD_SD = 80
 const MAX_SPAWN_ANGLE = 0.5
 
 type Matter = typeof MatterModule
-
-export function pilePeriodLabel(range: StatsRange): string {
-  switch (range.mode) {
-    case "month": {
-      const d = new Date(range.year, range.month - 1, 1)
-      return new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" }).format(d)
-    }
-    case "year":
-      return String(range.year)
-    case "all":
-      return "All time"
-    case "last12":
-      return "Last 12 months"
-  }
-}
 
 export type PileShape = "book" | "manga" | "case" | "disc" | "record" | "cartridge" | "box"
 
@@ -144,7 +128,7 @@ export function pileBodies(logs: readonly Log[]): PileBody[] {
     const rad = shape === "record" ? 0 : Math.abs(spawnAngle)
     const halfW = (width * Math.cos(rad) + height * Math.sin(rad)) / 2
 
-    // Box-Muller: a roughly normal spread around the middle (300)
+    // Box-Muller: a roughly normal spread around the middle
     const normal = Math.sqrt(-2 * Math.log(1 - random())) * Math.cos(2 * Math.PI * random())
     const spawnX = clamp(PILE_WIDTH / 2 + normal * SPREAD_SD, halfW, PILE_WIDTH - halfW)
 
@@ -168,7 +152,7 @@ export function createPileWorld(Matter: Matter, bodies: readonly PileBody[]): Pi
   const engine = Matter.Engine.create({ enableSleeping: true })
   engine.gravity.y = 1
 
-  const ground = Matter.Bodies.rectangle(PILE_WIDTH / 2, GROUND_TOP + 500, 800, 1000, { isStatic: true })
+  const ground = Matter.Bodies.rectangle(PILE_WIDTH / 2, GROUND_TOP + 500, PILE_WIDTH + 200, 1000, { isStatic: true })
   const leftWall = Matter.Bodies.rectangle(-50, GROUND_TOP - 500, 100, 1000, { isStatic: true })
   const rightWall = Matter.Bodies.rectangle(PILE_WIDTH + 50, GROUND_TOP - 500, 100, 1000, { isStatic: true })
   Matter.Composite.add(engine.world, [ground, leftWall, rightWall])

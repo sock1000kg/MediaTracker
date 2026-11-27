@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { screen, waitFor, within } from "@testing-library/react"
+import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { renderWithProviders } from "@/test/render"
 import StatsSection from "@/pages/sections/StatsSection"
@@ -63,7 +63,7 @@ describe("Stats pile", () => {
     vi.restoreAllMocks()
   })
 
-  it("on the Stats page: shows the selected period and count for only that period's logs, and switching type tab updates count and appends the type", async () => {
+  it("on the Stats page: six tiles in order, Logged counts the selection, and the pile has no text", async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     // Logs in two different months (October 2026 and November 2026) and 2025, different types
     const logs: Log[] = [
@@ -75,21 +75,44 @@ describe("Stats pile", () => {
     ]
     vi.mocked(logsApi.fetchLogs).mockResolvedValue(logs)
 
-    renderWithProviders(<StatsSection />)
+    const { container } = renderWithProviders(<StatsSection />)
 
     // By default for 2026 logs, initialRange picks year 2026 (excluding the 2025 log)
     const pile = await screen.findByRole("region", { name: "Your pile" })
-    expect(within(pile).getByText("2026 · 4")).toBeInTheDocument()
+    expect(pile.textContent?.trim()).toBe("")
 
-    // Switching type tab to "Book" updates count and appends type suffix (3 books in 2026, excluding 2025 book)
+    const tiles = container.querySelector("dl")!
+    const labels = Array.from(tiles.querySelectorAll("dt")).map((dt) => dt.textContent)
+    expect(labels).toEqual(["Logged", "Completed", "In progress", "Wishlist", "Average rating", "Completion rate"])
+    expect(screen.queryByText("Finished")).not.toBeInTheDocument()
+
+    const valueOf = (label: string) => {
+      const dt = Array.from(tiles.querySelectorAll("dt")).find((el) => el.textContent === label)
+      return dt?.parentElement?.querySelector("dd")?.textContent
+    }
+    expect(valueOf("Logged")).toBe("4")
+
+    // Switching type tab to "Book" narrows the selection to 3 logs (excluding the 2025 book)
     const bookTab = await screen.findByRole("tab", { name: "Book" })
     await user.click(bookTab)
 
-    expect(within(pile).getByText("2026 · 3 · Book")).toBeInTheDocument()
+    expect(valueOf("Logged")).toBe("3")
+  })
+
+  it("with an empty period shows only the nothing-logged message and no pile", async () => {
+    localStorage.setItem("stats.range", "last12")
+    vi.mocked(logsApi.fetchLogs).mockResolvedValue([makeLog("1", "Old Book", "book", new Date(2024, 5, 1, 12))])
+
+    renderWithProviders(<StatsSection />)
+
+    expect(await screen.findByText("Nothing logged in this range. Pick another one above.")).toBeInTheDocument()
+    expect(screen.queryByRole("region", { name: "Your pile" })).not.toBeInTheDocument()
+    expect(screen.queryByText("Logged")).not.toBeInTheDocument()
   })
 
   it("no pile section appears on the Logs page any more", async () => {
     const logs: Log[] = [makeLog("1", "Dune", "book", new Date(2026, 10, 5, 12))]
+    vi.mocked(logsApi.fetchLogs).mockResolvedValue(logs)
     apiFetch.mockImplementation(async (url: string) => {
       if (url === "/logs") return logs
       if (url === "/letters/summary") return { sealed: 0, ready: 0, nextOpensAt: null }
@@ -107,27 +130,9 @@ describe("Stats pile", () => {
     expect(screen.queryByRole("region", { name: "This month's pile" })).not.toBeInTheDocument()
   })
 
-  it("shows 'Nothing logged in this period' when there are no logs in the selection", () => {
-    renderWithProviders(<StatsPile logs={[]} range={{ mode: "year", year: 2026 }} />)
-    expect(screen.getByText("Nothing logged in this period")).toBeInTheDocument()
-  })
-
-  it("formats title for all time, last 12 months, and month ranges", () => {
-    const logs = [makeLog("1", "Dune", "book", new Date(2026, 10, 5, 12))]
-    const { rerender } = renderWithProviders(<StatsPile logs={logs} range={{ mode: "all" }} />)
-    expect(screen.getByText("All time · 1")).toBeInTheDocument()
-
-    rerender(<StatsPile logs={logs} range={{ mode: "last12" }} />)
-    expect(screen.getByText("Last 12 months · 1")).toBeInTheDocument()
-
-    const month = new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" }).format(new Date(2026, 10, 1))
-    rerender(<StatsPile logs={logs} range={{ mode: "month", year: 2026, month: 11 }} />)
-    expect(screen.getByText(`${month} · 1`)).toBeInTheDocument()
-  })
-
   it("draws anime discs with a dark bottom edge strip", async () => {
     const logs = [makeLog("1", "Akira", "anime", new Date(2026, 10, 5, 12))]
-    const { container } = renderWithProviders(<StatsPile logs={logs} range={{ mode: "all" }} />)
+    const { container } = renderWithProviders(<StatsPile logs={logs} />)
     await waitFor(() => {
       expect(container.querySelector("[data-pile-body]")).toBeInTheDocument()
     })
@@ -152,7 +157,7 @@ describe("Stats pile", () => {
       makeLog("1", "Dune", "book", new Date(2026, 10, 5, 12)),
       makeLog("2", "Akira", "anime", new Date(2026, 10, 6, 12)),
     ]
-    const { container } = renderWithProviders(<StatsPile logs={logs} range={{ mode: "all" }} />)
+    const { container } = renderWithProviders(<StatsPile logs={logs} />)
 
     await waitFor(() => {
       const groups = container.querySelectorAll("[data-pile-body]")
@@ -190,7 +195,7 @@ describe("Stats pile", () => {
       makeLog("1", "Dune", "book", new Date(2026, 10, 5, 12)),
       makeLog("2", "Akira", "anime", new Date(2026, 10, 6, 12)),
     ]
-    const { container } = renderWithProviders(<StatsPile logs={logs} range={{ mode: "all" }} />)
+    const { container } = renderWithProviders(<StatsPile logs={logs} />)
 
     await waitFor(() => expect(pending.size).toBeGreaterThan(0))
 
@@ -248,7 +253,7 @@ describe("Stats pile", () => {
     const shared = makeLog("1", "Dune", "book", new Date(2026, 10, 5, 12))
     const dropped = makeLog("2", "Akira", "anime", new Date(2026, 10, 6, 12))
     const { container, rerender } = renderWithProviders(
-      <StatsPile logs={[shared, dropped]} range={{ mode: "all" }} />,
+      <StatsPile logs={[shared, dropped]} />,
     )
 
     await waitFor(() => expect(pending.size).toBeGreaterThan(0))
@@ -260,7 +265,7 @@ describe("Stats pile", () => {
 
     // The new selection shares log 1 and adds log 3, so the shared node survives.
     const added = makeLog("3", "Neuromancer", "book", new Date(2026, 10, 7, 12))
-    rerender(<StatsPile logs={[shared, added]} range={{ mode: "all" }} />)
+    rerender(<StatsPile logs={[shared, added]} />)
 
     // Before running any new frame, nothing from the old pile may still show.
     expect(pending.size).toBeGreaterThan(0)

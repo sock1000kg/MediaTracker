@@ -96,14 +96,14 @@ describe("filterByRange / yearsPresent", () => {
 
 describe("summary", () => {
   test("no logs", () => {
-    expect(summary([])).toEqual({ total: 0, byStatus: { completed: 0, "in progress": 0, wishlist: 0, dropped: 0, none: 0 }, rated: 0, avgRating: null, completionRate: null })
+    expect(summary([])).toEqual({ logged: 0, byStatus: { completed: 0, "in progress": 0, wishlist: 0, dropped: 0, none: 0 }, rated: 0, avgRating: null, completionRate: null })
   })
   test("counts, avg rating and completion rate (wishlist excluded)", () => {
     const s = summary([
       log({ status: "completed", rating: 80 }), log({ status: "completed", rating: 100 }), log({ status: "dropped", rating: 20 }),
       log({ status: "wishlist" }), log({ status: "in progress" }), log({ status: null }), log({ status: "weird" }),
     ])
-    expect(s.total).toBe(7)
+    expect(s.logged).toBe(7)
     expect(s.byStatus).toEqual({ completed: 2, "in progress": 1, wishlist: 1, dropped: 1, none: 2 })
     expect(s.rated).toBe(3)
     expect(s.avgRating).toBeCloseTo(200 / 3)
@@ -267,9 +267,9 @@ describe("range persistence", () => {
 })
 
 describe("pickStatsLine", () => {
-  const base = { total: 10, completed: 5, avgRating: 50 }
+  const base = { logged: 10, completed: 5, avgRating: 50 }
   test("rules in order", () => {
-    expect(pickStatsLine({ ...base, total: 0 })).toBeNull()
+    expect(pickStatsLine({ ...base, logged: 0 })).toBeNull()
     expect(pickStatsLine({ ...base, completed: 50, avgRating: 90 })).toBe(STATS_LINES.finisher)
     expect(pickStatsLine({ ...base, avgRating: 80 })).toBe(STATS_LINES.generous)
     expect(pickStatsLine(base)).toBe(STATS_LINES.default)
@@ -373,8 +373,8 @@ describe("entries: activity counts entries, ratings count logs", () => {
     expect(buckets.find((b) => b.key === "2026-05")?.total).toBe(1)
     expect(buckets.reduce((n, b) => n + b.total, 0)).toBe(2)
 
-    const s = summary([l], { mode: "year", year: 2026 }, NOW)
-    expect(s.total).toBe(2) // finished entries
+    const s = summary([l])
+    expect(s.logged).toBe(1) // one log, however many times it was read
     expect(s.rated).toBe(1)
     expect(s.avgRating).toBe(80)
     const hist = ratingHistogram([l])
@@ -390,10 +390,10 @@ describe("entries: activity counts entries, ratings count logs", () => {
     expect(perDay([l], 2026, 3).reduce((n, b) => n + b.total, 0)).toBe(1)
   })
 
-  test("summary.total counts only finished entries inside the range", () => {
+  test("summary.logged is the number of logs passed in, whatever their entries", () => {
     const l: StatLog = { ...log({}), entries: [{ startedAt: "2026-03-01T00:00:00Z", finishedAt: "2026-03-02T00:00:00Z" }, { startedAt: "2025-01-01T00:00:00Z" }] }
-    expect(summary([l]).total).toBe(1)
-    expect(summary([l], { mode: "year", year: 2025 }, NOW).total).toBe(0)
+    expect(summary([l]).logged).toBe(1)
+    expect(summary([l, log({})]).logged).toBe(2)
   })
 
   test("a log without entries counts once for activity, by logged_at", () => {

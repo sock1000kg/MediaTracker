@@ -97,7 +97,7 @@ export default function StatsSection() {
   // 4. Pure filterByType step
   const filteredLogs = useMemo(() => filterByType(inRange, selectedType), [inRange, selectedType])
 
-  const sum = useMemo(() => summary(filteredLogs, range), [filteredLogs, range])
+  const sum = useMemo(() => summary(filteredLogs), [filteredLogs])
   const unit: Unit = range.mode === "month" ? "day" : range.mode === "all" && granularity === "year" ? "year" : "month"
   const months = useMemo(
     () => range.mode === "month" ? perDay(filteredLogs, range.year, range.month)
@@ -113,7 +113,7 @@ export default function StatsSection() {
   const creators = useMemo(() => topCreators(filteredLogs), [filteredLogs])
   const tags = useMemo(() => topTags(filteredLogs), [filteredLogs])
   const hasTagsInRange = useMemo(() => filteredLogs.some((l) => (l.tags ?? []).length > 0), [filteredLogs])
-  const line = pickStatsLine({ total: sum.total, completed: sum.byStatus.completed, avgRating: sum.avgRating })
+  const line = pickStatsLine({ logged: sum.logged, completed: sum.byStatus.completed, avgRating: sum.avgRating })
 
   const lastLineSaid = useRef<string | null>(null)
   useEffect(() => {
@@ -294,24 +294,25 @@ export default function StatsSection() {
 
       {!isPending && hasLogs && (
         <div className="flex flex-col gap-5">
-          <StatsPile logs={filteredLogs} range={range} sectionSuffix={sectionSuffix} />
-
           {inRange.length === 0 && (
             <p className="text-sm text-muted-foreground">Nothing logged in this range. Pick another one above.</p>
           )}
 
           {inRange.length > 0 && (
             <>
-              <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-                <Tile label="Finished">{sum.total}</Tile>
-                <Tile label="Completed">{sum.byStatus.completed}</Tile>
-                <Tile label="In progress">{sum.byStatus["in progress"]}</Tile>
-                <Tile label="Wishlist">{sum.byStatus.wishlist}</Tile>
-                <Tile label="Average rating">
-                  {fmtAvg(sum.avgRating)}{sum.avgRating !== null && <span className="text-base font-normal text-muted-foreground"> /100</span>}
-                </Tile>
-                <Tile label="Completion rate">{sum.completionRate === null ? "–" : `${Math.round(sum.completionRate * 100)}%`}</Tile>
-              </dl>
+              <div className="grid gap-3 lg:grid-cols-2 lg:items-stretch">
+                <StatsPile logs={filteredLogs} />
+                <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 content-start">
+                  <Tile label="Logged">{sum.logged}</Tile>
+                  <Tile label="Completed">{sum.byStatus.completed}</Tile>
+                  <Tile label="In progress">{sum.byStatus["in progress"]}</Tile>
+                  <Tile label="Wishlist">{sum.byStatus.wishlist}</Tile>
+                  <Tile label="Average rating">
+                    {fmtAvg(sum.avgRating)}{sum.avgRating !== null && <span className="text-base font-normal text-muted-foreground"> /100</span>}
+                  </Tile>
+                  <Tile label="Completion rate">{sum.completionRate === null ? "–" : `${Math.round(sum.completionRate * 100)}%`}</Tile>
+                </dl>
+              </div>
 
               {/* Type stats panel when a single type is selected */}
               {selectedTypeStats && (

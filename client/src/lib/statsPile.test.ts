@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest"
 import Matter from "matter-js"
 import {
-  PILE_MAX, PILE_WIDTH, createPileWorld, pileBodies, settlePile, type PileBody,
+  PILE_GROUND, PILE_HEIGHT, PILE_MAX, PILE_WIDTH, createPileWorld, pileBodies, settlePile, type PileBody,
 } from "./statsPile"
 import type { Log } from "@/types/mainTypes"
 
-const GROUND_TOP = 150
+const GROUND_TOP = PILE_HEIGHT - PILE_GROUND
 
 const TYPES = ["book", "manga", "movie", "tv", "anime", "music", "game", "boardgame", "zine"]
 
@@ -40,7 +40,7 @@ describe("pileBodies", () => {
     }
   })
 
-  it.each([undefined, ...TYPES])("keeps every spawn inside the 0..600 drawing (%s)", (type) => {
+  it.each([undefined, ...TYPES])("keeps every spawn inside the 0..480 drawing (%s)", (type) => {
     for (const body of pileBodies(makeLogs(40, type))) {
       const half = halfWidth(body)
       expect(body.spawnX - half).toBeGreaterThanOrEqual(-1e-9)

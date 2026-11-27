@@ -2,7 +2,7 @@
 // Dates are read in local time. Logs with an unparseable date only count in the "all" range
 // (and are skipped by the per-month chart).
 //
-// Activity (per month / year / day, and the "finished" total) counts ENTRIES: a log read three times is three.
+// Activity (per month / year / day) counts ENTRIES: a log read three times is three.
 // Everything about ratings or items counts LOGS, once: one rating per item, so a re-read never counts twice.
 // A log without entries counts once for activity, by logged_at.
 
@@ -146,41 +146,15 @@ export function monthOptions(logs: StatLog[], year: number): MonthOption[] {
 // --- summary ---
 
 export interface Summary {
-  /** Finished entries in the range (a log read twice counts twice). */
-  total: number
+  /** Logs in the selection (period and type filtered). */
+  logged: number
   byStatus: Record<StatusKey, number>
   rated: number
   avgRating: number | null
   completionRate: number | null
 }
 
-function inRange(d: Date, range: StatsRange, now: Date): boolean {
-  if (range.mode === "all") return true
-  if (range.mode === "year") return d.getFullYear() === range.year
-  if (range.mode === "month") return d.getFullYear() === range.year && d.getMonth() === range.month - 1
-  const start = new Date(now.getFullYear(), now.getMonth() - 11, 1).getTime()
-  const end = new Date(now.getFullYear(), now.getMonth() + 1, 1).getTime()
-  return d.getTime() >= start && d.getTime() < end
-}
-
-function countFinishedEntries(logs: StatLog[], range: StatsRange, now: Date): number {
-  let n = 0
-  for (const l of logs) {
-    const entries = l.entries ?? []
-    if (entries.length === 0) {
-      const d = parse(l.logged_at)
-      if (d && inRange(d, range, now)) n++
-    } else {
-      for (const e of entries) {
-        const d = parse(e.finishedAt)
-        if (d && inRange(d, range, now)) n++
-      }
-    }
-  }
-  return n
-}
-
-export function summary(logs: StatLog[], range: StatsRange = { mode: "all" }, now: Date = new Date()): Summary {
+export function summary(logs: StatLog[]): Summary {
   const byStatus: Record<StatusKey, number> = { completed: 0, "in progress": 0, wishlist: 0, dropped: 0, none: 0 }
   const ratings: number[] = []
   for (const l of logs) {
@@ -191,7 +165,7 @@ export function summary(logs: StatLog[], range: StatsRange = { mode: "all" }, no
   }
   const denom = logs.length - byStatus.wishlist
   return {
-    total: countFinishedEntries(logs, range, now),
+    logged: logs.length,
     byStatus,
     rated: ratings.length,
     avgRating: avg(ratings),

@@ -1,10 +1,9 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react"
 import type * as MatterModule from "matter-js"
 import {
-  PILE_GROUND, PILE_HEIGHT, PILE_WIDTH, createPileWorld, pileBodies, pilePeriodLabel, settlePile,
+  PILE_GROUND, PILE_HEIGHT, PILE_WIDTH, createPileWorld, pileBodies, settlePile,
   type PileBody,
 } from "@/lib/statsPile"
-import type { StatsRange } from "@/lib/stats"
 import type { Log } from "@/types/mainTypes"
 
 type Matter = typeof MatterModule
@@ -58,15 +57,7 @@ function transformOf(x: number, y: number, angle: number) {
  * Each selection drops its objects from above the card and they settle under matter-js.
  * Decorative: the charts and tables below are the real UI.
  */
-export function StatsPile({
-  logs,
-  range,
-  sectionSuffix = "",
-}: {
-  logs: readonly Log[]
-  range: StatsRange
-  sectionSuffix?: string
-}) {
+export function StatsPile({ logs }: { logs: readonly Log[] }) {
   const labelId = `pile-record-${useId().replace(/[^a-zA-Z0-9]/g, "")}`
   const bodies = useMemo(() => pileBodies(logs), [logs])
   const ids = useMemo(() => bodies.map((body) => body.id).join(","), [bodies])
@@ -74,9 +65,6 @@ export function StatsPile({
   bodiesRef.current = bodies
   const refs = useRef(new Map<string, SVGGElement>())
   const [matter, setMatter] = useState<Matter | null>(null)
-  const title = logs.length === 0
-    ? "Nothing logged in this period"
-    : `${pilePeriodLabel(range)} · ${logs.length}${sectionSuffix}`
 
   useEffect(() => {
     let cancelled = false
@@ -138,8 +126,8 @@ export function StatsPile({
   }, [matter, ids])
 
   return (
-    <section aria-label="Your pile" className="flex flex-wrap items-end gap-5 rounded-xl bg-card px-5 pt-4 shadow-paper">
-      <svg viewBox={`0 0 ${PILE_WIDTH} ${PILE_HEIGHT}`} aria-hidden="true" className="block w-full max-w-[600px]">
+    <section aria-label="Your pile" className="relative h-full rounded-xl bg-card p-3 shadow-paper">
+      <svg viewBox={`0 0 ${PILE_WIDTH} ${PILE_HEIGHT}`} aria-hidden="true" className="block w-full lg:absolute lg:top-3 lg:left-3 lg:h-[calc(100%-1.5rem)] lg:w-[calc(100%-1.5rem)]" preserveAspectRatio="xMidYMax meet">
         <defs>
           {COVERS.map((n) => (
             <radialGradient key={n} id={`${labelId}-${n}`}>
@@ -169,10 +157,6 @@ export function StatsPile({
           </g>
         ))}
       </svg>
-      <div className="flex flex-col gap-1 pb-[18px]">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Your pile</p>
-        <p className="font-display text-[22px]">{title}</p>
-      </div>
     </section>
   )
 }
