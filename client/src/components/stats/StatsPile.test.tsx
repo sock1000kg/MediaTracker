@@ -277,6 +277,17 @@ describe("Stats pile", () => {
     for (const group of container.querySelectorAll("[data-pile-body]")) {
       expect(group.getAttribute("visibility")).toBe("visible")
     }
+
+    // A new period with the same drawn logs (e.g. All time vs 2026 past 150 logs) still drops again.
+    rerender(<StatsPile logs={[shared, added]} dropKey="y:2026|all" />)
+    expect(pending.size).toBeGreaterThan(0)
+    for (const group of container.querySelectorAll("[data-pile-body]")) {
+      expect(group.getAttribute("visibility")).not.toBe("visible")
+    }
+    runFrames()
+    for (const group of container.querySelectorAll("[data-pile-body]")) {
+      expect(group.getAttribute("visibility")).toBe("visible")
+    }
   })
 })
 
