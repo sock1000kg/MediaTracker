@@ -1,7 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react"
 import type * as MatterModule from "matter-js"
 import {
-  PILE_GROUND, PILE_HEIGHT, PILE_WIDTH, createPileWorld, pileBodies, settlePile,
+  PILE_GROUND, PILE_HEIGHT, PILE_MAX, PILE_WIDTH, createPileWorld, pileBodies, settlePile,
   type PileBody,
 } from "@/lib/statsPile"
 import type { Log } from "@/types/mainTypes"
@@ -53,15 +53,20 @@ function transformOf(x: number, y: number, angle: number) {
 }
 
 /**
- * Filtered logs as a pile on the Stats page, one object per log (at most 150 drawn).
+ * Filtered logs as a pile on the Stats page, one object per log: every log with `drawAll`
+ * (the All types tab), otherwise the newest 150.
  * Each selection drops its objects from above the card and they settle under matter-js.
  * `dropKey` names the selection (period + type): a new key re-drops the pile even when the
  * drawn logs are the same (only the newest 150 are drawn, so big periods often share them).
  * Decorative: the charts and tables below are the real UI.
  */
-export function StatsPile({ logs, dropKey = "" }: { logs: readonly Log[]; dropKey?: string }) {
+export function StatsPile({ logs, dropKey = "", drawAll = false }: {
+  logs: readonly Log[]
+  dropKey?: string
+  drawAll?: boolean
+}) {
   const labelId = `pile-record-${useId().replace(/[^a-zA-Z0-9]/g, "")}`
-  const bodies = useMemo(() => pileBodies(logs), [logs])
+  const bodies = useMemo(() => pileBodies(logs, drawAll ? Infinity : PILE_MAX), [logs, drawAll])
   const ids = useMemo(() => bodies.map((body) => body.id).join(","), [bodies])
   const bodiesRef = useRef(bodies)
   bodiesRef.current = bodies

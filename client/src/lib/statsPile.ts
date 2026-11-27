@@ -103,18 +103,20 @@ function sizeOf(shape: PileShape, log: Log, random: () => number): { width: numb
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v))
 
 /**
- * The newest 150 logs as physics bodies, oldest first.
- * Position and tilt are seeded from the log id, so the same logs always spawn the same way.
+ * Logs as physics bodies, oldest first: the newest `limit` of them (default 150; pass
+ * `Infinity` to draw every log). Position and tilt are seeded from the log id, so the
+ * same logs always spawn the same way.
  */
-export function pileBodies(logs: readonly Log[]): PileBody[] {
-  const ordered = [...logs]
+export function pileBodies(logs: readonly Log[], limit = PILE_MAX): PileBody[] {
+  const sorted = [...logs]
     .sort((a, b) => logTime(a) - logTime(b) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
-    .slice(-PILE_MAX)
+  const ordered = sorted.length > limit ? sorted.slice(-limit) : sorted
 
   if (ordered.length === 0) return []
 
+  // Total object area stays about the same however many are drawn
   const n = ordered.length
-  const s = Math.max(0.6, Math.min(1.35, Math.sqrt(55 / n)))
+  const s = Math.max(0.2, Math.min(1.35, Math.sqrt(55 / n)))
 
   return ordered.map((log) => {
     const random = seeded(hash(log.id))
@@ -146,7 +148,8 @@ export function pileBodies(logs: readonly Log[]): PileBody[] {
 
 /**
  * Build a matter-js world for the given bodies. Static ground and side walls are added up
- * front; log bodies enter one every two steps, oldest first, then settle.
+ * front; log bodies enter oldest first, then settle. Up to 150 bodies enter one every two
+ * steps; bigger piles enter faster so every drop takes about as long (300 steps).
  */
 export function createPileWorld(Matter: Matter, bodies: readonly PileBody[]): PileWorld {
   const engine = Matter.Engine.create({ enableSleeping: true })
@@ -171,12 +174,14 @@ export function createPileWorld(Matter: Matter, bodies: readonly PileBody[]): Pi
 
   let steps = 0
   let added = 0
+  const perStep = Math.max(0.5, logBodies.length / 300)
   const allAsleep = () => added === logBodies.length && logBodies.every((body) => body.isSleeping)
 
   return {
     engine,
     step() {
-      if (added < logBodies.length && steps % 2 === 0) {
+      const due = Math.min(logBodies.length, Math.floor(steps * perStep) + 1)
+      while (added < due) {
         Matter.Composite.add(engine.world, logBodies[added])
         added += 1
       }

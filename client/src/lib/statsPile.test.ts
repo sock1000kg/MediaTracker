@@ -30,6 +30,23 @@ describe("pileBodies", () => {
     expect(pileBodies([...logs].reverse())).toEqual(pileBodies(logs))
   })
 
+  it("draws every log when asked for all of them", () => {
+    expect(pileBodies(makeLogs(400), Infinity)).toHaveLength(400)
+  })
+
+  it("settles a 400-log pile inside the card before the step cap", () => {
+    const world = createPileWorld(Matter, pileBodies(makeLogs(400), Infinity))
+    let steps = 0
+    while (!world.done) { world.step(); steps += 1 }
+    expect(steps).toBeLessThan(1500)
+    for (const body of world.engine.world.bodies.filter((b) => !b.isStatic)) {
+      expect(body.position.y).toBeGreaterThan(0)
+      expect(body.position.y).toBeLessThan(GROUND_TOP)
+      expect(body.position.x).toBeGreaterThan(0)
+      expect(body.position.x).toBeLessThan(PILE_WIDTH)
+    }
+  })
+
   it("draws at most the newest 150 when given more than 150 logs", () => {
     const bodies = pileBodies(makeLogs(200))
     expect(bodies).toHaveLength(PILE_MAX)

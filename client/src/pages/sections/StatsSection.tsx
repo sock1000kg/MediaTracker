@@ -301,7 +301,7 @@ export default function StatsSection() {
           {inRange.length > 0 && (
             <>
               <div className="grid gap-3 lg:grid-cols-2 lg:items-stretch">
-                <StatsPile logs={filteredLogs} dropKey={`${rangeToString(range)}|${selectedType}`} />
+                <StatsPile logs={filteredLogs} dropKey={`${rangeToString(range)}|${selectedType}`} drawAll={selectedType === "all"} />
                 <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 content-start">
                   <Tile label="Logged">{sum.logged}</Tile>
                   <Tile label="Completed">{sum.byStatus.completed}</Tile>
