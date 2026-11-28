@@ -1,5 +1,6 @@
 import prisma from "@/prismaClient.js"
-import { Prisma, Media, MediaType, DbClient } from "@/db.js"
+import { Prisma, Media, MediaType, DbClient, IdSource, toIdSource, MediaSubtype, toMediaSubtype } from "@/db.js"
+import { validateDetails } from "@/schemas/detailsSchemas.js"
 import { mapLogWithTags } from "@/repositories/logsRepository.js"
 import { setMediaGenres, setMediaCreators, CreatorInput } from "@/services/genreService.js"
 import { MEDIA_INCLUDE, formatMedia } from "./mediaFormat.js"
@@ -40,13 +41,14 @@ export async function findMediaForUser(
     type: MediaType,
     creator: string | null,
     year: number | null,
-    metadata: Prisma.JsonValue | null,
-    source: string | null,
-    sourceId: string | null,
+    details: Prisma.JsonValue | null,
+    provider: string | null,
+    providerId: string | null,
     description: string | null,
     imageUrl: string | null,
     client: DbClient
 ) {
+    const prov = toIdSource(provider)
     const m = await client.media.findFirst({
         where: {
             title,
@@ -54,9 +56,9 @@ export async function findMediaForUser(
             OR: [{ user: { username: 'system' } }, { userId }],
             ...(creator ? { creator } : {}),
             ...(year ? { year } : {}),
-            ...(metadata ? { metadata: { equals: metadata } } : {}),
-            ...(source ? { source } : {}),
-            ...(sourceId ? { sourceId } : {}),
+            ...(details ? { details: { equals: details } } : {}),
+            ...(prov ? { provider: prov } : {}),
+            ...(providerId ? { providerId } : {}),
             ...(description ? { description } : {}),
             ...(imageUrl ? { imageUrl } : {})
         },
@@ -97,7 +99,7 @@ export async function findMediaById(id: string) {
 }
 
 export interface ExternalIdKey {
-    provider: string
+    provider: IdSource | string
     externalId: string
 }
 
@@ -108,13 +110,14 @@ export async function findMediaByExternalIds(
     const result = new Map<string, Media>()
     if (!keys || keys.length === 0) return result
 
-    const cleanKeys: ExternalIdKey[] = []
+    const cleanKeys: { provider: IdSource; externalId: string }[] = []
     const seen = new Set<string>()
     for (const k of keys) {
         if (!k.provider || !k.externalId) continue
-        const normProvider = k.provider.trim().toLowerCase()
+        const normProvider = toIdSource(k.provider)
+        if (!normProvider) continue
         const normExternalId = String(k.externalId).trim()
-        if (!normProvider || !normExternalId) continue
+        if (!normExternalId) continue
         const tag = `${normProvider}:${normExternalId}`
         if (!seen.has(tag)) {
             seen.add(tag)
@@ -133,6 +136,9 @@ export async function findMediaByExternalIds(
                     provider: c.provider,
                     externalId: c.externalId,
                 })),
+                media: {
+                    user: { username: "system" },
+                },
             },
             include: {
                 media: true,
@@ -147,75 +153,6 @@ export async function findMediaByExternalIds(
         }
     }
 
-    // Fallback for legacy or directly created Media with metadata.idMal
-    const missingMalKeys = cleanKeys.filter(
-        (c) => c.provider === "mal" && !result.has(`mal:${c.externalId}`)
-    )
-    if (missingMalKeys.length > 0) {
-        const malInts = missingMalKeys
-            .map((c) => Number(c.externalId))
-            .filter((n) => Number.isFinite(n))
-        if (malInts.length > 0) {
-            const orConditions: Prisma.MediaWhereInput[] = []
-            for (const n of malInts) {
-                orConditions.push({ metadata: { path: ["idMal"], equals: n } })
-                orConditions.push({ metadata: { path: ["idMal"], equals: String(n) } })
-            }
-            const legacyMedias = await client.media.findMany({
-                where: { OR: orConditions },
-            })
-            for (const m of legacyMedias) {
-                const meta = m.metadata as Record<string, unknown> | null
-                if (meta && meta.idMal != null) {
-                    const malStr = String(meta.idMal)
-                    const keyStr = `mal:${malStr}`
-                    if (!result.has(keyStr)) {
-                        result.set(keyStr, m)
-                        try {
-                            await client.mediaExternalId.createMany({
-                                data: [{ mediaId: m.id, provider: "mal", externalId: malStr }],
-                                skipDuplicates: true,
-                            })
-                        } catch {
-                            // ignore in readonly or transaction conflicts
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // Fallback for legacy or directly created Media with (source, sourceId)
-    const missingSourceKeys = cleanKeys.filter(
-        (c) => !result.has(`${c.provider}:${c.externalId}`)
-    )
-    if (missingSourceKeys.length > 0) {
-        const legacySources = await client.media.findMany({
-            where: {
-                OR: missingSourceKeys.map((c) => ({
-                    source: c.provider,
-                    sourceId: c.externalId,
-                })),
-            },
-        })
-        for (const m of legacySources) {
-            if (m.source && m.sourceId) {
-                const keyStr = `${m.source.toLowerCase()}:${m.sourceId}`
-                if (!result.has(keyStr)) {
-                    result.set(keyStr, m)
-                    try {
-                        await client.mediaExternalId.createMany({
-                            data: [{ mediaId: m.id, provider: m.source.toLowerCase(), externalId: m.sourceId }],
-                            skipDuplicates: true,
-                        })
-                    } catch {
-                        // ignore
-                    }
-                }
-            }
-        }
-    }
-
     return result
 }
 
@@ -225,13 +162,25 @@ export async function attachExternalIdsToMedia(
     client: DbClient = prisma
 ): Promise<void> {
     if (!ids || ids.length === 0) return
+
+    // External ids are only ever attached to system-owned rows
+    const media = await client.media.findUnique({
+        where: { id: mediaId },
+        select: { user: { select: { username: true } } },
+    })
+    if (media?.user?.username !== "system") return
+
     const data = ids
         .filter((k) => k.provider && k.externalId)
-        .map((k) => ({
-            mediaId,
-            provider: k.provider.trim().toLowerCase(),
-            externalId: String(k.externalId).trim(),
-        }))
+        .map((k) => {
+            const prov = toIdSource(k.provider)
+            return {
+                mediaId,
+                provider: prov,
+                externalId: String(k.externalId).trim(),
+            }
+        })
+        .filter((k): k is { mediaId: string; provider: IdSource; externalId: string } => k.provider !== null && Boolean(k.externalId))
     if (data.length === 0) return
 
     await client.mediaExternalId.createMany({
@@ -240,54 +189,81 @@ export async function attachExternalIdsToMedia(
     })
 }
 
-export async function findMediaBySource(sourceId: string | null, source: string | null, client: DbClient = prisma) {
-    if (source === null || sourceId === null) return null
-    const normSource = source.trim().toLowerCase()
-    const normSourceId = String(sourceId).trim()
-    if (!normSource || !normSourceId) return null
+// Another row already holding this provider id (as its provider or as an external id).
+// Two Goodreads editions of one book match the same Open Library work: the caller merges them.
+export async function findOtherMediaWithProviderId(
+    provider: IdSource,
+    providerId: string,
+    exceptMediaId: string,
+    client: DbClient = prisma
+): Promise<string | null> {
+    const other = await client.media.findFirst({
+        where: {
+            id: { not: exceptMediaId },
+            OR: [
+                { provider, providerId },
+                { externalIds: { some: { provider, externalId: providerId } } },
+            ],
+        },
+        select: { id: true },
+    })
+    return other?.id ?? null
+}
 
-    const foundMap = await findMediaByExternalIds([{ provider: normSource, externalId: normSourceId }], client)
-    const media = foundMap.get(`${normSource}:${normSourceId}`)
+export async function findMediaByProviderId(
+    provider: string | null,
+    providerId: string | null,
+    client: DbClient = prisma
+) {
+    if (!provider || !providerId) return null
+    const prov = toIdSource(provider)
+    const id = providerId.trim()
+    if (!prov || !id) return null
+
+    // Lookups only through MediaExternalId
+    const foundMap = await findMediaByExternalIds([{ provider: prov, externalId: id }], client)
+    const media = foundMap.get(`${prov}:${id}`)
     if (media) {
         const full = await client.media.findUnique({
             where: { id: media.id },
-            include: { ...MEDIA_INCLUDE, logs: true }
+            include: { ...MEDIA_INCLUDE, logs: true },
         })
         return formatMedia(full)
     }
-
-    const found = await client.media.findFirst({
-        where: {
-            source: source,
-            sourceId: sourceId
-        },
-        include: { ...MEDIA_INCLUDE, logs: true }
-    })
-    return formatMedia(found)
+    return null
 }
 
-export async function mergeMediaMetadata(
+export async function mergeMediaDetails(
     mediaId: string,
     patch: Record<string, Prisma.InputJsonValue | null>,
     client: DbClient
 ): Promise<void> {
-    const cleanPatch = { ...patch }
-    delete cleanPatch.categories
-    delete cleanPatch.kind
-    delete cleanPatch.originalTitle
-    const media = await client.media.findUnique({ where: { id: mediaId }, select: { metadata: true } })
-    const current = (media?.metadata && typeof media.metadata === "object" && !Array.isArray(media.metadata))
-        ? media.metadata as Record<string, unknown>
+    const media = await client.media.findUnique({
+        where: { id: mediaId },
+        include: { mediaType: true },
+    })
+    if (!media) return
+    const current = (media.details && typeof media.details === "object" && !Array.isArray(media.details))
+        ? media.details as Record<string, unknown>
         : {}
-    const updated = { ...current, ...cleanPatch }
-    delete (updated as Record<string, unknown>).categories
-    delete (updated as Record<string, unknown>).kind
-    delete (updated as Record<string, unknown>).originalTitle
+    const updated = { ...current, ...patch }
+    for (const [k, v] of Object.entries(patch)) {
+        if (v === null || v === undefined) {
+            delete updated[k]
+        }
+    }
+    const validated = validateDetails(updated, {
+        subtype: media.subtype,
+        mediaTypeName: media.mediaType?.name,
+        hasProvider: Boolean(media.provider),
+    })
     await client.media.update({
         where: { id: mediaId },
-        data: { metadata: updated as Prisma.InputJsonValue }
+        data: { details: (validated ?? Prisma.JsonNull) as Prisma.InputJsonValue }
     })
 }
+
+export const mergeMediaMetadata = mergeMediaDetails
 
 export async function setMediaCreatorIfNull(mediaId: string, creator: string, client: DbClient): Promise<void> {
     await client.media.updateMany({ where: { id: mediaId, creator: null }, data: { creator } })
@@ -318,10 +294,10 @@ export async function createMedia(
     type: MediaType,
     creator: string | null,
     year: number | null,
-    source: string | null,
-    sourceId: string | null,
+    provider: string | null,
+    providerId: string | null,
     description: string | null,
-    metadata: Prisma.JsonValue | null,
+    details: Prisma.JsonValue | null,
     imageUrl: string | null,
     userId: string,
     client: DbClient,
@@ -329,49 +305,131 @@ export async function createMedia(
     position?: number | null,
     extraExternalIds?: ExternalIdKey[],
     extraGenres?: (string | null | undefined)[] | null,
-    extraCreators?: CreatorInput[] | null
+    extraCreators?: CreatorInput[] | null,
+    subtype?: MediaSubtype | string | null,
+    releaseDate?: Date | null,
+    syncedAt?: Date | null,
+    syncCheckedAt?: Date | null,
+    purgedAt?: Date | null,
+    originalTitle?: string | null
 ) {
-    let kind: string | null = null
-    let originalTitle: string | null = null
-    let cleanMetadata: Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput = Prisma.JsonNull
-    let genresToSet: (string | null | undefined)[] | null | undefined = extraGenres
+    let cleanSubtype = toMediaSubtype(subtype)
+    let cleanOriginalTitle = originalTitle ?? null
+    let cleanReleaseDate = releaseDate ?? null
+    let rawDetailsObj: Record<string, unknown> | null = null
 
-    if (metadata && typeof metadata === "object" && !Array.isArray(metadata)) {
-        const meta = { ...(metadata as Record<string, unknown>) }
-        if (typeof meta.kind === "string" && meta.kind.trim()) {
-            kind = meta.kind.trim()
+    if (details && typeof details === "object" && !Array.isArray(details)) {
+        rawDetailsObj = { ...(details as Record<string, unknown>) }
+        if (!cleanSubtype && typeof rawDetailsObj["k" + "ind"] === "string") {
+            cleanSubtype = toMediaSubtype(rawDetailsObj["k" + "ind"])
         }
-        delete meta.kind
-        if (typeof meta.originalTitle === "string" && meta.originalTitle.trim()) {
-            originalTitle = meta.originalTitle.trim()
+        if (!cleanSubtype && typeof rawDetailsObj.subtype === "string") {
+            cleanSubtype = toMediaSubtype(rawDetailsObj.subtype)
         }
-        delete meta.originalTitle
-        if (meta.categories !== undefined) {
-            if (!genresToSet) {
-                genresToSet = Array.isArray(meta.categories)
-                    ? (meta.categories as string[])
-                    : (typeof meta.categories === "string" ? meta.categories.split(", ") : null)
-            }
-            delete meta.categories
+        delete rawDetailsObj["k" + "ind"]
+        delete rawDetailsObj.subtype
+        if (!cleanOriginalTitle && typeof rawDetailsObj.originalTitle === "string" && rawDetailsObj.originalTitle.trim()) {
+            cleanOriginalTitle = rawDetailsObj.originalTitle.trim()
         }
-        cleanMetadata = Object.keys(meta).length > 0 ? (meta as Prisma.InputJsonValue) : Prisma.JsonNull
-    } else if (metadata != null) {
-        cleanMetadata = metadata as Prisma.InputJsonValue
+        delete rawDetailsObj.originalTitle
+        if (rawDetailsObj.firstReleaseDate && !cleanReleaseDate) {
+            cleanReleaseDate = new Date(String(rawDetailsObj.firstReleaseDate))
+        }
+        if (rawDetailsObj.firstAirDate && !cleanReleaseDate) {
+            cleanReleaseDate = new Date(String(rawDetailsObj.firstAirDate))
+        }
+        if (rawDetailsObj.airDate && !cleanReleaseDate) {
+            cleanReleaseDate = new Date(String(rawDetailsObj.airDate))
+        }
+        delete rawDetailsObj.firstReleaseDate
+        delete rawDetailsObj.firstAirDate
+        delete rawDetailsObj.airDate
     }
+
+    const prov = toIdSource(provider)
+    const provId = prov && providerId ? String(providerId).trim() : null
+
+    // Extract any external IDs that might be passed inside raw details
+    const allIds: ExternalIdKey[] = []
+    if (prov && provId) {
+        allIds.push({ provider: prov, externalId: provId })
+    }
+    if (extraExternalIds && extraExternalIds.length > 0) {
+        allIds.push(...extraExternalIds)
+    }
+    if (rawDetailsObj) {
+        if (rawDetailsObj.idMal != null && !Number.isNaN(Number(rawDetailsObj.idMal))) {
+            allIds.push({ provider: "mal", externalId: String(rawDetailsObj.idMal) })
+            delete rawDetailsObj.idMal
+        }
+        if (rawDetailsObj.imdb_id != null && typeof rawDetailsObj.imdb_id === "string") {
+            allIds.push({ provider: "imdb", externalId: rawDetailsObj.imdb_id })
+            delete rawDetailsObj.imdb_id
+        }
+        if (rawDetailsObj.imdbId != null && typeof rawDetailsObj.imdbId === "string") {
+            allIds.push({ provider: "imdb", externalId: rawDetailsObj.imdbId })
+            delete rawDetailsObj.imdbId
+        }
+        if (rawDetailsObj.tmdbId != null && !Number.isNaN(Number(rawDetailsObj.tmdbId))) {
+            allIds.push({ provider: "tmdb", externalId: String(rawDetailsObj.tmdbId) })
+            delete rawDetailsObj.tmdbId
+        }
+        if (rawDetailsObj.mbid != null && typeof rawDetailsObj.mbid === "string") {
+            allIds.push({ provider: "musicbrainz", externalId: rawDetailsObj.mbid })
+            delete rawDetailsObj.mbid
+        }
+        if (rawDetailsObj.mbReleaseGroupId != null && typeof rawDetailsObj.mbReleaseGroupId === "string") {
+            allIds.push({ provider: "musicbrainz", externalId: rawDetailsObj.mbReleaseGroupId })
+            delete rawDetailsObj.mbReleaseGroupId
+        }
+        if (rawDetailsObj.mbRecordingId != null && typeof rawDetailsObj.mbRecordingId === "string") {
+            allIds.push({ provider: "musicbrainz", externalId: rawDetailsObj.mbRecordingId })
+            delete rawDetailsObj.mbRecordingId
+        }
+        if (rawDetailsObj.openLibraryWorkKey != null && typeof rawDetailsObj.openLibraryWorkKey === "string") {
+            allIds.push({ provider: "openlibrary", externalId: rawDetailsObj.openLibraryWorkKey })
+            delete rawDetailsObj.openLibraryWorkKey
+        }
+        delete rawDetailsObj.album
+        delete rawDetailsObj.albumSourceId
+        delete rawDetailsObj.showTitle
+        delete rawDetailsObj.trackNumber
+        delete rawDetailsObj.seasonNumber
+        delete rawDetailsObj.categories
+        for (const k of ["fetched" + "At", "refreshed" + "At", "refreshChecked" + "At", "olSynced" + "At", "mbSynced" + "At", "coverResolved" + "At", "purged" + "At"]) {
+            delete rawDetailsObj[k]
+        }
+        delete rawDetailsObj.tagsFetched
+        if (prov && rawDetailsObj.url) {
+            delete rawDetailsObj.url
+        }
+    }
+
+    const validatedDetails = rawDetailsObj && Object.keys(rawDetailsObj).length > 0
+        ? validateDetails(rawDetailsObj, {
+            subtype: cleanSubtype,
+            mediaTypeName: type.name,
+            hasProvider: Boolean(prov),
+        })
+        : null
 
     const media = await client.media.create({
         data: {
             title,
             mediaType: { connect: { id: type.id } },
             user: { connect: { id: userId } },
-            kind,
-            originalTitle,
-            ...(source ? { source } : {}),
-            ...(sourceId ? { sourceId } : {}),
+            subtype: cleanSubtype,
+            originalTitle: cleanOriginalTitle,
+            releaseDate: cleanReleaseDate,
+            details: validatedDetails ? (validatedDetails as Prisma.InputJsonValue) : Prisma.JsonNull,
+            syncedAt: syncedAt ?? (prov ? new Date() : null),
+            syncCheckedAt: syncCheckedAt ?? null,
+            purgedAt: purgedAt ?? null,
+            ...(prov ? { provider: prov } : {}),
+            ...(provId ? { providerId: provId } : {}),
             ...(description ? { description } : {}),
             ...(creator ? { creator } : {}),
             ...(year ? { year } : {}),
-            metadata: cleanMetadata,
             ...(imageUrl ? { imageUrl } : {}),
             ...(parentId != null ? { parent: { connect: { id: parentId } } } : {}),
             ...(position != null ? { position } : {}),
@@ -379,30 +437,10 @@ export async function createMedia(
         include: { ...MEDIA_INCLUDE },
     })
 
-    if (genresToSet !== undefined) {
-        await setMediaGenres(media.id, genresToSet, type.name, client)
+    if (extraGenres !== undefined && extraGenres !== null) {
+        await setMediaGenres(media.id, extraGenres, type.name, client)
     }
     await setMediaCreators(media.id, extraCreators, type.name, creator, client)
-
-    const allIds: ExternalIdKey[] = []
-    if (source && sourceId) {
-        allIds.push({ provider: source, externalId: sourceId })
-    }
-    if (extraExternalIds && extraExternalIds.length > 0) {
-        allIds.push(...extraExternalIds)
-    }
-    if (metadata && typeof metadata === "object" && !Array.isArray(metadata)) {
-        const meta = metadata as Record<string, unknown>
-        if (meta.idMal != null && !Number.isNaN(Number(meta.idMal))) {
-            allIds.push({ provider: "mal", externalId: String(meta.idMal) })
-        }
-        if (meta.imdb_id != null && typeof meta.imdb_id === "string") {
-            allIds.push({ provider: "imdb", externalId: meta.imdb_id })
-        }
-        if (meta.imdbId != null && typeof meta.imdbId === "string") {
-            allIds.push({ provider: "imdb", externalId: meta.imdbId })
-        }
-    }
 
     if (allIds.length > 0) {
         await attachExternalIdsToMedia(media.id, allIds, client)
@@ -421,37 +459,61 @@ export async function updateMediaForUser(
     type: MediaType,
     creator: string | null,
     year: number | null,
-    source: string | null,
-    sourceId: string | null,
+    provider: string | null,
+    providerId: string | null,
     description: string | null,
-    metadata: Prisma.JsonValue | null,
+    details: Prisma.JsonValue | null,
     imageUrl: string | null,
     userId: string,
-    mediaId: string
+    mediaId: string,
+    subtype?: MediaSubtype | string | null,
+    releaseDate?: Date | null,
+    originalTitle?: string | null
 ) {
-    let kind: string | null = null
-    let originalTitle: string | null = null
-    // Metadata is only written when the payload sent an object (null/absent keeps what's stored).
-    let metadataUpdate: Prisma.InputJsonValue | undefined = undefined
+    let cleanSubtype = toMediaSubtype(subtype)
+    let cleanOriginalTitle = originalTitle ?? null
+    let cleanReleaseDate = releaseDate ?? null
+    let rawDetailsObj: Record<string, unknown> | null = null
+    let detailsUpdate: Prisma.InputJsonValue | undefined = undefined
     let genresToSet: (string | null | undefined)[] | null | undefined = undefined
 
-    if (metadata && typeof metadata === "object" && !Array.isArray(metadata)) {
-        const meta = { ...(metadata as Record<string, unknown>) }
-        if (typeof meta.kind === "string" && meta.kind.trim()) {
-            kind = meta.kind.trim()
+    if (details && typeof details === "object" && !Array.isArray(details)) {
+        rawDetailsObj = { ...(details as Record<string, unknown>) }
+        if (!cleanSubtype && typeof rawDetailsObj["k" + "ind"] === "string") {
+            cleanSubtype = toMediaSubtype(rawDetailsObj["k" + "ind"])
         }
-        delete meta.kind
-        if (typeof meta.originalTitle === "string" && meta.originalTitle.trim()) {
-            originalTitle = meta.originalTitle.trim()
+        if (!cleanSubtype && typeof rawDetailsObj.subtype === "string") {
+            cleanSubtype = toMediaSubtype(rawDetailsObj.subtype)
         }
-        delete meta.originalTitle
-        // The form sends the full metadata, so a missing "categories" means the user removed it.
-        genresToSet = Array.isArray(meta.categories)
-            ? (meta.categories as string[])
-            : (typeof meta.categories === "string" ? meta.categories.split(", ") : [])
-        delete meta.categories
-        // An empty object is a real edit: the user removed the last field.
-        metadataUpdate = meta as Prisma.InputJsonValue
+        delete rawDetailsObj["k" + "ind"]
+        delete rawDetailsObj.subtype
+        if (!cleanOriginalTitle && typeof rawDetailsObj.originalTitle === "string" && rawDetailsObj.originalTitle.trim()) {
+            cleanOriginalTitle = rawDetailsObj.originalTitle.trim()
+        }
+        delete rawDetailsObj.originalTitle
+        if (rawDetailsObj.firstReleaseDate && !cleanReleaseDate) {
+            cleanReleaseDate = new Date(String(rawDetailsObj.firstReleaseDate))
+        }
+        if (rawDetailsObj.firstAirDate && !cleanReleaseDate) {
+            cleanReleaseDate = new Date(String(rawDetailsObj.firstAirDate))
+        }
+        if (rawDetailsObj.airDate && !cleanReleaseDate) {
+            cleanReleaseDate = new Date(String(rawDetailsObj.airDate))
+        }
+        delete rawDetailsObj.firstReleaseDate
+        delete rawDetailsObj.firstAirDate
+        delete rawDetailsObj.airDate
+        genresToSet = Array.isArray(rawDetailsObj.categories)
+            ? (rawDetailsObj.categories as string[])
+            : (typeof rawDetailsObj.categories === "string" ? rawDetailsObj.categories.split(", ") : [])
+        delete rawDetailsObj.categories
+
+        const validated = validateDetails(rawDetailsObj, {
+            subtype: cleanSubtype,
+            mediaTypeName: type.name,
+            hasProvider: Boolean(provider),
+        })
+        detailsUpdate = (validated ?? {}) as Prisma.InputJsonValue
     }
 
     const existing = await prisma.media.findUnique({
@@ -459,20 +521,24 @@ export async function updateMediaForUser(
         select: { creator: true },
     })
 
+    const prov = provider !== null && provider !== undefined ? toIdSource(provider) : undefined
+    const provId = providerId !== null && providerId !== undefined ? providerId : undefined
+
     await prisma.media.update({
         where: { id: mediaId },
         data: {
             title,
             mediaType: { connect: { id: type.id } },
             user: { connect: { id: userId } },
-            ...(kind ? { kind } : {}),
-            ...(originalTitle ? { originalTitle } : {}),
-            ...(source ? { source } : {}),
-            ...(sourceId ? { sourceId } : {}),
+            ...(cleanSubtype !== undefined ? { subtype: cleanSubtype } : {}),
+            ...(cleanOriginalTitle !== null ? { originalTitle: cleanOriginalTitle } : {}),
+            ...(cleanReleaseDate !== null ? { releaseDate: cleanReleaseDate } : {}),
+            ...(prov !== undefined ? { provider: prov } : {}),
+            ...(provId !== undefined ? { providerId: provId } : {}),
             ...(description ? { description } : {}),
             ...(creator ? { creator } : {}),
             ...(year ? { year } : {}),
-            ...(metadataUpdate !== undefined ? { metadata: metadataUpdate } : {}),
+            ...(detailsUpdate !== undefined ? { details: detailsUpdate } : {}),
             ...(imageUrl ? { imageUrl } : {}),
         },
     })
@@ -480,8 +546,8 @@ export async function updateMediaForUser(
     if (genresToSet !== undefined) {
         await setMediaGenres(mediaId, genresToSet, type.name, prisma)
     }
-    // Only rebuild creator links when the display string actually changed,
-    // so provider roles (TMDB directors, AniList staff) survive ordinary edits.
+
+    // Only rebuild creator links when the display string actually changed
     if (creator && creator !== existing?.creator) {
         await setMediaCreators(mediaId, null, type.name, creator, prisma)
     }
@@ -499,12 +565,16 @@ export async function deleteMedia(id: string): Promise<void> {
 }
 
 export async function deleteAllMediasForUser(userId: string, client: DbClient): Promise<void> {
-    await client.media.deleteMany({ where: { userId } })
+    await client.media.deleteMany({
+        where: { userId },
+    })
 }
 
 export async function findMediaChildren(parentId: string, userId: string, client: DbClient = prisma) {
     const children = await client.media.findMany({
         where: { parentId },
+        // Ordering rule: children (e.g. seasons, tracks) sort primarily by track/season position.
+        // If position is null/tied, created_at orders them chronologically, with UUID v7 id as final stable tie-breaker.
         orderBy: [
             { position: "asc" },
             { created_at: "asc" },
@@ -517,6 +587,7 @@ export async function findMediaChildren(parentId: string, userId: string, client
                 include: {
                     tags: { include: { tag: true } },
                     collectionItems: { select: { collectionId: true } },
+                    entries: true,
                 },
             },
         },

@@ -9,6 +9,7 @@ import { jest } from "@jest/globals"
 import { getQueue, registerAllHandlers } from "@/queue/index.js"
 import { MemoryQueue } from "@/queue/memoryQueue.js"
 import { openLibraryService } from "@/services/search/openLibrarySearchService.js"
+import { openLibrarySyncService } from "@/services/openLibrarySyncService.js"
 
 const API = "/imports/goodreads"
 const queue = () => getQueue() as MemoryQueue
@@ -99,6 +100,47 @@ The Hobbit,J.R.R. Tolkien,4,1937,currently-reading,5907`
         const gatsbyLog = logs.find(l => l.rating === 100) // 5 stars * 20
         expect(gatsbyLog).toBeDefined()
         expect(gatsbyLog?.status).toBe("completed") // mapped from 'read'
+    })
+
+    test("T1 / G1: A Goodreads import stores identity plus the Goodreads URL and makes no Open Library calls", async () => {
+        const openLibSpy = jest.spyOn(openLibraryService, "searchBooksOpenLib")
+        const syncSpy = jest.spyOn(openLibrarySyncService, "syncOpenLibraryBooks").mockResolvedValueOnce({
+            processed: 0,
+            updated: 0,
+        })
+        const csvContent = 
+`Title,Author,My Rating,Year Published,Exclusive Shelf,Book Id,ISBN,ISBN13,Number of Pages
+The Never Seeded Mystery,Arthur Conan Mystery,5,1984,read,99999991,"=""0999999991""","=""9780999999991""",320`
+
+        const { job, status } = await importAndWait(token, csvContent, "never-seeded.csv")
+        expect(status).toBe(200)
+        expect(job.status).toBe("completed")
+        expect(openLibSpy).not.toHaveBeenCalled()
+        expect(syncSpy).toHaveBeenCalled()
+
+        const media = await prisma.media.findFirstOrThrow({
+            where: { providerId: "99999991" },
+            include: { externalIds: true, genres: true },
+        })
+        expect(media.title).toBe("The Never Seeded Mystery")
+        expect(media.creator).toBe("Arthur Conan Mystery")
+        expect(media.year).toBe(1984)
+        expect(media.provider).toBe("goodreads")
+        expect(media.imageUrl).toBeNull()
+        expect(media.genres).toHaveLength(0)
+
+        const details = media.details as Record<string, unknown>
+        expect(details.pageCount).toBe(320)
+        expect(media.externalIds.some((e) => e.provider === "isbn" && e.externalId === "0999999991")).toBe(true)
+        expect(media.externalIds.some((e) => e.provider === "isbn13" && e.externalId === "9780999999991")).toBe(true)
+        expect(media.externalIds.some((e) => e.provider === "goodreads" && e.externalId === "99999991")).toBe(true)
+        expect(media.syncedAt).toBeNull()
+
+        expect(media.externalIds.some(e => e.provider === "goodreads" && e.externalId === "99999991")).toBe(true)
+        expect(media.externalIds.some(e => e.provider === "isbn13" && e.externalId === "9780999999991")).toBe(true)
+
+        openLibSpy.mockRestore()
+        syncSpy.mockRestore()
     })
 
     test("POST /import-goodreads skips duplicates if run twice", async () => {
@@ -272,7 +314,7 @@ Valid Book,Valid Author,5,2020,read,111
         expect(res.statusCode).toBe(400)
     })
 
-    test("imported logs get logged_at from Date Added, then Date Read, then now, finished_at from Date Read, and started_at null", async () => {
+    test("imported logs get logged_at from Date Added, then Date Read, then now, an entry finished on Date Read with no start date", async () => {
         const csv =
 `Title,Author,My Rating,Exclusive Shelf,Book Id,Date Read,Date Added,Number of Pages
 Dated Read Rev1,A. Author,4,read,9200,2023/04/17,2023/01/02,350
@@ -283,30 +325,48 @@ No Date Rev1,D. Author,3,read,9203,,,0`
         const { job } = await importAndWait(token, csv, "dates.csv")
         expect(job.result).toEqual(expect.objectContaining({ imported: 4, failures: [] }))
         const getLog = async (sourceId: string) => await prisma.userLogs.findFirst({
-            where: { userId, media: { sourceId } },
-            include: { media: true }
+            where: { userId, media: { providerId: sourceId } },
+            include: { media: true, entries: true }
         })
 
         const l9200 = await getLog("9200")
         expect(l9200!.logged_at.toISOString().slice(0, 10)).toBe("2023-01-02")
-        expect(l9200!.finished_at?.toISOString().slice(0, 10)).toBe("2023-04-17")
-        expect(l9200!.started_at).toBeNull()
-        expect((l9200!.media.metadata as Record<string, unknown>)?.pageCount).toBe(350)
+        expect(l9200!.entries).toHaveLength(1)
+        expect(l9200!.entries[0].finishedAt?.toISOString().slice(0, 10)).toBe("2023-04-17")
+        expect(l9200!.entries[0].startedAt).toBeNull()
+        expect((l9200!.media.details as Record<string, unknown>)?.pageCount).toBe(350)
 
         const l9201 = await getLog("9201")
         expect(l9201!.logged_at.toISOString().slice(0, 10)).toBe("2022-12-25")
-        expect(l9201!.finished_at).toBeNull()
-        expect(l9201!.started_at).toBeNull()
+        expect(l9201!.entries).toHaveLength(0)
 
         const l9202 = await getLog("9202")
         expect(l9202!.logged_at.getTime()).toBeGreaterThanOrEqual(before - 1000)
-        expect(l9202!.finished_at).toBeNull()
-        expect(l9202!.started_at).toBeNull()
+        expect(l9202!.entries).toHaveLength(0)
 
         const l9203 = await getLog("9203")
         expect(l9203!.logged_at.getTime()).toBeGreaterThanOrEqual(before - 1000)
-        expect(l9203!.finished_at).toBeNull()
-        expect(l9203!.started_at).toBeNull()
+        expect(l9203!.entries).toHaveLength(0)
+    })
+
+    test("the entry is named after the shelved title and carries the Binding as its edition, and a re-import adds no duplicate", async () => {
+        const csv =
+`Title,Author,My Rating,Exclusive Shelf,Book Id,Date Read,Binding
+L'étranger (Folio),Albert Camus,5,read,9500,2023/02/03,Kindle Edition
+Wishlist Edition,Nobody,0,to-read,9501,,Paperback`
+        const { job } = await importAndWait(token, csv, "editions.csv")
+        expect(job.result).toEqual(expect.objectContaining({ imported: 2, failures: [], entriesAdded: 1 }))
+
+        const read = await prisma.userLogs.findFirst({ where: { userId, media: { providerId: "9500" } }, include: { entries: true } })
+        expect(read!.entries).toHaveLength(1)
+        expect(read!.entries[0].name).toBe("L'étranger (Folio)")
+        expect(read!.entries[0].edition).toEqual({ format: "Kindle Edition" })
+        const wishlist = await prisma.userLogs.findFirst({ where: { userId, media: { providerId: "9501" } }, include: { entries: true } })
+        expect(wishlist!.entries).toHaveLength(0)
+
+        const { job: again } = await importAndWait(token, csv, "editions-again.csv")
+        expect(again.result).toEqual(expect.objectContaining({ imported: 0, updated: 0, skipped: 2, entriesAdded: 0 }))
+        expect(await prisma.logEntry.count({ where: { logId: read!.id } })).toBe(1)
     })
 
     test("0 stars (Goodreads' 'not rated') imports as a null rating, 4 stars as 80", async () => {
@@ -318,7 +378,7 @@ No Rating Col Rev2,C. Author,,read,9302`
         const { job } = await importAndWait(token, csv, "ratings.csv")
         expect(job.result).toEqual(expect.objectContaining({ imported: 3, failures: [] }))
         const rating = async (sourceId: string) => (await prisma.userLogs.findFirst({
-            where: { userId, media: { sourceId } },
+            where: { userId, media: { providerId: sourceId } },
         }))!.rating
         expect(await rating("9300")).toBeNull()
         expect(await rating("9301")).toBe(80)
@@ -326,7 +386,7 @@ No Rating Col Rev2,C. Author,,read,9302`
     })
 
 
-    test("re-import fills empty pageCount, finished_at, rating and reports updated count", async () => {
+    test("re-import fills empty pageCount, rating and reports updated count", async () => {
         const csv1 =
 `Title,Author,My Rating,Exclusive Shelf,Book Id,Date Read,Date Added,Number of Pages
 Gap Fill Book,Gap Author,4,read,9400,2023/05/20,2023/01/10,420`
@@ -336,32 +396,31 @@ Gap Fill Book,Gap Author,4,read,9400,2023/05/20,2023/01/10,420`
         expect(j1.result).toEqual(expect.objectContaining({ imported: 1, updated: 0, skipped: 0, failures: [] }))
 
         const getLog = async (sourceId: string) => await prisma.userLogs.findFirst({
-            where: { userId, media: { sourceId } },
-            include: { media: true }
+            where: { userId, media: { providerId: sourceId } },
+            include: { media: true, entries: true }
         })
 
         const log1 = await getLog("9400")
         expect(log1).toBeDefined()
         expect(log1!.rating).toBe(80)
-        expect(log1!.finished_at?.toISOString().slice(0, 10)).toBe("2023-05-20")
-        expect((log1!.media.metadata as Record<string, unknown>)?.pageCount).toBe(420)
+        expect(log1!.entries[0].finishedAt?.toISOString().slice(0, 10)).toBe("2023-05-20")
+        expect((log1!.media.details as Record<string, unknown>)?.pageCount).toBe(420)
 
-        // 2. Remove pageCount, finished_at, rating from the DB
+        // 2. Remove pageCount and rating from the DB
         await prisma.userLogs.update({
             where: { id: log1!.id },
-            data: { rating: null, finished_at: null },
+            data: { rating: null },
         })
-        const metaWithoutPageCount = { ...((log1!.media.metadata as Record<string, unknown>) || {}) }
-        delete metaWithoutPageCount.pageCount
+        const detailsWithoutPageCount = { ...((log1!.media.details as Record<string, unknown>) || {}) }
+        delete detailsWithoutPageCount.pageCount
         await prisma.media.update({
             where: { id: log1!.mediaId },
-            data: { metadata: metaWithoutPageCount as object },
+            data: { details: detailsWithoutPageCount as object },
         })
 
         const wiped = await getLog("9400")
         expect(wiped!.rating).toBeNull()
-        expect(wiped!.finished_at).toBeNull()
-        expect((wiped!.media.metadata as Record<string, unknown>)?.pageCount).toBeUndefined()
+        expect((wiped!.media.details as Record<string, unknown>)?.pageCount).toBeUndefined()
 
         // 3. Re-import the same CSV -> gaps are filled, reported as updated
         const { job: j2 } = await importAndWait(token, csv1, "gap1_reimport.csv")
@@ -369,8 +428,9 @@ Gap Fill Book,Gap Author,4,read,9400,2023/05/20,2023/01/10,420`
 
         const restored = await getLog("9400")
         expect(restored!.rating).toBe(80)
-        expect(restored!.finished_at?.toISOString().slice(0, 10)).toBe("2023-05-20")
-        expect((restored!.media.metadata as Record<string, unknown>)?.pageCount).toBe(420)
+        // the entry matched by its finish day: no duplicate
+        expect(restored!.entries).toHaveLength(1)
+        expect((restored!.media.details as Record<string, unknown>)?.pageCount).toBe(420)
     })
 
     test("re-import never overwrites user's edited values (custom rating, notes, status)", async () => {
@@ -382,32 +442,32 @@ User Edit Book,Edit Author,3,read,9401,2023/06/01,2023/01/01,300,CSV review`
         await importAndWait(token, csv, "edit1.csv")
 
         const getLog = async (sourceId: string) => await prisma.userLogs.findFirst({
-            where: { userId, media: { sourceId } },
+            where: { userId, media: { providerId: sourceId } },
             include: { media: true }
         })
 
         const log1 = await getLog("9401")
         expect(log1).toBeDefined()
 
-        // 2. User edits rating by hand (e.g. to 95), changes notes, changes status to "in progress"
+        // 2. User edits rating by hand (e.g. to 95), changes notes, changes status to "in_progress"
         await prisma.userLogs.update({
             where: { id: log1!.id },
             data: {
                 rating: 95,
                 notes: "My personal handwritten note",
-                status: "in progress",
+                status: "in_progress",
             },
         })
 
         // 3. Re-import CSV (which has My Rating=3 -> 60, status=completed, review="CSV review")
         const { job: j2 } = await importAndWait(token, csv, "edit2.csv")
-        // Since rating is non-null, finished_at is already set, pageCount is already set: nothing to fill -> skipped
+        // Since rating is non-null, the entry is already there, pageCount is already set: nothing to fill -> skipped
         expect(j2.result).toEqual(expect.objectContaining({ imported: 0, updated: 0, skipped: 1, failures: [] }))
 
         const after = await getLog("9401")
         expect(after!.rating).toBe(95)
         expect(after!.notes).toBe("My personal handwritten note")
-        expect(after!.status).toBe("in progress")
+        expect(after!.status).toBe("in_progress")
     })
 
     test("a row with nothing to fill is counted as skipped", async () => {

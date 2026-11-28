@@ -1,11 +1,12 @@
 import type { Log, Media } from "@/types/mainTypes"
-import { formatLogMetadata } from "@/lib/logMetadata"
+import { formatLogDetails } from "@/lib/logDetails"
 import { displayRating, formatLogDate, statusLabel } from "@/lib/logView"
 import { aspectForMedia } from "@/lib/mediaView"
 import { Button } from "@/components/ui/button"
 import { Cover } from "@/components/media-view/Cover"
 import { RowShell } from "@/components/media-view/RowShell"
 import { ClampText } from "@/components/media-view/ClampText"
+import { formatBggDescription } from "@/lib/boardGameFormat"
 import { MediaActions } from "./MediaActions"
 
 interface MediaRowProps {
@@ -17,9 +18,8 @@ interface MediaRowProps {
 }
 
 export function MediaRow({ media, log, onEdit, onDelete, onLog }: MediaRowProps) {
-  const categories = media.genres ?? (Array.isArray(media.metadata?.categories) ? (media.metadata.categories as string[]) : [])
-  const metaParts = formatLogMetadata(media)
-  const url = typeof media.metadata?.url === "string" ? media.metadata.url : null
+  const categories = media.genres ?? (Array.isArray(media.details?.categories) ? (media.details.categories as string[]) : [])
+  const metaParts = formatLogDetails(media)
   const byline = [media.creator, media.year].filter(Boolean).join(" · ")
   const rating = log ? displayRating(log.rating) : null
   const status = log ? [statusLabel(log.status), formatLogDate(log.logged_at)].filter(Boolean).join(" · ") : ""
@@ -40,11 +40,9 @@ export function MediaRow({ media, log, onEdit, onDelete, onLog }: MediaRowProps)
           ) : (
               <Button size="sm" variant="amber" className="sm:mt-1" onClick={() => onLog(media)}>+ Log</Button>
           )}
-          <div className="max-sm:ml-auto">
-            <MediaActions media={media} logged={!!log} onEdit={onEdit} onDelete={onDelete} onLog={onLog} />
-          </div>
         </>
       }
+      actions={<MediaActions media={media} logged={!!log} onEdit={onEdit} onDelete={onDelete} onLog={onLog} />}
     >
       <div className="flex flex-wrap items-baseline gap-x-2">
         <h3 className="font-display text-lg font-semibold break-words">{media.title}</h3>
@@ -57,7 +55,7 @@ export function MediaRow({ media, log, onEdit, onDelete, onLog }: MediaRowProps)
         {metaParts.length > 0 && <> · {metaParts.join(" · ")}</>}
       </p>
 
-      <ClampText text={media.description ?? ""} />
+      <ClampText text={media.provider === "bgg" || media.mediaType?.name === "boardgame" ? formatBggDescription(media.description) : (media.description ?? "")} />
 
       {categories.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1">
@@ -65,11 +63,6 @@ export function MediaRow({ media, log, onEdit, onDelete, onLog }: MediaRowProps)
         </div>
       )}
 
-      {url && (
-        <a href={url} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block text-xs text-link underline-offset-4 hover:underline">
-          More info
-        </a>
-      )}
     </RowShell>
   )
 }

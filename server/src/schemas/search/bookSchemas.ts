@@ -1,79 +1,12 @@
 import { z } from "zod"
 import { LIMITS } from "@/config/limits.js"
 
-export const bookMetadataSchema = z.object({
+export const bookDetailsSchema = z.object({
     pageCount: z.number().nullable().optional(),
-    categories: z.array(z.string()).nullable().optional(), // 👈 Now TS knows this is an array!
     publisher: z.string().nullable().optional(),
-    url: z.string().nullable().optional(),
-    isbn: z.string().nullable().optional(),
-})
+}).strict()
 
-export type BookMetadata = z.infer<typeof bookMetadataSchema>
-
-//GOOGLE BOOKS SEARCH (DEPRECATED)
-//For info of each book fetched from GG Books
-const bookVolumeInfoSchema = z.object({
-    title: z
-        .string()
-        .optional()
-        .transform(val => val ?? "Unknown title"),
-    authors: z
-        .array(z.string())
-        .nullable()
-        .default(null),
-    publishedDate: z
-        .string()
-        .nullable()
-        .default(null),
-    description: z
-        .string()
-        .nullable()
-        .default(null),
-    imageLinks: z.object({
-        thumbnail: z
-            .string()
-            .nullable()
-            .default(null)
-    }).nullable().default(null),
-    averageRating: z
-        .number()
-        .nullable()
-        .default(null),
-    pageCount: z
-        .number()
-        .nullable()
-        .default(null),
-    categories: z
-        .array(z.string())
-        .nullable()
-        .default(null),
-    publisher: z
-        .string()
-        .nullable()
-        .default(null),
-    infoLink: z
-        .string()
-        .nullable()
-        .default(null),
-}).loose() //allow extra stuff
-
-//For an item of book
-export const googleBookSchema = z.object({
-  id: z.string(),
-  volumeInfo: bookVolumeInfoSchema,
-})
-
-export type GoogleBook = z.infer<typeof googleBookSchema>
-
-//For response of a buncha books
-export const googleBooksResponseSchema = z.object({
-    items: z
-        .array(googleBookSchema)
-        .nullable()
-        .default(null)
-})
-
+export type BookDetails = z.infer<typeof bookDetailsSchema>
 
 // OPEN LIBRARY SEARCH
 // Schema for a single book from Open Library Search API

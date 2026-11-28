@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import type { DialogName, Log } from "@/types/mainTypes"
-import type { Media, MediaMetadata } from "@/types/mainTypes"
+import type { Media } from "@/types/mainTypes"
 
 import { Button } from "@/components/ui/button"
 import { MediaRow } from "@/components/media/MediaRow"
@@ -29,7 +29,7 @@ import { unionCI } from "@/lib/filterValues"
 import { MediaForm } from "@/forms/MediaForm"
 import { ConfirmDeleteDialog } from "../../components/dialogs/ConfirmDeleteDialog"
 import EntityDialog from "../../components/dialogs/EntityDialog"
-import { LogForm } from "@/forms/LogForm"
+import { LogJournalDialog, type JournalSave } from "@/components/logs/LogJournalDialog"
 import { AVAILABLE_SORT_FIELDS_MEDIAS, type SortCriterion, type SortField } from "@/types/sort"
 import { useDataFilter } from "@/hooks/useDataFilter"
 import { DataControls } from "@/components/ui/DataControls"
@@ -40,9 +40,9 @@ const getMediaSortValue = (media: Media, field: SortField) => {
       case "title": return media.title
       case "creator": return media.creator
       case "date": return new Date(media.created_at).getTime()
-      case "pageCount": return Number((media.metadata as MediaMetadata)?.pageCount ?? 0)
+      case "pageCount": return Number((media.details as Record<string, unknown> | undefined)?.pageCount ?? 0)
       case "categories": {
-          const cats = media.genres ?? (media.metadata as MediaMetadata)?.categories
+          const cats = media.genres ?? (media.details as Record<string, unknown> | undefined)?.categories
           return Array.isArray(cats) ? cats.join(", ") : String(cats || "")
       }
       default: return ""
@@ -189,6 +189,8 @@ export default function MediasSection() {
     onSuccess: () => {
       queryClient.refetchQueries({queryKey: fetchMediasQueryOptions().queryKey})
       queryClient.refetchQueries({queryKey: fetchLogsQueryOptions().queryKey})
+      // A deleted item takes its log, and the log its letters
+      queryClient.invalidateQueries({queryKey: ["letters"]})
     }
   })
   
@@ -201,7 +203,8 @@ export default function MediasSection() {
   })
   // LOG
   const createLogMutation = useMutation({
-    mutationFn: createLog,
+    mutationFn: ({ media, save }: { media: Media; save: JournalSave }) =>
+      createLog({ ...save.log, media }, save.entry ?? null),
     onSuccess: () => {
       queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey })
       queryClient.invalidateQueries({ queryKey: ["tags"] })
@@ -209,7 +212,7 @@ export default function MediasSection() {
   })
   
   const editLogMutation = useMutation({
-    mutationFn: editLog,
+    mutationFn: ({ log, save }: { log: Log; save: JournalSave }) => editLog({ id: log.id, ...save.log }, save.entries),
     onSuccess: () => {
       queryClient.refetchQueries({ queryKey: fetchLogsQueryOptions().queryKey })
       queryClient.invalidateQueries({ queryKey: ["tags"] })
@@ -249,14 +252,6 @@ export default function MediasSection() {
       setFormData: React.Dispatch<React.SetStateAction<Partial<Media>>> //state setter for formData
   ) => (
     <MediaForm formData={formData} setFormData={setFormData}/>
-  )
-
-  //Log form
-  const renderLogForm = (
-        formData: Partial<Log>,
-        setFormData: React.Dispatch<React.SetStateAction<Partial<Log>>> //state setter for formData
-    ) => (
-      <LogForm formData={formData} setFormData={setFormData} targetMedia={targetMediaForLog as Media}/>
   )
 
   return (
@@ -381,16 +376,18 @@ export default function MediasSection() {
         renderForm={renderMediaForm}
       />
 
-      <EntityDialog 
-        mode={targetLog ? "edit" : "create"}
-        open={openDialog === "logForm"}
-        onOpenChange={(isOpen) => setOpenDialog(isOpen ? "logForm" : null)}
-        target={targetLog ?? undefined}
-        onSubmit={targetLog ? 
-          (formData) => editLogMutation.mutateAsync(formData) : 
-          (formData) => createLogMutation.mutateAsync(formData)}
-        renderForm={renderLogForm}
-      />
+      {targetMediaForLog && (
+        <LogJournalDialog
+          open={openDialog === "logForm"}
+          onOpenChange={(isOpen) => setOpenDialog(isOpen ? "logForm" : null)}
+          media={targetMediaForLog}
+          log={targetLog}
+          onSave={(save) =>
+            targetLog
+              ? editLogMutation.mutateAsync({ log: targetLog, save })
+              : createLogMutation.mutateAsync({ media: targetMediaForLog, save })}
+        />
+      )}
     </div>
   )
 }

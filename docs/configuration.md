@@ -35,6 +35,7 @@ Never commit real `.env` files; they're git-ignored.
 
 | Variable | Required | Description |
 | --- | --- | --- |
+| `PUBLIC_DEMO` | no | Publish the demo credentials in `GET /config` so the login page can offer a one-click demo login. Default `false`; note that it publishes the demo password on purpose. |
 | `SYSTEM_USER_PASSWORD` | yes | Password for the internal `system` user that owns shared media and the built-in media types. |
 | `DEMO_USER_PASSWORD` | yes | Password for the `demo` user. |
 | `LASTFM_API_KEY` | no | Gives the demo user a Last.fm key (music search). |

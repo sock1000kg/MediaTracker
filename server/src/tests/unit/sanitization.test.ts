@@ -1,4 +1,5 @@
 // __tests__/utils.test.js
+import { toIdSource } from "@/db.js"
 import { checkPasswordStrength, 
   normalizeTypeName,
   sanitizeRating,
@@ -8,7 +9,6 @@ import { checkPasswordStrength,
   sanitizeStatus,
   sanitizeYear,
   sanitizeMetadata,
-  sanitizeSource,
   sanitizeApiKey,
   MAX_API_KEY_LENGTH,
   sanitizeUsername,
@@ -186,17 +186,17 @@ describe('sanitizeDisplayName', () => {
     expect(result!.length).toBe(50)
   })
 })
-describe("sanitizeSource", () => {
+describe("toIdSource", () => {
     it("allows known sources, normalised", () => {
-        expect(sanitizeSource("jikan")).toBe("jikan")
-        expect(sanitizeSource(" Jikan ")).toBe("jikan")
-        expect(sanitizeSource("lastfm")).toBe("lastfm")
-        expect(sanitizeSource(" TMDB ")).toBe("tmdb")
-        expect(sanitizeSource(" RAWG ")).toBe("rawg")
+        expect(toIdSource("mal")).toBe("mal")
+        expect(toIdSource(" MAL ")).toBe("mal")
+        expect(toIdSource("lastfm")).toBe("lastfm")
+        expect(toIdSource(" TMDB ")).toBe("tmdb")
+        expect(toIdSource(" RAWG ")).toBe("rawg")
     })
     it("rejects unknown sources", () => {
-        expect(sanitizeSource("unknown")).toBeNull()
-        expect(sanitizeSource(null)).toBeNull()
+        expect(toIdSource("unknown")).toBeNull()
+        expect(toIdSource(null)).toBeNull()
     })
 })
 

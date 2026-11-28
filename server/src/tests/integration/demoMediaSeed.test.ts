@@ -82,8 +82,10 @@ describe("Demo Media Seeding (Integration)", () => {
             return acc
         }, {})
 
+        const normalizeStatus = (s: string) => s === "in progress" ? "in_progress" : s
         const expectedByStatus = fixture.items.reduce<Record<string, number>>((acc, it) => {
-            acc[it.log.status] = (acc[it.log.status] || 0) + 1
+            const st = normalizeStatus(it.log.status)
+            acc[st] = (acc[st] || 0) + 1
             return acc
         }, {})
 
@@ -92,9 +94,10 @@ describe("Demo Media Seeding (Integration)", () => {
         }
 
         // Verify dates (finished >= started)
-        for (const l of fixtureLogs) {
-            if (l.started_at && l.finished_at) {
-                expect(l.finished_at.getTime()).toBeGreaterThanOrEqual(l.started_at.getTime())
+        const entries = await prisma.logEntry.findMany({ where: { log: { userId: demoUserId } } })
+        for (const e of entries) {
+            if (e.startedAt && e.finishedAt) {
+                expect(e.finishedAt.getTime()).toBeGreaterThanOrEqual(e.startedAt.getTime())
             }
         }
 
@@ -167,8 +170,9 @@ describe("Demo Media Seeding (Integration)", () => {
         expect(tagNames.has("shoegaze")).toBe(true)
     })
 
-    it("is idempotent: re-seeding produces no duplicate media or logs", async () => {
+    it("is idempotent: re-seeding produces no duplicate media, logs or entries", async () => {
         const mediaCountBefore = await prisma.media.count()
+        const entryCountBefore = await prisma.logEntry.count({ where: { log: { userId: demoUserId } } })
         const logCountBefore = await prisma.userLogs.count({ where: { userId: demoUserId } })
         const collCountBefore = await prisma.collection.count({ where: { userId: demoUserId } })
         const collItemCountBefore = await prisma.collectionItem.count({
@@ -189,6 +193,7 @@ describe("Demo Media Seeding (Integration)", () => {
         expect(logCountAfter).toBe(logCountBefore)
         expect(collCountAfter).toBe(collCountBefore)
         expect(collItemCountAfter).toBe(collItemCountBefore)
+        expect(await prisma.logEntry.count({ where: { log: { userId: demoUserId } } })).toBe(entryCountBefore)
     })
 
     it("resetDemoUser restores exactly the same state", async () => {

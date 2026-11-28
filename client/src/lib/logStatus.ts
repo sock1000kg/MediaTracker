@@ -1,16 +1,34 @@
-import type { LogStatus } from "@/types/mainTypes"
+import type { EntryInput } from "@/types/mainTypes"
 
-type DatedStatus = { status?: LogStatus | string | null; started_at?: string | null; finished_at?: string | null }
+/** True when the draft entry says anything worth saving. */
+export function hasEntryContent(entry: EntryInput | undefined | null): entry is EntryInput {
+  if (!entry) return false
+  const ed = entry.edition
+  return Boolean(
+    entry.name?.trim() || entry.startedAt || entry.finishedAt || entry.note?.trim() ||
+    entry.progressEpisodes != null || entry.progressChapters != null || entry.progressVolumes != null ||
+    (ed && (ed.format?.trim() || ed.language?.trim()))
+  )
+}
 
-/**
- * Applies a status change to log form data. Switching to "in progress" with no start date
- * starts it today, unless a finish date before today would make that invalid.
- */
-export function applyStatus<T extends DatedStatus>(prev: T, status: LogStatus, today: string): T {
-  const next = { ...prev, status }
-  const finished = prev.finished_at ? prev.finished_at.slice(0, 10) : ""
-  if (status === "in progress" && !prev.started_at && (!finished || finished >= today)) {
-    next.started_at = today
+/** Trims an entry draft for sending: day-precision dates, blank name, note and edition keys dropped. */
+export function cleanEntry(entry: EntryInput): EntryInput {
+  const ed = entry.edition
+  const edition = ed
+    ? Object.fromEntries(
+        (["format", "language"] as const)
+          .map((k) => [k, ed[k]?.trim()] as const)
+          .filter(([, v]) => v)
+      )
+    : undefined
+  return {
+    name: entry.name?.trim() ? entry.name.trim() : null,
+    startedAt: entry.startedAt ? entry.startedAt.slice(0, 10) : null,
+    finishedAt: entry.finishedAt ? entry.finishedAt.slice(0, 10) : null,
+    progressEpisodes: entry.progressEpisodes ?? null,
+    progressChapters: entry.progressChapters ?? null,
+    progressVolumes: entry.progressVolumes ?? null,
+    note: entry.note?.trim() ? entry.note.trim() : null,
+    edition: edition && Object.keys(edition).length > 0 ? edition : null,
   }
-  return next
 }

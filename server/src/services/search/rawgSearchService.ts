@@ -2,17 +2,16 @@ import {
     RawgGameItem, GameSearchFilters, rawgGameDetailsSchema, rawgSearchResponseSchema
 } from "@/schemas/search/gameSchemas.js"
 import { searchResultsSchema, SearchResult } from "@/schemas/search/searchSchemas.js"
-import { createUserAgentHeader, decryptKey, sanitizeDescription, validateSchema } from "@/utilities.js"
-import { findUserById } from "@/repositories/authRepository.js"
+import { sanitizeDescription, validateSchema } from "@/utilities.js"
+import { unexpectedShape } from "./providerErrors.js"
+import { providerFetch } from "@/providers/providerFetch.js"
+import { getUserApiKey as getRegistryUserApiKey } from "@/providers/auth.js"
 import { AppError } from "@/api/domain/error.js"
 import prisma from "@/prismaClient.js"
-import { findMediaBySource } from "@/repositories/mediaRepository.js"
+import { findMediaByProviderId } from "@/repositories/mediaRepository.js"
 
 const BASE_URL = "https://api.rawg.io/api/games"
 const PAGE_SIZE = 20
-const DEFAULT_RETRY_MS = 1000
-const MAX_RETRY_MS = 3000
-const TIMEOUT_MS = 8000
 const MAX_CATEGORIES = 10
 
 export const RAWG_PLATFORM_IDS: Record<NonNullable<GameSearchFilters["platform"]>, number> = {
@@ -24,17 +23,13 @@ export const RAWG_ORDERING: Record<NonNullable<GameSearchFilters["sort"]>, strin
 }
 
 import { isJunkGenre, JUNK_RAWG_TAGS } from "@/services/genreService.js"
-import { unexpectedShape } from "./providerErrors.js"
 
 export { JUNK_RAWG_TAGS }
 
-// The key is a query parameter: never log or echo this URL
 export function buildRawgSearchUrl(
-    { q, page = 1, platform, sort }: { q: string, page?: number } & GameSearchFilters,
-    key: string
+    { q, page = 1, platform, sort }: { q: string, page?: number } & GameSearchFilters
 ): URL {
     const url = new URL(BASE_URL)
-    url.searchParams.set("key", key)
     url.searchParams.set("search", q)
     url.searchParams.set("page", String(page))
     url.searchParams.set("page_size", String(PAGE_SIZE))
@@ -45,10 +40,8 @@ export function buildRawgSearchUrl(
     return url
 }
 
-export function buildRawgDetailsUrl(id: number, key: string): URL {
-    const url = new URL(`${BASE_URL}/${id}`)
-    url.searchParams.set("key", key)
-    return url
+export function buildRawgDetailsUrl(id: number): URL {
+    return new URL(`${BASE_URL}/${id}`)
 }
 
 type Named = { name?: string | null }
@@ -84,23 +77,24 @@ export function mapRawgGame(item: RawgGameItem): SearchResult {
     const platforms = [...new Set(
         (item.platforms ?? []).map(p => p.platform?.name?.trim() ?? "").filter(Boolean)
     )]
+    const categories = cleanRawgCategories(item.genres, item.tags)
     return {
         mediaType: "game",
         title: item.name?.trim() as string, // undefined falls back to "Unknown title" in searchResultSchema
         creator: null,
         year: yearStr && /^\d{4}$/.test(yearStr) ? yearStr : null,
+        releaseDate: item.released ?? null,
         description: null,
         source: "rawg",
         sourceId: `game-${item.id}`,
         imageUrl: image && image.startsWith("https://") ? image : null,
-        metadata: {
-            url: `https://rawg.io/games/${item.slug || item.id}`,
-            kind: "game",
-            platforms: platforms.length ? platforms : null,
-            metacritic: item.metacritic ?? null,
-            score: item.rating ? item.rating : null,
-            categories: cleanRawgCategories(item.genres, item.tags),
-            playtimeHours: typeof item.playtime === "number" && item.playtime > 0 ? item.playtime : null,
+        genres: categories && categories.length ? categories : undefined,
+        details: {
+            platforms: platforms.length ? platforms : undefined,
+            metacritic: item.metacritic ?? undefined,
+            score: item.rating ? item.rating : undefined,
+            scoreScale: item.rating ? "rawg_5" as const : undefined,
+            avgPlaytimeHours: typeof item.playtime === "number" && item.playtime > 0 ? item.playtime : undefined,
         },
     } as SearchResult
 }
@@ -125,46 +119,24 @@ export function parseRawgDetails(raw: unknown): GameDetails {
     }
 }
 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
-
-function retryDelayMs(res: Response): number {
-    const secs = Number(res.headers.get("Retry-After"))
-    const ms = Number.isFinite(secs) && secs > 0 ? secs * 1000 : DEFAULT_RETRY_MS
-    return Math.min(ms, MAX_RETRY_MS)
-}
 
 export class RawgSearchService {
     async getUserApiKey(userId: string): Promise<string> {
-        const user = await findUserById(userId)
-        if (!user) throw new AppError("Non-existent userId", 404)
-
-        const key = user.apiKeys
-            .map(k => ({ ...k, key: decryptKey(k.key) }))
-            .find(k => k.service === "rawg")?.key
-
-        if (!key) throw new AppError("Missing Game API Key", 404)
-        return key
+        return getRegistryUserApiKey("rawg", userId)
     }
 
-    // One request with a single retry after a 429. 401/403 map to 400: the client treats any 401 as an expired session.
-    // Every thrown error is a fixed message: nothing from fetch (which may include the URL and key) is propagated.
-    private async fetchJson(url: URL): Promise<unknown> {
-        const send = () => fetch(url.toString(), {
-            headers: createUserAgentHeader().headers as Record<string, string>,
-            signal: AbortSignal.timeout(TIMEOUT_MS), // created per attempt, at send time
-        })
-
+    // One request with a single retry after a 429. Routed through providerFetch.
+    private async fetchJson(url: URL, apiKey: string): Promise<unknown> {
         try {
-            let res = await send()
-            if (res.status === 429) {
-                await sleep(retryDelayMs(res))
-                res = await send()
-                if (res.status === 429) {
-                    throw new AppError("Game search is busy right now, try again in a moment", 503)
-                }
-            }
+            const res = await providerFetch("rawg", url, {
+                apiKey,
+                allowHttpErrors: true,
+            })
             if (res.status === 401 || res.status === 403) {
                 throw new AppError("RAWG rejected your API key. Check it in Settings → API Keys.", 400)
+            }
+            if (res.status === 429 || res.status === 503) {
+                throw new AppError("RAWG is unavailable", 503)
             }
             if (!res.ok) throw new AppError("RAWG search failed", 502, { cause: `upstream HTTP ${res.status}` })
             return await res.json()
@@ -178,11 +150,41 @@ export class RawgSearchService {
         }
     }
 
+    // One game by id, mapped like a search result plus what only the details endpoint has.
+    // Throws the standard AppError 404 (gone) / 503 (unavailable).
+    async getGame(id: number, options?: { apiKey?: string; userId?: string }): Promise<SearchResult> {
+        let key = options?.apiKey
+        if (!key && options?.userId) {
+            key = await this.getUserApiKey(options.userId)
+        }
+        if (!key) throw new AppError("Missing Game API Key", 404)
+
+        // providerFetch maps 404 -> "no longer has this item" and every other failure -> 503
+        const res = await providerFetch("rawg", buildRawgDetailsUrl(id), { apiKey: key })
+        const checked = rawgGameDetailsSchema.safeParse(await res.json().catch(() => null))
+        if (!checked.success) {
+            throw new AppError("Provider is unavailable", 503, { cause: unexpectedShape(checked.error) })
+        }
+        const d = checked.data
+        const base = mapRawgGame({ ...d, id, slug: null })
+        const details = parseRawgDetails(d)
+        return {
+            ...base,
+            creator: details.developers.length ? details.developers.join(", ") : null,
+            creators: details.developers.map(name => ({ name, role: "developer" })),
+            description: details.description,
+            details: {
+                ...base.details,
+                publishers: details.publishers.length ? details.publishers : undefined,
+            },
+        } as SearchResult
+    }
+
     async searchGamesRawg(userId: string, q: string, page = 1, filters: GameSearchFilters = {}):
         Promise<{ results: SearchResult[], nextStartIndex: number | null }>
     {
         const key = await this.getUserApiKey(userId)
-        const raw = await this.fetchJson(buildRawgSearchUrl({ q, page, ...filters }, key))
+        const raw = await this.fetchJson(buildRawgSearchUrl({ q, page, ...filters }), key)
         const checked = rawgSearchResponseSchema.safeParse(raw)
         if (!checked.success) throw new AppError("RAWG search failed", 502, { cause: unexpectedShape(checked.error) })
         const parsed = checked.data
@@ -197,7 +199,7 @@ export class RawgSearchService {
     // Throws on any failure (callers decide what to do)
     async fetchGameDetails(userId: string, id: number): Promise<GameDetails> {
         const key = await this.getUserApiKey(userId)
-        const raw = await this.fetchJson(buildRawgDetailsUrl(id, key))
+        const raw = await this.fetchJson(buildRawgDetailsUrl(id), key)
         const checked = rawgGameDetailsSchema.safeParse(raw)
         if (!checked.success) throw new AppError("RAWG search failed", 502, { cause: unexpectedShape(checked.error) })
         return parseRawgDetails(checked.data)
@@ -220,14 +222,14 @@ export type RawgEnrichment = {
 // Never throws: failures (incl. missing/invalid key) are warned about (message only) and the log still succeeds.
 export async function enrichRawgOnLog(
     userId: string,
-    mediaData: { source: string, sourceId: string | null, creator?: string | null, description?: string | null, metadata?: unknown }
+    mediaData: { source: string, sourceId: string | null, creator?: string | null, description?: string | null, details?: unknown }
 ): Promise<RawgEnrichment | null> {
     try {
-        const existing = await findMediaBySource(mediaData.sourceId, mediaData.source, prisma)
-        const existingMeta = existing?.metadata && typeof existing.metadata === "object" && !Array.isArray(existing.metadata)
-            ? existing.metadata as Record<string, unknown>
+        const existing = await findMediaByProviderId(mediaData.source, mediaData.sourceId, prisma)
+        const existingDetails = existing?.details && typeof existing.details === "object" && !Array.isArray(existing.details)
+            ? existing.details as Record<string, unknown>
             : null
-        if (existing && existingMeta && existingMeta.publishers !== undefined) return null
+        if (existing && existingDetails && existingDetails.publishers !== undefined) return null
 
         const gameId = Number(/^game-(\d+)$/.exec(mediaData.sourceId ?? "")?.[1])
         if (!Number.isInteger(gameId)) return null
@@ -244,16 +246,20 @@ export async function enrichRawgOnLog(
                 existingId: existing.id,
                 creator: existing.creator ? null : developers,
                 creators: developersStructured,
-                genres: details.categories,
+                genres: details.categories && details.categories.length > 0 ? details.categories : null,
                 description: existing.description ? null : details.description,
                 patch,
             }
         }
         mediaData.creator = mediaData.creator ?? developers
         mediaData.description = mediaData.description ?? details.description
-        ;(mediaData as Record<string, unknown>).creators = developersStructured
-        ;(mediaData as Record<string, unknown>).genres = details.categories
-        mediaData.metadata = { ...(mediaData.metadata as object ?? {}), ...patch }
+        if (developersStructured.length > 0) {
+            ;(mediaData as Record<string, unknown>).creators = developersStructured
+        }
+        if (details.categories && details.categories.length > 0) {
+            ;(mediaData as Record<string, unknown>).genres = details.categories
+        }
+        mediaData.details = { ...(mediaData.details as object ?? {}), ...patch }
         return null
     } catch (error: unknown) {
         const reason = error instanceof AppError ? error.message : "unexpected error"

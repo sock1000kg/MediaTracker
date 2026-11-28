@@ -1,6 +1,26 @@
 import prisma from "@/prismaClient.js"
-import { DbClient, Prisma } from "@/db.js"
+import { DbClient, LogStatus, toLogStatus, fromLogStatus } from "@/db.js"
 import { MEDIA_INCLUDE, formatMedia } from "./mediaFormat.js"
+import { sortEntriesNewestFirst, EntryLike } from "@/services/logEntries.js"
+import { attachLetterCounts } from "./letterRepository.js"
+
+type EntryRow = EntryLike & {
+    logId: string
+    progressEpisodes: number | null // entry
+    progressChapters: number | null // entry
+    progressVolumes: number | null // entry
+    name: string | null
+    note: string | null
+    created_at: Date
+}
+
+/** What every log read includes. */
+export const LOG_INCLUDE = {
+    media: { include: MEDIA_INCLUDE },
+    tags: { include: { tag: true } },
+    collectionItems: { select: { collectionId: true } },
+    entries: true,
+} as const
 
 export type LogTagItem = { id: string; name: string }
 
@@ -13,6 +33,7 @@ export function mapLogWithTags<T extends {
     media?: Record<string, unknown> | null
     tags?: { tag: { id: string; name: string } }[]
     collectionItems?: { collectionId: string }[]
+    entries?: EntryRow[]
 }>(log: T) {
     const rawTags = log.tags ?? []
     const tags: LogTagItem[] = rawTags
@@ -23,8 +44,15 @@ export function mapLogWithTags<T extends {
     const formattedMedia = log.media ? formatMedia(log.media) : log.media
     const copy = { ...log }
     delete (copy as { collectionItems?: unknown }).collectionItems
+    const rawStatus = (copy as { status?: unknown }).status
+    const statusStr = typeof rawStatus === "string" ? fromLogStatus(toLogStatus(rawStatus)) : null
+    const entries = sortEntriesNewestFirst(log.entries ?? [])
+
     return {
         ...copy,
+        status: statusStr,
+        entries,
+        entryCount: entries.length,
         media: formattedMedia,
         genres: formattedMedia?.genres ?? [],
         creators: formattedMedia?.creators ?? [],
@@ -114,32 +142,22 @@ export async function attachChildSummaries<T extends { media?: MediaWithChildSum
 export async function createLog(
     userId: string, 
     mediaId: string, 
-    status: string | null,
+    status: LogStatus | string | null,
     rating: number | null, 
     notes: string | null,
     client: DbClient,
-    loggedAt?: Date | null,
-    startedAt?: Date | null,
-    finishedAt?: Date | null,
-    progress?: unknown
+    loggedAt?: Date | null
 ) {
     const log = await client.userLogs.create({
         data: {
             userId,
             mediaId,
-            status,
+            status: toLogStatus(status),
             rating,
             notes,
-            ...(progress !== undefined ? { progress: (progress as Prisma.InputJsonValue) ?? Prisma.JsonNull } : {}),
             ...(loggedAt ? { logged_at: loggedAt } : {}),
-            ...(startedAt ? { started_at: startedAt } : {}),
-            ...(finishedAt ? { finished_at: finishedAt } : {}),
         },
-        include: {
-            media: { include: MEDIA_INCLUDE },
-            tags: { include: { tag: true } },
-            collectionItems: { select: { collectionId: true } },
-        },
+        include: LOG_INCLUDE,
     })
     return mapLogWithTags(log)
 }
@@ -147,18 +165,16 @@ export async function createLog(
 export async function getAllLogs(userId: string, client: DbClient = prisma) {
     const logs = await client.userLogs.findMany({
         where: { userId },
+        // Ordering rule: logged_at is non-unique (e.g. bulk imports or multiple logs in same millisecond).
+        // UUID v7 id is time-ordered but can have sub-millisecond variations; adding id: "asc" provides a stable tie-breaker.
         orderBy: [
             { logged_at: "desc" },
             { id: "asc" },
         ],
-        include: { 
-            media: { include: MEDIA_INCLUDE },
-            tags: { include: { tag: true } },
-            collectionItems: { select: { collectionId: true } },
-        },
+        include: LOG_INCLUDE,
     })
     const mapped = logs.map(mapLogWithTags)
-    return attachChildSummaries(mapped, userId, client)
+    return attachLetterCounts(await attachChildSummaries(mapped, userId, client), userId, client)
 }
 
 export async function findLogOfUserByMediaId(userId: string, mediaId: string, client: DbClient) {
@@ -169,58 +185,44 @@ export async function findLogOfUserByMediaId(userId: string, mediaId: string, cl
                 mediaId 
             } 
         },
-        include: { 
-            media: { include: MEDIA_INCLUDE },
-            tags: { include: { tag: true } },
-            collectionItems: { select: { collectionId: true } },
-        },
+        include: LOG_INCLUDE,
     })
     if (!log) return null
     const mapped = mapLogWithTags(log)
     const [withSummary] = await attachChildSummaries([mapped], userId, client)
-    return withSummary
+    const [withLetters] = await attachLetterCounts([withSummary], userId, client)
+    return withLetters
 }
 
 export async function findLogById(logId: string, client: DbClient = prisma) {
     const log = await client.userLogs.findFirst({ 
         where: { id: logId }, 
-        include: { 
-            media: { include: MEDIA_INCLUDE },
-            tags: { include: { tag: true } },
-            collectionItems: { select: { collectionId: true } },
-        } 
+        include: LOG_INCLUDE 
     })
     if (!log) return null
     const mapped = mapLogWithTags(log)
     const [withSummary] = await attachChildSummaries([mapped], log.userId, client)
-    return withSummary
+    const [withLetters] = await attachLetterCounts([withSummary], log.userId, client)
+    return withLetters
 }
 
 export async function updateLog(
     logId: string, 
-    newStatus: string | null | undefined, 
+    newStatus: LogStatus | string | null | undefined, 
     newRating: number | null | undefined, 
     newNotes: string | null | undefined,
-    client: DbClient,
-    startedAt?: Date | null,
-    finishedAt?: Date | null,
-    progress?: unknown
+    client: DbClient
 ) {
+    const cleanStatus = newStatus !== undefined ? toLogStatus(newStatus) : undefined
+
     const log = await client.userLogs.update({
         where: { id: logId },
         data: { 
-            ...(newStatus !== undefined ? { status: newStatus } : {}), 
+            ...(cleanStatus !== undefined ? { status: cleanStatus } : {}), 
             ...(newRating !== undefined ? { rating: newRating } : {}),
             ...(newNotes !== undefined ? { notes: newNotes } : {}),
-            ...(startedAt !== undefined ? { started_at: startedAt } : {}),
-            ...(finishedAt !== undefined ? { finished_at: finishedAt } : {}),
-            ...(progress !== undefined ? { progress: (progress as Prisma.InputJsonValue) ?? Prisma.JsonNull } : {}),
         },
-        include: { 
-            media: { include: MEDIA_INCLUDE },
-            tags: { include: { tag: true } },
-            collectionItems: { select: { collectionId: true } },
-        },
+        include: LOG_INCLUDE,
     })
     return mapLogWithTags(log)
 }

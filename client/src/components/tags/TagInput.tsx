@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useId } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { X } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { fetchTags } from "@/api/tags"
 import {
   normalizeTagName,
@@ -14,6 +15,7 @@ interface TagInputProps {
   disabled?: boolean
   maxTags?: number
   id?: string
+  variant?: "default" | "underlined"
 }
 
 export function TagInput({
@@ -22,6 +24,7 @@ export function TagInput({
   disabled = false,
   maxTags: propMaxTags,
   id: propId,
+  variant = "default",
 }: TagInputProps) {
   const limits = useLimits()
   const maxTags = propMaxTags ?? limits.tags.maxPerLog
@@ -190,9 +193,12 @@ export function TagInput({
   return (
     <div ref={containerRef} className="relative w-full space-y-1">
       <div
-        className={`flex min-h-10 w-full flex-wrap items-center gap-1.5 rounded-md border border-input bg-card px-2.5 py-1.5 text-sm focus-within:ring-2 focus-within:ring-ring ${
-          disabled ? "opacity-60 cursor-not-allowed" : ""
-        }`}
+        className={cn(
+          variant === "underlined"
+            ? "journal-field flex min-h-9 w-full flex-wrap items-center gap-1.5 px-0 py-1 text-sm focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 rounded-xs"
+            : "flex min-h-10 w-full flex-wrap items-center gap-1.5 rounded-md border border-input bg-card px-2.5 py-1.5 text-sm focus-within:ring-2 focus-within:ring-ring",
+          disabled && "opacity-60 cursor-not-allowed"
+        )}
         onClick={() => inputRef.current?.focus()}
       >
         {value.map((tag) => (

@@ -27,14 +27,13 @@ function log(o: Partial<{
     status: o.status === undefined ? "completed" : o.status,
     rating: o.rating === undefined ? null : o.rating,
     logged_at: o.date ?? at(2026, 11),
-    started_at: o.started_at,
-    finished_at: o.finished_at,
+    entries: o.started_at || o.finished_at ? [{ startedAt: o.started_at, finishedAt: o.finished_at }] : undefined,
     tags: o.tags?.map((t, idx) => ({ id: t.id ?? String(idx + 1), name: t.name })),
     media: {
       id, title: o.title ?? `t${id}`, creator: o.creator ?? null,
       creators: o.creators ?? null,
       genres: o.genres ?? (Array.isArray(o.cats) ? (o.cats.filter((x): x is string => typeof x === "string")) : null),
-      metadata: o.cats === undefined ? null : { categories: o.cats },
+      details: o.cats === undefined ? null : { categories: o.cats },
       mediaType: { name: o.type ?? "book" },
     },
   }
@@ -42,7 +41,7 @@ function log(o: Partial<{
 const NOW = new Date(2026, 10, 13, 12) // 13 Nov 2026
 
 describe("dateOf / date basis", () => {
-  test("uses finished_at when present, otherwise logged_at", () => {
+  test("uses the entry finish date when present, otherwise logged_at", () => {
     const finishedLog = log({ date: at(2026, 11), finished_at: at(2026, 10, 5) })
     const unfinishedLog = log({ date: at(2026, 11) })
     expect(dateOf(finishedLog)?.toISOString()).toBe(new Date(at(2026, 10, 5)).toISOString())
@@ -52,11 +51,11 @@ describe("dateOf / date basis", () => {
   test("when finished date and logged date fall in different months, range filtering uses finish date", () => {
     // Finished 20 Oct 2026, logged 5 Nov 2026
     const item = log({ date: at(2026, 11, 5), finished_at: at(2026, 10, 20) })
-    expect(filterByRange([item], { kind: "month", year: 2026, month: 10 }, NOW)).toHaveLength(1)
-    expect(filterByRange([item], { kind: "month", year: 2026, month: 11 }, NOW)).toHaveLength(0)
+    expect(filterByRange([item], { mode: "month", year: 2026, month: 10 }, NOW)).toHaveLength(1)
+    expect(filterByRange([item], { mode: "month", year: 2026, month: 11 }, NOW)).toHaveLength(0)
 
     // In perMonth, it counts under Oct (2026-10), not Nov
-    const buckets = perMonth([item], { kind: "year", year: 2026 }, NOW)
+    const buckets = perMonth([item], { mode: "year", year: 2026 }, NOW)
     const oct = buckets.find((b) => b.key === "2026-10")
     const nov = buckets.find((b) => b.key === "2026-11")
     expect(oct?.total).toBe(1)
@@ -76,18 +75,18 @@ describe("dateOf / date basis", () => {
 describe("filterByRange / yearsPresent", () => {
   const logs = [log({ date: at(2026, 1) }), log({ date: at(2025, 12, 31) }), log({ date: at(2025, 11, 1) }), log({ date: at(2025, 10, 31) }), log({ date: "garbage" })]
   test("all keeps everything, even invalid dates", () => {
-    expect(filterByRange(logs, { kind: "all" }, NOW)).toHaveLength(5)
+    expect(filterByRange(logs, { mode: "all" }, NOW)).toHaveLength(5)
   })
   test("year", () => {
-    expect(filterByRange(logs, { kind: "year", year: 2025 }, NOW)).toHaveLength(3)
-    expect(filterByRange(logs, { kind: "year", year: 1999 }, NOW)).toEqual([])
+    expect(filterByRange(logs, { mode: "year", year: 2025 }, NOW)).toHaveLength(3)
+    expect(filterByRange(logs, { mode: "year", year: 1999 }, NOW)).toEqual([])
   })
   test("last12 window: includes 1 Dec 2025 start month boundary, excludes the month before", () => {
     // Nov 2026 current -> window starts 1 Dec 2025
-    const r = filterByRange(logs, { kind: "last12" }, NOW)
+    const r = filterByRange(logs, { mode: "last12" }, NOW)
     expect(r.map((l) => l.logged_at)).toEqual([at(2026, 1), at(2025, 12, 31)])
     const edge = [log({ date: new Date(2025, 11, 1, 0, 0, 0).toISOString() }), log({ date: new Date(2025, 10, 30, 23, 59).toISOString() }), log({ date: new Date(2026, 11, 1).toISOString() })]
-    expect(filterByRange(edge, { kind: "last12" }, NOW)).toHaveLength(1)
+    expect(filterByRange(edge, { mode: "last12" }, NOW)).toHaveLength(1)
   })
   test("years are descending and skip invalid dates", () => {
     expect(yearsPresent(logs)).toEqual([2026, 2025])
@@ -97,14 +96,14 @@ describe("filterByRange / yearsPresent", () => {
 
 describe("summary", () => {
   test("no logs", () => {
-    expect(summary([])).toEqual({ total: 0, byStatus: { completed: 0, "in progress": 0, wishlist: 0, dropped: 0, none: 0 }, rated: 0, avgRating: null, completionRate: null })
+    expect(summary([])).toEqual({ logged: 0, byStatus: { completed: 0, "in progress": 0, wishlist: 0, dropped: 0, none: 0 }, rated: 0, avgRating: null, completionRate: null })
   })
   test("counts, avg rating and completion rate (wishlist excluded)", () => {
     const s = summary([
       log({ status: "completed", rating: 80 }), log({ status: "completed", rating: 100 }), log({ status: "dropped", rating: 20 }),
       log({ status: "wishlist" }), log({ status: "in progress" }), log({ status: null }), log({ status: "weird" }),
     ])
-    expect(s.total).toBe(7)
+    expect(s.logged).toBe(7)
     expect(s.byStatus).toEqual({ completed: 2, "in progress": 1, wishlist: 1, dropped: 1, none: 2 })
     expect(s.rated).toBe(3)
     expect(s.avgRating).toBeCloseTo(200 / 3)
@@ -119,35 +118,35 @@ describe("summary", () => {
 
 describe("perMonth", () => {
   test("year range fills empty months up to now for the current year", () => {
-    const m = perMonth([log({ date: at(2026, 3), type: "book" }), log({ date: at(2026, 3), type: "movie" })], { kind: "year", year: 2026 }, NOW)
+    const m = perMonth([log({ date: at(2026, 3), type: "book" }), log({ date: at(2026, 3), type: "movie" })], { mode: "year", year: 2026 }, NOW)
     expect(m).toHaveLength(11)
     expect(m[0].key).toBe("2026-01")
     expect(m[2]).toMatchObject({ key: "2026-03", total: 2, byType: { book: 1, movie: 1 } })
     expect(m[1].total).toBe(0)
   })
   test("past year gives all 12 months", () => {
-    expect(perMonth([log({ date: at(2024, 6) })], { kind: "year", year: 2024 }, NOW)).toHaveLength(12)
+    expect(perMonth([log({ date: at(2024, 6) })], { mode: "year", year: 2024 }, NOW)).toHaveLength(12)
   })
   test("last12 gives exactly 12 months ending now", () => {
-    const m = perMonth([], { kind: "last12" }, NOW)
+    const m = perMonth([], { mode: "last12" }, NOW)
     expect(m).toHaveLength(12)
     expect(m[0].key).toBe("2025-12")
     expect(m[11].key).toBe("2026-11")
   })
   test("all runs from the first log's month to now; empty with no dated logs", () => {
-    const m = perMonth([log({ date: at(2026, 9) }), log({ date: "bad" })], { kind: "all" }, NOW)
+    const m = perMonth([log({ date: at(2026, 9) }), log({ date: "bad" })], { mode: "all" }, NOW)
     expect(m.map((x) => x.key)).toEqual(["2026-09", "2026-10", "2026-11"])
-    expect(perMonth([], { kind: "all" }, NOW)).toEqual([])
-    expect(perMonth([log({ date: "bad" })], { kind: "all" }, NOW)).toEqual([])
+    expect(perMonth([], { mode: "all" }, NOW)).toEqual([])
+    expect(perMonth([log({ date: "bad" })], { mode: "all" }, NOW)).toEqual([])
   })
   test("a year with no logs still lists its months", () => {
-    expect(perMonth([], { kind: "year", year: 2020 }, NOW).every((x) => x.total === 0)).toBe(true)
+    expect(perMonth([], { mode: "year", year: 2020 }, NOW).every((x) => x.total === 0)).toBe(true)
   })
   test("labels and most active month", () => {
-    const m = perMonth([log({ date: at(2026, 10) }), log({ date: at(2026, 10) }), log({ date: at(2026, 11) })], { kind: "last12" }, NOW)
+    const m = perMonth([log({ date: at(2026, 10) }), log({ date: at(2026, 10) }), log({ date: at(2026, 11) })], { mode: "last12" }, NOW)
     expect(mostActiveMonth(m)).toMatchObject({ key: "2026-10", total: 2 })
     expect(m[10].label).toBe("Oct 2026")
-    expect(mostActiveMonth(perMonth([], { kind: "last12" }, NOW))).toBeNull()
+    expect(mostActiveMonth(perMonth([], { mode: "last12" }, NOW))).toBeNull()
   })
 })
 
@@ -245,32 +244,32 @@ describe("typeColorKey", () => {
 
 describe("range persistence", () => {
   test("round trip and junk", () => {
-    for (const r of [{ kind: "all" }, { kind: "last12" }, { kind: "year", year: 2024 }, { kind: "month", year: 2024, month: 3 }, { kind: "month", year: 2026, month: 12 }] as const) expect(rangeFromString(rangeToString(r))).toEqual(r)
+    for (const r of [{ mode: "all" }, { mode: "last12" }, { mode: "year", year: 2024 }, { mode: "month", year: 2024, month: 3 }, { mode: "month", year: 2026, month: 12 }] as const) expect(rangeFromString(rangeToString(r))).toEqual(r)
     expect(rangeFromString("nope")).toBeNull()
     expect(rangeFromString(null)).toBeNull()
-    expect(rangeToString({ kind: "month", year: 2024, month: 3 })).toBe("2024-03")
+    expect(rangeToString({ mode: "month", year: 2024, month: 3 })).toBe("2024-03")
     for (const bad of ["2024-00", "2024-13", "2024-3", "24-03", "2024-03-01", "y:2024-03"]) expect(rangeFromString(bad)).toBeNull()
   })
   test("initialRange with a stored month: kept only when that month has logs", () => {
     const logs = [log({ date: at(2026, 2) }), log({ date: at(2024, 2) })]
-    expect(initialRange(logs, "2024-02", NOW)).toEqual({ kind: "month", year: 2024, month: 2 })
-    expect(initialRange(logs, "2024-03", NOW)).toEqual({ kind: "year", year: 2026 })
-    expect(initialRange([log({ date: at(2024, 2) })], "2024-03", NOW)).toEqual({ kind: "all" })
+    expect(initialRange(logs, "2024-02", NOW)).toEqual({ mode: "month", year: 2024, month: 2 })
+    expect(initialRange(logs, "2024-03", NOW)).toEqual({ mode: "year", year: 2026 })
+    expect(initialRange([log({ date: at(2024, 2) })], "2024-03", NOW)).toEqual({ mode: "all" })
   })
   test("initialRange: stored if valid, else this year, else all", () => {
     const logs = [log({ date: at(2026, 2) }), log({ date: at(2024, 2) })]
-    expect(initialRange(logs, "y:2024", NOW)).toEqual({ kind: "year", year: 2024 })
-    expect(initialRange(logs, "y:1999", NOW)).toEqual({ kind: "year", year: 2026 })
-    expect(initialRange(logs, "last12", NOW)).toEqual({ kind: "last12" })
-    expect(initialRange([log({ date: at(2024, 2) })], null, NOW)).toEqual({ kind: "all" })
-    expect(initialRange([], null, NOW)).toEqual({ kind: "all" })
+    expect(initialRange(logs, "y:2024", NOW)).toEqual({ mode: "year", year: 2024 })
+    expect(initialRange(logs, "y:1999", NOW)).toEqual({ mode: "year", year: 2026 })
+    expect(initialRange(logs, "last12", NOW)).toEqual({ mode: "last12" })
+    expect(initialRange([log({ date: at(2024, 2) })], null, NOW)).toEqual({ mode: "all" })
+    expect(initialRange([], null, NOW)).toEqual({ mode: "all" })
   })
 })
 
 describe("pickStatsLine", () => {
-  const base = { total: 10, completed: 5, avgRating: 50 }
+  const base = { logged: 10, completed: 5, avgRating: 50 }
   test("rules in order", () => {
-    expect(pickStatsLine({ ...base, total: 0 })).toBeNull()
+    expect(pickStatsLine({ ...base, logged: 0 })).toBeNull()
     expect(pickStatsLine({ ...base, completed: 50, avgRating: 90 })).toBe(STATS_LINES.finisher)
     expect(pickStatsLine({ ...base, avgRating: 80 })).toBe(STATS_LINES.generous)
     expect(pickStatsLine(base)).toBe(STATS_LINES.default)
@@ -289,7 +288,7 @@ describe("month range, buckets and options", () => {
       log({ date: new Date(2025, 1, 10).toISOString() }),
       log({ date: "garbage" }),
     ]
-    expect(filterByRange(logs, { kind: "month", year: 2026, month: 2 }, NOW)).toHaveLength(2)
+    expect(filterByRange(logs, { mode: "month", year: 2026, month: 2 }, NOW)).toHaveLength(2)
   })
 
   test("perYear fills gaps up to now", () => {
@@ -310,7 +309,7 @@ describe("month range, buckets and options", () => {
   })
 
   test("perMonth for a month range is that single month", () => {
-    const r = perMonth([log({ date: at(2026, 3) })], { kind: "month", year: 2026, month: 3 }, NOW)
+    const r = perMonth([log({ date: at(2026, 3) })], { mode: "month", year: 2026, month: 3 }, NOW)
     expect(r.map((b) => b.key)).toEqual(["2026-03"])
   })
 
@@ -355,5 +354,50 @@ describe("filterByType", () => {
       media: { id: "999", title: "No Type", mediaType: null },
     }
     expect(filterByType([l1, l2], "Unknown")).toEqual([l2])
+  })
+})
+
+describe("entries: activity counts entries, ratings count logs", () => {
+  const twoReads = (): StatLog => ({
+    ...log({ rating: 80, type: "movie" }),
+    entries: [
+      { startedAt: "2026-03-01T00:00:00Z", finishedAt: "2026-03-02T00:00:00Z" },
+      { startedAt: "2026-05-10T00:00:00Z", finishedAt: "2026-05-11T00:00:00Z" },
+    ],
+  })
+
+  test("two entries of one log count 2 in perMonth, once in avgRating and the rating histogram", () => {
+    const l = twoReads()
+    const buckets = perMonth([l], { mode: "year", year: 2026 }, NOW)
+    expect(buckets.find((b) => b.key === "2026-03")?.total).toBe(1)
+    expect(buckets.find((b) => b.key === "2026-05")?.total).toBe(1)
+    expect(buckets.reduce((n, b) => n + b.total, 0)).toBe(2)
+
+    const s = summary([l])
+    expect(s.logged).toBe(1) // one log, however many times it was read
+    expect(s.rated).toBe(1)
+    expect(s.avgRating).toBe(80)
+    const hist = ratingHistogram([l])
+    expect(hist.buckets.reduce((n, b) => n + b.count, 0)).toBe(1)
+    expect(byType([l])).toEqual([{ type: "movie", count: 1, avgRating: 80 }])
+  })
+
+  test("a log is ranged by its newest entry; perYear and perDay count every entry", () => {
+    const l = twoReads()
+    expect(filterByRange([l], { mode: "month", year: 2026, month: 5 }, NOW)).toHaveLength(1)
+    expect(filterByRange([l], { mode: "month", year: 2026, month: 3 }, NOW)).toHaveLength(0)
+    expect(perYear([l], NOW).find((b) => b.key === "2026")?.total).toBe(2)
+    expect(perDay([l], 2026, 3).reduce((n, b) => n + b.total, 0)).toBe(1)
+  })
+
+  test("summary.logged is the number of logs passed in, whatever their entries", () => {
+    const l: StatLog = { ...log({}), entries: [{ startedAt: "2026-03-01T00:00:00Z", finishedAt: "2026-03-02T00:00:00Z" }, { startedAt: "2025-01-01T00:00:00Z" }] }
+    expect(summary([l]).logged).toBe(1)
+    expect(summary([l, log({})]).logged).toBe(2)
+  })
+
+  test("a log without entries counts once for activity, by logged_at", () => {
+    const l = log({ date: at(2026, 4, 5) })
+    expect(perMonth([l], { mode: "year", year: 2026 }, NOW).find((b) => b.key === "2026-04")?.total).toBe(1)
   })
 })

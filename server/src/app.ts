@@ -20,6 +20,7 @@ import jobRoutes from '@/api/routes/jobRoutes.js'
 import importRoutes from '@/api/routes/importRoutes.js'
 import tagRoutes from '@/api/routes/tagRoutes.js'
 import collectionRoutes from '@/api/routes/collectionRoutes.js'
+import letterRoutes from '@/api/routes/letterRoutes.js'
 import errorHandler from '@/middleWare/errorHandlerMiddleware.js'
 import logger from '@/middleWare/loggingMiddleware.js'
 import cookieParser from 'cookie-parser'
@@ -69,6 +70,7 @@ protectedRouter.use('/users', userRoutes)
 protectedRouter.use('/jobs', jobRoutes)
 protectedRouter.use('/tags', tagRoutes)
 protectedRouter.use('/collections', collectionRoutes)
+protectedRouter.use('/letters', letterRoutes)
 
 apiRouter.use('/', protectedRouter)
 app.use(apiRouter)

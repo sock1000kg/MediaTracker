@@ -170,8 +170,8 @@ describe('Task 35 Acceptance Tests (G1-G3, C1-C3, K1, J1-J2, T1)', () => {
         })
     })
 
-    describe('K1: kind and originalTitle columns', () => {
-        it('stores kind and originalTitle as real columns and strips from metadata', async () => {
+    describe('K1: originalTitle column', () => {
+        it('stores originalTitle as real column and strips from details', async () => {
             const media = await createMedia(
                 'Spirited Away',
                 movieType,
@@ -180,19 +180,17 @@ describe('Task 35 Acceptance Tests (G1-G3, C1-C3, K1, J1-J2, T1)', () => {
                 'tmdb',
                 'tmdb-129',
                 null,
-                { kind: 'movie', originalTitle: 'Sen to Chihiro no Kamikakushi', runtime: 125 },
+                { originalTitle: 'Sen to Chihiro no Kamikakushi', durationSec: 7500 },
                 null,
                 testUser.id,
                 prisma
             )
 
-            expect(media.kind).toBe('movie')
             expect(media.originalTitle).toBe('Sen to Chihiro no Kamikakushi')
-            const rawMeta = media.metadata as Record<string, unknown>
-            expect(rawMeta.kind).toBeUndefined()
-            expect(rawMeta.originalTitle).toBeUndefined()
-            expect(rawMeta.categories).toBeUndefined()
-            expect(rawMeta.runtime).toBe(125)
+            const rawDetails = media.details as Record<string, unknown>
+            expect(rawDetails.originalTitle).toBeUndefined()
+            expect(rawDetails.categories).toBeUndefined()
+            expect(rawDetails.durationSec).toBe(7500)
         })
     })
 
@@ -274,8 +272,8 @@ describe('Task 35 Acceptance Tests (G1-G3, C1-C3, K1, J1-J2, T1)', () => {
         })
     })
 
-    describe('API responses and T1 metadata check', () => {
-        it('logs API returns genres, creators, kind, and originalTitle', async () => {
+    describe('API responses and T1 details check', () => {
+        it('logs API returns genres, creators, and originalTitle', async () => {
             const media = await createMedia(
                 'API Test Book',
                 bookType,
@@ -325,15 +323,15 @@ describe('Task 35 Acceptance Tests (G1-G3, C1-C3, K1, J1-J2, T1)', () => {
             ])
         })
 
-        it('T1: verifies 0 rows in Media where metadata holds categories, kind, or originalTitle', async () => {
-            const rowsWithLegacyMetadata = await prisma.$queryRaw<Array<{ count: bigint }>>`
+        it('T1: verifies 0 rows in Media where details holds categories, subtype, or originalTitle', async () => {
+            const rowsWithLegacyDetails = await prisma.$queryRaw<Array<{ count: bigint }>>`
                 SELECT count(*)::bigint AS count
                 FROM "Media"
-                WHERE metadata ? 'categories'
-                   OR metadata ? 'kind'
-                   OR metadata ? 'originalTitle'
+                WHERE details ? 'categories'
+                   OR details ? 'subtype'
+                   OR details ? 'originalTitle'
             `
-            const count = Number(rowsWithLegacyMetadata[0]?.count ?? 0)
+            const count = Number(rowsWithLegacyDetails[0]?.count ?? 0)
             expect(count).toBe(0)
         })
     })
@@ -355,12 +353,12 @@ describe('Task 35 Acceptance Tests (G1-G3, C1-C3, K1, J1-J2, T1)', () => {
                 .send({ mediaType: movieType, ...body })
         }
 
-        it('an edit without metadata keeps the stored metadata and genres', async () => {
-            const media = await makeMovie('Edit Keeps Metadata')
-            const res = await put(media.id, { title: 'Edit Keeps Metadata 2', metadata: null })
+        it('an edit without details keeps the stored details and genres', async () => {
+            const media = await makeMovie('Edit Keeps Details')
+            const res = await put(media.id, { title: 'Edit Keeps Details 2', details: null })
             expect(res.statusCode).toBe(200)
             const after = await findMediaById(media.id)
-            expect((after?.metadata as Record<string, unknown>).url).toBe('https://example.com/film')
+            expect((after?.details as Record<string, unknown>).url).toBe('https://example.com/film')
             expect(after?.genres).toEqual(['Drama', 'Space'])
         })
 
@@ -368,20 +366,20 @@ describe('Task 35 Acceptance Tests (G1-G3, C1-C3, K1, J1-J2, T1)', () => {
             const media = await makeMovie('Edit Clears Genres')
             const res = await put(media.id, {
                 title: 'Edit Clears Genres',
-                metadata: { url: 'https://example.com/film' },
+                details: { url: 'https://example.com/film' },
             })
             expect(res.statusCode).toBe(200)
             const after = await findMediaById(media.id)
             expect(after?.genres).toEqual([])
-            expect((after?.metadata as Record<string, unknown>).url).toBe('https://example.com/film')
+            expect((after?.details as Record<string, unknown>).url).toBe('https://example.com/film')
         })
 
-        it('an edit with empty metadata removes the last field and keeps the rest of the media', async () => {
-            const media = await makeMovie('Edit Empties Metadata')
-            const res = await put(media.id, { title: 'Edit Empties Metadata', creator: 'Christopher Nolan', metadata: {} })
+        it('an edit with empty details removes the last field and keeps the rest of the media', async () => {
+            const media = await makeMovie('Edit Empties Details')
+            const res = await put(media.id, { title: 'Edit Empties Details', creator: 'Christopher Nolan', details: {} })
             expect(res.statusCode).toBe(200)
             const after = await findMediaById(media.id)
-            expect((after?.metadata as Record<string, unknown> | null)?.url).toBeUndefined()
+            expect((after?.details as Record<string, unknown> | null)?.url).toBeUndefined()
             expect(after?.genres).toEqual([])
             expect(after?.creator).toBe('Christopher Nolan')
             expect(after?.year).toBe(2014)

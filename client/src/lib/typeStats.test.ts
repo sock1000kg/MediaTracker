@@ -21,7 +21,11 @@ function makeLog(opts: {
   started_at?: string | null
   finished_at?: string | null
   logged_at?: string
-  metadata?: Record<string, unknown> | null
+  details?: Record<string, unknown> | null
+  subtype?: string | null
+  progressEpisodes?: number | null
+  progressChapters?: number | null
+  progressVolumes?: number | null
 } = {}): StatLog {
   const id = String(nextId++)
   return {
@@ -29,12 +33,18 @@ function makeLog(opts: {
     status: opts.status === undefined ? "completed" : opts.status,
     rating: null,
     logged_at: opts.logged_at ?? "2026-11-13T12:00:00Z",
-    started_at: opts.started_at,
-    finished_at: opts.finished_at,
+    entries: [{
+      startedAt: opts.started_at,
+      finishedAt: opts.finished_at,
+      progressEpisodes: opts.progressEpisodes,
+      progressChapters: opts.progressChapters,
+      progressVolumes: opts.progressVolumes,
+    }],
     media: {
       id,
       title: opts.title ?? `Title ${id}`,
-      metadata: opts.metadata,
+      details: opts.details,
+      subtype: opts.subtype,
       mediaType: { name: opts.type ?? "book" },
     },
   }
@@ -104,12 +114,12 @@ describe("timeToFinish", () => {
 describe("computeBookStats", () => {
   it("calculates pagesRead, avgPages, longest, and coverage with mixed data", () => {
     const logs = [
-      makeLog({ title: "Book A", metadata: { pageCount: 200 } }),
-      makeLog({ title: "Book B", metadata: { pageCount: "450" } }), // string coercion
-      makeLog({ title: "Book C", metadata: { pageCount: 0 } }), // 0 ignored
-      makeLog({ title: "Book D", metadata: { pageCount: -15 } }), // negative ignored
-      makeLog({ title: "Book E", metadata: { pageCount: "bad" } }), // invalid ignored
-      makeLog({ title: "Book F", metadata: {} }), // missing
+      makeLog({ title: "Book A", details: { pageCount: 200 } }),
+      makeLog({ title: "Book B", details: { pageCount: "450" } }), // string coercion
+      makeLog({ title: "Book C", details: { pageCount: 0 } }), // 0 ignored
+      makeLog({ title: "Book D", details: { pageCount: -15 } }), // negative ignored
+      makeLog({ title: "Book E", details: { pageCount: "bad" } }), // invalid ignored
+      makeLog({ title: "Book F", details: {} }), // missing
     ]
     const res = computeBookStats(logs)
     expect(res.completed).toBe(6)
@@ -120,7 +130,7 @@ describe("computeBookStats", () => {
   })
 
   it("handles empty logs or all missing page counts", () => {
-    const res = computeBookStats([makeLog({ metadata: {} })])
+    const res = computeBookStats([makeLog({ details: {} })])
     expect(res.completed).toBe(1)
     expect(res.coverage).toEqual({ withData: 0, total: 1 })
     expect(res.pagesRead).toBeNull()
@@ -132,11 +142,11 @@ describe("computeBookStats", () => {
 describe("computeMovieStats", () => {
   it("calculates minutesWatched, avgRuntime, longest, and coverage with mixed data", () => {
     const logs = [
-      makeLog({ title: "Movie 1", metadata: { runtime: 120 } }),
-      makeLog({ title: "Movie 2", metadata: { runtime: "90" } }),
-      makeLog({ title: "Movie 3", metadata: { runtime: 0 } }),
-      makeLog({ title: "Movie 4", metadata: { runtime: -50 } }),
-      makeLog({ title: "Movie 5", metadata: {} }),
+      makeLog({ title: "Movie 1", details: { durationSec: 120 * 60 } }),
+      makeLog({ title: "Movie 2", details: { durationSec: 90 * 60 } }),
+      makeLog({ title: "Movie 3", details: { durationSec: 0 } }),
+      makeLog({ title: "Movie 4", details: { durationSec: -50 } }),
+      makeLog({ title: "Movie 5", details: {} }),
     ]
     const res = computeMovieStats(logs)
     expect(res.completed).toBe(5)
@@ -151,13 +161,13 @@ describe("computeAnimeStats", () => {
   it("calculates episodesWatched, minutesWatched (episodes * episodeMinutes), and coverage", () => {
     const logs = [
       // has both
-      makeLog({ metadata: { episodes: 12, episodeMinutes: 24 } }), // 288 min
+      makeLog({ details: { episodeCount: 12, durationSec: 24 * 60 } }), // 288 min
       // has only episodes
-      makeLog({ metadata: { episodes: "24", episodeMinutes: 0 } }),
+      makeLog({ details: { episodeCount: "24", durationSec: 0 } }),
       // has only episodeMinutes
-      makeLog({ metadata: { episodes: -5, episodeMinutes: "20" } }),
+      makeLog({ details: { episodeCount: -5, durationSec: 20 * 60 } }),
       // has neither
-      makeLog({ metadata: {} }),
+      makeLog({ details: {} }),
     ]
     const res = computeAnimeStats(logs)
     expect(res.completed).toBe(4)
@@ -172,10 +182,10 @@ describe("computeAnimeStats", () => {
 describe("computeMangaStats", () => {
   it("calculates chaptersRead and volumesRead with coverage for each", () => {
     const logs = [
-      makeLog({ metadata: { chapters: 100, volumes: 10 } }),
-      makeLog({ metadata: { chapters: "50", volumes: 0 } }),
-      makeLog({ metadata: { chapters: 0, volumes: "5" } }),
-      makeLog({ metadata: {} }),
+      makeLog({ details: { chapterCount: 100, volumeCount: 10 } }),
+      makeLog({ details: { chapterCount: "50", volumeCount: 0 } }),
+      makeLog({ details: { chapterCount: 0, volumeCount: "5" } }),
+      makeLog({ details: {} }),
     ]
     const res = computeMangaStats(logs)
     expect(res.completed).toBe(4)
@@ -189,11 +199,11 @@ describe("computeMangaStats", () => {
 describe("computeGameStats", () => {
   it("calculates estimatedHours, coverage and topPlatforms", () => {
     const logs = [
-      makeLog({ metadata: { playtimeHours: 50, platforms: ["PC", "PS5"] } }),
-      makeLog({ metadata: { playtimeHours: "30", platforms: "PC, Switch, PS5" } }),
-      makeLog({ metadata: { playtimeHours: 0, platforms: "PC, Xbox Series X" } }),
-      makeLog({ metadata: { playtimeHours: -10, platforms: [] } }),
-      makeLog({ metadata: {} }),
+      makeLog({ details: { avgPlaytimeHours: 50, platforms: ["PC", "PS5"] } }),
+      makeLog({ details: { avgPlaytimeHours: "30", platforms: "PC, Switch, PS5" } }),
+      makeLog({ details: { avgPlaytimeHours: 0, platforms: "PC, Xbox Series X" } }),
+      makeLog({ details: { avgPlaytimeHours: -10, platforms: [] } }),
+      makeLog({ details: {} }),
     ]
     const res = computeGameStats(logs)
     expect(res.completed).toBe(5)
@@ -208,13 +218,13 @@ describe("computeGameStats", () => {
 })
 
 describe("computeMusicStats", () => {
-  it("calculates albums and tracks counts from kind", () => {
+  it("calculates albums and tracks counts from subtype", () => {
     const logs = [
-      makeLog({ metadata: { kind: "album" } }),
-      makeLog({ metadata: { kind: "album" } }),
-      makeLog({ metadata: { kind: "track" } }),
-      makeLog({ metadata: { kind: "other" } }),
-      makeLog({ metadata: {} }),
+      makeLog({ subtype: "album" }),
+      makeLog({ subtype: "album" }),
+      makeLog({ subtype: "track" }),
+      makeLog({ subtype: "other" }),
+      makeLog({ details: {} }),
     ]
     const res = computeMusicStats(logs)
     expect(res.completed).toBe(5)
@@ -251,7 +261,7 @@ describe("computeAllTypeStats with range filter and date basis", () => {
         status: "completed",
         logged_at: "2026-11-05T12:00:00Z",
         finished_at: "2026-10-20T12:00:00Z",
-        metadata: { pageCount: 300 },
+        details: { pageCount: 300 },
       }),
       // Dropped book finished in Oct 2026 (should be excluded from completed type stats)
       makeLog({
@@ -259,7 +269,7 @@ describe("computeAllTypeStats with range filter and date basis", () => {
         status: "dropped",
         logged_at: "2026-10-15T12:00:00Z",
         finished_at: "2026-10-15T12:00:00Z",
-        metadata: { pageCount: 150 },
+        details: { pageCount: 150 },
       }),
       // Completed movie finished in Oct 2026
       makeLog({
@@ -267,7 +277,7 @@ describe("computeAllTypeStats with range filter and date basis", () => {
         status: "completed",
         logged_at: "2026-10-10T12:00:00Z",
         finished_at: "2026-10-10T12:00:00Z",
-        metadata: { runtime: 120 },
+        details: { durationSec: 120 * 60 },
       }),
       // Completed game finished in Sep 2026 (outside Oct range)
       makeLog({
@@ -275,12 +285,12 @@ describe("computeAllTypeStats with range filter and date basis", () => {
         status: "completed",
         logged_at: "2026-09-10T12:00:00Z",
         finished_at: "2026-09-10T12:00:00Z",
-        metadata: { playtimeHours: 40 },
+        details: { avgPlaytimeHours: 40 },
       }),
     ]
 
     // Filter by month Oct 2026
-    const inRange = filterByRange(logs, { kind: "month", year: 2026, month: 10 }, NOW)
+    const inRange = filterByRange(logs, { mode: "month", year: 2026, month: 10 }, NOW)
     // The completed book and movie and dropped book are in Oct; game is in Sep
     expect(inRange).toHaveLength(3)
 
@@ -289,15 +299,15 @@ describe("computeAllTypeStats with range filter and date basis", () => {
     expect(typeStats).toHaveLength(2)
 
     const bookStat = typeStats.find((s) => s.type === "book")
-    expect(bookStat?.stats.kind).toBe("book")
-    if (bookStat?.stats.kind === "book") {
+    expect(bookStat?.stats.statType).toBe("book")
+    if (bookStat?.stats.statType === "book") {
       expect(bookStat.stats.completed).toBe(1)
       expect(bookStat.stats.pagesRead).toBe(300)
     }
 
     const movieStat = typeStats.find((s) => s.type === "movie")
-    expect(movieStat?.stats.kind).toBe("movie")
-    if (movieStat?.stats.kind === "movie") {
+    expect(movieStat?.stats.statType).toBe("movie")
+    if (movieStat?.stats.statType === "movie") {
       expect(movieStat.stats.completed).toBe(1)
       expect(movieStat.stats.minutesWatched).toBe(120)
     }
@@ -308,23 +318,26 @@ describe("computeAllTypeStats with range filter and date basis", () => {
       const logs = [
         makeLog({
           type: "tv",
+          subtype: "show",
           status: "completed",
-          metadata: { kind: "show", tmdbId: 1396, seasonCount: 5, episodeCount: 62 },
+          details: { tmdbId: 1396, seasonCount: 5, episodeCount: 62 },
         }),
         makeLog({
           type: "tv",
+          subtype: "season",
           status: "completed",
-          metadata: { kind: "season", tmdbId: 60625, seasonNumber: 1, episodeCount: 11 },
+          details: { tmdbId: 60625, seasonNumber: 1, episodeCount: 11 },
         }),
         makeLog({
           type: "tv",
+          subtype: "season",
           status: "completed",
-          metadata: { kind: "season", tmdbId: 60625, seasonNumber: 2, episodeCount: 10 },
+          details: { tmdbId: 60625, seasonNumber: 2, episodeCount: 10 },
         }),
       ]
 
       const stats = computeTvStats(logs)
-      expect(stats.kind).toBe("tv")
+      expect(stats.statType).toBe("tv")
       expect(stats.completed).toBe(3)
       expect(stats.shows).toBe(1)
       expect(stats.seasons).toBe(2)
@@ -332,12 +345,12 @@ describe("computeAllTypeStats with range filter and date basis", () => {
       expect(stats.coverage).toEqual({ withData: 3, total: 3 })
     })
 
-    it("handles logs with missing kind or episodeCount", () => {
+    it("handles logs with missing subtype or episodeCount", () => {
       const logs = [
         makeLog({
           type: "tv",
           status: "completed",
-          metadata: null,
+          details: null,
         }),
       ]
 

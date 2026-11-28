@@ -51,6 +51,8 @@ html {
   --color-tag-foreground: var(--tag-foreground);
   --color-dude: var(--dude);
   --color-dude-shade: var(--dude-shade);
+  --color-wax: var(--wax);
+  --color-wax-dark: var(--wax-dark);
   --font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Fraunces", ui-serif, Georgia, serif;
   --font-hand: "Caveat", cursive;
@@ -88,8 +90,17 @@ html {
   --cover-5: #a8846a;
   --cover-6: #8b8f7a;
   --cover-ink: #1d1916;
+  --ground: #e4dacb;
+  --pile-low: #b0432a;
+  --pile-mid: #cf8a2e;
+  --pile-high: #e2bb3c;
+  --pile-unrated: #b3aa9d;
   --dude: #29c7df;
   --dude-shade: #327d8d;
+  --wax: #a8391f;
+  --wax-dark: #6e2412;
+  --gold: #a87a12;
+  --gold-dark: #5e4208;
   --chart-1: #a8481f;
   --chart-2: #23707f;
   --chart-3: #b8862b;
@@ -146,8 +157,17 @@ html {
   --cover-5: #6a5340;
   --cover-6: #53574a;
   --cover-ink: #f5ece0;
+  --ground: #2a241f;
+  --pile-low: #c0563a;
+  --pile-mid: #c98a35;
+  --pile-high: #e2c25a;
+  --pile-unrated: #5d574f;
   --dude: #29c7df;
   --dude-shade: #327d8d;
+  --wax: #d0603f;
+  --wax-dark: #8a3320;
+  --gold: #e3b04b;
+  --gold-dark: #8a5f14;
   --chart-1: #e08a5a;
   --chart-2: #5fc9d9;
   --chart-3: #b8862b;
@@ -332,10 +352,30 @@ button.user-tag:hover {
   }
 }
 
+/* Landing page hand bob: 2px with steps(2), out of phase */
+.hand-bob-left {
+  animation: hand-bob-left 2s steps(2) infinite;
+}
+.hand-bob-right {
+  animation: hand-bob-right 2s steps(2) infinite;
+}
+@keyframes hand-bob-left {
+  50% {
+    transform: translateY(-2px);
+  }
+}
+@keyframes hand-bob-right {
+  50% {
+    transform: translateY(2px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-pulse,
   .bubble,
-  .dude-hop {
+  .dude-hop,
+  .hand-bob-left,
+  .hand-bob-right {
     animation: none !important;
   }
   *,
@@ -349,5 +389,70 @@ button.user-tag:hover {
 @media print {
   .logs-backdrop {
     display: none !important;
+  }
+}
+
+/* The log journal dialog: two pages like an open book. Opens with a short fade + scale, closes faster. */
+.journal-dialog[data-slot="dialog-content"] {
+  --journal-gutter: color-mix(in oklab, var(--foreground) 14%, transparent);
+}
+.journal-dialog[data-slot="dialog-content"][data-state="open"] {
+  animation: journal-in 200ms ease-out both;
+}
+.journal-dialog[data-slot="dialog-content"][data-state="closed"] {
+  animation: journal-out 120ms ease-in both;
+}
+/* Mockup D: Left page is bg-card, right page is bg-background with soft inset shadow on left edge */
+@media (min-width: 48rem) {
+  .journal-right-page {
+    box-shadow: inset 14px 0 18px -14px rgb(0 0 0 / 0.12);
+  }
+  .dark .journal-right-page {
+    box-shadow: inset 14px 0 18px -14px rgb(0 0 0 / 0.6);
+  }
+}
+
+/* Journal form field underlines (A6) */
+.journal-field {
+  background: transparent;
+  border-bottom: 1px solid var(--input);
+  transition: border-color var(--dur-fast, 150ms) ease;
+}
+.journal-field:hover {
+  border-bottom-color: var(--foreground);
+}
+.journal-field:focus,
+.journal-field:focus-within {
+  border-bottom-color: var(--primary);
+}
+
+.journal-rating-input {
+  border-bottom: 2px dashed var(--input);
+  transition: border-color var(--dur-fast, 150ms) ease, border-style var(--dur-fast, 150ms) ease;
+}
+.journal-rating-input:hover,
+.journal-rating-input:focus {
+  border-bottom-style: solid;
+  border-bottom-color: var(--primary);
+}
+
+.journal-mobile-footer {
+  box-shadow: 0 -4px 14px -4px rgb(0 0 0 / 0.15);
+}
+.dark .journal-mobile-footer {
+  box-shadow: 0 -4px 14px -4px rgb(0 0 0 / 0.5);
+}
+@keyframes journal-in {
+  from { opacity: 0; scale: 0.98; }
+  to { opacity: 1; scale: 1; }
+}
+@keyframes journal-out {
+  from { opacity: 1; scale: 1; }
+  to { opacity: 0; scale: 0.98; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .journal-dialog[data-slot="dialog-content"][data-state="open"],
+  .journal-dialog[data-slot="dialog-content"][data-state="closed"] {
+    animation: none !important;
   }
 }

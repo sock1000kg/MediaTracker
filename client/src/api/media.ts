@@ -1,7 +1,7 @@
 import type { MediaResult } from "@/types/search"
 import { apiFetch } from "./clientWrapper"
 
-import type { Log, Media } from "@/types/mainTypes"
+import type { EntryInput, Log, Media } from "@/types/mainTypes"
 
 export function fetchMedias(): Promise<Media[]> {
   return apiFetch("/media")
@@ -19,10 +19,13 @@ export function createMedia(newMedia: Partial<Media>): Promise<Media> {
       },
       creator: newMedia.creator,
       year: newMedia.year,
-      source: newMedia.source, 
+      provider: newMedia.provider, 
+      providerId: newMedia.providerId, 
       description: newMedia.description, 
       imageUrl: newMedia.imageUrl,
-      metadata: newMedia.metadata
+      details: newMedia.details,
+      subtype: newMedia.subtype,
+      releaseDate: newMedia.releaseDate,
     })
   })
 }
@@ -49,29 +52,37 @@ export function editMedia(media: Partial<Media>): Promise<Media> {
       mediaType: media.mediaType,
       creator: media.creator,
       year: media.year,
-      source: media.source, 
-      sourceId: media.sourceId, 
+      provider: media.provider, 
+      providerId: media.providerId, 
       description: media.description, 
       imageUrl: media.imageUrl,
-      metadata: media.metadata
+      details: media.details,
+      subtype: media.subtype,
+      releaseDate: media.releaseDate,
     })
   })
 }
 
-export function createMediaAndLog(mediaData: MediaResult, logData: Partial<Log>, parent?: MediaResult): Promise<Log>{
+export interface MediaLogResult {
+    media: Media
+    log: Log
+    logCreated: boolean
+    entryCreated: boolean
+}
+
+export function createMediaAndLog(mediaData: MediaResult, logData: Partial<Log>, parent?: MediaResult, entry?: EntryInput | null): Promise<MediaLogResult>{
     const tags = logData.tags !== undefined ? logData.tags.map((t) => t.name) : undefined
     return apiFetch(`/media/media-log`, {
         method: "PUT",
         body: JSON.stringify({
             mediaData,
             logData: {
-                status: logData.status,
-                rating: logData.rating,
-                notes: logData.notes,
-                startedAt: logData.started_at ? logData.started_at.slice(0, 10) : null,
-                finishedAt: logData.finished_at ? logData.finished_at.slice(0, 10) : null,
+                ...(logData.status !== undefined ? { status: logData.status } : {}),
+                ...(logData.rating !== undefined ? { rating: logData.rating } : {}),
+                ...(logData.notes !== undefined ? { notes: logData.notes } : {}),
                 ...(tags !== undefined ? { tags } : {}),
             },
+            ...(entry ? { entry } : {}),
             ...(parent ? { parent } : {})
         })
     })
@@ -80,5 +91,11 @@ export function createMediaAndLog(mediaData: MediaResult, logData: Partial<Log>,
 export function getMediaChildren(mediaId: string): Promise<Array<Media & { log: Log | null }>> {
     return apiFetch(`/media/${mediaId}/children`, {
         method: "GET"
+    })
+}
+
+export function refreshMedia(id: string): Promise<Media> {
+    return apiFetch(`/media/${id}/refresh`, {
+        method: "POST"
     })
 }

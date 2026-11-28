@@ -1,17 +1,27 @@
 // Pure helpers behind the Stats page. Everything is computed client-side from GET /logs.
 // Dates are read in local time. Logs with an unparseable date only count in the "all" range
 // (and are skipped by the per-month chart).
+//
+// Activity (per month / year / day) counts ENTRIES: a log read three times is three.
+// Everything about ratings or items counts LOGS, once: one rating per item, so a re-read never counts twice.
+// A log without entries counts once for activity, by logged_at.
 
 import { getCategories } from "./utils"
+
+export interface StatEntry {
+  startedAt?: string | null
+  finishedAt?: string | null
+  progressEpisodes?: number | null // entry
+  progressChapters?: number | null // entry
+  progressVolumes?: number | null // entry
+}
 
 export interface StatLog {
   id: string
   status: string | null
   rating: number | null
   logged_at: string
-  started_at?: string | null
-  finished_at?: string | null
-  progress?: Record<string, unknown> | null
+  entries?: StatEntry[] | null
   media: {
     id: string
     title: string
@@ -19,17 +29,19 @@ export interface StatLog {
     creators?: { name: string; role: string }[] | null
     genres?: string[] | null
     imageUrl?: string | null
-    metadata?: Record<string, unknown> | null
+    details?: Record<string, unknown> | null
+    subtype?: string | null
+    releaseDate?: string | null
     mediaType?: { name: string } | null
   }
   tags?: { id: string; name: string }[]
 }
 
 export type StatsRange =
-  | { kind: "all" }
-  | { kind: "year"; year: number }
-  | { kind: "month"; year: number; month: number } // month is 1-12
-  | { kind: "last12" }
+  | { mode: "all" }
+  | { mode: "year"; year: number }
+  | { mode: "month"; year: number; month: number } // month is 1-12
+  | { mode: "last12" }
 
 export const STATUS_KEYS = ["completed", "in progress", "wishlist", "dropped"] as const
 export type StatusKey = (typeof STATUS_KEYS)[number] | "none"
@@ -38,10 +50,33 @@ const UNKNOWN_TYPE = "Unknown"
 
 const typeName = (log: StatLog): string => log.media.mediaType?.name?.trim() || UNKNOWN_TYPE
 
-export function dateOf(log: StatLog): Date | null {
-  const raw = log.finished_at != null && log.finished_at.trim() !== "" ? log.finished_at : log.logged_at
+const parse = (raw: string | null | undefined): Date | null => {
+  if (raw == null || raw.trim() === "") return null
   const d = new Date(raw)
   return Number.isNaN(d.getTime()) ? null : d
+}
+
+/** When an entry happened: finished, else started. */
+export function entryDateOf(e: StatEntry): Date | null {
+  return parse(e.finishedAt) ?? parse(e.startedAt)
+}
+
+/** A log's date for ranges and per-log numbers: its newest entry's date, else when it was logged. */
+export function dateOf(log: StatLog): Date | null {
+  let newest: Date | null = null
+  for (const e of log.entries ?? []) {
+    const d = entryDateOf(e)
+    if (d && (!newest || d.getTime() > newest.getTime())) newest = d
+  }
+  return newest ?? parse(log.logged_at)
+}
+
+/** The dates a log is active on: one per dated entry, else once by logged_at. */
+export function activityDates(log: StatLog): Date[] {
+  const dates = (log.entries ?? []).flatMap((e) => { const d = entryDateOf(e); return d ? [d] : [] })
+  if (dates.length > 0) return dates
+  const logged = parse(log.logged_at)
+  return logged ? [logged] : []
 }
 
 /** A rating counts when it is a finite number (0 is a real rating; unrated is null). */
@@ -59,11 +94,11 @@ function avg(values: number[]): number | null {
 // --- ranges & filters ---
 
 export function filterByRange<L extends StatLog>(logs: L[], range: StatsRange, now: Date = new Date()): L[] {
-  if (range.kind === "all") return logs
-  if (range.kind === "year") {
+  if (range.mode === "all") return logs
+  if (range.mode === "year") {
     return logs.filter((l) => dateOf(l)?.getFullYear() === range.year)
   }
-  if (range.kind === "month") {
+  if (range.mode === "month") {
     return logs.filter((l) => {
       const d = dateOf(l)
       return d !== null && d.getFullYear() === range.year && d.getMonth() === range.month - 1
@@ -111,7 +146,8 @@ export function monthOptions(logs: StatLog[], year: number): MonthOption[] {
 // --- summary ---
 
 export interface Summary {
-  total: number
+  /** Logs in the selection (period and type filtered). */
+  logged: number
   byStatus: Record<StatusKey, number>
   rated: number
   avgRating: number | null
@@ -129,7 +165,7 @@ export function summary(logs: StatLog[]): Summary {
   }
   const denom = logs.length - byStatus.wishlist
   return {
-    total: logs.length,
+    logged: logs.length,
     byStatus,
     rated: ratings.length,
     avgRating: avg(ratings),
@@ -148,10 +184,7 @@ export interface MonthBucket {
 
 /** Ordered months across the range, empty ones included. */
 export function perMonth(logs: StatLog[], range: StatsRange, now: Date = new Date()): MonthBucket[] {
-  const dated = logs.flatMap((l) => {
-    const d = dateOf(l)
-    return d ? [{ d, type: typeName(l) }] : []
-  })
+  const dated = logs.flatMap((l) => activityDates(l).map((d) => ({ d, type: typeName(l) })))
   const idx = (d: Date) => d.getFullYear() * 12 + d.getMonth()
   const nowIdx = idx(now)
   const maxLog = dated.length ? Math.max(...dated.map((x) => idx(x.d))) : -Infinity
@@ -159,12 +192,12 @@ export function perMonth(logs: StatLog[], range: StatsRange, now: Date = new Dat
 
   let start: number
   let end: number
-  if (range.kind === "month") {
+  if (range.mode === "month") {
     start = end = range.year * 12 + range.month - 1
-  } else if (range.kind === "year") {
+  } else if (range.mode === "year") {
     start = range.year * 12
     end = Math.max(range.year === now.getFullYear() ? nowIdx : range.year * 12 + 11, Math.min(maxLog, range.year * 12 + 11))
-  } else if (range.kind === "last12") {
+  } else if (range.mode === "last12") {
     start = nowIdx - 11
     end = nowIdx
   } else {
@@ -195,7 +228,7 @@ export type Granularity = "month" | "year"
 
 /** All time defaults to by-month while the data spans at most 36 months, by-year beyond that. */
 export function defaultGranularity(logs: StatLog[], now: Date = new Date()): Granularity {
-  const idxs = logs.flatMap((l) => { const d = dateOf(l); return d ? [d.getFullYear() * 12 + d.getMonth()] : [] })
+  const idxs = logs.flatMap((l) => activityDates(l).map((d) => d.getFullYear() * 12 + d.getMonth()))
   if (!idxs.length) return "month"
   const lo = Math.min(Math.min(...idxs), now.getFullYear() * 12 + now.getMonth())
   const hi = Math.max(Math.max(...idxs), now.getFullYear() * 12 + now.getMonth())
@@ -212,7 +245,7 @@ function addTo(b: MonthBucket, type: string) {
 
 /** Every year from the first log (or this year if later) to the latest/now, empty years included. */
 export function perYear(logs: StatLog[], now: Date = new Date()): MonthBucket[] {
-  const dated = logs.flatMap((l) => { const d = dateOf(l); return d ? [{ y: d.getFullYear(), type: typeName(l) }] : [] })
+  const dated = logs.flatMap((l) => activityDates(l).map((d) => ({ y: d.getFullYear(), type: typeName(l) })))
   if (!dated.length) return []
   const start = Math.min(...dated.map((x) => x.y), now.getFullYear())
   const end = Math.max(...dated.map((x) => x.y), now.getFullYear())
@@ -233,8 +266,9 @@ export function perDay(logs: StatLog[], year: number, month: number): MonthBucke
   const out: MonthBucket[] = Array.from({ length: days }, (_, i) =>
     emptyBucket(`${monthKey(year, month - 1)}-${String(i + 1).padStart(2, "0")}`, String(i + 1)))
   for (const l of logs) {
-    const d = dateOf(l)
-    if (d && d.getFullYear() === year && d.getMonth() === month - 1) addTo(out[d.getDate() - 1], typeName(l))
+    for (const d of activityDates(l)) {
+      if (d.getFullYear() === year && d.getMonth() === month - 1) addTo(out[d.getDate() - 1], typeName(l))
+    }
   }
   return out
 }
@@ -305,7 +339,7 @@ export function topCategories(logs: StatLog[], n = 10): RankedStat[] {
   const groups = new Map<string, { name: string; count: number; ratings: number[] }>()
   for (const l of logs) {
     const seen = new Set<string>()
-    const cats = l.media.genres ?? getCategories(l.media.metadata)
+    const cats = l.media.genres ?? getCategories(l.media.details)
     for (const raw of cats) {
       const c = raw.trim()
       if (!c || seen.has(c.toLowerCase())) continue
@@ -383,24 +417,24 @@ export type Unit = "month" | "year" | "day"
 // --- range <-> string (persisted per device) ---
 
 export function rangeToString(r: StatsRange): string {
-  if (r.kind === "year") return `y:${r.year}`
-  if (r.kind === "month") return `${r.year}-${String(r.month).padStart(2, "0")}`
-  return r.kind
+  if (r.mode === "year") return `y:${r.year}`
+  if (r.mode === "month") return `${r.year}-${String(r.month).padStart(2, "0")}`
+  return r.mode
 }
 
 export function rangeFromString(s: string | null | undefined): StatsRange | null {
-  if (s === "all") return { kind: "all" }
-  if (s === "last12") return { kind: "last12" }
+  if (s === "all") return { mode: "all" }
+  if (s === "last12") return { mode: "last12" }
   const mm = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(s ?? "")
-  if (mm) return { kind: "month", year: Number(mm[1]), month: Number(mm[2]) }
+  if (mm) return { mode: "month", year: Number(mm[1]), month: Number(mm[2]) }
   const m = /^y:(\d{4})$/.exec(s ?? "")
-  return m ? { kind: "year", year: Number(m[1]) } : null
+  return m ? { mode: "year", year: Number(m[1]) } : null
 }
 
 /** Stored range if still valid (a year must be present; a month must have logs), else this year if it has logs, else all time. */
 export function initialRange(logs: StatLog[], stored: string | null, now: Date = new Date()): StatsRange {
   const years = yearsPresent(logs)
   const r = rangeFromString(stored)
-  if (r && (r.kind === "month" ? filterByRange(logs, r).length > 0 : r.kind !== "year" || years.includes(r.year))) return r
-  return years.includes(now.getFullYear()) ? { kind: "year", year: now.getFullYear() } : { kind: "all" }
+  if (r && (r.mode === "month" ? filterByRange(logs, r).length > 0 : r.mode !== "year" || years.includes(r.year))) return r
+  return years.includes(now.getFullYear()) ? { mode: "year", year: now.getFullYear() } : { mode: "all" }
 }

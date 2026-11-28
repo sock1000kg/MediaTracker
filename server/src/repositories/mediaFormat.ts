@@ -8,6 +8,9 @@ export const MEDIA_INCLUDE = {
         include: { creator: true },
         orderBy: { position: "asc" as const },
     },
+    externalIds: {
+        select: { provider: true, externalId: true },
+    },
 } as const
 
 export type FormattedMedia<T> = T & { genres: string[]; creators: { name: string; role: string }[] }

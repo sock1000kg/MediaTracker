@@ -1,4 +1,5 @@
 import type { Log } from "../types/mainTypes"
+import { newestEntry, logDateOf, type EntryLike } from "./logEntries"
 import { aspectForMedia, capitalise, coverToken, type CoverAspect } from "./mediaView"
 
 export { coverToken }
@@ -14,16 +15,26 @@ export function formatLogDate(iso: string): string {
   return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
 }
 
+/** One entry's dates as text: "12 Mar 2024 → 2 Apr 2024", "Started 12 Mar 2024", "Finished 2 Apr 2024". */
+export function entryDatesText(e: { startedAt?: string | null; finishedAt?: string | null }): string {
+  const s = e.startedAt ? formatLogDate(e.startedAt) : ""
+  const f = e.finishedAt ? formatLogDate(e.finishedAt) : ""
+  if (s && f) return `${s} → ${f}`
+  if (s) return `Started ${s}`
+  if (f) return `Finished ${f}`
+  return "No dates"
+}
+
 /**
- * Calculates the difference in calendar days between `started_at` and `finished_at`.
+ * Calculates the difference in calendar days between an entry's `startedAt` and `finishedAt`.
  * Uses day precision (UTC calendar date) so time zones never affect the count.
  * Returns 0 when started and finished on the same day ("same day").
- * Returns null if either date is missing or invalid, or if finished_at < started_at.
+ * Returns null if either date is missing or invalid, or if finishedAt < startedAt.
  */
-export function daysToFinish(log: { started_at?: string | null; finished_at?: string | null }): number | null {
-  if (!log.started_at || !log.finished_at) return null
-  const s = new Date(log.started_at)
-  const f = new Date(log.finished_at)
+export function daysToFinish(entry: { startedAt?: string | null; finishedAt?: string | null }): number | null {
+  if (!entry.startedAt || !entry.finishedAt) return null
+  const s = new Date(entry.startedAt)
+  const f = new Date(entry.finishedAt)
   if (Number.isNaN(s.getTime()) || Number.isNaN(f.getTime())) return null
   const sUtc = Date.UTC(s.getUTCFullYear(), s.getUTCMonth(), s.getUTCDate())
   const fUtc = Date.UTC(f.getUTCFullYear(), f.getUTCMonth(), f.getUTCDate())
@@ -33,23 +44,24 @@ export function daysToFinish(log: { started_at?: string | null; finished_at?: st
 }
 
 /**
- * Returns the status + date line for a log card/row aside.
- * If `finished_at` is set: "{status} · Finished {date}" (and if `started_at` is also set, "· took {N} days", or "· same day" if equal).
+ * Returns the status + date line for a log card/row aside, from the log's newest entry.
+ * If that entry is finished: "{status} · Finished {date}" (and if it was started too, "· took {N} days", or "· same day").
+ * If it is only started: "{status} · Started {date}".
  * Otherwise: "{status} · {logged date}".
  */
 export function logDateLine(log: {
   status?: string | null
   logged_at?: string | null
-  started_at?: string | null
-  finished_at?: string | null
+  entries?: EntryLike[] | null
 }): string {
   const status = statusLabel(log.status)
-  if (log.finished_at) {
-    const finishedStr = formatLogDate(log.finished_at)
+  const entry = newestEntry(log.entries)
+  if (entry?.finishedAt) {
+    const finishedStr = formatLogDate(entry.finishedAt)
     if (finishedStr) {
       let line = [status, `Finished ${finishedStr}`].filter(Boolean).join(" · ")
-      if (log.started_at) {
-        const days = daysToFinish(log)
+      if (entry.startedAt) {
+        const days = daysToFinish(entry)
         if (days !== null) {
           const tookPart = days === 0 ? "same day" : `took ${days} day${days === 1 ? "" : "s"}`
           line = `${line} · ${tookPart}`
@@ -57,6 +69,10 @@ export function logDateLine(log: {
       }
       return line
     }
+  }
+  if (entry?.startedAt) {
+    const startedStr = formatLogDate(entry.startedAt)
+    if (startedStr) return [status, `Started ${startedStr}`].filter(Boolean).join(" · ")
   }
   const loggedDateStr = log.logged_at ? formatLogDate(log.logged_at) : ""
   return [status, loggedDateStr].filter(Boolean).join(" · ")
@@ -99,7 +115,7 @@ export function groupLogs(logs: Log[], mode: GroupMode): LogGroup[] {
   const map = new Map<string, Log[]>()
   const undated: Log[] = []
   for (const log of logs) {
-    const d = new Date(log.logged_at)
+    const d = new Date(logDateOf(log))
     if (Number.isNaN(d.getTime())) { undated.push(log); continue }
     const label = d.toLocaleDateString("en-GB", { month: "long", year: "numeric" })
     if (!map.has(label)) map.set(label, [])
@@ -143,4 +159,11 @@ export function visibleSlice<T>(items: T[], shown: number): { visible: T[]; rema
 export function revealState(total: number, shown: number, initial: number): { remaining: number; canLoadMore: boolean; canCollapse: boolean } {
   const remaining = Math.max(0, total - Math.max(0, Math.floor(shown)))
   return { remaining, canLoadMore: remaining > 0, canCollapse: shown > initial }
+}
+
+/** Logs whose title or creator contains `query` (any case); all of them for a blank query. */
+export function filterLogsByQuery<T extends { media: { title: string; creator?: string | null } }>(logs: T[], query: string): T[] {
+  const q = query.trim().toLowerCase()
+  if (!q) return logs
+  return logs.filter((l) => l.media.title.toLowerCase().includes(q) || (l.media.creator ?? "").toLowerCase().includes(q))
 }

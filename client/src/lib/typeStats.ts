@@ -1,6 +1,7 @@
 import type { StatLog } from "./stats"
 import { num, str, strList } from "./coerce"
 import { daysToFinish } from "./logView"
+import { newestEntry } from "./logEntries"
 
 export interface TimeToFinishStat {
   count: number
@@ -14,7 +15,7 @@ export interface Coverage {
 }
 
 export interface BookStats {
-  kind: "book"
+  statType: "book"
   completed: number
   pagesRead: number | null
   avgPages: number | null
@@ -24,7 +25,7 @@ export interface BookStats {
 }
 
 export interface MovieStats {
-  kind: "movie"
+  statType: "movie"
   completed: number
   minutesWatched: number | null
   avgRuntime: number | null
@@ -34,7 +35,7 @@ export interface MovieStats {
 }
 
 export interface AnimeStats {
-  kind: "anime"
+  statType: "anime"
   completed: number
   episodesWatched: number | null
   episodesCoverage: Coverage
@@ -45,7 +46,7 @@ export interface AnimeStats {
 }
 
 export interface MangaStats {
-  kind: "manga"
+  statType: "manga"
   completed: number
   chaptersRead: number | null
   chaptersCoverage: Coverage
@@ -60,7 +61,7 @@ export interface GamePlatformStat {
 }
 
 export interface GameStats {
-  kind: "game"
+  statType: "game"
   completed: number
   estimatedHours: number | null
   coverage: Coverage
@@ -69,7 +70,7 @@ export interface GameStats {
 }
 
 export interface MusicStats {
-  kind: "music"
+  statType: "music"
   completed: number
   albums: number
   tracks: number
@@ -78,7 +79,7 @@ export interface MusicStats {
 }
 
 export interface TvStats {
-  kind: "tv"
+  statType: "tv"
   completed: number
   shows: number
   seasons: number
@@ -88,7 +89,7 @@ export interface TvStats {
 }
 
 export interface GenericStats {
-  kind: "generic"
+  statType: "generic"
   completed: number
   timeToFinish: TimeToFinishStat
 }
@@ -109,14 +110,16 @@ export interface TypeDetailStat {
 }
 
 /**
- * Calculates average and median time to finish over logs with both dates
- * and finished_at >= started_at (same day = 0 days).
+ * Calculates average and median time to finish over entries with both dates
+ * and finishedAt >= startedAt (same day = 0 days).
  */
 export function timeToFinish(logs: StatLog[]): TimeToFinishStat {
   const days: number[] = []
   for (const log of logs) {
-    const d = daysToFinish(log)
-    if (d !== null) days.push(d)
+    for (const entry of log.entries ?? []) {
+      const d = daysToFinish(entry)
+      if (d !== null) days.push(d)
+    }
   }
   if (!days.length) {
     return { count: 0, avgDays: null, medianDays: null }
@@ -136,7 +139,7 @@ export function computeBookStats(logs: StatLog[]): BookStats {
   let longest: { title: string; pages: number } | null = null
 
   for (const log of logs) {
-    const pages = num(log.media?.metadata?.pageCount)
+    const pages = num(log.media?.details?.pageCount)
     if (pages !== null && pages > 0) {
       withData++
       sumPages += pages
@@ -147,7 +150,7 @@ export function computeBookStats(logs: StatLog[]): BookStats {
   }
 
   return {
-    kind: "book",
+    statType: "book",
     completed: total,
     pagesRead: withData > 0 ? sumPages : null,
     avgPages: withData > 0 ? sumPages / withData : null,
@@ -164,7 +167,9 @@ export function computeMovieStats(logs: StatLog[]): MovieStats {
   let longest: { title: string; runtime: number } | null = null
 
   for (const log of logs) {
-    const runtime = num(log.media?.metadata?.runtime)
+    const runtime = log.media?.details?.durationSec != null
+      ? Math.round(Number(log.media.details.durationSec) / 60)
+      : num((log.media?.details as Record<string, unknown> | undefined)?.runtime)
     if (runtime !== null && runtime > 0) {
       withData++
       sumMinutes += runtime
@@ -175,7 +180,7 @@ export function computeMovieStats(logs: StatLog[]): MovieStats {
   }
 
   return {
-    kind: "movie",
+    statType: "movie",
     completed: total,
     minutesWatched: withData > 0 ? sumMinutes : null,
     avgRuntime: withData > 0 ? sumMinutes / withData : null,
@@ -195,9 +200,10 @@ export function computeAnimeStats(logs: StatLog[]): AnimeStats {
   let sumEpMins = 0
 
   for (const log of logs) {
-    const prog = (log.progress && typeof log.progress === "object" ? log.progress : null) as Record<string, unknown> | null
-    const eps = num(prog?.watchedEpisodes) ?? num(log.media?.metadata?.episodes)
-    const epMins = num(log.media?.metadata?.episodeMinutes)
+    const eps = num(newestEntry(log.entries)?.progressEpisodes) ?? num(log.media?.details?.episodeCount) ?? num((log.media?.details as Record<string, unknown> | undefined)?.episodes)
+    const epMins = log.media?.details?.durationSec != null
+      ? Math.round(Number(log.media.details.durationSec) / 60)
+      : num((log.media?.details as Record<string, unknown> | undefined)?.episodeMinutes)
 
     if (eps !== null && eps > 0) {
       withEps++
@@ -214,7 +220,7 @@ export function computeAnimeStats(logs: StatLog[]): AnimeStats {
   }
 
   return {
-    kind: "anime",
+    statType: "anime",
     completed: total,
     episodesWatched: withEps > 0 ? sumEps : null,
     episodesCoverage: { withData: withEps, total },
@@ -233,9 +239,8 @@ export function computeMangaStats(logs: StatLog[]): MangaStats {
   let sumVolumes = 0
 
   for (const log of logs) {
-    const prog = (log.progress && typeof log.progress === "object" ? log.progress : null) as Record<string, unknown> | null
-    const ch = num(prog?.readChapters) ?? num(log.media?.metadata?.chapters)
-    const vol = num(prog?.readVolumes) ?? num(log.media?.metadata?.volumes)
+    const ch = num(newestEntry(log.entries)?.progressChapters) ?? num(log.media?.details?.chapterCount) ?? num((log.media?.details as Record<string, unknown> | undefined)?.chapters)
+    const vol = num(newestEntry(log.entries)?.progressVolumes) ?? num(log.media?.details?.volumeCount) ?? num((log.media?.details as Record<string, unknown> | undefined)?.volumes)
 
     if (ch !== null && ch > 0) {
       withChapters++
@@ -248,7 +253,7 @@ export function computeMangaStats(logs: StatLog[]): MangaStats {
   }
 
   return {
-    kind: "manga",
+    statType: "manga",
     completed: total,
     chaptersRead: withChapters > 0 ? sumChapters : null,
     chaptersCoverage: { withData: withChapters, total },
@@ -265,13 +270,13 @@ export function computeGameStats(logs: StatLog[]): GameStats {
   const platformCounts = new Map<string, { name: string; count: number }>()
 
   for (const log of logs) {
-    const pt = num(log.media?.metadata?.playtimeHours)
+    const pt = num(log.media?.details?.avgPlaytimeHours) ?? num((log.media?.details as Record<string, unknown> | undefined)?.playtimeHours)
     if (pt !== null && pt > 0) {
       withPlaytime++
       sumHours += pt
     }
 
-    const plats = strList(log.media?.metadata?.platforms) ?? []
+    const plats = strList(log.media?.details?.platforms) ?? []
     const seen = new Set<string>()
     for (const p of plats) {
       const key = p.toLowerCase()
@@ -291,7 +296,7 @@ export function computeGameStats(logs: StatLog[]): GameStats {
     .slice(0, 3)
 
   return {
-    kind: "game",
+    statType: "game",
     completed: total,
     estimatedHours: withPlaytime > 0 ? sumHours : null,
     coverage: { withData: withPlaytime, total },
@@ -306,13 +311,13 @@ export function computeMusicStats(logs: StatLog[]): MusicStats {
   let tracks = 0
 
   for (const log of logs) {
-    const k = str((log.media as { kind?: string | null })?.kind ?? log.media?.metadata?.kind)?.toLowerCase()
-    if (k === "album") albums++
-    else if (k === "track") tracks++
+    const s = str(log.media?.subtype)?.toLowerCase()
+    if (s === "album") albums++
+    else if (s === "track") tracks++
   }
 
   return {
-    kind: "music",
+    statType: "music",
     completed: total,
     albums,
     tracks,
@@ -328,12 +333,12 @@ export function computeTvStats(logs: StatLog[]): TvStats {
   let sumEpisodes = 0
 
   for (const log of logs) {
-    const k = str((log.media as { kind?: string | null })?.kind ?? log.media?.metadata?.kind)?.toLowerCase()
-    if (k === "show") {
+    const s = str(log.media?.subtype)?.toLowerCase()
+    if (s === "show") {
       shows++
-    } else if (k === "season") {
+    } else if (s === "season") {
       seasons++
-      const ep = num(log.media?.metadata?.episodeCount)
+      const ep = num(log.media?.details?.episodeCount)
       if (ep !== null && ep > 0) {
         sumEpisodes += ep
       }
@@ -341,7 +346,7 @@ export function computeTvStats(logs: StatLog[]): TvStats {
   }
 
   return {
-    kind: "tv",
+    statType: "tv",
     completed: total,
     shows,
     seasons,
@@ -353,7 +358,7 @@ export function computeTvStats(logs: StatLog[]): TvStats {
 
 export function computeGenericStats(logs: StatLog[]): GenericStats {
   return {
-    kind: "generic",
+    statType: "generic",
     completed: logs.length,
     timeToFinish: timeToFinish(logs),
   }

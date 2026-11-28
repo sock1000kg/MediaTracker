@@ -11,6 +11,7 @@ import {
     searchMovies,
     searchTracks,
     searchTv,
+    searchBoardGames,
 } from '@/api/controllers/searchControllers.js'
 
 const router = express.Router()
@@ -25,5 +26,6 @@ router.get('/movies', searchMovies)
 router.get('/tv', searchTv)
 router.get('/tv/:tmdbId/seasons', getTvSeasons)
 router.get('/games', searchGames)
+router.get('/boardgames', searchBoardGames)
 
 export default router

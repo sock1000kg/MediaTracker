@@ -4,9 +4,7 @@ import request from 'supertest'
 import app from '@/app.js'
 import { prisma } from '@/tests/jest.setup.js'
 
-type Meta = { categories?: string[] | null, kind?: string, url?: string }
-
-describe('Media log - Last.fm tag enrichment', () => {
+describe('Media log - Last.fm data is never stored', () => {
     const users = ['LfmUserA', 'LfmUserB']
     const tokens: string[] = []
     let fetchSpy: SpiedFunction<typeof fetch>
@@ -21,13 +19,13 @@ describe('Media log - Last.fm tag enrichment', () => {
         mediaData: {
             title: 'Souvlaki', mediaType: 'music', creator: 'Slowdive', year: null, description: null,
             source: 'lastfm', sourceId, imageUrl: null,
-            metadata: { url: 'https://last.fm/x', kind: 'album' },
+            subtype: 'album',
         },
         logData: { status: 'completed' },
     })
     const log = (i: number, sourceId: string) =>
         request(app).put('/media/media-log').set('Authorization', `Bearer ${tokens[i]}`).send(payload(sourceId))
-    const findMedia = (sourceId: string) => prisma.media.findFirst({ where: { source: 'lastfm', sourceId } })
+    const findMedia = (sourceId: string) => prisma.media.findFirst({ where: { provider: 'lastfm', providerId: sourceId } })
     const tagCalls = () => fetchSpy.mock.calls.filter(c => String(c[0]).includes('gettoptags'))
 
     beforeAll(async () => {
@@ -49,37 +47,30 @@ describe('Media log - Last.fm tag enrichment', () => {
     afterEach(() => fetchSpy.mockRestore())
 
     afterAll(async () => {
-        await prisma.media.deleteMany({ where: { source: 'lastfm', sourceId: { startsWith: 'lfm-test-' } } })
+        await prisma.media.deleteMany({ where: { provider: 'lastfm', providerId: { startsWith: 'lfm-test-' } } })
         await prisma.user.deleteMany({ where: { username: { in: users } } })
     })
 
-    it('stores cleaned tags for new media and fetches once', async () => {
+    const genresOf = async (mediaId: string) =>
+        (await prisma.mediaGenre.findMany({ where: { mediaId }, include: { genre: true }, orderBy: { position: 'asc' } })).map(mg => mg.genre.name)
+
+    it('never requests or stores Last.fm tags for new media', async () => {
         const res = await log(0, 'lfm-test-1')
         expect(res.statusCode).toBeLessThan(300)
-        expect(tagCalls()).toHaveLength(1)
-        expect(String(tagCalls()[0][0])).toContain('album.gettoptags')
+        expect(tagCalls()).toHaveLength(0)
         const media = await findMedia('lfm-test-1')
-        const genres = (await prisma.mediaGenre.findMany({ where: { mediaId: media!.id }, include: { genre: true }, orderBy: { position: 'asc' } })).map(mg => mg.genre.name)
-        expect(genres).toEqual(['shoegaze', 'Dream Pop'])
-        expect(media?.kind).toBe('album')
+        expect(await genresOf(media!.id)).toEqual([])
+        expect(media?.subtype).toBe('album')
     })
 
-    it('does not refetch when logged again by another user', async () => {
+    it('makes no tag request when logged again by another user', async () => {
         await log(0, 'lfm-test-1')
         const res = await log(1, 'lfm-test-1')
         expect(res.statusCode).toBeLessThan(300)
         expect(tagCalls()).toHaveLength(0)
     })
 
-    it('does not refetch when categories is null', async () => {
-        fetchSpy.mockImplementation(async () => new Response(JSON.stringify({ toptags: {} }), { status: 200 }))
-        await log(0, 'lfm-test-2')
-        expect(tagCalls()).toHaveLength(1)
-        await log(1, 'lfm-test-2')
-        expect(tagCalls()).toHaveLength(1)
-    })
-
-    it('still logs when the tags call fails, leaving categories unset', async () => {
+    it('still logs when Last.fm is down: no tags, no failure', async () => {
         fetchSpy.mockImplementation(async () => { throw new Error('network down') })
         const warn = jest.spyOn(console, 'warn').mockImplementation(() => {})
         const res = await log(0, 'lfm-test-3')
@@ -87,43 +78,37 @@ describe('Media log - Last.fm tag enrichment', () => {
         expect(res.statusCode).toBeLessThan(300)
         const media = await findMedia('lfm-test-3')
         expect(media).not.toBeNull()
-        expect(media?.metadata).not.toHaveProperty('categories')
-
-        fetchSpy.mockImplementation(async () => new Response('{}', { status: 500 }))
-        const res2 = await log(1, 'lfm-test-3')
-        expect(res2.statusCode).toBeLessThan(300)
-        expect(tagCalls()).toHaveLength(2) // first failed call + retry on the next log
-        expect(await findMedia('lfm-test-3')).not.toBeNull()
+        expect(await genresOf(media!.id)).toEqual([])
     })
 
-    it('enriches pre-existing media without categories on next log', async () => {
+    it('leaves a pre-existing media without genres alone: no tag request, no genres', async () => {
         const system = await prisma.user.findFirstOrThrow({ where: { username: 'system' } })
         const type = await prisma.mediaType.findFirstOrThrow({ where: { name: 'music' } })
-        await prisma.media.create({ data: {
-            title: 'Souvlaki', creator: 'Slowdive', source: 'lastfm', sourceId: 'lfm-test-4',
-            metadata: { url: 'https://last.fm/x' }, userId: system.id, mediaTypeId: type.id,
+        const preMedia = await prisma.media.create({ data: {
+            title: 'Souvlaki', creator: 'Slowdive', provider: 'lastfm', providerId: 'lfm-test-4',
+            userId: system.id, mediaTypeId: type.id, subtype: 'album',
         } })
+        await prisma.mediaExternalId.create({
+            data: { mediaId: preMedia.id, provider: 'lastfm', externalId: 'lfm-test-4' }
+        })
         const res = await log(0, 'lfm-test-4')
         expect(res.statusCode).toBeLessThan(300)
-        expect(tagCalls()).toHaveLength(1)
+        expect(tagCalls()).toHaveLength(0)
         const media = await findMedia('lfm-test-4')
-        const genres = (await prisma.mediaGenre.findMany({ where: { mediaId: media!.id }, include: { genre: true }, orderBy: { position: 'asc' } })).map(mg => mg.genre.name)
-        expect(genres).toEqual(['shoegaze', 'Dream Pop'])
-        const meta = media?.metadata as Meta
-        expect(meta.url).toBe('https://last.fm/x')
+        expect(await genresOf(media!.id)).toEqual([])
     })
 
     it('leaves book logging unchanged', async () => {
         const res = await request(app).put('/media/media-log').set('Authorization', `Bearer ${tokens[0]}`).send({
-            mediaData: { title: 'Dune', mediaType: 'book', creator: 'Frank Herbert', year: 1965, source: 'open_library',
-                sourceId: 'lfm-test-book', metadata: { categories: ['Science fiction'] } },
+            mediaData: { title: 'Dune', mediaType: 'book', creator: 'Frank Herbert', year: 1965, source: 'openlibrary',
+                sourceId: 'lfm-test-book', genres: ['Science fiction'] },
             logData: { status: 'completed' },
         })
         expect(res.statusCode).toBeLessThan(300)
         expect(fetchSpy).not.toHaveBeenCalled()
-        const media = await prisma.media.findFirst({ where: { sourceId: 'lfm-test-book' } })
+        const media = await prisma.media.findFirst({ where: { providerId: 'lfm-test-book' } })
         const genres = (await prisma.mediaGenre.findMany({ where: { mediaId: media!.id }, include: { genre: true } })).map(mg => mg.genre.name)
         expect(genres).toEqual(['Science fiction'])
-        await prisma.media.deleteMany({ where: { sourceId: 'lfm-test-book' } })
+        await prisma.media.deleteMany({ where: { providerId: 'lfm-test-book' } })
     })
 })

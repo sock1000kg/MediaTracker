@@ -16,6 +16,7 @@ export const MISSING_KEY_PROVIDERS: Record<string, string> = {
   "Missing Movie API Key": "TMDB",
   "Missing TV API Key": "TMDB",
   "Missing Game API Key": "RAWG",
+  "Missing Board Game API Key": "BoardGameGeek",
 }
 
 /** onKeyDown for any search control: Enter runs the search. */

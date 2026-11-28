@@ -10,10 +10,10 @@ import { searchResultsSchema } from '@/schemas/search/searchSchemas.js'
 const KEY = 'SECRETKEY123'
 
 describe('buildRawgSearchUrl', () => {
-    it('sets base params and key', () => {
-        const u = buildRawgSearchUrl({ q: 'zelda', page: 2 }, KEY)
+    it('sets base params and never a key', () => {
+        const u = buildRawgSearchUrl({ q: 'zelda', page: 2 })
         expect(u.origin + u.pathname).toBe('https://api.rawg.io/api/games')
-        expect(u.searchParams.get('key')).toBe(KEY)
+        expect(u.searchParams.has('key')).toBe(false)
         expect(u.searchParams.get('search')).toBe('zelda')
         expect(u.searchParams.get('page')).toBe('2')
         expect(u.searchParams.get('page_size')).toBe('20')
@@ -22,20 +22,20 @@ describe('buildRawgSearchUrl', () => {
         expect(u.searchParams.has('ordering')).toBe(false)
     })
     it('relevance sort adds no ordering', () => {
-        expect(buildRawgSearchUrl({ q: 'x', sort: 'relevance' }, KEY).searchParams.has('ordering')).toBe(false)
+        expect(buildRawgSearchUrl({ q: 'x', sort: 'relevance' }).searchParams.has('ordering')).toBe(false)
     })
     it.each([
         ['pc', '1'], ['playstation', '2'], ['xbox', '3'], ['ios', '4'], ['mac', '5'], ['linux', '6'], ['nintendo', '7'], ['android', '8'],
     ] as const)('platform %s -> %s', (platform, id) => {
-        expect(buildRawgSearchUrl({ q: 'x', platform }, KEY).searchParams.get('parent_platforms')).toBe(id)
+        expect(buildRawgSearchUrl({ q: 'x', platform }).searchParams.get('parent_platforms')).toBe(id)
     })
     it.each([['rating', '-rating'], ['newest', '-released'], ['metacritic', '-metacritic']] as const)('sort %s -> %s', (sort, o) => {
-        expect(buildRawgSearchUrl({ q: 'x', sort }, KEY).searchParams.get('ordering')).toBe(o)
+        expect(buildRawgSearchUrl({ q: 'x', sort }).searchParams.get('ordering')).toBe(o)
     })
     it('details url', () => {
-        const u = buildRawgDetailsUrl(42, KEY)
+        const u = buildRawgDetailsUrl(42)
         expect(u.pathname).toBe('/api/games/42')
-        expect(u.searchParams.get('key')).toBe(KEY)
+        expect(u.searchParams.has('key')).toBe(false)
     })
 })
 
@@ -86,27 +86,28 @@ describe('mapRawgGame', () => {
     it('maps fields', () => {
         expect(mapRawgGame(item)).toEqual({
             mediaType: 'game',
-            title: 'The Witcher 3', creator: null, year: '2015', description: null, source: 'rawg', sourceId: 'game-3328',
+            title: 'The Witcher 3', creator: null, year: '2015', releaseDate: '2015-05-18', description: null, source: 'rawg', sourceId: 'game-3328',
             imageUrl: 'https://media.rawg.io/a.jpg',
-            metadata: {
-                url: 'https://rawg.io/games/the-witcher-3', kind: 'game', platforms: ['PC', 'Xbox One'],
-                metacritic: 92, score: 4.66, categories: ['RPG', 'Open World'], playtimeHours: 45,
+            genres: ['RPG', 'Open World'],
+            details: {
+                platforms: ['PC', 'Xbox One'],
+                metacritic: 92, score: 4.66, scoreScale: 'rawg_5', avgPlaytimeHours: 45,
             },
         })
     })
     it('null released / image, non-https image, rating 0, url falls back to id', () => {
         const r = mapRawgGame(rawgGameItemSchema.parse({ id: 1, name: 'A', released: null, background_image: 'http://x/y.jpg', rating: 0, playtime: 0 }))
         expect(r).toMatchObject({ year: null, imageUrl: null, sourceId: 'game-1' })
-        expect(r.metadata).toEqual({ url: 'https://rawg.io/games/1', kind: 'game', platforms: null, metacritic: null, score: null, categories: null, playtimeHours: null })
+        expect(r.details).toEqual({})
     })
-    it('all-null fields are safe and validate; kind survives the union', () => {
+    it('all-null fields are safe and validate', () => {
         const r = mapRawgGame(rawgGameItemSchema.parse({ id: 2, name: null, released: 'TBA', platforms: null, genres: null, tags: null }))
         expect(r.year).toBeNull()
         const [v] = searchResultsSchema.parse([r])
         expect(v.title).toBe('Unknown title')
-        expect(v.metadata).toMatchObject({ kind: 'game' })
-        const [g] = searchResultsSchema.parse([{ mediaType: 'game', source: 'rawg', sourceId: 'game-1', metadata: { kind: 'game', platforms: ['PC'], metacritic: 80 } }])
-        expect(g.metadata).toMatchObject({ kind: 'game', platforms: ['PC'], metacritic: 80 })
+        expect(v.mediaType).toBe('game')
+        const [g] = searchResultsSchema.parse([{ mediaType: 'game', source: 'rawg', sourceId: 'game-1', details: { platforms: ['PC'], metacritic: 80 } }])
+        expect(g.details).toMatchObject({ platforms: ['PC'], metacritic: 80 })
     })
 })
 
@@ -203,5 +204,34 @@ describe('RawgSearchService error mapping (key never leaks)', () => {
         expect(new URL(String(spy.mock.calls[0][0])).searchParams.get('key')).toBe(KEY)
         spy.mockImplementation(async () => new Response(JSON.stringify({ next: null, results: [] }), { status: 200 }))
         expect((await svc.searchGamesRawg(uid, 'x', 2)).nextStartIndex).toBeNull()
+    })
+})
+
+describe('RawgSearchService.getGame (fetch by id, full SearchResult)', () => {
+    const svc = new RawgSearchService()
+    afterEach(() => { jest.restoreAllMocks() })
+    const body = {
+        id: 3498, name: 'GTA V', released: '2013-09-17', background_image: 'https://media.rawg.io/g.jpg',
+        rating: 4.4, metacritic: 96, playtime: 70,
+        developers: [{ name: 'Rockstar North' }], publishers: [{ name: 'Rockstar Games' }],
+        description_raw: ' Open world. ', genres: [{ name: 'Action' }], tags: [],
+    }
+
+    it('returns the mapped game with creators, description, publishers and score', async () => {
+        jest.spyOn(global, 'fetch').mockResolvedValue(new Response(JSON.stringify(body), { status: 200 }))
+        const r = await svc.getGame(3498, { apiKey: KEY })
+        expect(r).toMatchObject({
+            title: 'GTA V', year: '2013', sourceId: 'game-3498', imageUrl: 'https://media.rawg.io/g.jpg',
+            creator: 'Rockstar North', creators: [{ name: 'Rockstar North', role: 'developer' }],
+            description: 'Open world.', genres: ['Action'],
+        })
+        expect(r.details).toMatchObject({ score: 4.4, scoreScale: 'rawg_5', metacritic: 96, avgPlaytimeHours: 70, publishers: ['Rockstar Games'] })
+    })
+    it('404 -> "no longer has this item"; other failures -> 503', async () => {
+        jest.spyOn(global, 'fetch').mockResolvedValue(new Response('{}', { status: 404 }))
+        await expect(svc.getGame(1, { apiKey: KEY })).rejects.toMatchObject({ status: 404, message: 'The provider no longer has this item' })
+        jest.restoreAllMocks()
+        jest.spyOn(global, 'fetch').mockResolvedValue(new Response('{}', { status: 500 }))
+        await expect(svc.getGame(1, { apiKey: KEY })).rejects.toMatchObject({ status: 503 })
     })
 })

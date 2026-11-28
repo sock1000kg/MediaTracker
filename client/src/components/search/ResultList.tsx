@@ -10,20 +10,22 @@ interface ResultListProps<T extends SearchResult> {
   kindOf: (r: T) => ResultKind
   isLogged: (r: T) => boolean
   onLog: (r: T) => void
+  /** Entries in the user's log of a result (0 when unlogged). */
+  entryCount?: (r: T) => number
 }
 
 /** The results as a row list or a tile grid. */
-export function ResultList<T extends SearchResult>({ results, view, kindOf, isLogged, onLog }: ResultListProps<T>) {
+export function ResultList<T extends SearchResult>({ results, view, kindOf, isLogged, onLog, entryCount }: ResultListProps<T>) {
   if (view === "grid") {
     return (
       <ul className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-x-5 gap-y-7">
-        {results.map((r) => <ResultTile key={r.sourceId} result={r} kind={kindOf(r)} isLogged={isLogged(r)} onLog={() => onLog(r)} />)}
+        {results.map((r) => <ResultTile key={r.sourceId} result={r} kind={kindOf(r)} isLogged={isLogged(r)} entryCount={entryCount?.(r) ?? 0} onLog={() => onLog(r)} />)}
       </ul>
     )
   }
   return (
     <ul className="flex flex-col gap-3">
-      {results.map((r) => <ResultRow key={r.sourceId} result={r} kind={kindOf(r)} isLogged={isLogged(r)} onLog={() => onLog(r)} />)}
+      {results.map((r) => <ResultRow key={r.sourceId} result={r} kind={kindOf(r)} isLogged={isLogged(r)} entryCount={entryCount?.(r) ?? 0} onLog={() => onLog(r)} />)}
     </ul>
   )
 }

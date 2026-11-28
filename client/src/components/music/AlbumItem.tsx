@@ -35,8 +35,8 @@ export function AlbumItem({ album, view, logs, onLog, onMore, onErrorToast }: Al
 
   const isAlbumLogged = isResultLogged(logs, album)
   const byline = [album.creator, album.year].filter(Boolean).join(" · ")
-  const url = typeof album.metadata?.url === "string" ? album.metadata.url : null
-  const categories = (album as { genres?: string[] }).genres ?? (Array.isArray(album.metadata?.categories) ? (album.metadata.categories as string[]) : [])
+  const url = typeof album.details?.url === "string" ? album.details.url : null
+  const categories = (album as { genres?: string[] }).genres ?? (Array.isArray(album.details?.categories) ? (album.details.categories as string[]) : [])
 
   const mbid = album.sourceId && album.sourceId.includes("-") && !album.sourceId.startsWith("http")
     ? album.sourceId
@@ -161,8 +161,8 @@ export function AlbumItem({ album, view, logs, onLog, onMore, onErrorToast }: Al
       {!tracksLoading && tracks.length > 0 && (
         <ul className="flex flex-col divide-y divide-border/50">
           {tracks.map((track, idx) => {
-            const trackNumber = track.metadata.trackNumber ?? idx + 1
-            const durationStr = formatTrackDuration(track.metadata.durationSec)
+            const trackNumber = ((track.details as Record<string, unknown> | undefined)?.trackNumber as number | undefined) ?? (track as { position?: number }).position ?? idx + 1
+            const durationStr = formatTrackDuration(track.details?.durationSec)
             const currentRating = optimisticRatings[track.sourceId] !== undefined
               ? optimisticRatings[track.sourceId]
               : (track.myLog?.rating ?? null)

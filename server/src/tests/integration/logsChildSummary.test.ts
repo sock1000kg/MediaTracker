@@ -50,11 +50,12 @@ describe('Logs API childSummary and multi-user isolation', () => {
             data: {
                 title: 'Test Album For Summary',
                 creator: 'Test Band',
-                source: 'lastfm',
-                sourceId: 'summary-test-album',
+                provider: 'lastfm',
+                providerId: 'summary-test-album',
                 mediaTypeId: musicType!.id,
                 userId: systemUser!.id,
-                metadata: { kind: 'album' },
+                subtype: 'album',
+                details: {},
             },
         })
         albumId = album.id
@@ -64,13 +65,14 @@ describe('Logs API childSummary and multi-user isolation', () => {
             data: {
                 title: 'Track One',
                 creator: 'Test Band',
-                source: 'lastfm',
-                sourceId: 'summary-test-track-1',
+                provider: 'lastfm',
+                providerId: 'summary-test-track-1',
                 mediaTypeId: musicType!.id,
                 userId: systemUser!.id,
                 parentId: albumId,
                 position: 1,
-                metadata: { kind: 'track', trackNumber: 1 },
+                subtype: 'track',
+                details: { trackNumber: 1 },
             },
         })
         track1Id = track1.id
@@ -80,13 +82,14 @@ describe('Logs API childSummary and multi-user isolation', () => {
             data: {
                 title: 'Track Two',
                 creator: 'Test Band',
-                source: 'lastfm',
-                sourceId: 'summary-test-track-2',
+                provider: 'lastfm',
+                providerId: 'summary-test-track-2',
                 mediaTypeId: musicType!.id,
                 userId: systemUser!.id,
                 parentId: albumId,
                 position: 2,
-                metadata: { kind: 'track', trackNumber: 2 },
+                subtype: 'track',
+                details: { trackNumber: 2 },
             },
         })
         track2Id = track2.id

@@ -1,6 +1,6 @@
 /**
- * Shared coercion helpers for metadata and user-edited values.
- * Users can edit metadata as text in MediaForm, so values may be strings, numbers, arrays, or objects.
+ * Shared coercion helpers for details and user-edited values.
+ * Users can edit details as text in MediaForm, so values may be strings, numbers, arrays, or objects.
  */
 
 /** Finite numbers, or numeric strings ("8.61"); anything else is null. */

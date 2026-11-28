@@ -1,23 +1,24 @@
 import { describe, expect, test } from "vitest"
-import { applyStatus } from "./logStatus"
+import { hasEntryContent, cleanEntry } from "./logStatus"
 
-const today = "2026-11-16"
-
-describe("applyStatus", () => {
-  test("in progress with no start date starts today", () => {
-    expect(applyStatus({ status: "wishlist", started_at: null }, "in progress", today))
-      .toEqual({ status: "in progress", started_at: today })
+describe("entry drafts", () => {
+  test("an empty draft says nothing; a name, dates, progress, a note or an edition do", () => {
+    expect(hasEntryContent(undefined)).toBe(false)
+    expect(hasEntryContent({ name: " ", note: "  ", edition: { format: "" } })).toBe(false)
+    expect(hasEntryContent({ name: "The Stranger" })).toBe(true)
+    expect(hasEntryContent({ startedAt: "2026-01-01" })).toBe(true)
+    expect(hasEntryContent({ progressEpisodes: 0 })).toBe(true)
+    expect(hasEntryContent({ edition: { format: "Kindle" } })).toBe(true)
   })
 
-  test("keeps an existing start date", () => {
-    expect(applyStatus({ status: "wishlist", started_at: "2026-01-02" }, "in progress", today).started_at).toBe("2026-01-02")
-  })
-
-  test("other statuses leave the start date alone", () => {
-    expect(applyStatus({ status: "wishlist", started_at: null }, "completed", today).started_at).toBeNull()
-  })
-
-  test("skips when a past finish date would come before today", () => {
-    expect(applyStatus({ started_at: null, finished_at: "2026-01-02" }, "in progress", today).started_at).toBeNull()
+  test("cleanEntry sends day-precision dates, a trimmed name and drops blank edition keys", () => {
+    expect(cleanEntry({ name: " L'étranger ", startedAt: "2026-01-01T12:00:00Z", note: " hi ", edition: { format: "", language: "French" } }))
+      .toEqual({
+        name: "L'étranger", startedAt: "2026-01-01", finishedAt: null,
+        progressEpisodes: null, progressChapters: null, progressVolumes: null,
+        note: "hi", edition: { language: "French" },
+      })
+    expect(cleanEntry({ edition: { format: " " } }).edition).toBeNull()
+    expect(cleanEntry({ name: "  " }).name).toBeNull()
   })
 })

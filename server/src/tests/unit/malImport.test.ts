@@ -26,14 +26,14 @@ describe("MyAnimeList Import (Unit)", () => {
     describe("Anime and Manga Detection", () => {
         it("detects anime export correctly from user_export_type or anime tag", () => {
             const parsed = parseMalExport(validAnimeXml)
-            expect(parsed.kind).toBe("anime")
+            expect(parsed.exportType).toBe("anime")
             expect(parsed.entries.length).toBe(2)
             expect(parsed.entries[0].watchedEpisodes).toBe(28)
         })
 
         it("detects manga export correctly from user_export_type or manga tag", () => {
             const parsed = parseMalExport(validMangaXml)
-            expect(parsed.kind).toBe("manga")
+            expect(parsed.exportType).toBe("manga")
             expect(parsed.entries.length).toBe(1)
             expect(parsed.entries[0].title).toBe("Berserk")
             expect(parsed.entries[0].readChapters).toBe(364)

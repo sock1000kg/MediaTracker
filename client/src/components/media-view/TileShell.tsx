@@ -18,7 +18,8 @@ export function TileShell({ cover, badge, children }: TileShellProps) {
           </span>
         )}
       </div>
-      <div className="px-1 pb-0.5">
+      {/* flex-1 + flex-col so a tile's last row (date, actions) can mt-auto to the bottom of a taller row-mate */}
+      <div className="flex flex-1 flex-col px-1 pb-0.5">
         {children}
       </div>
     </li>

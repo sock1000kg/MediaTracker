@@ -62,18 +62,16 @@ describe('Tracklist Resolution and Fetching', () => {
         expect(res.tracks[0].mediaType).toBe('music')
         expect(res.album.title).toBe('Loveless')
         expect(res.album.creator).toBe('my bloody valentine')
-        expect(res.album.imageUrl).toBe('https://cover.jpg')
+        expect(res.album.imageUrl).toBe('https://coverartarchive.org/release/mbid-123/front-250')
+        expect(res.tracks[0].imageUrl).toBe('https://coverartarchive.org/release/mbid-123/front-250')
         expect(res.tracks).toHaveLength(2)
         expect(res.tracks[0].title).toBe('Only Shallow')
-        expect(res.tracks[0].metadata).toMatchObject({
-            trackNumber: 1,
+        expect(res.tracks[0].subtype).toBe('track')
+        expect(res.tracks[0].details).toMatchObject({
             durationSec: 257,
-            kind: 'track',
-            album: 'Loveless',
         })
         expect(res.tracks[1].title).toBe('Loomer')
-        expect(res.tracks[1].metadata).toMatchObject({
-            trackNumber: 2,
+        expect(res.tracks[1].details).toMatchObject({
             durationSec: 158,
         })
     })
@@ -109,8 +107,7 @@ describe('Tracklist Resolution and Fetching', () => {
         expect(res.provider).toBe('lastfm')
         expect(res.tracks).toHaveLength(1)
         expect(res.tracks[0].title).toBe('Solo Track')
-        expect(res.tracks[0].metadata).toMatchObject({
-            trackNumber: 1,
+        expect(res.tracks[0].details).toMatchObject({
             durationSec: 180,
         })
     })
@@ -169,8 +166,7 @@ describe('Tracklist Resolution and Fetching', () => {
         expect(res.tracks[0].source).toBe('musicbrainz')
         expect(res.tracks[0].mediaType).toBe('music')
         expect(res.tracks[0].sourceId).toBe('mb-trk-1')
-        expect(res.tracks[0].metadata).toMatchObject({
-            trackNumber: 1,
+        expect(res.tracks[0].details).toMatchObject({
             durationSec: 200,
         })
     })
@@ -227,10 +223,15 @@ describe('Tracklist Resolution and Fetching', () => {
             { id: '018f0000-0000-7000-8000-000000000101', sourceId: 'lastfm:https://last.fm/music/slowdive/souvlaki#1' },
             { id: '018f0000-0000-7000-8000-000000000102', sourceId: 'lastfm:https://last.fm/music/slowdive/souvlaki#2' },
         ]
+        const fakeExt = [
+            { mediaId: '018f0000-0000-7000-8000-000000000101', externalId: 'lastfm:https://last.fm/music/slowdive/souvlaki#1' },
+            { mediaId: '018f0000-0000-7000-8000-000000000102', externalId: 'lastfm:https://last.fm/music/slowdive/souvlaki#2' },
+        ]
 
         jest.spyOn(prisma.media, 'findMany').mockResolvedValue(fakeMedia as never)
+        jest.spyOn(prisma.mediaExternalId, 'findMany').mockResolvedValue(fakeExt as never)
         jest.spyOn(prisma.userLogs, 'findMany').mockResolvedValue([
-            { id: '018f0000-0000-7000-8000-000000000501', mediaId: '018f0000-0000-7000-8000-000000000101', rating: 95, status: 'completed' },
+            { id: '018f0000-0000-7000-8000-000000000501', mediaId: '018f0000-0000-7000-8000-000000000101', rating: 95, status: 'completed', _count: { entries: 3 } },
         ] as never)
 
         const res = await musicSearchService.fetchAlbumTracks('018f0000-0000-7000-8000-000000000042', 'Slowdive', 'Souvlaki')
@@ -242,9 +243,72 @@ describe('Tracklist Resolution and Fetching', () => {
             id: '018f0000-0000-7000-8000-000000000501',
             rating: 95,
             status: 'completed',
+            entryCount: 3,
         })
         // Machine Gun has media in DB but no user log
         expect(res.tracks[1].inLibrary).toBe(false)
         expect(res.tracks[1].myLog).toBeNull()
+    })
+
+    it('T1: accepts a release group and returns its tracks (MusicBrainz mocked)', async () => {
+        const mbRelease = {
+            id: 'mb-rel-early',
+            title: 'Loveless',
+            date: '1991-11-04',
+            'artist-credit': [{ name: 'my bloody valentine' }],
+            media: [
+                {
+                    position: 1,
+                    tracks: [
+                        { id: 'mb-trk-1', position: 1, title: 'Only Shallow', length: 257000 },
+                        { id: 'mb-trk-2', position: 2, title: 'Loomer', length: 158000 },
+                    ],
+                },
+            ],
+        }
+
+        jest.spyOn(musicBrainzService, 'getReleaseByReleaseGroup').mockResolvedValue(mbRelease)
+        jest.spyOn(prisma.media, 'findMany').mockResolvedValue([])
+
+        const res = await musicSearchService.fetchAlbumTracks('1', 'my bloody valentine', 'Loveless', undefined, 'rg-loveless-456')
+
+        expect(res.provider).toBe('musicbrainz')
+        expect(res.album.sourceId).toBe('rg-loveless-456')
+        expect(res.album.externalIds).toEqual(expect.arrayContaining([{ provider: 'musicbrainz', id: 'rg-loveless-456' }]))
+        expect(res.tracks).toHaveLength(2)
+        expect(res.tracks[0].title).toBe('Only Shallow')
+        expect(res.tracks[0].details).toMatchObject({
+            durationSec: 257,
+        })
+    })
+
+    it('T1: getReleaseByReleaseGroup picks the earliest official release', async () => {
+        const mockReleasesData = {
+            releases: [
+                { id: 'rel-bootleg', status: 'Bootleg', date: '1990-01-01' },
+                { id: 'rel-late', status: 'Official', date: '2008-05-01' },
+                { id: 'rel-early', status: 'Official', date: '1991-11-04' },
+            ],
+        }
+
+        const mockReleaseDetail = {
+            id: 'rel-early',
+            title: 'Loveless',
+            date: '1991-11-04',
+            'artist-credit': [{ name: 'my bloody valentine' }],
+            media: [
+                {
+                    position: 1,
+                    tracks: [{ id: 'trk-1', position: 1, title: 'Only Shallow' }],
+                },
+            ],
+        }
+
+        jest.spyOn(musicBrainzService, 'fetchJson').mockResolvedValue(mockReleasesData)
+        jest.spyOn(musicBrainzService, 'getRelease').mockResolvedValue(mockReleaseDetail)
+
+        const chosen = await musicBrainzService.getReleaseByReleaseGroup('rg-pick-early')
+        expect(musicBrainzService.getRelease).toHaveBeenCalledWith('rel-early')
+        expect(chosen?.id).toBe('rel-early')
     })
 })

@@ -2,25 +2,15 @@ import prisma from "@/prismaClient.js"
 import { Prisma } from "@/db.js"
 import { findUserByUsername } from "@/repositories/authRepository.js"
 import { findMediaTypeForUserOrGlobal } from "@/repositories/mediaTypeRepository.js"
+import { compactEdition } from "@/schemas/entrySchemas.js"
 import { GoodReadsRow, goodreadsRowSchema } from "@/schemas/imports/goodReadsSchemas.js"
 import { AppError } from "@/api/domain/error.js"
 import { validateSchema, parseImportDate, toDayPrecision } from "@/utilities.js"
 import { parse } from "csv-parse/sync"
-import { BookMetadata } from "@/api/domain/media.js"
 import { ZodError } from "zod"
 import { ImportResult } from "@/api/domain/imports.js"
-import { openLibraryService } from "../search/openLibrarySearchService.js"
 import { executeBatchImport, BatchRowItem } from "./batchWrite.js"
-import { findMediaByExternalIds, ExternalIdKey } from "@/repositories/mediaRepository.js"
-
 import { LIMITS } from "@/config/limits.js"
-
-// Helpers for preparing rich or unrich data
-type BookEnrichmentData = {
-    description: string | null
-    imageUrl: string | null
-    metadata: BookMetadata
-}
 
 export const MAX_IMPORT_FAILURES = LIMITS.imports.maxFailures
 
@@ -52,49 +42,6 @@ export function importedLogDate(record: Pick<GoodReadsRow, "Date Read" | "Date A
 }
 
 export class GoodreadsImportService {
-    /**
-     * Enriches a record with Google Books data.
-     * Returns a partial object to merge with mediaData.
-     */
-    private async fetchEnrichmentData(
-        userId: string,
-        record: GoodReadsRow
-    ): Promise<BookEnrichmentData | null> {
-        try {
-            const isbn = record['ISBN13'] || record['ISBN']
-            const cleanIsbn = isbn?.replace(/["'=]/g, "") // Clean Goodreads CSV formatting
-
-            let query = ""
-            if (cleanIsbn) {
-                query = `isbn:${cleanIsbn}`
-            } else {
-                query = `intitle:${record['Title']} inauthor:${record['Author']}`
-            }
-
-            // catch errors silently so one failed search doesn't crash the import
-            const searchResponse = await openLibraryService.searchBooksOpenLib(userId, query, 1).catch(() => null)
-            const book = searchResponse?.results?.[0]
-
-            if (!book) return null
-
-            const meta = book.metadata as BookMetadata
-
-            // Map Google result to our internal structure
-            return {
-                description: book.description || null,
-                imageUrl: book.imageUrl || null,
-                metadata: {
-                    pageCount: meta.pageCount || null, // ignore 0
-                    categories: meta.categories ?? null,
-                    publisher: meta.publisher ?? null,
-                },
-            }
-        } catch (error) {
-            console.warn(`Enrichment failed for ${record['Title']}`, error)
-            return null
-        }
-    }
-
     async importFromGoodReads(
         userId: string,
         fileBuffer: Buffer,
@@ -114,20 +61,8 @@ export class GoodreadsImportService {
         const bookType = await findMediaTypeForUserOrGlobal("book", userId, prisma)
         if (!systemUser || !bookType) throw new AppError("System config missing", 500)
 
-        const lookupKeys: ExternalIdKey[] = []
-        for (const unvalidRecord of rawRecords) {
-            const raw = unvalidRecord as Record<string, unknown>
-            const bId = raw['Book Id'] ? String(raw['Book Id']).trim() : null
-            if (bId) lookupKeys.push({ provider: "goodreads", externalId: bId })
-            const isbn13 = raw['ISBN13'] ? String(raw['ISBN13']).replace(/["'=]/g, "").trim() : null
-            if (isbn13) lookupKeys.push({ provider: "isbn13", externalId: isbn13 })
-            const isbn = raw['ISBN'] ? String(raw['ISBN']).replace(/["'=]/g, "").trim() : null
-            if (isbn) lookupKeys.push({ provider: "isbn", externalId: isbn })
-        }
-        const existingMediaMap = await findMediaByExternalIds(lookupKeys, prisma)
 
         const validItems: BatchRowItem[] = []
-        const shouldEnrich = opts.enrich !== false
 
         for (const [index, unvalidRecord] of rawRecords.entries()) {
             const rowNum = index + 2 // 1st entry is line 2
@@ -138,24 +73,12 @@ export class GoodreadsImportService {
                 const rawIsbn13 = record['ISBN13'] ? String(record['ISBN13']).replace(/["'=]/g, "").trim() : null
                 const rawIsbn = record['ISBN'] ? String(record['ISBN']).replace(/["'=]/g, "").trim() : null
 
-                const matchedMedia = (sourceId && existingMediaMap.get(`goodreads:${sourceId}`)) ||
-                                     (rawIsbn13 && existingMediaMap.get(`isbn13:${rawIsbn13}`)) ||
-                                     (rawIsbn && existingMediaMap.get(`isbn:${rawIsbn}`)) || null
-
-                let enrichmentData: BookEnrichmentData | undefined
-                if (shouldEnrich && !matchedMedia) {
-                    await new Promise(r => setTimeout(r, 100))
-                    const data = await this.fetchEnrichmentData(userId, record)
-                    if (data) enrichmentData = data
-                }
-
                 const mainAuthor = record['Author']
                 const additionalAuthors = record['Additional Authors']
                 const year = record['Year Published'] ?? null
                 const starRating = record['My Rating']
                 const exclusiveShelf = record['Exclusive Shelf'] || ""
                 const author = additionalAuthors ? `${mainAuthor}, ${additionalAuthors}` : mainAuthor
-                const constructedSourceUrl = sourceId ? `https://www.goodreads.com/book/show/${sourceId}` : ""
 
                 let status = "wishlist"
                 if (exclusiveShelf === 'read') status = "completed"
@@ -168,7 +91,6 @@ export class GoodreadsImportService {
 
                 const rawPageCount = record['Number of Pages']
                 const csvPageCount = typeof rawPageCount === "number" && rawPageCount > 0 ? rawPageCount : null
-                const pageCount = enrichmentData?.metadata?.pageCount ?? csvPageCount
 
                 const externalIds: { provider: string; id: string }[] = []
                 if (sourceId) externalIds.push({ provider: "goodreads", id: sourceId })
@@ -185,13 +107,12 @@ export class GoodreadsImportService {
                         if (trimmed) structuredCreators.push({ name: trimmed, role: "author" })
                     }
                 }
-                const bookGenres = (enrichmentData?.metadata as { categories?: string[] } | undefined)?.categories ?? []
 
                 validItems.push({
                     rowNum,
                     title: record['Title'],
                     externalIds,
-                    genres: bookGenres,
+                    genres: [],
                     creators: structuredCreators,
                     mediaData: {
                         title: record['Title'],
@@ -199,12 +120,11 @@ export class GoodreadsImportService {
                         year,
                         source: "goodreads",
                         sourceId,
-                        description: enrichmentData?.description ?? null,
-                        imageUrl: enrichmentData?.imageUrl ?? null,
-                        metadata: {
-                            url: constructedSourceUrl,
-                            ...(enrichmentData?.metadata || {}),
-                            ...(pageCount ? { pageCount } : {}),
+                        description: null,
+                        imageUrl: null,
+                        details: {
+                            ...(csvPageCount ? { pageCount: csvPageCount } : {}),
+                            ...(record['Publisher'] ? { publisher: record['Publisher'] } : {}),
                         },
                     },
                     logData: {
@@ -212,10 +132,16 @@ export class GoodreadsImportService {
                         rating: rating100,
                         notes: record['My Review'] || "",
                         loggedAt: importedLogDate(record),
-                        startedAt: null,
-                        finishedAt: toDayPrecision(record['Date Read']),
                         tags: [],
                     },
+                    // One read, finished on Date Read (Goodreads has no start date). Read Count has no dates, so it adds nothing.
+                    entries: [{
+                        finishedAt: toDayPrecision(record['Date Read']),
+                        name: record['Title'].trim().slice(0, LIMITS.logs.entryNameMaxLength) || null,
+                        edition: compactEdition({
+                            ...(record['Binding'] ? { format: record['Binding'].trim().slice(0, 60) } : {}),
+                        }),
+                    }],
                 })
             } catch (error: unknown) {
                 let reason = "Invalid data format"
@@ -254,29 +180,21 @@ export class GoodreadsImportService {
             },
             computeGapFill: (media, log, item) => {
                 let filledGap = false
-                const logUpdates: { rating?: number; finished_at?: Date } = {}
+                const logUpdates: { rating?: number } = {}
                 let mediaPatch: Record<string, Prisma.InputJsonValue | null> | undefined
 
-                const existingMeta = (media.metadata && typeof media.metadata === "object" && !Array.isArray(media.metadata))
-                    ? (media.metadata as Record<string, unknown>)
+                const existingDetails = (media.details && typeof media.details === "object" && !Array.isArray(media.details))
+                    ? (media.details as Record<string, unknown>)
                     : {}
-                const hasPageCount = typeof existingMeta.pageCount === "number" && existingMeta.pageCount > 0
-                const itemMeta = (item.mediaData.metadata && typeof item.mediaData.metadata === "object" && !Array.isArray(item.mediaData.metadata))
-                    ? (item.mediaData.metadata as Record<string, unknown>)
+                const hasPageCount = typeof existingDetails.pageCount === "number" && existingDetails.pageCount > 0
+                const itemDetails = (item.mediaData.details && typeof item.mediaData.details === "object" && !Array.isArray(item.mediaData.details))
+                    ? (item.mediaData.details as Record<string, unknown>)
                     : {}
-                const csvPageCount = typeof itemMeta.pageCount === "number" ? itemMeta.pageCount : null
+                const csvPageCount = typeof itemDetails.pageCount === "number" ? itemDetails.pageCount : null
 
                 if (!hasPageCount && csvPageCount) {
                     mediaPatch = { pageCount: csvPageCount }
                     filledGap = true
-                }
-
-                const parsedFinishedAt = item.logData.finishedAt
-                if (log.finished_at === null && parsedFinishedAt !== null) {
-                    if (!log.started_at || parsedFinishedAt.getTime() >= log.started_at.getTime()) {
-                        logUpdates.finished_at = parsedFinishedAt
-                        filledGap = true
-                    }
                 }
 
                 if (log.rating === null && item.logData.rating !== null) {

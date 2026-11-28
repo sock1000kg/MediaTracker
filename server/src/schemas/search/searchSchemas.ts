@@ -2,13 +2,16 @@ import { z } from "zod"
 import { uuidSchema } from "@/schemas/common.js"
 import { searchMediaSchema } from "@schemas/mediaSchemas.js"
 import { searchLogSchema } from "@/schemas/logSchemas.js"
-import { normalizeTypeName } from "@/utilities.js"
-import { bookMetadataSchema } from "./bookSchemas.js"
-import { musicMetadataSchema } from "./musicSchemas.js"
-import { animeMetadataSchema } from "./animeSchemas.js"
-import { movieMetadataSchema } from "./movieSchemas.js"
-import { gameMetadataSchema } from "./gameSchemas.js"
-import { tvSeasonMetadataSchema, tvShowMetadataSchema } from "./tvSchemas.js"
+import { entryInputSchema } from "@/schemas/entrySchemas.js"
+import { isStoredAsReceived } from "@/providers/registry.js"
+import { normalizeTypeName, sanitizeDescription } from "@/utilities.js"
+import { bookDetailsSchema } from "./bookSchemas.js"
+import { albumDetailsSchema, trackDetailsSchema } from "./musicSchemas.js"
+import { animeDetailsSchema, mangaDetailsSchema } from "./animeSchemas.js"
+import { movieDetailsSchema } from "./movieSchemas.js"
+import { gameDetailsSchema } from "./gameSchemas.js"
+import { tvSeasonDetailsSchema, tvShowDetailsSchema } from "./tvSchemas.js"
+import { boardgameDetailsSchema } from "./bggSchemas.js"
 
 const parentMediaSchema = searchMediaSchema.extend({
     mediaType: z
@@ -18,27 +21,40 @@ const parentMediaSchema = searchMediaSchema.extend({
         .optional(),
 })
 
+export function normalizeDescription(source: string, description: string | null | undefined): string | null {
+    return isStoredAsReceived(source)
+        ? (description ? String(description).trim() || null : null)
+        : sanitizeDescription(description)
+}
+
 //For when user search up a media and wanna log it
 export const createMediaAndLogSchema = z.object({
     mediaData: searchMediaSchema,
     logData: searchLogSchema,
+    entry: entryInputSchema.optional(),
     parent: parentMediaSchema.nullish(),
 }).transform((data) => {
     if (data.parent && !data.parent.mediaType) {
         data.parent.mediaType = data.mediaData.mediaType
     }
+    // Providers whose terms say "store as received" (BGG) are only trimmed; everything else is sanitized
+    data.mediaData.description = normalizeDescription(data.mediaData.source, data.mediaData.description)
+    if (data.parent) data.parent.description = normalizeDescription(data.parent.source, data.parent.description)
     return data
 })
 
-// Music goes first and is strict: the book schema would otherwise match music results and strip `kind`
-const mediaMetadataSchema = z.union([
-  musicMetadataSchema.strict(),
-  tvSeasonMetadataSchema,
-  tvShowMetadataSchema,
-  animeMetadataSchema,
-  movieMetadataSchema,
-  gameMetadataSchema,
-  bookMetadataSchema
+const mediaDetailsSchema = z.union([
+    albumDetailsSchema.strict(),
+    trackDetailsSchema.strict(),
+    boardgameDetailsSchema,
+    tvSeasonDetailsSchema,
+    tvShowDetailsSchema,
+    animeDetailsSchema,
+    mangaDetailsSchema,
+    movieDetailsSchema,
+    gameDetailsSchema,
+    bookDetailsSchema,
+    z.record(z.string(), z.unknown()),
 ])
 
 export const searchResultCreatorSchema = z.object({
@@ -48,7 +64,7 @@ export const searchResultCreatorSchema = z.object({
 
 //Schema for ONE result of a search (generic normaliztion for all types)
 // Search providers stamp the type so clients can log a result as-is
-export const SEARCH_MEDIA_TYPES = ["book", "music", "movie", "tv", "game", "anime", "manga"] as const
+export const SEARCH_MEDIA_TYPES = ["book", "music", "movie", "tv", "game", "anime", "manga", "boardgame"] as const
 
 export const searchResultSchema = z.object({
     mediaType: z.enum(SEARCH_MEDIA_TYPES),
@@ -61,6 +77,7 @@ export const searchResultSchema = z.object({
         .nullable()
         .default(null),
     creators: z.array(searchResultCreatorSchema).optional(),
+    genres: z.array(z.string()).optional(),
     year: z
         .string()
         .nullable()
@@ -80,8 +97,17 @@ export const searchResultSchema = z.object({
         id: uuidSchema,
         rating: z.number().nullable(),
         status: z.string().nullable(),
+        entryCount: z.number().int().nonnegative(),
     }).nullable().optional(),
-    metadata: mediaMetadataSchema.optional(), // raw Google volumeInfo
+    details: mediaDetailsSchema.nullable().optional(),
+    subtype: z.enum(["album", "track", "show", "season"]).nullable().optional(),
+    releaseDate: z.string().nullable().optional(),
+    originalTitle: z.string().nullable().optional(),
+    // The edition the search matched (books): its title and language, when they are known
+    edition: z.object({
+        title: z.string().optional(),
+        language: z.string().optional(),
+    }).nullable().optional(),
     externalIds: z.array(z.object({
         provider: z.string(),
         id: z.string(),

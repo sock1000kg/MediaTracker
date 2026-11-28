@@ -43,7 +43,7 @@ describe('X4: MediaExternalId identity, lookups, and importer matching', () => {
         await prisma.mediaExternalId.deleteMany({
             where: {
                 OR: [
-                    { provider: 'test-prov' },
+                    { provider: 'google_books', externalId: { in: ['test-ext-unique', 'test-ext-other', 'test-ext-dup'] } },
                     { provider: 'mal', externalId: '999991' },
                     { provider: 'goodreads', externalId: { in: ['888881', '888882'] } },
                     { provider: 'isbn13', externalId: '9781234567897' },
@@ -53,7 +53,7 @@ describe('X4: MediaExternalId identity, lookups, and importer matching', () => {
         await prisma.media.deleteMany({
             where: {
                 OR: [
-                    { sourceId: { in: ['test-x-1', 'test-x-2', 'ext-anime-1'] } },
+                    { providerId: { in: ['test-x-1', 'test-x-2', 'ext-anime-1', 'test-ext-unique', 'test-ext-other'] } },
                     { title: { in: ['Test External Title 1', 'Test External Title 2', 'Anime Via AniList', 'Book Via Goodreads 1'] } },
                 ],
             },
@@ -62,16 +62,15 @@ describe('X4: MediaExternalId identity, lookups, and importer matching', () => {
     })
 
     it('migration backfill inserts sourceId and idMal into MediaExternalId', async () => {
-        // Create pre-migration style media with sourceId and metadata.idMal
+        // Create pre-migration style media with sourceId and details.idMal
         const testMedia = await prisma.media.create({
             data: {
                 title: 'Backfill Target Anime',
-                source: 'anilist',
-                sourceId: 'anime-777771',
+                provider: 'anilist',
+                providerId: 'anime-777771',
                 mediaTypeId: animeTypeId,
                 userId: systemUserId,
-                metadata: {
-                    kind: 'anime',
+                details: {
                     idMal: 777771,
                 },
             },
@@ -80,20 +79,20 @@ describe('X4: MediaExternalId identity, lookups, and importer matching', () => {
         // Execute the exact backfill queries from the migration
         await prisma.$executeRawUnsafe(`
             INSERT INTO "MediaExternalId" ("id", "mediaId", "provider", "externalId", "created_at")
-            SELECT gen_random_uuid(), id, LOWER(source), "sourceId", created_at
+            SELECT gen_random_uuid(), id, provider, "providerId", created_at
             FROM "Media"
-            WHERE id = '${testMedia.id}'::uuid AND "sourceId" IS NOT NULL AND source IS NOT NULL
+            WHERE id = '${testMedia.id}'::uuid AND "providerId" IS NOT NULL AND provider IS NOT NULL
             ON CONFLICT ("provider", "externalId") DO NOTHING;
         `)
 
         await prisma.$executeRawUnsafe(`
             INSERT INTO "MediaExternalId" ("id", "mediaId", "provider", "externalId", "created_at")
-            SELECT gen_random_uuid(), id, 'mal', (metadata->>'idMal'), created_at
+            SELECT gen_random_uuid(), id, 'mal', (details->>'idMal'), created_at
             FROM "Media"
             WHERE id = '${testMedia.id}'::uuid
-              AND metadata IS NOT NULL
-              AND metadata ? 'idMal'
-              AND (metadata->>'idMal') ~ '^[0-9]+$'
+              AND details IS NOT NULL
+              AND details ? 'idMal'
+              AND (details->>'idMal') ~ '^[0-9]+$'
             ON CONFLICT ("provider", "externalId") DO NOTHING;
         `)
 
@@ -122,11 +121,12 @@ describe('X4: MediaExternalId identity, lookups, and importer matching', () => {
                     source: 'anilist',
                     sourceId: 'anime-999991',
                     mediaType: 'anime',
-                    metadata: {
-                        kind: 'anime',
-                        idMal: 999991,
-                        episodes: 12,
+                    details: {
+                        episodeCount: 12,
                     },
+                    externalIds: [
+                        { provider: 'mal', id: '999991' },
+                    ],
                 },
                 logData: {
                     status: 'completed',
@@ -215,8 +215,8 @@ describe('X4: MediaExternalId identity, lookups, and importer matching', () => {
         const media1 = await prisma.media.create({
             data: {
                 title: 'Test External Title 1',
-                source: 'test-prov',
-                sourceId: 'test-ext-unique',
+                provider: 'google_books',
+                providerId: 'test-ext-unique',
                 mediaTypeId: bookTypeId,
                 userId: systemUserId,
             },
@@ -225,24 +225,24 @@ describe('X4: MediaExternalId identity, lookups, and importer matching', () => {
         const media2 = await prisma.media.create({
             data: {
                 title: 'Test External Title 2',
-                source: 'test-prov',
-                sourceId: 'test-ext-other',
+                provider: 'google_books',
+                providerId: 'test-ext-other',
                 mediaTypeId: bookTypeId,
                 userId: systemUserId,
             },
         })
 
         // Attach to media 1
-        await attachExternalIdsToMedia(media1.id, [{ provider: 'test-prov', externalId: 'test-ext-dup' }], prisma)
+        await attachExternalIdsToMedia(media1.id, [{ provider: 'google_books', externalId: 'test-ext-dup' }], prisma)
 
         // Attempting to attach to media 2 with skipDuplicates must not throw
         await expect(
-            attachExternalIdsToMedia(media2.id, [{ provider: 'test-prov', externalId: 'test-ext-dup' }], prisma)
+            attachExternalIdsToMedia(media2.id, [{ provider: 'google_books', externalId: 'test-ext-dup' }], prisma)
         ).resolves.not.toThrow()
 
         // Lookup maps to media1
-        const map = await findMediaByExternalIds([{ provider: 'test-prov', externalId: 'test-ext-dup' }], prisma)
-        expect(map.get('test-prov:test-ext-dup')?.id).toBe(media1.id)
+        const map = await findMediaByExternalIds([{ provider: 'google_books', externalId: 'test-ext-dup' }], prisma)
+        expect(map.get('google_books:test-ext-dup')?.id).toBe(media1.id)
 
         // Cleanup
         await prisma.media.deleteMany({ where: { id: { in: [media1.id, media2.id] } } })

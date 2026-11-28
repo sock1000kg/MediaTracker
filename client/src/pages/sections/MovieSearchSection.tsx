@@ -11,7 +11,7 @@ import { useSearchLogging } from "@/hooks/useSearchLogging"
 import { useStoredView } from "@/hooks/useStoredView"
 import { isResultLogged } from "@/lib/utils"
 import { parseYear } from "@/lib/searchQuery"
-import { TMDB_ATTRIBUTION, TMDB_URL } from "@/lib/movieFormat"
+import { CLIENT_PROVIDERS } from "@/lib/providers"
 import type { MovieResult } from "@/types/search"
 
 export function MovieSearchSection() {
@@ -29,7 +29,7 @@ export function MovieSearchSection() {
     fetchPage: (page) => searchMovies(query, page, { year: year ? Number(year) : undefined }),
     hideLogged,
   })
-  const { openLog, dialog } = useSearchLogging<MovieResult>(search.logs)
+  const { openLog, dialog, entryCountFor } = useSearchLogging<MovieResult>(search.logs)
 
   const handleSearch = () => {
     if (!inputValue.trim()) return
@@ -41,7 +41,7 @@ export function MovieSearchSection() {
     <SearchPageShell page="movies">
       <SearchHeader
         title="Movie search"
-        attribution={{ href: TMDB_URL, text: TMDB_ATTRIBUTION }}
+        attribution={CLIENT_PROVIDERS.tmdb.attribution}
         value={inputValue}
         onChange={setInputValue}
         onSearch={handleSearch}
@@ -57,6 +57,7 @@ export function MovieSearchSection() {
           kindOf={() => "movie"}
           isLogged={(item) => isResultLogged(search.logs, item)}
           onLog={(item) => openLog(item)}
+          entryCount={(item) => entryCountFor(item)}
         />
       </SearchResults>
 

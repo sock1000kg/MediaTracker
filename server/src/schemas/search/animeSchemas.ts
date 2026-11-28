@@ -6,24 +6,26 @@ export const MANGA_TYPES = ["manga", "novel", "lightnovel", "oneshot", "manhwa",
 export const ANIME_SORTS = ["relevance", "score", "popularity", "newest"] as const
 
 export type AniListMode = "anime" | "manga"
-export type JikanMode = AniListMode
 
-export const animeMetadataSchema = z.object({
-    url: z.string().optional(),
-    kind: z.enum(["anime", "manga"]),
+export const animeDetailsSchema = z.object({
     format: z.string().nullable().optional(),
-    episodes: z.number().nullable().optional(),
-    chapters: z.number().nullable().optional(),
-    volumes: z.number().nullable().optional(),
+    episodeCount: z.number().nullable().optional(),
+    durationSec: z.number().nullable().optional(),
+    country: z.string().nullable().optional(),
+    airingStatus: z.string().nullable().optional(),
+    language: z.string().nullable().optional(),
     score: z.number().nullable().optional(),
-    scoreScale: z.enum(["mal", "anilist"]).optional(),
-    originalTitle: z.string().nullable().optional(),
-    categories: z.array(z.string()).nullable().optional(),
-    episodeMinutes: z.number().nullable().optional(),
-    idMal: z.number().nullable().optional(),
-    watchedEpisodes: z.number().nullable().optional(),
-    readChapters: z.number().nullable().optional(),
-    readVolumes: z.number().nullable().optional(),
+    scoreScale: z.literal("anilist_100").optional(),
+}).strict()
+
+export const mangaDetailsSchema = z.object({
+    format: z.string().nullable().optional(),
+    chapterCount: z.number().nullable().optional(),
+    volumeCount: z.number().nullable().optional(),
+    country: z.string().nullable().optional(),
+    publishingStatus: z.string().nullable().optional(),
+    score: z.number().nullable().optional(),
+    scoreScale: z.literal("anilist_100").optional(),
 }).strict()
 
 const nl = <T extends z.ZodTypeAny>(s: T) => s.nullable().optional()
@@ -93,43 +95,6 @@ export const anilistResponseSchema = z.object({
 })
 
 export type AniListMedia = z.infer<typeof anilistMediaSchema>
-
-// Jikan v4 (kept for backwards compatibility / existing data)
-const named = z.array(z.object({ name: nl(z.string()) })).nullable().optional()
-const fromYear = z.object({ prop: nl(z.object({ from: nl(z.object({ year: nl(z.number()) })) })) }).nullable().optional()
-
-export const jikanItemSchema = z.object({
-    mal_id: nl(z.number()),
-    url: nl(z.string()),
-    images: nl(z.object({
-        jpg: nl(z.object({ image_url: nl(z.string()), large_image_url: nl(z.string()) })),
-        webp: nl(z.object({ large_image_url: nl(z.string()) })),
-    })),
-    title: nl(z.string()),
-    title_english: nl(z.string()),
-    type: nl(z.string()),
-    synopsis: nl(z.string()),
-    score: nl(z.number()),
-    year: nl(z.number()),
-    aired: fromYear,
-    published: fromYear,
-    duration: nl(z.string()),
-    episodes: nl(z.number()),
-    chapters: nl(z.number()),
-    volumes: nl(z.number()),
-    genres: named,
-    themes: named,
-    demographics: named,
-    studios: named,
-    authors: named,
-})
-
-export const jikanResponseSchema = z.object({
-    data: z.array(jikanItemSchema).default([]),
-    pagination: nl(z.object({ has_next_page: nl(z.boolean()) })),
-})
-
-export type JikanItem = z.infer<typeof jikanItemSchema>
 
 const emptyToUndefined = (val: unknown) => (val === "" ? undefined : val)
 

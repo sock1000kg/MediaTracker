@@ -8,28 +8,35 @@
       "source": "anilist",
       "sourceId": "anime-226",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx226-MibyRKhIrnTe.png",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 13,
-        "episodeMinutes": 25,
+      "genres": [
+        "Action",
+        "Drama",
+        "Ecchi",
+        "Horror",
+        "Psychological",
+        "Romance",
+        "Supernatural",
+        "Gore",
+        "Super Power",
+        "Fugitive"
+      ],
+      "details": {
         "score": 68,
-        "scoreScale": "anilist",
-        "originalTitle": "エルフェンリート",
-        "categories": [
-          "Action",
-          "Drama",
-          "Ecchi",
-          "Horror",
-          "Psychological",
-          "Romance",
-          "Supernatural",
-          "Gore",
-          "Super Power",
-          "Fugitive"
-        ],
-        "idMal": 226
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 13,
+        "durationSec": 1500
+      },
+      "originalTitle": "エルフェンリート",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-226"
+        },
+        {
+          "provider": "mal",
+          "externalId": "226"
+        }
+      ]
     },
     "934": {
       "title": "When They Cry",
@@ -39,28 +46,35 @@
       "source": "anilist",
       "sourceId": "anime-934",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx934-wjMlVEl4CWwg.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 26,
-        "episodeMinutes": 24,
+      "genres": [
+        "Horror",
+        "Mystery",
+        "Psychological",
+        "Supernatural",
+        "Thriller",
+        "Denpa",
+        "Ensemble Cast",
+        "Rural",
+        "Achronological Order",
+        "Gore"
+      ],
+      "details": {
         "score": 76,
-        "scoreScale": "anilist",
-        "originalTitle": "Higurashi no Naku Koro ni",
-        "categories": [
-          "Horror",
-          "Mystery",
-          "Psychological",
-          "Supernatural",
-          "Thriller",
-          "Denpa",
-          "Ensemble Cast",
-          "Rural",
-          "Achronological Order",
-          "Gore"
-        ],
-        "idMal": 934
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 26,
+        "durationSec": 1440
+      },
+      "originalTitle": "Higurashi no Naku Koro ni",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-934"
+        },
+        {
+          "provider": "mal",
+          "externalId": "934"
+        }
+      ]
     },
     "3455": {
       "title": "To Love Ru",
@@ -70,28 +84,35 @@
       "source": "anilist",
       "sourceId": "anime-3455",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx3455-oNiJmsZZTAAj.png",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 26,
-        "episodeMinutes": 24,
+      "genres": [
+        "Comedy",
+        "Ecchi",
+        "Romance",
+        "Sci-Fi",
+        "Female Harem",
+        "Slapstick",
+        "Surreal Comedy",
+        "Nudity",
+        "Aliens",
+        "School"
+      ],
+      "details": {
         "score": 65,
-        "scoreScale": "anilist",
-        "originalTitle": "To LOVE-Ru",
-        "categories": [
-          "Comedy",
-          "Ecchi",
-          "Romance",
-          "Sci-Fi",
-          "Female Harem",
-          "Slapstick",
-          "Surreal Comedy",
-          "Nudity",
-          "Aliens",
-          "School"
-        ],
-        "idMal": 3455
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 26,
+        "durationSec": 1440
+      },
+      "originalTitle": "To LOVE-Ru",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-3455"
+        },
+        {
+          "provider": "mal",
+          "externalId": "3455"
+        }
+      ]
     },
     "5081": {
       "title": "Bakemonogatari",
@@ -101,28 +122,35 @@
       "source": "anilist",
       "sourceId": "anime-5081",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx5081-9GocceQ5Z865.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 15,
-        "episodeMinutes": 24,
+      "genres": [
+        "Comedy",
+        "Drama",
+        "Mystery",
+        "Psychological",
+        "Romance",
+        "Supernatural",
+        "Youkai",
+        "Urban Fantasy",
+        "Ensemble Cast",
+        "Surreal Comedy"
+      ],
+      "details": {
         "score": 82,
-        "scoreScale": "anilist",
-        "originalTitle": "化物語",
-        "categories": [
-          "Comedy",
-          "Drama",
-          "Mystery",
-          "Psychological",
-          "Romance",
-          "Supernatural",
-          "Youkai",
-          "Urban Fantasy",
-          "Ensemble Cast",
-          "Surreal Comedy"
-        ],
-        "idMal": 5081
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 15,
+        "durationSec": 1440
+      },
+      "originalTitle": "化物語",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-5081"
+        },
+        {
+          "provider": "mal",
+          "externalId": "5081"
+        }
+      ]
     },
     "9989": {
       "title": "Anohana: The Flower We Saw That Day",
@@ -132,28 +160,35 @@
       "source": "anilist",
       "sourceId": "anime-9989",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx9989-hImMg6kCMm6I.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 11,
-        "episodeMinutes": 22,
+      "genres": [
+        "Drama",
+        "Romance",
+        "Slice of Life",
+        "Supernatural",
+        "Coming of Age",
+        "Hikikomori",
+        "Male Protagonist",
+        "Rural",
+        "Primarily Teen Cast",
+        "Heterosexual"
+      ],
+      "details": {
         "score": 80,
-        "scoreScale": "anilist",
-        "originalTitle": "Ano Hi Mita Hana no Namae wo Bokutachi wa Mada Shiranai.",
-        "categories": [
-          "Drama",
-          "Romance",
-          "Slice of Life",
-          "Supernatural",
-          "Coming of Age",
-          "Hikikomori",
-          "Male Protagonist",
-          "Rural",
-          "Primarily Teen Cast",
-          "Heterosexual"
-        ],
-        "idMal": 9989
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 11,
+        "durationSec": 1320
+      },
+      "originalTitle": "Ano Hi Mita Hana no Namae wo Bokutachi wa Mada Shiranai.",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-9989"
+        },
+        {
+          "provider": "mal",
+          "externalId": "9989"
+        }
+      ]
     },
     "10620": {
       "title": "The Future Diary",
@@ -163,28 +198,35 @@
       "source": "anilist",
       "sourceId": "anime-10620",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx10620-dUZeNej0W4QN.png",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 26,
-        "episodeMinutes": 23,
+      "genres": [
+        "Action",
+        "Horror",
+        "Mystery",
+        "Psychological",
+        "Supernatural",
+        "Thriller",
+        "Battle Royale",
+        "Death Game",
+        "Survival",
+        "Yandere"
+      ],
+      "details": {
         "score": 69,
-        "scoreScale": "anilist",
-        "originalTitle": "Mirai Nikki",
-        "categories": [
-          "Action",
-          "Horror",
-          "Mystery",
-          "Psychological",
-          "Supernatural",
-          "Thriller",
-          "Battle Royale",
-          "Death Game",
-          "Survival",
-          "Yandere"
-        ],
-        "idMal": 10620
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 26,
+        "durationSec": 1380
+      },
+      "originalTitle": "Mirai Nikki",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-10620"
+        },
+        {
+          "provider": "mal",
+          "externalId": "10620"
+        }
+      ]
     },
     "11061": {
       "title": "Hunter x Hunter (2011)",
@@ -194,28 +236,35 @@
       "source": "anilist",
       "sourceId": "anime-11061",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx11061-y5gsT1hoHuHw.png",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 148,
-        "episodeMinutes": 24,
+      "genres": [
+        "Action",
+        "Adventure",
+        "Fantasy",
+        "Shounen",
+        "Super Power",
+        "Male Protagonist",
+        "Travel",
+        "Ensemble Cast",
+        "Martial Arts",
+        "Philosophy"
+      ],
+      "details": {
         "score": 89,
-        "scoreScale": "anilist",
-        "originalTitle": "HUNTER×HUNTER (2011)",
-        "categories": [
-          "Action",
-          "Adventure",
-          "Fantasy",
-          "Shounen",
-          "Super Power",
-          "Male Protagonist",
-          "Travel",
-          "Ensemble Cast",
-          "Martial Arts",
-          "Philosophy"
-        ],
-        "idMal": 11061
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 148,
+        "durationSec": 1440
+      },
+      "originalTitle": "HUNTER×HUNTER (2011)",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-11061"
+        },
+        {
+          "provider": "mal",
+          "externalId": "11061"
+        }
+      ]
     },
     "11597": {
       "title": "Nisemonogatari",
@@ -225,28 +274,35 @@
       "source": "anilist",
       "sourceId": "anime-11597",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx11597-dcEqcn2ku4RN.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 11,
-        "episodeMinutes": 24,
+      "genres": [
+        "Comedy",
+        "Drama",
+        "Ecchi",
+        "Mystery",
+        "Psychological",
+        "Supernatural",
+        "Urban Fantasy",
+        "Surreal Comedy",
+        "Ensemble Cast",
+        "Primarily Female Cast"
+      ],
+      "details": {
         "score": 79,
-        "scoreScale": "anilist",
-        "originalTitle": "偽物語",
-        "categories": [
-          "Comedy",
-          "Drama",
-          "Ecchi",
-          "Mystery",
-          "Psychological",
-          "Supernatural",
-          "Urban Fantasy",
-          "Surreal Comedy",
-          "Ensemble Cast",
-          "Primarily Female Cast"
-        ],
-        "idMal": 11597
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 11,
+        "durationSec": 1440
+      },
+      "originalTitle": "偽物語",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-11597"
+        },
+        {
+          "provider": "mal",
+          "externalId": "11597"
+        }
+      ]
     },
     "11617": {
       "title": "High School DxD",
@@ -256,28 +312,35 @@
       "source": "anilist",
       "sourceId": "anime-11617",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/nx11617-nmxMU9Zh3H5R.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 24,
+      "genres": [
+        "Action",
+        "Comedy",
+        "Ecchi",
+        "Fantasy",
+        "Romance",
+        "Nudity",
+        "Female Harem",
+        "Urban Fantasy",
+        "Male Protagonist",
+        "Primarily Female Cast"
+      ],
+      "details": {
         "score": 69,
-        "scoreScale": "anilist",
-        "originalTitle": "ハイスクールDxD",
-        "categories": [
-          "Action",
-          "Comedy",
-          "Ecchi",
-          "Fantasy",
-          "Romance",
-          "Nudity",
-          "Female Harem",
-          "Urban Fantasy",
-          "Male Protagonist",
-          "Primarily Female Cast"
-        ],
-        "idMal": 11617
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1440
+      },
+      "originalTitle": "ハイスクールDxD",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-11617"
+        },
+        {
+          "provider": "mal",
+          "externalId": "11617"
+        }
+      ]
     },
     "11843": {
       "title": "Daily Lives of High School Boys",
@@ -287,28 +350,35 @@
       "source": "anilist",
       "sourceId": "anime-11843",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx11843-ui2jBcuQUqnl.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 24,
+      "genres": [
+        "Comedy",
+        "Slice of Life",
+        "School",
+        "Episodic",
+        "Primarily Male Cast",
+        "Slapstick",
+        "Satire",
+        "Meta",
+        "Urban",
+        "Shounen"
+      ],
+      "details": {
         "score": 80,
-        "scoreScale": "anilist",
-        "originalTitle": "Danshi Koukousei no Nichijou",
-        "categories": [
-          "Comedy",
-          "Slice of Life",
-          "School",
-          "Episodic",
-          "Primarily Male Cast",
-          "Slapstick",
-          "Satire",
-          "Meta",
-          "Urban",
-          "Shounen"
-        ],
-        "idMal": 11843
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1440
+      },
+      "originalTitle": "Danshi Koukousei no Nichijou",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-11843"
+        },
+        {
+          "provider": "mal",
+          "externalId": "11843"
+        }
+      ]
     },
     "13663": {
       "title": "To Love Ru Darkness",
@@ -318,28 +388,35 @@
       "source": "anilist",
       "sourceId": "anime-13663",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx13663-kpsCFSRAutWM.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 24,
+      "genres": [
+        "Comedy",
+        "Ecchi",
+        "Romance",
+        "Sci-Fi",
+        "Nudity",
+        "Female Harem",
+        "Slapstick",
+        "School",
+        "Aliens",
+        "Primarily Female Cast"
+      ],
+      "details": {
         "score": 71,
-        "scoreScale": "anilist",
-        "originalTitle": "To LOVE-Ru Darkness",
-        "categories": [
-          "Comedy",
-          "Ecchi",
-          "Romance",
-          "Sci-Fi",
-          "Nudity",
-          "Female Harem",
-          "Slapstick",
-          "School",
-          "Aliens",
-          "Primarily Female Cast"
-        ],
-        "idMal": 13663
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1440
+      },
+      "originalTitle": "To LOVE-Ru Darkness",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-13663"
+        },
+        {
+          "provider": "mal",
+          "externalId": "13663"
+        }
+      ]
     },
     "14227": {
       "title": "My Little Monster",
@@ -349,28 +426,35 @@
       "source": "anilist",
       "sourceId": "anime-14227",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx14227-VGxPG1xDZG7v.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 13,
-        "episodeMinutes": 24,
+      "genres": [
+        "Comedy",
+        "Romance",
+        "Slice of Life",
+        "School",
+        "Shoujo",
+        "Female Protagonist",
+        "Primarily Teen Cast",
+        "Kuudere",
+        "Heterosexual",
+        "Tsundere"
+      ],
+      "details": {
         "score": 72,
-        "scoreScale": "anilist",
-        "originalTitle": "Tonari no Kaibutsu-kun",
-        "categories": [
-          "Comedy",
-          "Romance",
-          "Slice of Life",
-          "School",
-          "Shoujo",
-          "Female Protagonist",
-          "Primarily Teen Cast",
-          "Kuudere",
-          "Heterosexual",
-          "Tsundere"
-        ],
-        "idMal": 14227
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 13,
+        "durationSec": 1440
+      },
+      "originalTitle": "Tonari no Kaibutsu-kun",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-14227"
+        },
+        {
+          "provider": "mal",
+          "externalId": "14227"
+        }
+      ]
     },
     "14345": {
       "title": "BTOOOM!",
@@ -380,28 +464,35 @@
       "source": "anilist",
       "sourceId": "anime-14345",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx14345-BeDPCuhQGtL5.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 24,
+      "genres": [
+        "Action",
+        "Psychological",
+        "Sci-Fi",
+        "Battle Royale",
+        "Survival",
+        "Death Game",
+        "Video Games",
+        "Body Horror",
+        "Wilderness",
+        "Coastal"
+      ],
+      "details": {
         "score": 68,
-        "scoreScale": "anilist",
-        "originalTitle": "BTOOOM！",
-        "categories": [
-          "Action",
-          "Psychological",
-          "Sci-Fi",
-          "Battle Royale",
-          "Survival",
-          "Death Game",
-          "Video Games",
-          "Body Horror",
-          "Wilderness",
-          "Coastal"
-        ],
-        "idMal": 14345
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1440
+      },
+      "originalTitle": "BTOOOM！",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-14345"
+        },
+        {
+          "provider": "mal",
+          "externalId": "14345"
+        }
+      ]
     },
     "14719": {
       "title": "JoJo's Bizarre Adventure (TV)",
@@ -411,28 +502,35 @@
       "source": "anilist",
       "sourceId": "anime-14719",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx14719-VT5dRzTBSZ0w.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 26,
-        "episodeMinutes": 24,
+      "genres": [
+        "Action",
+        "Adventure",
+        "Supernatural",
+        "Male Protagonist",
+        "Super Power",
+        "Primarily Male Cast",
+        "Urban Fantasy",
+        "Shounen",
+        "Cultivation",
+        "Foreign"
+      ],
+      "details": {
         "score": 77,
-        "scoreScale": "anilist",
-        "originalTitle": "JoJo no Kimyou na Bouken (TV)",
-        "categories": [
-          "Action",
-          "Adventure",
-          "Supernatural",
-          "Male Protagonist",
-          "Super Power",
-          "Primarily Male Cast",
-          "Urban Fantasy",
-          "Shounen",
-          "Cultivation",
-          "Foreign"
-        ],
-        "idMal": 14719
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 26,
+        "durationSec": 1440
+      },
+      "originalTitle": "JoJo no Kimyou na Bouken (TV)",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-14719"
+        },
+        {
+          "provider": "mal",
+          "externalId": "14719"
+        }
+      ]
     },
     "15809": {
       "title": "The Devil is a Part-Timer!",
@@ -442,28 +540,35 @@
       "source": "anilist",
       "sourceId": "anime-15809",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx15809-ECv3HyOYJKrk.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 13,
-        "episodeMinutes": 24,
+      "genres": [
+        "Comedy",
+        "Fantasy",
+        "Romance",
+        "Slice of Life",
+        "Reverse Isekai",
+        "Demons",
+        "Work",
+        "Male Protagonist",
+        "Restaurant",
+        "Urban"
+      ],
+      "details": {
         "score": 75,
-        "scoreScale": "anilist",
-        "originalTitle": "Hataraku Maou-sama!",
-        "categories": [
-          "Comedy",
-          "Fantasy",
-          "Romance",
-          "Slice of Life",
-          "Reverse Isekai",
-          "Demons",
-          "Work",
-          "Male Protagonist",
-          "Restaurant",
-          "Urban"
-        ],
-        "idMal": 15809
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 13,
+        "durationSec": 1440
+      },
+      "originalTitle": "Hataraku Maou-sama!",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-15809"
+        },
+        {
+          "provider": "mal",
+          "externalId": "15809"
+        }
+      ]
     },
     "16498": {
       "title": "Attack on Titan",
@@ -473,28 +578,35 @@
       "source": "anilist",
       "sourceId": "anime-16498",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx16498-buvcRTBx4NSm.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 25,
-        "episodeMinutes": 24,
+      "genres": [
+        "Action",
+        "Drama",
+        "Fantasy",
+        "Mystery",
+        "Kaiju",
+        "Revenge",
+        "Military",
+        "Primarily Teen Cast",
+        "Male Protagonist",
+        "Post-Apocalyptic"
+      ],
+      "details": {
         "score": 85,
-        "scoreScale": "anilist",
-        "originalTitle": "Shingeki no Kyojin",
-        "categories": [
-          "Action",
-          "Drama",
-          "Fantasy",
-          "Mystery",
-          "Kaiju",
-          "Revenge",
-          "Military",
-          "Primarily Teen Cast",
-          "Male Protagonist",
-          "Post-Apocalyptic"
-        ],
-        "idMal": 16498
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 25,
+        "durationSec": 1440
+      },
+      "originalTitle": "Shingeki no Kyojin",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-16498"
+        },
+        {
+          "provider": "mal",
+          "externalId": "16498"
+        }
+      ]
     },
     "20507": {
       "title": "Noragami",
@@ -504,28 +616,35 @@
       "source": "anilist",
       "sourceId": "anime-20447",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx20447-EoQXeygHaVCK.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 24,
+      "genres": [
+        "Action",
+        "Adventure",
+        "Comedy",
+        "Supernatural",
+        "Gods",
+        "Youkai",
+        "Urban Fantasy",
+        "Female Protagonist",
+        "Shounen",
+        "Mythology"
+      ],
+      "details": {
         "score": 78,
-        "scoreScale": "anilist",
-        "originalTitle": "ノラガミ",
-        "categories": [
-          "Action",
-          "Adventure",
-          "Comedy",
-          "Supernatural",
-          "Gods",
-          "Youkai",
-          "Urban Fantasy",
-          "Female Protagonist",
-          "Shounen",
-          "Mythology"
-        ],
-        "idMal": 20507
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1440
+      },
+      "originalTitle": "ノラガミ",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-20447"
+        },
+        {
+          "provider": "mal",
+          "externalId": "20507"
+        }
+      ]
     },
     "20899": {
       "title": "JoJo's Bizarre Adventure: Stardust Crusaders",
@@ -535,28 +654,35 @@
       "source": "anilist",
       "sourceId": "anime-20474",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx20474-xuqem5GBlBtb.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 24,
-        "episodeMinutes": 24,
+      "genres": [
+        "Action",
+        "Adventure",
+        "Supernatural",
+        "Super Power",
+        "Foreign",
+        "Primarily Male Cast",
+        "Travel",
+        "Shounen",
+        "Male Protagonist",
+        "Urban Fantasy"
+      ],
+      "details": {
         "score": 79,
-        "scoreScale": "anilist",
-        "originalTitle": "JoJo no Kimyou na Bouken: Stardust Crusaders",
-        "categories": [
-          "Action",
-          "Adventure",
-          "Supernatural",
-          "Super Power",
-          "Foreign",
-          "Primarily Male Cast",
-          "Travel",
-          "Shounen",
-          "Male Protagonist",
-          "Urban Fantasy"
-        ],
-        "idMal": 20899
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 24,
+        "durationSec": 1440
+      },
+      "originalTitle": "JoJo no Kimyou na Bouken: Stardust Crusaders",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-20474"
+        },
+        {
+          "provider": "mal",
+          "externalId": "20899"
+        }
+      ]
     },
     "21603": {
       "title": "Mekakucity Actors",
@@ -566,28 +692,35 @@
       "source": "anilist",
       "sourceId": "anime-20541",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx20541-vEenrRZqApRn.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 23,
+      "genres": [
+        "Comedy",
+        "Romance",
+        "Sci-Fi",
+        "Supernatural",
+        "Super Power",
+        "Ensemble Cast",
+        "Found Family",
+        "Urban Fantasy",
+        "Achronological Order",
+        "Primarily Teen Cast"
+      ],
+      "details": {
         "score": 67,
-        "scoreScale": "anilist",
-        "originalTitle": "メカクシティアクターズ",
-        "categories": [
-          "Comedy",
-          "Romance",
-          "Sci-Fi",
-          "Supernatural",
-          "Super Power",
-          "Ensemble Cast",
-          "Found Family",
-          "Urban Fantasy",
-          "Achronological Order",
-          "Primarily Teen Cast"
-        ],
-        "idMal": 21603
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1380
+      },
+      "originalTitle": "メカクシティアクターズ",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-20541"
+        },
+        {
+          "provider": "mal",
+          "externalId": "21603"
+        }
+      ]
     },
     "22319": {
       "title": "Tokyo Ghoul",
@@ -597,28 +730,35 @@
       "source": "anilist",
       "sourceId": "anime-20605",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/b20605-k665mVkSug8D.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 24,
+      "genres": [
+        "Action",
+        "Drama",
+        "Horror",
+        "Mystery",
+        "Psychological",
+        "Supernatural",
+        "Gore",
+        "Urban Fantasy",
+        "Survival",
+        "Body Horror"
+      ],
+      "details": {
         "score": 76,
-        "scoreScale": "anilist",
-        "originalTitle": "東京喰種 トーキョーグール",
-        "categories": [
-          "Action",
-          "Drama",
-          "Horror",
-          "Mystery",
-          "Psychological",
-          "Supernatural",
-          "Gore",
-          "Urban Fantasy",
-          "Survival",
-          "Body Horror"
-        ],
-        "idMal": 22319
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1440
+      },
+      "originalTitle": "東京喰種 トーキョーグール",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-20605"
+        },
+        {
+          "provider": "mal",
+          "externalId": "22319"
+        }
+      ]
     },
     "25777": {
       "title": "Attack on Titan Season 2",
@@ -628,28 +768,35 @@
       "source": "anilist",
       "sourceId": "anime-20958",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx20958-HuFJyr54Mmir.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 25,
+      "genres": [
+        "Action",
+        "Drama",
+        "Fantasy",
+        "Mystery",
+        "Survival",
+        "Shapeshifting",
+        "Post-Apocalyptic",
+        "Military",
+        "Primarily Teen Cast",
+        "Kaiju"
+      ],
+      "details": {
         "score": 85,
-        "scoreScale": "anilist",
-        "originalTitle": "Shingeki no Kyojin Season 2",
-        "categories": [
-          "Action",
-          "Drama",
-          "Fantasy",
-          "Mystery",
-          "Survival",
-          "Shapeshifting",
-          "Post-Apocalyptic",
-          "Military",
-          "Primarily Teen Cast",
-          "Kaiju"
-        ],
-        "idMal": 25777
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1500
+      },
+      "originalTitle": "Shingeki no Kyojin Season 2",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-20958"
+        },
+        {
+          "provider": "mal",
+          "externalId": "25777"
+        }
+      ]
     },
     "26055": {
       "title": "JoJo's Bizarre Adventure: Stardust Crusaders - Battle in Egypt",
@@ -659,28 +806,35 @@
       "source": "anilist",
       "sourceId": "anime-20799",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx20799-S1eyqBDlx51E.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 24,
-        "episodeMinutes": 24,
+      "genres": [
+        "Action",
+        "Adventure",
+        "Drama",
+        "Supernatural",
+        "Super Power",
+        "Primarily Male Cast",
+        "Male Protagonist",
+        "Travel",
+        "Shounen",
+        "Foreign"
+      ],
+      "details": {
         "score": 83,
-        "scoreScale": "anilist",
-        "originalTitle": "JoJo no Kimyou na Bouken: Stardust Crusaders - Egypt-hen",
-        "categories": [
-          "Action",
-          "Adventure",
-          "Drama",
-          "Supernatural",
-          "Super Power",
-          "Primarily Male Cast",
-          "Male Protagonist",
-          "Travel",
-          "Shounen",
-          "Foreign"
-        ],
-        "idMal": 26055
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 24,
+        "durationSec": 1440
+      },
+      "originalTitle": "JoJo no Kimyou na Bouken: Stardust Crusaders - Egypt-hen",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-20799"
+        },
+        {
+          "provider": "mal",
+          "externalId": "26055"
+        }
+      ]
     },
     "27899": {
       "title": "Tokyo Ghoul √A",
@@ -690,28 +844,35 @@
       "source": "anilist",
       "sourceId": "anime-20850",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx20850-glDf9EMKeCwe.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 24,
+      "genres": [
+        "Action",
+        "Drama",
+        "Horror",
+        "Mystery",
+        "Psychological",
+        "Supernatural",
+        "Anti-Hero",
+        "Body Horror",
+        "Super Power",
+        "Gore"
+      ],
+      "details": {
         "score": 67,
-        "scoreScale": "anilist",
-        "originalTitle": "東京喰種[トーキョーグール]√A",
-        "categories": [
-          "Action",
-          "Drama",
-          "Horror",
-          "Mystery",
-          "Psychological",
-          "Supernatural",
-          "Anti-Hero",
-          "Body Horror",
-          "Super Power",
-          "Gore"
-        ],
-        "idMal": 27899
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1440
+      },
+      "originalTitle": "東京喰種[トーキョーグール]√A",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-20850"
+        },
+        {
+          "provider": "mal",
+          "externalId": "27899"
+        }
+      ]
     },
     "28121": {
       "title": "Is It Wrong to Try to Pick Up Girls in a Dungeon?",
@@ -721,28 +882,35 @@
       "source": "anilist",
       "sourceId": "anime-20920",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx20920-MTREwZOG4BAD.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 13,
-        "episodeMinutes": 24,
+      "genres": [
+        "Action",
+        "Adventure",
+        "Comedy",
+        "Fantasy",
+        "Romance",
+        "Dungeon",
+        "Male Protagonist",
+        "Gods",
+        "Medieval",
+        "Magic"
+      ],
+      "details": {
         "score": 73,
-        "scoreScale": "anilist",
-        "originalTitle": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka",
-        "categories": [
-          "Action",
-          "Adventure",
-          "Comedy",
-          "Fantasy",
-          "Romance",
-          "Dungeon",
-          "Male Protagonist",
-          "Gods",
-          "Medieval",
-          "Magic"
-        ],
-        "idMal": 28121
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 13,
+        "durationSec": 1440
+      },
+      "originalTitle": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-20920"
+        },
+        {
+          "provider": "mal",
+          "externalId": "28121"
+        }
+      ]
     },
     "29786": {
       "title": "SHIMONETA: A Boring World Where the Concept of Dirty Jokes Doesn’t Exist",
@@ -752,28 +920,35 @@
       "source": "anilist",
       "sourceId": "anime-20910",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx20910-U7txwG3o9gma.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 23,
+      "genres": [
+        "Comedy",
+        "Ecchi",
+        "Satire",
+        "Politics",
+        "Dystopian",
+        "Terrorism",
+        "Parody",
+        "Male Protagonist",
+        "Female Protagonist",
+        "Psychosexual"
+      ],
+      "details": {
         "score": 69,
-        "scoreScale": "anilist",
-        "originalTitle": "Shimoneta to Iu Gainen ga Sonzai Shinai Taikutsu na Sekai",
-        "categories": [
-          "Comedy",
-          "Ecchi",
-          "Satire",
-          "Politics",
-          "Dystopian",
-          "Terrorism",
-          "Parody",
-          "Male Protagonist",
-          "Female Protagonist",
-          "Psychosexual"
-        ],
-        "idMal": 29786
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1380
+      },
+      "originalTitle": "Shimoneta to Iu Gainen ga Sonzai Shinai Taikutsu na Sekai",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-20910"
+        },
+        {
+          "provider": "mal",
+          "externalId": "29786"
+        }
+      ]
     },
     "30240": {
       "title": "Prison School",
@@ -783,28 +958,35 @@
       "source": "anilist",
       "sourceId": "anime-20807",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx20807-8nFoO0AUdGsy.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 24,
+      "genres": [
+        "Comedy",
+        "Ecchi",
+        "School",
+        "Prison",
+        "Surreal Comedy",
+        "Nudity",
+        "Parody",
+        "Male Protagonist",
+        "Torture",
+        "Heterosexual"
+      ],
+      "details": {
         "score": 73,
-        "scoreScale": "anilist",
-        "originalTitle": "監獄学園〈プリズンスクール〉",
-        "categories": [
-          "Comedy",
-          "Ecchi",
-          "School",
-          "Prison",
-          "Surreal Comedy",
-          "Nudity",
-          "Parody",
-          "Male Protagonist",
-          "Torture",
-          "Heterosexual"
-        ],
-        "idMal": 30240
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1440
+      },
+      "originalTitle": "監獄学園〈プリズンスクール〉",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-20807"
+        },
+        {
+          "provider": "mal",
+          "externalId": "30240"
+        }
+      ]
     },
     "30276": {
       "title": "One-Punch Man",
@@ -814,28 +996,35 @@
       "source": "anilist",
       "sourceId": "anime-21087",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx21087-B5DHjqZ3kW4b.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 24,
+      "genres": [
+        "Action",
+        "Comedy",
+        "Sci-Fi",
+        "Supernatural",
+        "Superhero",
+        "Super Power",
+        "Parody",
+        "Male Protagonist",
+        "Satire",
+        "Urban Fantasy"
+      ],
+      "details": {
         "score": 82,
-        "scoreScale": "anilist",
-        "originalTitle": "One Punch Man",
-        "categories": [
-          "Action",
-          "Comedy",
-          "Sci-Fi",
-          "Supernatural",
-          "Superhero",
-          "Super Power",
-          "Parody",
-          "Male Protagonist",
-          "Satire",
-          "Urban Fantasy"
-        ],
-        "idMal": 30276
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1440
+      },
+      "originalTitle": "One Punch Man",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-21087"
+        },
+        {
+          "provider": "mal",
+          "externalId": "30276"
+        }
+      ]
     },
     "30503": {
       "title": "Noragami Aragoto",
@@ -845,28 +1034,35 @@
       "source": "anilist",
       "sourceId": "anime-21128",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx21128-eQgH3TG4nngo.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 13,
-        "episodeMinutes": 24,
+      "genres": [
+        "Action",
+        "Adventure",
+        "Comedy",
+        "Supernatural",
+        "Gods",
+        "Mythology",
+        "Female Protagonist",
+        "Shounen",
+        "Urban Fantasy",
+        "Youkai"
+      ],
+      "details": {
         "score": 80,
-        "scoreScale": "anilist",
-        "originalTitle": "Noragami ARAGOTO",
-        "categories": [
-          "Action",
-          "Adventure",
-          "Comedy",
-          "Supernatural",
-          "Gods",
-          "Mythology",
-          "Female Protagonist",
-          "Shounen",
-          "Urban Fantasy",
-          "Youkai"
-        ],
-        "idMal": 30503
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 13,
+        "durationSec": 1440
+      },
+      "originalTitle": "Noragami ARAGOTO",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-21128"
+        },
+        {
+          "provider": "mal",
+          "externalId": "30503"
+        }
+      ]
     },
     "30831": {
       "title": "KONOSUBA -God's blessing on this wonderful world!",
@@ -876,28 +1072,35 @@
       "source": "anilist",
       "sourceId": "anime-21202",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx21202-mPOr80AEjUcZ.png",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 10,
-        "episodeMinutes": 23,
+      "genres": [
+        "Adventure",
+        "Comedy",
+        "Ecchi",
+        "Fantasy",
+        "Isekai",
+        "Satire",
+        "Parody",
+        "Primarily Female Cast",
+        "Ensemble Cast",
+        "Male Protagonist"
+      ],
+      "details": {
         "score": 79,
-        "scoreScale": "anilist",
-        "originalTitle": "Kono Subarashii Sekai ni Shukufuku wo!",
-        "categories": [
-          "Adventure",
-          "Comedy",
-          "Ecchi",
-          "Fantasy",
-          "Isekai",
-          "Satire",
-          "Parody",
-          "Primarily Female Cast",
-          "Ensemble Cast",
-          "Male Protagonist"
-        ],
-        "idMal": 30831
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 10,
+        "durationSec": 1380
+      },
+      "originalTitle": "Kono Subarashii Sekai ni Shukufuku wo!",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-21202"
+        },
+        {
+          "provider": "mal",
+          "externalId": "30831"
+        }
+      ]
     },
     "31964": {
       "title": "My Hero Academia",
@@ -907,28 +1110,35 @@
       "source": "anilist",
       "sourceId": "anime-21459",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx21459-nYh85uj2Fuwr.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 13,
-        "episodeMinutes": 24,
+      "genres": [
+        "Action",
+        "Adventure",
+        "Comedy",
+        "Super Power",
+        "Superhero",
+        "Shounen",
+        "Primarily Teen Cast",
+        "Male Protagonist",
+        "Crime",
+        "School"
+      ],
+      "details": {
         "score": 76,
-        "scoreScale": "anilist",
-        "originalTitle": "Boku no Hero Academia",
-        "categories": [
-          "Action",
-          "Adventure",
-          "Comedy",
-          "Super Power",
-          "Superhero",
-          "Shounen",
-          "Primarily Teen Cast",
-          "Male Protagonist",
-          "Crime",
-          "School"
-        ],
-        "idMal": 31964
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 13,
+        "durationSec": 1440
+      },
+      "originalTitle": "Boku no Hero Academia",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-21459"
+        },
+        {
+          "provider": "mal",
+          "externalId": "31964"
+        }
+      ]
     },
     "32093": {
       "title": "Tanaka-kun is Always Listless",
@@ -938,27 +1148,34 @@
       "source": "anilist",
       "sourceId": "anime-21495",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx21495-I6p0OKzKBFjw.png",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 25,
+      "genres": [
+        "Comedy",
+        "Slice of Life",
+        "School",
+        "Male Protagonist",
+        "Iyashikei",
+        "Primarily Teen Cast",
+        "Episodic",
+        "Cute Boys Doing Cute Things",
+        "Kuudere"
+      ],
+      "details": {
         "score": 76,
-        "scoreScale": "anilist",
-        "originalTitle": "Tanaka-kun wa Itsumo Kedaruge",
-        "categories": [
-          "Comedy",
-          "Slice of Life",
-          "School",
-          "Male Protagonist",
-          "Iyashikei",
-          "Primarily Teen Cast",
-          "Episodic",
-          "Cute Boys Doing Cute Things",
-          "Kuudere"
-        ],
-        "idMal": 32093
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1500
+      },
+      "originalTitle": "Tanaka-kun wa Itsumo Kedaruge",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-21495"
+        },
+        {
+          "provider": "mal",
+          "externalId": "32093"
+        }
+      ]
     },
     "32648": {
       "title": "Handa-kun",
@@ -968,27 +1185,34 @@
       "source": "anilist",
       "sourceId": "anime-21626",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx21626-5jbbIK9DsmY8.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 24,
+      "genres": [
+        "Comedy",
+        "Slice of Life",
+        "School",
+        "Primarily Teen Cast",
+        "Male Protagonist",
+        "Episodic",
+        "Calligraphy",
+        "Satire",
+        "Shounen"
+      ],
+      "details": {
         "score": 70,
-        "scoreScale": "anilist",
-        "originalTitle": "はんだくん",
-        "categories": [
-          "Comedy",
-          "Slice of Life",
-          "School",
-          "Primarily Teen Cast",
-          "Male Protagonist",
-          "Episodic",
-          "Calligraphy",
-          "Satire",
-          "Shounen"
-        ],
-        "idMal": 32648
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1440
+      },
+      "originalTitle": "はんだくん",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-21626"
+        },
+        {
+          "provider": "mal",
+          "externalId": "32648"
+        }
+      ]
     },
     "32887": {
       "title": "Sword Oratoria: Is it Wrong to Try to Pick Up Girls in a Dungeon? On the Side",
@@ -998,28 +1222,35 @@
       "source": "anilist",
       "sourceId": "anime-21676",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx21676-98OeKU9NDhJI.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 25,
+      "genres": [
+        "Action",
+        "Adventure",
+        "Comedy",
+        "Fantasy",
+        "Dungeon",
+        "Gods",
+        "Female Protagonist",
+        "Primarily Female Cast",
+        "Swordplay",
+        "Magic"
+      ],
+      "details": {
         "score": 68,
-        "scoreScale": "anilist",
-        "originalTitle": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka Gaiden: Sword Oratoria",
-        "categories": [
-          "Action",
-          "Adventure",
-          "Comedy",
-          "Fantasy",
-          "Dungeon",
-          "Gods",
-          "Female Protagonist",
-          "Primarily Female Cast",
-          "Swordplay",
-          "Magic"
-        ],
-        "idMal": 32887
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1500
+      },
+      "originalTitle": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka Gaiden: Sword Oratoria",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-21676"
+        },
+        {
+          "provider": "mal",
+          "externalId": "32887"
+        }
+      ]
     },
     "32937": {
       "title": "KONOSUBA -God's blessing on this wonderful world! 2",
@@ -1029,28 +1260,35 @@
       "source": "anilist",
       "sourceId": "anime-21699",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx21699-Fkbnkl9ZC6fW.png",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 10,
-        "episodeMinutes": 23,
+      "genres": [
+        "Adventure",
+        "Comedy",
+        "Ecchi",
+        "Fantasy",
+        "Isekai",
+        "Satire",
+        "Parody",
+        "Magic",
+        "Ensemble Cast",
+        "Male Protagonist"
+      ],
+      "details": {
         "score": 80,
-        "scoreScale": "anilist",
-        "originalTitle": "Kono Subarashii Sekai ni Shukufuku wo! 2",
-        "categories": [
-          "Adventure",
-          "Comedy",
-          "Ecchi",
-          "Fantasy",
-          "Isekai",
-          "Satire",
-          "Parody",
-          "Magic",
-          "Ensemble Cast",
-          "Male Protagonist"
-        ],
-        "idMal": 32937
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 10,
+        "durationSec": 1380
+      },
+      "originalTitle": "Kono Subarashii Sekai ni Shukufuku wo! 2",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-21699"
+        },
+        {
+          "provider": "mal",
+          "externalId": "32937"
+        }
+      ]
     },
     "33255": {
       "title": "The Disastrous Life of Saiki K.",
@@ -1060,28 +1298,35 @@
       "source": "anilist",
       "sourceId": "anime-21804",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx21804-As6tDLAvEvNY.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 120,
-        "episodeMinutes": 5,
+      "genres": [
+        "Comedy",
+        "Slice of Life",
+        "Supernatural",
+        "Super Power",
+        "Surreal Comedy",
+        "Satire",
+        "Episodic",
+        "Parody",
+        "Meta",
+        "School"
+      ],
+      "details": {
         "score": 83,
-        "scoreScale": "anilist",
-        "originalTitle": "Saiki Kusuo no Ψ-nan",
-        "categories": [
-          "Comedy",
-          "Slice of Life",
-          "Supernatural",
-          "Super Power",
-          "Surreal Comedy",
-          "Satire",
-          "Episodic",
-          "Parody",
-          "Meta",
-          "School"
-        ],
-        "idMal": 33255
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 120,
+        "durationSec": 300
+      },
+      "originalTitle": "Saiki Kusuo no Ψ-nan",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-21804"
+        },
+        {
+          "provider": "mal",
+          "externalId": "33255"
+        }
+      ]
     },
     "33352": {
       "title": "Violet Evergarden",
@@ -1091,28 +1336,35 @@
       "source": "anilist",
       "sourceId": "anime-21827",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx21827-ubzq619ZA2E9.png",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 13,
-        "episodeMinutes": 24,
+      "genres": [
+        "Drama",
+        "Fantasy",
+        "Slice of Life",
+        "Rehabilitation",
+        "Writing",
+        "Female Protagonist",
+        "Coming of Age",
+        "Kuudere",
+        "War",
+        "Work"
+      ],
+      "details": {
         "score": 85,
-        "scoreScale": "anilist",
-        "originalTitle": "ヴァイオレット・エヴァーガーデン",
-        "categories": [
-          "Drama",
-          "Fantasy",
-          "Slice of Life",
-          "Rehabilitation",
-          "Writing",
-          "Female Protagonist",
-          "Coming of Age",
-          "Kuudere",
-          "War",
-          "Work"
-        ],
-        "idMal": 33352
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 13,
+        "durationSec": 1440
+      },
+      "originalTitle": "ヴァイオレット・エヴァーガーデン",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-21827"
+        },
+        {
+          "provider": "mal",
+          "externalId": "33352"
+        }
+      ]
     },
     "33475": {
       "title": "Armed Girl's Machiavellism",
@@ -1122,28 +1374,35 @@
       "source": "anilist",
       "sourceId": "anime-21851",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx21851-WCBWT6fLgh5z.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 24,
+      "genres": [
+        "Action",
+        "Comedy",
+        "Ecchi",
+        "Romance",
+        "School",
+        "Swordplay",
+        "Male Protagonist",
+        "Martial Arts",
+        "Nudity",
+        "Primarily Female Cast"
+      ],
+      "details": {
         "score": 66,
-        "scoreScale": "anilist",
-        "originalTitle": "Busou Shoujo Machiavellianism",
-        "categories": [
-          "Action",
-          "Comedy",
-          "Ecchi",
-          "Romance",
-          "School",
-          "Swordplay",
-          "Male Protagonist",
-          "Martial Arts",
-          "Nudity",
-          "Primarily Female Cast"
-        ],
-        "idMal": 33475
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1440
+      },
+      "originalTitle": "Busou Shoujo Machiavellianism",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-21851"
+        },
+        {
+          "provider": "mal",
+          "externalId": "33475"
+        }
+      ]
     },
     "33486": {
       "title": "My Hero Academia Season 2",
@@ -1153,28 +1412,35 @@
       "source": "anilist",
       "sourceId": "anime-21856",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx21856-gutauxhWAwn6.png",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 25,
-        "episodeMinutes": 24,
+      "genres": [
+        "Action",
+        "Adventure",
+        "Comedy",
+        "Super Power",
+        "Superhero",
+        "Shounen",
+        "Primarily Teen Cast",
+        "School",
+        "Male Protagonist",
+        "Ensemble Cast"
+      ],
+      "details": {
         "score": 79,
-        "scoreScale": "anilist",
-        "originalTitle": "Boku no Hero Academia 2",
-        "categories": [
-          "Action",
-          "Adventure",
-          "Comedy",
-          "Super Power",
-          "Superhero",
-          "Shounen",
-          "Primarily Teen Cast",
-          "School",
-          "Male Protagonist",
-          "Ensemble Cast"
-        ],
-        "idMal": 33486
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 25,
+        "durationSec": 1440
+      },
+      "originalTitle": "Boku no Hero Academia 2",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-21856"
+        },
+        {
+          "provider": "mal",
+          "externalId": "33486"
+        }
+      ]
     },
     "33487": {
       "title": "Masamune-kun's Revenge",
@@ -1184,28 +1450,35 @@
       "source": "anilist",
       "sourceId": "anime-21857",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/nx21857-haPDVD7DKDpg.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 24,
+      "genres": [
+        "Comedy",
+        "Romance",
+        "Slice of Life",
+        "Male Protagonist",
+        "Revenge",
+        "Tsundere",
+        "School",
+        "Primarily Female Cast",
+        "Ojou-sama",
+        "Bullying"
+      ],
+      "details": {
         "score": 66,
-        "scoreScale": "anilist",
-        "originalTitle": "Masamune-kun no Revenge",
-        "categories": [
-          "Comedy",
-          "Romance",
-          "Slice of Life",
-          "Male Protagonist",
-          "Revenge",
-          "Tsundere",
-          "School",
-          "Primarily Female Cast",
-          "Ojou-sama",
-          "Bullying"
-        ],
-        "idMal": 33487
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1440
+      },
+      "originalTitle": "Masamune-kun no Revenge",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-21857"
+        },
+        {
+          "provider": "mal",
+          "externalId": "33487"
+        }
+      ]
     },
     "34561": {
       "title": "Re:CREATORS",
@@ -1215,28 +1488,34 @@
       "source": "anilist",
       "sourceId": "anime-97980",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx97980-9NQwPW0igSMk.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 22,
-        "episodeMinutes": 24,
+      "genres": [
+        "Action",
+        "Drama",
+        "Fantasy",
+        "Mecha",
+        "Thriller",
+        "Crossover",
+        "Writing",
+        "Urban Fantasy",
+        "Meta",
+        "Isekai"
+      ],
+      "details": {
         "score": 73,
-        "scoreScale": "anilist",
-        "originalTitle": null,
-        "categories": [
-          "Action",
-          "Drama",
-          "Fantasy",
-          "Mecha",
-          "Thriller",
-          "Crossover",
-          "Writing",
-          "Urban Fantasy",
-          "Meta",
-          "Isekai"
-        ],
-        "idMal": 34561
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 22,
+        "durationSec": 1440
+      },
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-97980"
+        },
+        {
+          "provider": "mal",
+          "externalId": "34561"
+        }
+      ]
     },
     "34612": {
       "title": "The Disastrous Life of Saiki K. Season 2",
@@ -1246,28 +1525,35 @@
       "source": "anilist",
       "sourceId": "anime-98034",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/nx98034-1eQ4F7SKxVas.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 24,
-        "episodeMinutes": 24,
+      "genres": [
+        "Comedy",
+        "Slice of Life",
+        "Supernatural",
+        "Surreal Comedy",
+        "Super Power",
+        "Parody",
+        "Unrequited Love",
+        "Meta",
+        "Male Protagonist",
+        "School"
+      ],
+      "details": {
         "score": 83,
-        "scoreScale": "anilist",
-        "originalTitle": "Saiki Kusuo no Ψ-nan 2",
-        "categories": [
-          "Comedy",
-          "Slice of Life",
-          "Supernatural",
-          "Surreal Comedy",
-          "Super Power",
-          "Parody",
-          "Unrequited Love",
-          "Meta",
-          "Male Protagonist",
-          "School"
-        ],
-        "idMal": 34612
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 24,
+        "durationSec": 1440
+      },
+      "originalTitle": "Saiki Kusuo no Ψ-nan 2",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-98034"
+        },
+        {
+          "provider": "mal",
+          "externalId": "34612"
+        }
+      ]
     },
     "34881": {
       "title": "AHO-GIRL",
@@ -1277,28 +1563,35 @@
       "source": "anilist",
       "sourceId": "anime-98251",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/b98251-6miVBNYEXzaF.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 13,
+      "genres": [
+        "Comedy",
+        "Romance",
+        "Slapstick",
+        "Female Protagonist",
+        "School",
+        "Primarily Female Cast",
+        "Love Triangle",
+        "Heterosexual",
+        "Shounen",
+        "Male Protagonist"
+      ],
+      "details": {
         "score": 64,
-        "scoreScale": "anilist",
-        "originalTitle": "Aho-Girl",
-        "categories": [
-          "Comedy",
-          "Romance",
-          "Slapstick",
-          "Female Protagonist",
-          "School",
-          "Primarily Female Cast",
-          "Love Triangle",
-          "Heterosexual",
-          "Shounen",
-          "Male Protagonist"
-        ],
-        "idMal": 34881
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 780
+      },
+      "originalTitle": "Aho-Girl",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-98251"
+        },
+        {
+          "provider": "mal",
+          "externalId": "34881"
+        }
+      ]
     },
     "35507": {
       "title": "Classroom of the Elite",
@@ -1308,28 +1601,35 @@
       "source": "anilist",
       "sourceId": "anime-98659",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx98659-WNyPLIZDpGGY.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 24,
+      "genres": [
+        "Drama",
+        "Psychological",
+        "School",
+        "Primarily Teen Cast",
+        "Male Protagonist",
+        "Ensemble Cast",
+        "Survival",
+        "Blackmail",
+        "Female Harem",
+        "Kuudere"
+      ],
+      "details": {
         "score": 76,
-        "scoreScale": "anilist",
-        "originalTitle": "Youkoso Jitsuryoku Shijou Shugi no Kyoushitsu e",
-        "categories": [
-          "Drama",
-          "Psychological",
-          "School",
-          "Primarily Teen Cast",
-          "Male Protagonist",
-          "Ensemble Cast",
-          "Survival",
-          "Blackmail",
-          "Female Harem",
-          "Kuudere"
-        ],
-        "idMal": 35507
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1440
+      },
+      "originalTitle": "Youkoso Jitsuryoku Shijou Shugi no Kyoushitsu e",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-98659"
+        },
+        {
+          "provider": "mal",
+          "externalId": "35507"
+        }
+      ]
     },
     "35760": {
       "title": "Attack on Titan Season 3",
@@ -1339,28 +1639,35 @@
       "source": "anilist",
       "sourceId": "anime-99147",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx99147-AiPDD8cwlCfi.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 24,
+      "genres": [
+        "Action",
+        "Drama",
+        "Fantasy",
+        "Mystery",
+        "Military",
+        "Shapeshifting",
+        "Dystopian",
+        "Male Protagonist",
+        "Revenge",
+        "Henshin"
+      ],
+      "details": {
         "score": 86,
-        "scoreScale": "anilist",
-        "originalTitle": "Shingeki no Kyojin Season 3",
-        "categories": [
-          "Action",
-          "Drama",
-          "Fantasy",
-          "Mystery",
-          "Military",
-          "Shapeshifting",
-          "Dystopian",
-          "Male Protagonist",
-          "Revenge",
-          "Henshin"
-        ],
-        "idMal": 35760
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1440
+      },
+      "originalTitle": "Shingeki no Kyojin Season 3",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-99147"
+        },
+        {
+          "provider": "mal",
+          "externalId": "35760"
+        }
+      ]
     },
     "35968": {
       "title": "Wotakoi: Love is Hard for Otaku",
@@ -1370,28 +1677,35 @@
       "source": "anilist",
       "sourceId": "anime-99578",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/nx99578-oO5KChtfhzln.png",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 11,
-        "episodeMinutes": 23,
+      "genres": [
+        "Comedy",
+        "Romance",
+        "Slice of Life",
+        "Otaku Culture",
+        "Primarily Adult Cast",
+        "Josei",
+        "Office Lady",
+        "Female Protagonist",
+        "Video Games",
+        "Work"
+      ],
+      "details": {
         "score": 78,
-        "scoreScale": "anilist",
-        "originalTitle": "Wotaku ni Koi wa Muzukashii",
-        "categories": [
-          "Comedy",
-          "Romance",
-          "Slice of Life",
-          "Otaku Culture",
-          "Primarily Adult Cast",
-          "Josei",
-          "Office Lady",
-          "Female Protagonist",
-          "Video Games",
-          "Work"
-        ],
-        "idMal": 35968
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 11,
+        "durationSec": 1380
+      },
+      "originalTitle": "Wotaku ni Koi wa Muzukashii",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-99578"
+        },
+        {
+          "provider": "mal",
+          "externalId": "35968"
+        }
+      ]
     },
     "36456": {
       "title": "My Hero Academia Season 3",
@@ -1401,28 +1715,35 @@
       "source": "anilist",
       "sourceId": "anime-100166",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx100166-jUCZYbzn2XLw.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 25,
-        "episodeMinutes": 24,
+      "genres": [
+        "Action",
+        "Adventure",
+        "Comedy",
+        "Drama",
+        "Superhero",
+        "Super Power",
+        "Shounen",
+        "Primarily Teen Cast",
+        "Cultivation",
+        "Urban Fantasy"
+      ],
+      "details": {
         "score": 79,
-        "scoreScale": "anilist",
-        "originalTitle": "Boku no Hero Academia 3",
-        "categories": [
-          "Action",
-          "Adventure",
-          "Comedy",
-          "Drama",
-          "Superhero",
-          "Super Power",
-          "Shounen",
-          "Primarily Teen Cast",
-          "Cultivation",
-          "Urban Fantasy"
-        ],
-        "idMal": 36456
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 25,
+        "durationSec": 1440
+      },
+      "originalTitle": "Boku no Hero Academia 3",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-100166"
+        },
+        {
+          "provider": "mal",
+          "externalId": "36456"
+        }
+      ]
     },
     "36511": {
       "title": "Tokyo Ghoul:re",
@@ -1432,28 +1753,35 @@
       "source": "anilist",
       "sourceId": "anime-100240",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/nx100240-vJNaKd5HwPJ2.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 24,
+      "genres": [
+        "Action",
+        "Horror",
+        "Mystery",
+        "Psychological",
+        "Supernatural",
+        "Detective",
+        "Amnesia",
+        "Male Protagonist",
+        "Urban Fantasy",
+        "Police"
+      ],
+      "details": {
         "score": 61,
-        "scoreScale": "anilist",
-        "originalTitle": "東京喰種-トーキョーグール-:re",
-        "categories": [
-          "Action",
-          "Horror",
-          "Mystery",
-          "Psychological",
-          "Supernatural",
-          "Detective",
-          "Amnesia",
-          "Male Protagonist",
-          "Urban Fantasy",
-          "Police"
-        ],
-        "idMal": 36511
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1440
+      },
+      "originalTitle": "東京喰種-トーキョーグール-:re",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-100240"
+        },
+        {
+          "provider": "mal",
+          "externalId": "36511"
+        }
+      ]
     },
     "36649": {
       "title": "BANANA FISH",
@@ -1463,28 +1791,34 @@
       "source": "anilist",
       "sourceId": "anime-100388",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx100388-hjkg1AnlJR5z.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 24,
-        "episodeMinutes": 23,
+      "genres": [
+        "Action",
+        "Drama",
+        "Psychological",
+        "Thriller",
+        "Gangs",
+        "Mafia",
+        "Crime",
+        "Drugs",
+        "Male Protagonist",
+        "Urban"
+      ],
+      "details": {
         "score": 84,
-        "scoreScale": "anilist",
-        "originalTitle": null,
-        "categories": [
-          "Action",
-          "Drama",
-          "Psychological",
-          "Thriller",
-          "Gangs",
-          "Mafia",
-          "Crime",
-          "Drugs",
-          "Male Protagonist",
-          "Urban"
-        ],
-        "idMal": 36649
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 24,
+        "durationSec": 1380
+      },
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-100388"
+        },
+        {
+          "provider": "mal",
+          "externalId": "36649"
+        }
+      ]
     },
     "37105": {
       "title": "Grand Blue Dreaming",
@@ -1494,28 +1828,35 @@
       "source": "anilist",
       "sourceId": "anime-100922",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx100922-uxEhaCsqMMp3.png",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 24,
+      "genres": [
+        "Comedy",
+        "Slice of Life",
+        "Sports",
+        "School Club",
+        "Coastal",
+        "Slapstick",
+        "Nudity",
+        "College",
+        "Primarily Adult Cast",
+        "Seinen"
+      ],
+      "details": {
         "score": 82,
-        "scoreScale": "anilist",
-        "originalTitle": "Grand Blue",
-        "categories": [
-          "Comedy",
-          "Slice of Life",
-          "Sports",
-          "School Club",
-          "Coastal",
-          "Slapstick",
-          "Nudity",
-          "College",
-          "Primarily Adult Cast",
-          "Seinen"
-        ],
-        "idMal": 37105
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1440
+      },
+      "originalTitle": "Grand Blue",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-100922"
+        },
+        {
+          "provider": "mal",
+          "externalId": "37105"
+        }
+      ]
     },
     "37141": {
       "title": "Cells at Work!",
@@ -1525,28 +1866,35 @@
       "source": "anilist",
       "sourceId": "anime-100977",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx100977-nH1J2dR7GGAk.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 13,
-        "episodeMinutes": 24,
+      "genres": [
+        "Action",
+        "Comedy",
+        "Sci-Fi",
+        "Educational",
+        "Work",
+        "Medicine",
+        "Anthropomorphism",
+        "Episodic",
+        "Female Protagonist",
+        "Ensemble Cast"
+      ],
+      "details": {
         "score": 73,
-        "scoreScale": "anilist",
-        "originalTitle": "Hataraku Saibou",
-        "categories": [
-          "Action",
-          "Comedy",
-          "Sci-Fi",
-          "Educational",
-          "Work",
-          "Medicine",
-          "Anthropomorphism",
-          "Episodic",
-          "Female Protagonist",
-          "Ensemble Cast"
-        ],
-        "idMal": 37141
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 13,
+        "durationSec": 1440
+      },
+      "originalTitle": "Hataraku Saibou",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-100977"
+        },
+        {
+          "provider": "mal",
+          "externalId": "37141"
+        }
+      ]
     },
     "37171": {
       "title": "Asobi Asobase - workshop of fun -",
@@ -1556,28 +1904,35 @@
       "source": "anilist",
       "sourceId": "anime-101001",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx101001-UERCW0UGi0P7.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 24,
+      "genres": [
+        "Comedy",
+        "Slice of Life",
+        "Surreal Comedy",
+        "Slapstick",
+        "Female Protagonist",
+        "Primarily Female Cast",
+        "Primarily Teen Cast",
+        "School Club",
+        "Episodic",
+        "School"
+      ],
+      "details": {
         "score": 79,
-        "scoreScale": "anilist",
-        "originalTitle": "Asobi Asobase",
-        "categories": [
-          "Comedy",
-          "Slice of Life",
-          "Surreal Comedy",
-          "Slapstick",
-          "Female Protagonist",
-          "Primarily Female Cast",
-          "Primarily Teen Cast",
-          "School Club",
-          "Episodic",
-          "School"
-        ],
-        "idMal": 37171
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1440
+      },
+      "originalTitle": "Asobi Asobase",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-101001"
+        },
+        {
+          "provider": "mal",
+          "externalId": "37171"
+        }
+      ]
     },
     "37377": {
       "title": "Masamune-kun's Revenge OAD",
@@ -1587,24 +1942,31 @@
       "source": "anilist",
       "sourceId": "anime-101213",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx101213-TY2isJgwXxfs.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 1,
-        "episodeMinutes": 24,
+      "genres": [
+        "Comedy",
+        "Romance",
+        "Slice of Life",
+        "Female Harem",
+        "Tsundere",
+        "Maids"
+      ],
+      "details": {
         "score": 64,
-        "scoreScale": "anilist",
-        "originalTitle": "Masamune-kun no Revenge OVA",
-        "categories": [
-          "Comedy",
-          "Romance",
-          "Slice of Life",
-          "Female Harem",
-          "Tsundere",
-          "Maids"
-        ],
-        "idMal": 37377
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 1,
+        "durationSec": 1440
+      },
+      "originalTitle": "Masamune-kun no Revenge OVA",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-101213"
+        },
+        {
+          "provider": "mal",
+          "externalId": "37377"
+        }
+      ]
     },
     "37450": {
       "title": "Rascal Does Not Dream of Bunny Girl Senpai",
@@ -1614,28 +1976,35 @@
       "source": "anilist",
       "sourceId": "anime-101291",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx101291-wfEdgPqtfU0l.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 13,
-        "episodeMinutes": 25,
+      "genres": [
+        "Comedy",
+        "Drama",
+        "Mystery",
+        "Psychological",
+        "Romance",
+        "Supernatural",
+        "Urban Fantasy",
+        "Primarily Teen Cast",
+        "Heterosexual",
+        "Male Protagonist"
+      ],
+      "details": {
         "score": 81,
-        "scoreScale": "anilist",
-        "originalTitle": "Seishun Buta Yarou wa Bunny Girl Senpai no Yume wo Minai",
-        "categories": [
-          "Comedy",
-          "Drama",
-          "Mystery",
-          "Psychological",
-          "Romance",
-          "Supernatural",
-          "Urban Fantasy",
-          "Primarily Teen Cast",
-          "Heterosexual",
-          "Male Protagonist"
-        ],
-        "idMal": 37450
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 13,
+        "durationSec": 1500
+      },
+      "originalTitle": "Seishun Buta Yarou wa Bunny Girl Senpai no Yume wo Minai",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-101291"
+        },
+        {
+          "provider": "mal",
+          "externalId": "37450"
+        }
+      ]
     },
     "37520": {
       "title": "Dororo",
@@ -1645,28 +2014,35 @@
       "source": "anilist",
       "sourceId": "anime-101347",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx101347-TGaDwEYqLfm1.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 24,
-        "episodeMinutes": 24,
+      "genres": [
+        "Action",
+        "Adventure",
+        "Drama",
+        "Supernatural",
+        "Demons",
+        "Revenge",
+        "Disability",
+        "Curses",
+        "Swordplay",
+        "Samurai"
+      ],
+      "details": {
         "score": 81,
-        "scoreScale": "anilist",
-        "originalTitle": "どろろ",
-        "categories": [
-          "Action",
-          "Adventure",
-          "Drama",
-          "Supernatural",
-          "Demons",
-          "Revenge",
-          "Disability",
-          "Curses",
-          "Swordplay",
-          "Samurai"
-        ],
-        "idMal": 37520
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 24,
+        "durationSec": 1440
+      },
+      "originalTitle": "どろろ",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-101347"
+        },
+        {
+          "provider": "mal",
+          "externalId": "37520"
+        }
+      ]
     },
     "37779": {
       "title": "The Promised Neverland",
@@ -1676,28 +2052,35 @@
       "source": "anilist",
       "sourceId": "anime-101759",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx101759-8UR7r9MNVpz2.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 23,
+      "genres": [
+        "Drama",
+        "Fantasy",
+        "Horror",
+        "Mystery",
+        "Psychological",
+        "Thriller",
+        "Primarily Child Cast",
+        "Orphan",
+        "Found Family",
+        "Female Protagonist"
+      ],
+      "details": {
         "score": 83,
-        "scoreScale": "anilist",
-        "originalTitle": "Yakusoku no Neverland",
-        "categories": [
-          "Drama",
-          "Fantasy",
-          "Horror",
-          "Mystery",
-          "Psychological",
-          "Thriller",
-          "Primarily Child Cast",
-          "Orphan",
-          "Found Family",
-          "Female Protagonist"
-        ],
-        "idMal": 37779
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1380
+      },
+      "originalTitle": "Yakusoku no Neverland",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-101759"
+        },
+        {
+          "provider": "mal",
+          "externalId": "37779"
+        }
+      ]
     },
     "37999": {
       "title": "Kaguya-sama: Love is War",
@@ -1707,28 +2090,35 @@
       "source": "anilist",
       "sourceId": "anime-101921",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx101921-ufrjLzhSz7L1.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 24,
+      "genres": [
+        "Comedy",
+        "Psychological",
+        "Romance",
+        "Slice of Life",
+        "School",
+        "Heterosexual",
+        "Tsundere",
+        "Primarily Teen Cast",
+        "School Club",
+        "Surreal Comedy"
+      ],
+      "details": {
         "score": 83,
-        "scoreScale": "anilist",
-        "originalTitle": "Kaguya-sama wa Kokurasetai: Tensaitachi no Renai Zunousen",
-        "categories": [
-          "Comedy",
-          "Psychological",
-          "Romance",
-          "Slice of Life",
-          "School",
-          "Heterosexual",
-          "Tsundere",
-          "Primarily Teen Cast",
-          "School Club",
-          "Surreal Comedy"
-        ],
-        "idMal": 37999
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1440
+      },
+      "originalTitle": "Kaguya-sama wa Kokurasetai: Tensaitachi no Renai Zunousen",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-101921"
+        },
+        {
+          "provider": "mal",
+          "externalId": "37999"
+        }
+      ]
     },
     "38524": {
       "title": "Attack on Titan Season 3 Part 2",
@@ -1738,28 +2128,35 @@
       "source": "anilist",
       "sourceId": "anime-104578",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx104578-k61nx3LPjvgd.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 10,
-        "episodeMinutes": 24,
+      "genres": [
+        "Action",
+        "Drama",
+        "Fantasy",
+        "Mystery",
+        "Military",
+        "Survival",
+        "Shapeshifting",
+        "Super Power",
+        "Revenge",
+        "Ensemble Cast"
+      ],
+      "details": {
         "score": 89,
-        "scoreScale": "anilist",
-        "originalTitle": "Shingeki no Kyojin Season 3 Part 2",
-        "categories": [
-          "Action",
-          "Drama",
-          "Fantasy",
-          "Mystery",
-          "Military",
-          "Survival",
-          "Shapeshifting",
-          "Super Power",
-          "Revenge",
-          "Ensemble Cast"
-        ],
-        "idMal": 38524
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 10,
+        "durationSec": 1440
+      },
+      "originalTitle": "Shingeki no Kyojin Season 3 Part 2",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-104578"
+        },
+        {
+          "provider": "mal",
+          "externalId": "38524"
+        }
+      ]
     },
     "39196": {
       "title": "Welcome to Demon School! Iruma-kun",
@@ -1769,28 +2166,35 @@
       "source": "anilist",
       "sourceId": "anime-107693",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx107693-A9bSSFAMxA6j.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 23,
-        "episodeMinutes": 25,
+      "genres": [
+        "Comedy",
+        "Fantasy",
+        "Demons",
+        "School",
+        "Male Protagonist",
+        "Magic",
+        "Isekai",
+        "Found Family",
+        "Primarily Teen Cast",
+        "Shounen"
+      ],
+      "details": {
         "score": 77,
-        "scoreScale": "anilist",
-        "originalTitle": "Mairimashita! Iruma-kun",
-        "categories": [
-          "Comedy",
-          "Fantasy",
-          "Demons",
-          "School",
-          "Male Protagonist",
-          "Magic",
-          "Isekai",
-          "Found Family",
-          "Primarily Teen Cast",
-          "Shounen"
-        ],
-        "idMal": 39196
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 23,
+        "durationSec": 1500
+      },
+      "originalTitle": "Mairimashita! Iruma-kun",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-107693"
+        },
+        {
+          "provider": "mal",
+          "externalId": "39196"
+        }
+      ]
     },
     "39535": {
       "title": "Mushoku Tensei: Jobless Reincarnation",
@@ -1800,28 +2204,35 @@
       "source": "anilist",
       "sourceId": "anime-108465",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx108465-1ANspF1EWyFx.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 11,
-        "episodeMinutes": 24,
+      "genres": [
+        "Adventure",
+        "Drama",
+        "Ecchi",
+        "Fantasy",
+        "Isekai",
+        "Magic",
+        "Male Protagonist",
+        "Rehabilitation",
+        "Coming of Age",
+        "Travel"
+      ],
+      "details": {
         "score": 81,
-        "scoreScale": "anilist",
-        "originalTitle": "Mushoku Tensei: Isekai Ittara Honki Dasu",
-        "categories": [
-          "Adventure",
-          "Drama",
-          "Ecchi",
-          "Fantasy",
-          "Isekai",
-          "Magic",
-          "Male Protagonist",
-          "Rehabilitation",
-          "Coming of Age",
-          "Travel"
-        ],
-        "idMal": 39535
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 11,
+        "durationSec": 1440
+      },
+      "originalTitle": "Mushoku Tensei: Isekai Ittara Honki Dasu",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-108465"
+        },
+        {
+          "provider": "mal",
+          "externalId": "39535"
+        }
+      ]
     },
     "39586": {
       "title": "Cells at Work!!",
@@ -1831,28 +2242,35 @@
       "source": "anilist",
       "sourceId": "anime-108631",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx108631-R3yjfHmOJDET.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 8,
-        "episodeMinutes": 24,
+      "genres": [
+        "Action",
+        "Comedy",
+        "Sci-Fi",
+        "Educational",
+        "Ensemble Cast",
+        "Medicine",
+        "Work",
+        "Anthropomorphism",
+        "Male Protagonist",
+        "Shounen"
+      ],
+      "details": {
         "score": 72,
-        "scoreScale": "anilist",
-        "originalTitle": "Hataraku Saibou!!",
-        "categories": [
-          "Action",
-          "Comedy",
-          "Sci-Fi",
-          "Educational",
-          "Ensemble Cast",
-          "Medicine",
-          "Work",
-          "Anthropomorphism",
-          "Male Protagonist",
-          "Shounen"
-        ],
-        "idMal": 39586
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 8,
+        "durationSec": 1440
+      },
+      "originalTitle": "Hataraku Saibou!!",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-108631"
+        },
+        {
+          "provider": "mal",
+          "externalId": "39586"
+        }
+      ]
     },
     "40591": {
       "title": "Kaguya-sama: Love is War?",
@@ -1862,28 +2280,35 @@
       "source": "anilist",
       "sourceId": "anime-112641",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx112641-zoGC8d6FaPXU.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 25,
+      "genres": [
+        "Comedy",
+        "Psychological",
+        "Romance",
+        "Slice of Life",
+        "School",
+        "School Club",
+        "Ensemble Cast",
+        "Tsundere",
+        "Female Protagonist",
+        "Male Protagonist"
+      ],
+      "details": {
         "score": 85,
-        "scoreScale": "anilist",
-        "originalTitle": "Kaguya-sama wa Kokurasetai?: Tensaitachi no Renai Zunousen",
-        "categories": [
-          "Comedy",
-          "Psychological",
-          "Romance",
-          "Slice of Life",
-          "School",
-          "School Club",
-          "Ensemble Cast",
-          "Tsundere",
-          "Female Protagonist",
-          "Male Protagonist"
-        ],
-        "idMal": 40591
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1500
+      },
+      "originalTitle": "Kaguya-sama wa Kokurasetai?: Tensaitachi no Renai Zunousen",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-112641"
+        },
+        {
+          "provider": "mal",
+          "externalId": "40591"
+        }
+      ]
     },
     "40748": {
       "title": "JUJUTSU KAISEN",
@@ -1893,28 +2318,35 @@
       "source": "anilist",
       "sourceId": "anime-113415",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx113415-LHBAeoZDIsnF.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 24,
-        "episodeMinutes": 24,
+      "genres": [
+        "Action",
+        "Drama",
+        "Supernatural",
+        "Urban Fantasy",
+        "Shounen",
+        "Curses",
+        "Super Power",
+        "Youkai",
+        "Male Protagonist",
+        "Exorcism"
+      ],
+      "details": {
         "score": 84,
-        "scoreScale": "anilist",
-        "originalTitle": "Jujutsu Kaisen",
-        "categories": [
-          "Action",
-          "Drama",
-          "Supernatural",
-          "Urban Fantasy",
-          "Shounen",
-          "Curses",
-          "Super Power",
-          "Youkai",
-          "Male Protagonist",
-          "Exorcism"
-        ],
-        "idMal": 40748
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 24,
+        "durationSec": 1440
+      },
+      "originalTitle": "Jujutsu Kaisen",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-113415"
+        },
+        {
+          "provider": "mal",
+          "externalId": "40748"
+        }
+      ]
     },
     "40784": {
       "title": "Scissor Seven Season 2",
@@ -1924,28 +2356,35 @@
       "source": "anilist",
       "sourceId": "anime-113290",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx113290-zsH3Ni7M7STm.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 10,
-        "episodeMinutes": 15,
+      "genres": [
+        "Action",
+        "Comedy",
+        "Drama",
+        "Mystery",
+        "Supernatural",
+        "Assassins",
+        "Martial Arts",
+        "Amnesia",
+        "Super Power",
+        "Male Protagonist"
+      ],
+      "details": {
         "score": 81,
-        "scoreScale": "anilist",
-        "originalTitle": "Wu Liuqi: Zui Qiang Faxingshi",
-        "categories": [
-          "Action",
-          "Comedy",
-          "Drama",
-          "Mystery",
-          "Supernatural",
-          "Assassins",
-          "Martial Arts",
-          "Amnesia",
-          "Super Power",
-          "Male Protagonist"
-        ],
-        "idMal": 40784
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 10,
+        "durationSec": 900
+      },
+      "originalTitle": "Wu Liuqi: Zui Qiang Faxingshi",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-113290"
+        },
+        {
+          "provider": "mal",
+          "externalId": "40784"
+        }
+      ]
     },
     "40839": {
       "title": "Rent-a-Girlfriend",
@@ -1955,28 +2394,35 @@
       "source": "anilist",
       "sourceId": "anime-113813",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx113813-SnljeXpU3Pw7.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 24,
+      "genres": [
+        "Comedy",
+        "Drama",
+        "Romance",
+        "Male Protagonist",
+        "Unrequited Love",
+        "Fake Relationship",
+        "Heterosexual",
+        "Slapstick",
+        "Primarily Female Cast",
+        "Shounen"
+      ],
+      "details": {
         "score": 65,
-        "scoreScale": "anilist",
-        "originalTitle": "Kanojo, Okarishimasu",
-        "categories": [
-          "Comedy",
-          "Drama",
-          "Romance",
-          "Male Protagonist",
-          "Unrequited Love",
-          "Fake Relationship",
-          "Heterosexual",
-          "Slapstick",
-          "Primarily Female Cast",
-          "Shounen"
-        ],
-        "idMal": 40839
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1440
+      },
+      "originalTitle": "Kanojo, Okarishimasu",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-113813"
+        },
+        {
+          "provider": "mal",
+          "externalId": "40839"
+        }
+      ]
     },
     "40938": {
       "title": "Higehiro: After Being Rejected, I Shaved and Took in a High School Runaway",
@@ -1986,28 +2432,35 @@
       "source": "anilist",
       "sourceId": "anime-114232",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx114232-2rm50ZD1cQgP.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 13,
-        "episodeMinutes": 24,
+      "genres": [
+        "Drama",
+        "Romance",
+        "Slice of Life",
+        "Rehabilitation",
+        "Coming of Age",
+        "Cohabitation",
+        "Male Protagonist",
+        "Heterosexual",
+        "Love Triangle",
+        "Female Protagonist"
+      ],
+      "details": {
         "score": 70,
-        "scoreScale": "anilist",
-        "originalTitle": "Hige wo Soru. Soshite Joshikousei wo Hirou.",
-        "categories": [
-          "Drama",
-          "Romance",
-          "Slice of Life",
-          "Rehabilitation",
-          "Coming of Age",
-          "Cohabitation",
-          "Male Protagonist",
-          "Heterosexual",
-          "Love Triangle",
-          "Female Protagonist"
-        ],
-        "idMal": 40938
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 13,
+        "durationSec": 1440
+      },
+      "originalTitle": "Hige wo Soru. Soshite Joshikousei wo Hirou.",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-114232"
+        },
+        {
+          "provider": "mal",
+          "externalId": "40938"
+        }
+      ]
     },
     "41094": {
       "title": "The Daily Life of the Immortal King",
@@ -2017,28 +2470,35 @@
       "source": "anilist",
       "sourceId": "anime-114121",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx114121-vxWVgIBlBjox.png",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 15,
-        "episodeMinutes": 18,
+      "genres": [
+        "Action",
+        "Adventure",
+        "Comedy",
+        "Fantasy",
+        "Super Power",
+        "Male Protagonist",
+        "School",
+        "Urban Fantasy",
+        "Magic",
+        "Parody"
+      ],
+      "details": {
         "score": 73,
-        "scoreScale": "anilist",
-        "originalTitle": "Xian Wang De Richang Shenghuo",
-        "categories": [
-          "Action",
-          "Adventure",
-          "Comedy",
-          "Fantasy",
-          "Super Power",
-          "Male Protagonist",
-          "School",
-          "Urban Fantasy",
-          "Magic",
-          "Parody"
-        ],
-        "idMal": 41094
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 15,
+        "durationSec": 1080
+      },
+      "originalTitle": "Xian Wang De Richang Shenghuo",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-114121"
+        },
+        {
+          "provider": "mal",
+          "externalId": "41094"
+        }
+      ]
     },
     "41694": {
       "title": "Cells at Work! CODE BLACK",
@@ -2048,28 +2508,35 @@
       "source": "anilist",
       "sourceId": "anime-117533",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx117533-Niown8l6NAWk.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 13,
-        "episodeMinutes": 24,
+      "genres": [
+        "Action",
+        "Drama",
+        "Sci-Fi",
+        "Educational",
+        "Dystopian",
+        "Seinen",
+        "Work",
+        "Primarily Adult Cast",
+        "Episodic",
+        "Anthropomorphism"
+      ],
+      "details": {
         "score": 73,
-        "scoreScale": "anilist",
-        "originalTitle": "Hataraku Saibou BLACK",
-        "categories": [
-          "Action",
-          "Drama",
-          "Sci-Fi",
-          "Educational",
-          "Dystopian",
-          "Seinen",
-          "Work",
-          "Primarily Adult Cast",
-          "Episodic",
-          "Anthropomorphism"
-        ],
-        "idMal": 41694
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 13,
+        "durationSec": 1440
+      },
+      "originalTitle": "Hataraku Saibou BLACK",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-117533"
+        },
+        {
+          "provider": "mal",
+          "externalId": "41694"
+        }
+      ]
     },
     "42361": {
       "title": "DON'T TOY WITH ME, MISS NAGATORO",
@@ -2079,28 +2546,35 @@
       "source": "anilist",
       "sourceId": "anime-120697",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx120697-BA2TqxB1I5bJ.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 24,
+      "genres": [
+        "Comedy",
+        "Romance",
+        "Slice of Life",
+        "Male Protagonist",
+        "Slapstick",
+        "Bullying",
+        "School",
+        "Heterosexual",
+        "Tsundere",
+        "Episodic"
+      ],
+      "details": {
         "score": 69,
-        "scoreScale": "anilist",
-        "originalTitle": "Ijiranaide, Nagatoro-san",
-        "categories": [
-          "Comedy",
-          "Romance",
-          "Slice of Life",
-          "Male Protagonist",
-          "Slapstick",
-          "Bullying",
-          "School",
-          "Heterosexual",
-          "Tsundere",
-          "Episodic"
-        ],
-        "idMal": 42361
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1440
+      },
+      "originalTitle": "Ijiranaide, Nagatoro-san",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-120697"
+        },
+        {
+          "provider": "mal",
+          "externalId": "42361"
+        }
+      ]
     },
     "43608": {
       "title": "Kaguya-sama: Love is War -Ultra Romantic-",
@@ -2110,28 +2584,35 @@
       "source": "anilist",
       "sourceId": "anime-125367",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx125367-1yuq9NFcQuLI.png",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 13,
-        "episodeMinutes": 24,
+      "genres": [
+        "Comedy",
+        "Psychological",
+        "Romance",
+        "Slice of Life",
+        "School",
+        "Heterosexual",
+        "School Club",
+        "Primarily Teen Cast",
+        "Slapstick",
+        "Ensemble Cast"
+      ],
+      "details": {
         "score": 89,
-        "scoreScale": "anilist",
-        "originalTitle": "Kaguya-sama wa Kokurasetai: Ultra Romantic",
-        "categories": [
-          "Comedy",
-          "Psychological",
-          "Romance",
-          "Slice of Life",
-          "School",
-          "Heterosexual",
-          "School Club",
-          "Primarily Teen Cast",
-          "Slapstick",
-          "Ensemble Cast"
-        ],
-        "idMal": 43608
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 13,
+        "durationSec": 1440
+      },
+      "originalTitle": "Kaguya-sama wa Kokurasetai: Ultra Romantic",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-125367"
+        },
+        {
+          "provider": "mal",
+          "externalId": "43608"
+        }
+      ]
     },
     "44074": {
       "title": "Link Click",
@@ -2141,28 +2622,35 @@
       "source": "anilist",
       "sourceId": "anime-126403",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx126403-BfVSRzWUtVFW.png",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 11,
-        "episodeMinutes": 24,
+      "genres": [
+        "Drama",
+        "Mystery",
+        "Supernatural",
+        "Thriller",
+        "Super Power",
+        "Photography",
+        "Male Protagonist",
+        "Primarily Adult Cast",
+        "Crime",
+        "Detective"
+      ],
+      "details": {
         "score": 86,
-        "scoreScale": "anilist",
-        "originalTitle": "Shiguang Dailiren",
-        "categories": [
-          "Drama",
-          "Mystery",
-          "Supernatural",
-          "Thriller",
-          "Super Power",
-          "Photography",
-          "Male Protagonist",
-          "Primarily Adult Cast",
-          "Crime",
-          "Detective"
-        ],
-        "idMal": 44074
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 11,
+        "durationSec": 1440
+      },
+      "originalTitle": "Shiguang Dailiren",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-126403"
+        },
+        {
+          "provider": "mal",
+          "externalId": "44074"
+        }
+      ]
     },
     "44511": {
       "title": "Chainsaw Man",
@@ -2172,28 +2660,35 @@
       "source": "anilist",
       "sourceId": "anime-127230",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx127230-DdP4vAdssLoz.png",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 25,
+      "genres": [
+        "Action",
+        "Drama",
+        "Horror",
+        "Supernatural",
+        "Demons",
+        "Monster Boy",
+        "Urban Fantasy",
+        "Male Protagonist",
+        "Gore",
+        "Shapeshifting"
+      ],
+      "details": {
         "score": 83,
-        "scoreScale": "anilist",
-        "originalTitle": "チェンソーマン",
-        "categories": [
-          "Action",
-          "Drama",
-          "Horror",
-          "Supernatural",
-          "Demons",
-          "Monster Boy",
-          "Urban Fantasy",
-          "Male Protagonist",
-          "Gore",
-          "Shapeshifting"
-        ],
-        "idMal": 44511
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1500
+      },
+      "originalTitle": "チェンソーマン",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-127230"
+        },
+        {
+          "provider": "mal",
+          "externalId": "44511"
+        }
+      ]
     },
     "45576": {
       "title": "Mushoku Tensei: Jobless Reincarnation Cour 2",
@@ -2203,28 +2698,35 @@
       "source": "anilist",
       "sourceId": "anime-127720",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx127720-ADJgIrUVMdU9.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 24,
+      "genres": [
+        "Adventure",
+        "Drama",
+        "Ecchi",
+        "Fantasy",
+        "Isekai",
+        "Magic",
+        "Travel",
+        "Coming of Age",
+        "Male Protagonist",
+        "Rehabilitation"
+      ],
+      "details": {
         "score": 85,
-        "scoreScale": "anilist",
-        "originalTitle": "Mushoku Tensei: Isekai Ittara Honki Dasu Part 2",
-        "categories": [
-          "Adventure",
-          "Drama",
-          "Ecchi",
-          "Fantasy",
-          "Isekai",
-          "Magic",
-          "Travel",
-          "Coming of Age",
-          "Male Protagonist",
-          "Rehabilitation"
-        ],
-        "idMal": 45576
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1440
+      },
+      "originalTitle": "Mushoku Tensei: Isekai Ittara Honki Dasu Part 2",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-127720"
+        },
+        {
+          "provider": "mal",
+          "externalId": "45576"
+        }
+      ]
     },
     "48413": {
       "title": "The Devil is a Part-Timer! Season 2",
@@ -2234,28 +2736,35 @@
       "source": "anilist",
       "sourceId": "anime-130592",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx130592-LAUlhx15mxQu.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 24,
+      "genres": [
+        "Comedy",
+        "Fantasy",
+        "Romance",
+        "Slice of Life",
+        "Reverse Isekai",
+        "Demons",
+        "Isekai",
+        "Work",
+        "Magic",
+        "Male Protagonist"
+      ],
+      "details": {
         "score": 65,
-        "scoreScale": "anilist",
-        "originalTitle": "Hataraku Maou-sama!!",
-        "categories": [
-          "Comedy",
-          "Fantasy",
-          "Romance",
-          "Slice of Life",
-          "Reverse Isekai",
-          "Demons",
-          "Isekai",
-          "Work",
-          "Magic",
-          "Male Protagonist"
-        ],
-        "idMal": 48413
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1440
+      },
+      "originalTitle": "Hataraku Maou-sama!!",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-130592"
+        },
+        {
+          "provider": "mal",
+          "externalId": "48413"
+        }
+      ]
     },
     "48583": {
       "title": "Attack on Titan Final Season Part 2",
@@ -2265,28 +2774,35 @@
       "source": "anilist",
       "sourceId": "anime-131681",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx131681-5ooUqvqNtee1.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 24,
+      "genres": [
+        "Action",
+        "Drama",
+        "Fantasy",
+        "Mystery",
+        "Psychological",
+        "Military",
+        "Survival",
+        "Kaiju",
+        "Male Protagonist",
+        "Foreign"
+      ],
+      "details": {
         "score": 87,
-        "scoreScale": "anilist",
-        "originalTitle": "Shingeki no Kyojin: The Final Season Part 2",
-        "categories": [
-          "Action",
-          "Drama",
-          "Fantasy",
-          "Mystery",
-          "Psychological",
-          "Military",
-          "Survival",
-          "Kaiju",
-          "Male Protagonist",
-          "Foreign"
-        ],
-        "idMal": 48583
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1440
+      },
+      "originalTitle": "Shingeki no Kyojin: The Final Season Part 2",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-131681"
+        },
+        {
+          "provider": "mal",
+          "externalId": "48583"
+        }
+      ]
     },
     "48736": {
       "title": "My Dress-Up Darling",
@@ -2296,28 +2812,35 @@
       "source": "anilist",
       "sourceId": "anime-132405",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx132405-qP7FQYGmNI3d.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 12,
-        "episodeMinutes": 24,
+      "genres": [
+        "Comedy",
+        "Ecchi",
+        "Romance",
+        "Slice of Life",
+        "Cosplay",
+        "Otaku Culture",
+        "Fashion",
+        "Male Protagonist",
+        "Heterosexual",
+        "Primarily Teen Cast"
+      ],
+      "details": {
         "score": 80,
-        "scoreScale": "anilist",
-        "originalTitle": "Sono Bisque Doll wa Koi wo Suru",
-        "categories": [
-          "Comedy",
-          "Ecchi",
-          "Romance",
-          "Slice of Life",
-          "Cosplay",
-          "Otaku Culture",
-          "Fashion",
-          "Male Protagonist",
-          "Heterosexual",
-          "Primarily Teen Cast"
-        ],
-        "idMal": 48736
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 12,
+        "durationSec": 1440
+      },
+      "originalTitle": "Sono Bisque Doll wa Koi wo Suru",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-132405"
+        },
+        {
+          "provider": "mal",
+          "externalId": "48736"
+        }
+      ]
     },
     "51096": {
       "title": "Classroom of the Elite Season 2",
@@ -2327,28 +2850,35 @@
       "source": "anilist",
       "sourceId": "anime-145545",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx145545-DGl3LVvFlnHi.png",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 13,
-        "episodeMinutes": 24,
+      "genres": [
+        "Drama",
+        "Mystery",
+        "Psychological",
+        "School",
+        "Male Protagonist",
+        "Primarily Teen Cast",
+        "Female Harem",
+        "Battle Royale",
+        "Ensemble Cast",
+        "Delinquents"
+      ],
+      "details": {
         "score": 78,
-        "scoreScale": "anilist",
-        "originalTitle": "Youkoso Jitsuryoku Shijou Shugi no Kyoushitsu e 2nd Season",
-        "categories": [
-          "Drama",
-          "Mystery",
-          "Psychological",
-          "School",
-          "Male Protagonist",
-          "Primarily Teen Cast",
-          "Female Harem",
-          "Battle Royale",
-          "Ensemble Cast",
-          "Delinquents"
-        ],
-        "idMal": 51096
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 13,
+        "durationSec": 1440
+      },
+      "originalTitle": "Youkoso Jitsuryoku Shijou Shugi no Kyoushitsu e 2nd Season",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-145545"
+        },
+        {
+          "provider": "mal",
+          "externalId": "51096"
+        }
+      ]
     },
     "51535": {
       "title": "Attack on Titan Final Season THE FINAL CHAPTERS Special 1",
@@ -2358,28 +2888,35 @@
       "source": "anilist",
       "sourceId": "anime-146984",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx146984-GXrLeT6vQqyP.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 1,
-        "episodeMinutes": 61,
+      "genres": [
+        "Action",
+        "Drama",
+        "Fantasy",
+        "Mystery",
+        "Psychological",
+        "Survival",
+        "Kaiju",
+        "Super Power",
+        "Military",
+        "Gore"
+      ],
+      "details": {
         "score": 87,
-        "scoreScale": "anilist",
-        "originalTitle": "Shingeki no Kyojin: The Final Season - Kanketsu-hen Zenpen",
-        "categories": [
-          "Action",
-          "Drama",
-          "Fantasy",
-          "Mystery",
-          "Psychological",
-          "Survival",
-          "Kaiju",
-          "Super Power",
-          "Military",
-          "Gore"
-        ],
-        "idMal": 51535
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 1,
+        "durationSec": 3660
+      },
+      "originalTitle": "Shingeki no Kyojin: The Final Season - Kanketsu-hen Zenpen",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-146984"
+        },
+        {
+          "provider": "mal",
+          "externalId": "51535"
+        }
+      ]
     },
     "57969": {
       "title": "Nukitashi THE ANIMATION",
@@ -2389,28 +2926,35 @@
       "source": "anilist",
       "sourceId": "anime-174188",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx174188-fZg8iePD9Dca.jpg",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 11,
-        "episodeMinutes": 24,
+      "genres": [
+        "Action",
+        "Comedy",
+        "Drama",
+        "Ecchi",
+        "Romance",
+        "Male Protagonist",
+        "Heterosexual",
+        "Primarily Female Cast",
+        "Nudity",
+        "Primarily Teen Cast"
+      ],
+      "details": {
         "score": 68,
-        "scoreScale": "anilist",
-        "originalTitle": "ぬきたし THE ANIMATION",
-        "categories": [
-          "Action",
-          "Comedy",
-          "Drama",
-          "Ecchi",
-          "Romance",
-          "Male Protagonist",
-          "Heterosexual",
-          "Primarily Female Cast",
-          "Nudity",
-          "Primarily Teen Cast"
-        ],
-        "idMal": 57969
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 11,
+        "durationSec": 1440
+      },
+      "originalTitle": "ぬきたし THE ANIMATION",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-174188"
+        },
+        {
+          "provider": "mal",
+          "externalId": "57969"
+        }
+      ]
     },
     "63046": {
       "title": "Nukitashi THE ANIMATION OVAs",
@@ -2420,23 +2964,30 @@
       "source": "anilist",
       "sourceId": "anime-194712",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx194712-lfwR1kGiy8NR.png",
-      "metadata": {
-        "kind": "anime",
-        "format": null,
-        "episodes": 4,
-        "episodeMinutes": 5,
+      "genres": [
+        "Ecchi",
+        "Nudity",
+        "Heterosexual",
+        "Male Protagonist",
+        "Primarily Female Cast"
+      ],
+      "details": {
         "score": 64,
-        "scoreScale": "anilist",
-        "originalTitle": "ぬきたし THE ANIMATION OVAs",
-        "categories": [
-          "Ecchi",
-          "Nudity",
-          "Heterosexual",
-          "Male Protagonist",
-          "Primarily Female Cast"
-        ],
-        "idMal": 63046
-      }
+        "scoreScale": "anilist_100",
+        "episodeCount": 4,
+        "durationSec": 300
+      },
+      "originalTitle": "ぬきたし THE ANIMATION OVAs",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "anime-194712"
+        },
+        {
+          "provider": "mal",
+          "externalId": "63046"
+        }
+      ]
     }
   },
   "manga": {
@@ -2448,28 +2999,35 @@
       "source": "anilist",
       "sourceId": "manga-30003",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx30003-E84fwIh22LAQ.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 249,
-        "volumes": 22,
+      "genres": [
+        "Drama",
+        "Mystery",
+        "Psychological",
+        "Sci-Fi",
+        "Thriller",
+        "Ensemble Cast",
+        "Coming of Age",
+        "Seinen",
+        "Achronological Order",
+        "Conspiracy"
+      ],
+      "details": {
         "score": 88,
-        "scoreScale": "anilist",
-        "originalTitle": "20 Seiki Shounen",
-        "categories": [
-          "Drama",
-          "Mystery",
-          "Psychological",
-          "Sci-Fi",
-          "Thriller",
-          "Ensemble Cast",
-          "Coming of Age",
-          "Seinen",
-          "Achronological Order",
-          "Conspiracy"
-        ],
-        "idMal": 3
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 249,
+        "volumeCount": 22
+      },
+      "originalTitle": "20 Seiki Shounen",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-30003"
+        },
+        {
+          "provider": "mal",
+          "externalId": "3"
+        }
+      ]
     },
     "11": {
       "title": "Naruto",
@@ -2479,28 +3037,35 @@
       "source": "anilist",
       "sourceId": "manga-30011",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/nx30011-9yUF1dXWgDOx.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 700,
-        "volumes": 72,
+      "genres": [
+        "Action",
+        "Adventure",
+        "Supernatural",
+        "Shounen",
+        "Ninja",
+        "Coming of Age",
+        "Super Power",
+        "Found Family",
+        "Male Protagonist",
+        "Martial Arts"
+      ],
+      "details": {
         "score": 80,
-        "scoreScale": "anilist",
-        "originalTitle": "NARUTO",
-        "categories": [
-          "Action",
-          "Adventure",
-          "Supernatural",
-          "Shounen",
-          "Ninja",
-          "Coming of Age",
-          "Super Power",
-          "Found Family",
-          "Male Protagonist",
-          "Martial Arts"
-        ],
-        "idMal": 11
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 700,
+        "volumeCount": 72
+      },
+      "originalTitle": "NARUTO",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-30011"
+        },
+        {
+          "provider": "mal",
+          "externalId": "11"
+        }
+      ]
     },
     "743": {
       "title": "21st Century Boys",
@@ -2510,28 +3075,35 @@
       "source": "anilist",
       "sourceId": "manga-30743",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/nx30743-eln5xX7mt8ps.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 16,
-        "volumes": 2,
+      "genres": [
+        "Drama",
+        "Mystery",
+        "Psychological",
+        "Sci-Fi",
+        "Conspiracy",
+        "Seinen",
+        "Cult",
+        "Ghost",
+        "Virtual World",
+        "Military"
+      ],
+      "details": {
         "score": 82,
-        "scoreScale": "anilist",
-        "originalTitle": "21 Seiki Shounen",
-        "categories": [
-          "Drama",
-          "Mystery",
-          "Psychological",
-          "Sci-Fi",
-          "Conspiracy",
-          "Seinen",
-          "Cult",
-          "Ghost",
-          "Virtual World",
-          "Military"
-        ],
-        "idMal": 743
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 16,
+        "volumeCount": 2
+      },
+      "originalTitle": "21 Seiki Shounen",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-30743"
+        },
+        {
+          "provider": "mal",
+          "externalId": "743"
+        }
+      ]
     },
     "932": {
       "title": "Ichi the Killer",
@@ -2541,28 +3113,35 @@
       "source": "anilist",
       "sourceId": "manga-30932",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx30932-hSKTuxasIoq2.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 113,
-        "volumes": 10,
+      "genres": [
+        "Action",
+        "Psychological",
+        "Yakuza",
+        "Gore",
+        "Crime",
+        "Anti-Hero",
+        "Seinen",
+        "Psychosexual",
+        "Assassins",
+        "Primarily Male Cast"
+      ],
+      "details": {
         "score": 73,
-        "scoreScale": "anilist",
-        "originalTitle": "Koroshiya 1",
-        "categories": [
-          "Action",
-          "Psychological",
-          "Yakuza",
-          "Gore",
-          "Crime",
-          "Anti-Hero",
-          "Seinen",
-          "Psychosexual",
-          "Assassins",
-          "Primarily Male Cast"
-        ],
-        "idMal": 932
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 113,
+        "volumeCount": 10
+      },
+      "originalTitle": "Koroshiya 1",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-30932"
+        },
+        {
+          "provider": "mal",
+          "externalId": "932"
+        }
+      ]
     },
     "936": {
       "title": "Homunculus",
@@ -2572,28 +3151,35 @@
       "source": "anilist",
       "sourceId": "manga-30936",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx30936-P55KMUW1sgLN.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 166,
-        "volumes": 15,
+      "genres": [
+        "Drama",
+        "Horror",
+        "Mystery",
+        "Psychological",
+        "Supernatural",
+        "Philosophy",
+        "Seinen",
+        "Psychosexual",
+        "Male Protagonist",
+        "Primarily Adult Cast"
+      ],
+      "details": {
         "score": 83,
-        "scoreScale": "anilist",
-        "originalTitle": "ホムンクルス",
-        "categories": [
-          "Drama",
-          "Horror",
-          "Mystery",
-          "Psychological",
-          "Supernatural",
-          "Philosophy",
-          "Seinen",
-          "Psychosexual",
-          "Male Protagonist",
-          "Primarily Adult Cast"
-        ],
-        "idMal": 936
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 166,
+        "volumeCount": 15
+      },
+      "originalTitle": "ホムンクルス",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-30936"
+        },
+        {
+          "provider": "mal",
+          "externalId": "936"
+        }
+      ]
     },
     "4632": {
       "title": "Goodnight Punpun",
@@ -2603,28 +3189,35 @@
       "source": "anilist",
       "sourceId": "manga-34632",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx34632-5xMDkx3pXsEh.png",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 147,
-        "volumes": 13,
+      "genres": [
+        "Drama",
+        "Psychological",
+        "Slice of Life",
+        "Coming of Age",
+        "Seinen",
+        "Philosophy",
+        "Denpa",
+        "Psychosexual",
+        "Urban",
+        "Male Protagonist"
+      ],
+      "details": {
         "score": 88,
-        "scoreScale": "anilist",
-        "originalTitle": "Oyasumi Punpun",
-        "categories": [
-          "Drama",
-          "Psychological",
-          "Slice of Life",
-          "Coming of Age",
-          "Seinen",
-          "Philosophy",
-          "Denpa",
-          "Psychosexual",
-          "Urban",
-          "Male Protagonist"
-        ],
-        "idMal": 4632
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 147,
+        "volumeCount": 13
+      },
+      "originalTitle": "Oyasumi Punpun",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-34632"
+        },
+        {
+          "provider": "mal",
+          "externalId": "4632"
+        }
+      ]
     },
     "7519": {
       "title": "Kami nomi zo Shiru Sekai",
@@ -2634,28 +3227,35 @@
       "source": "anilist",
       "sourceId": "manga-37519",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx37519-2A9eU21x8uVG.png",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 271,
-        "volumes": 26,
+      "genres": [
+        "Comedy",
+        "Fantasy",
+        "Romance",
+        "Primarily Female Cast",
+        "Female Harem",
+        "Male Protagonist",
+        "School",
+        "Video Games",
+        "Otaku Culture",
+        "Demons"
+      ],
+      "details": {
         "score": 82,
-        "scoreScale": "anilist",
-        "originalTitle": "神のみぞ知るセカイ",
-        "categories": [
-          "Comedy",
-          "Fantasy",
-          "Romance",
-          "Primarily Female Cast",
-          "Female Harem",
-          "Male Protagonist",
-          "School",
-          "Video Games",
-          "Otaku Culture",
-          "Demons"
-        ],
-        "idMal": 7519
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 271,
+        "volumeCount": 26
+      },
+      "originalTitle": "神のみぞ知るセカイ",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-37519"
+        },
+        {
+          "provider": "mal",
+          "externalId": "7519"
+        }
+      ]
     },
     "25132": {
       "title": "Akame ga KILL!",
@@ -2665,28 +3265,35 @@
       "source": "anilist",
       "sourceId": "manga-55132",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx55132-bhKk5JoXcvdA.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 80,
-        "volumes": 15,
+      "genres": [
+        "Action",
+        "Adventure",
+        "Drama",
+        "Fantasy",
+        "Horror",
+        "Assassins",
+        "Shounen",
+        "War",
+        "Swordplay",
+        "Gore"
+      ],
+      "details": {
         "score": 74,
-        "scoreScale": "anilist",
-        "originalTitle": "Akame ga Kill!",
-        "categories": [
-          "Action",
-          "Adventure",
-          "Drama",
-          "Fantasy",
-          "Horror",
-          "Assassins",
-          "Shounen",
-          "War",
-          "Swordplay",
-          "Gore"
-        ],
-        "idMal": 25132
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 80,
+        "volumeCount": 15
+      },
+      "originalTitle": "Akame ga Kill!",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-55132"
+        },
+        {
+          "provider": "mal",
+          "externalId": "25132"
+        }
+      ]
     },
     "26144": {
       "title": "The Daily Lives of High School Boys",
@@ -2696,27 +3303,34 @@
       "source": "anilist",
       "sourceId": "manga-56144",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/nx56144-9XxJWQTZFoJW.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 138,
-        "volumes": 7,
+      "genres": [
+        "Comedy",
+        "Slice of Life",
+        "Primarily Male Cast",
+        "Shounen",
+        "Slapstick",
+        "School",
+        "Cute Boys Doing Cute Things",
+        "Urban",
+        "Ensemble Cast"
+      ],
+      "details": {
         "score": 80,
-        "scoreScale": "anilist",
-        "originalTitle": "Danshi Koukousei no Nichijou",
-        "categories": [
-          "Comedy",
-          "Slice of Life",
-          "Primarily Male Cast",
-          "Shounen",
-          "Slapstick",
-          "School",
-          "Cute Boys Doing Cute Things",
-          "Urban",
-          "Ensemble Cast"
-        ],
-        "idMal": 26144
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 138,
+        "volumeCount": 7
+      },
+      "originalTitle": "Danshi Koukousei no Nichijou",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-56144"
+        },
+        {
+          "provider": "mal",
+          "externalId": "26144"
+        }
+      ]
     },
     "44347": {
       "title": "One-Punch Man",
@@ -2726,28 +3340,33 @@
       "source": "anilist",
       "sourceId": "manga-74347",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx74347-sZpmNJ5xLwRK.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": null,
-        "volumes": null,
+      "genres": [
+        "Action",
+        "Comedy",
+        "Sci-Fi",
+        "Supernatural",
+        "Super Power",
+        "Superhero",
+        "Urban Fantasy",
+        "Parody",
+        "Surreal Comedy",
+        "Kaiju"
+      ],
+      "details": {
         "score": 84,
-        "scoreScale": "anilist",
-        "originalTitle": "One Punch-Man",
-        "categories": [
-          "Action",
-          "Comedy",
-          "Sci-Fi",
-          "Supernatural",
-          "Super Power",
-          "Superhero",
-          "Urban Fantasy",
-          "Parody",
-          "Surreal Comedy",
-          "Kaiju"
-        ],
-        "idMal": 44347
-      }
+        "scoreScale": "anilist_100"
+      },
+      "originalTitle": "One Punch-Man",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-74347"
+        },
+        {
+          "provider": "mal",
+          "externalId": "44347"
+        }
+      ]
     },
     "54387": {
       "title": "Scumbag Loser",
@@ -2757,23 +3376,30 @@
       "source": "anilist",
       "sourceId": "manga-84387",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx84387-IYQZjF8rEj67.png",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 14,
-        "volumes": 3,
+      "genres": [
+        "Horror",
+        "Mystery",
+        "Supernatural",
+        "Shounen",
+        "Male Protagonist"
+      ],
+      "details": {
         "score": 55,
-        "scoreScale": "anilist",
-        "originalTitle": "Saiteihen no Otoko",
-        "categories": [
-          "Horror",
-          "Mystery",
-          "Supernatural",
-          "Shounen",
-          "Male Protagonist"
-        ],
-        "idMal": 54387
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 14,
+        "volumeCount": 3
+      },
+      "originalTitle": "Saiteihen no Otoko",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-84387"
+        },
+        {
+          "provider": "mal",
+          "externalId": "54387"
+        }
+      ]
     },
     "57295": {
       "title": "Magical Girl Site",
@@ -2783,28 +3409,35 @@
       "source": "anilist",
       "sourceId": "manga-85666",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx85666-mxhdekRnApEj.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 141,
-        "volumes": 16,
+      "genres": [
+        "Drama",
+        "Horror",
+        "Mahou Shoujo",
+        "Psychological",
+        "Supernatural",
+        "Female Protagonist",
+        "Magic",
+        "Bullying",
+        "Survival",
+        "Suicide"
+      ],
+      "details": {
         "score": 64,
-        "scoreScale": "anilist",
-        "originalTitle": "Mahou Shoujo Site",
-        "categories": [
-          "Drama",
-          "Horror",
-          "Mahou Shoujo",
-          "Psychological",
-          "Supernatural",
-          "Female Protagonist",
-          "Magic",
-          "Bullying",
-          "Survival",
-          "Suicide"
-        ],
-        "idMal": 57295
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 141,
+        "volumeCount": 16
+      },
+      "originalTitle": "Mahou Shoujo Site",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-85666"
+        },
+        {
+          "provider": "mal",
+          "externalId": "57295"
+        }
+      ]
     },
     "58313": {
       "title": "ib: Instant Bullet",
@@ -2814,28 +3447,35 @@
       "source": "anilist",
       "sourceId": "manga-85138",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx85138-74SNsMS77eTC.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 27,
-        "volumes": 5,
+      "genres": [
+        "Drama",
+        "Fantasy",
+        "Psychological",
+        "Supernatural",
+        "Urban Fantasy",
+        "Seinen",
+        "Super Power",
+        "Heterosexual",
+        "Anti-Hero",
+        "Male Protagonist"
+      ],
+      "details": {
         "score": 71,
-        "scoreScale": "anilist",
-        "originalTitle": "ib -インスタントバレット-",
-        "categories": [
-          "Drama",
-          "Fantasy",
-          "Psychological",
-          "Supernatural",
-          "Urban Fantasy",
-          "Seinen",
-          "Super Power",
-          "Heterosexual",
-          "Anti-Hero",
-          "Male Protagonist"
-        ],
-        "idMal": 58313
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 27,
+        "volumeCount": 5
+      },
+      "originalTitle": "ib -インスタントバレット-",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-85138"
+        },
+        {
+          "provider": "mal",
+          "externalId": "58313"
+        }
+      ]
     },
     "59893": {
       "title": "Tanaka-kun is Always Listless",
@@ -2845,28 +3485,35 @@
       "source": "anilist",
       "sourceId": "manga-85898",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx85898-X1sgRWZXXr5P.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 140,
-        "volumes": 13,
+      "genres": [
+        "Comedy",
+        "Slice of Life",
+        "School",
+        "Iyashikei",
+        "4-koma",
+        "Episodic",
+        "Shounen",
+        "Male Protagonist",
+        "Kuudere",
+        "Primarily Teen Cast"
+      ],
+      "details": {
         "score": 79,
-        "scoreScale": "anilist",
-        "originalTitle": "Tanaka-kun wa Itsumo Kedaruge",
-        "categories": [
-          "Comedy",
-          "Slice of Life",
-          "School",
-          "Iyashikei",
-          "4-koma",
-          "Episodic",
-          "Shounen",
-          "Male Protagonist",
-          "Kuudere",
-          "Primarily Teen Cast"
-        ],
-        "idMal": 59893
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 140,
+        "volumeCount": 13
+      },
+      "originalTitle": "Tanaka-kun wa Itsumo Kedaruge",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-85898"
+        },
+        {
+          "provider": "mal",
+          "externalId": "59893"
+        }
+      ]
     },
     "70345": {
       "title": "Grand Blue Dreaming",
@@ -2876,28 +3523,33 @@
       "source": "anilist",
       "sourceId": "manga-87395",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx87395-axsA49kSZp72.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": null,
-        "volumes": null,
+      "genres": [
+        "Comedy",
+        "Romance",
+        "Slice of Life",
+        "Sports",
+        "Slapstick",
+        "Surreal Comedy",
+        "Male Protagonist",
+        "Seinen",
+        "College",
+        "Primarily Adult Cast"
+      ],
+      "details": {
         "score": 89,
-        "scoreScale": "anilist",
-        "originalTitle": "Grand Blue",
-        "categories": [
-          "Comedy",
-          "Romance",
-          "Slice of Life",
-          "Sports",
-          "Slapstick",
-          "Surreal Comedy",
-          "Male Protagonist",
-          "Seinen",
-          "College",
-          "Primarily Adult Cast"
-        ],
-        "idMal": 70345
-      }
+        "scoreScale": "anilist_100"
+      },
+      "originalTitle": "Grand Blue",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-87395"
+        },
+        {
+          "provider": "mal",
+          "externalId": "70345"
+        }
+      ]
     },
     "75989": {
       "title": "My Hero Academia",
@@ -2907,28 +3559,35 @@
       "source": "anilist",
       "sourceId": "manga-85486",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx85486-INqnYx8gL3eX.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 432,
-        "volumes": 42,
+      "genres": [
+        "Action",
+        "Adventure",
+        "Comedy",
+        "Drama",
+        "Fantasy",
+        "Superhero",
+        "Super Power",
+        "Urban Fantasy",
+        "Shounen",
+        "Male Protagonist"
+      ],
+      "details": {
         "score": 77,
-        "scoreScale": "anilist",
-        "originalTitle": "Boku no Hero Academia",
-        "categories": [
-          "Action",
-          "Adventure",
-          "Comedy",
-          "Drama",
-          "Fantasy",
-          "Superhero",
-          "Super Power",
-          "Urban Fantasy",
-          "Shounen",
-          "Male Protagonist"
-        ],
-        "idMal": 75989
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 432,
+        "volumeCount": 42
+      },
+      "originalTitle": "Boku no Hero Academia",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-85486"
+        },
+        {
+          "provider": "mal",
+          "externalId": "75989"
+        }
+      ]
     },
     "81707": {
       "title": "Busou Shoujo Machiavellianism",
@@ -2938,25 +3597,32 @@
       "source": "anilist",
       "sourceId": "manga-85892",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx85892-rqismbQ1Ynh2.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 90,
-        "volumes": 13,
+      "genres": [
+        "Action",
+        "Comedy",
+        "School",
+        "Martial Arts",
+        "Male Protagonist",
+        "Swordplay",
+        "Female Harem"
+      ],
+      "details": {
         "score": 67,
-        "scoreScale": "anilist",
-        "originalTitle": "武装少女マキャヴェリズム",
-        "categories": [
-          "Action",
-          "Comedy",
-          "School",
-          "Martial Arts",
-          "Male Protagonist",
-          "Swordplay",
-          "Female Harem"
-        ],
-        "idMal": 81707
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 90,
+        "volumeCount": 13
+      },
+      "originalTitle": "武装少女マキャヴェリズム",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-85892"
+        },
+        {
+          "provider": "mal",
+          "externalId": "81707"
+        }
+      ]
     },
     "85173": {
       "title": "Happiness",
@@ -2966,27 +3632,34 @@
       "source": "anilist",
       "sourceId": "manga-86136",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx86136-CJRGk54qB6Ev.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 50,
-        "volumes": 10,
+      "genres": [
+        "Drama",
+        "Horror",
+        "Supernatural",
+        "Vampire",
+        "Primarily Teen Cast",
+        "Gore",
+        "Heterosexual",
+        "Male Protagonist",
+        "Urban Fantasy"
+      ],
+      "details": {
         "score": 73,
-        "scoreScale": "anilist",
-        "originalTitle": "ハピネス",
-        "categories": [
-          "Drama",
-          "Horror",
-          "Supernatural",
-          "Vampire",
-          "Primarily Teen Cast",
-          "Gore",
-          "Heterosexual",
-          "Male Protagonist",
-          "Urban Fantasy"
-        ],
-        "idMal": 85173
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 50,
+        "volumeCount": 10
+      },
+      "originalTitle": "ハピネス",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-86136"
+        },
+        {
+          "provider": "mal",
+          "externalId": "85173"
+        }
+      ]
     },
     "87844": {
       "title": "The Fable",
@@ -2996,28 +3669,35 @@
       "source": "anilist",
       "sourceId": "manga-94490",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx94490-rdtpGHQHOHHC.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 240,
-        "volumes": 22,
+      "genres": [
+        "Action",
+        "Comedy",
+        "Drama",
+        "Romance",
+        "Yakuza",
+        "Seinen",
+        "Urban",
+        "Assassins",
+        "Crime",
+        "Guns"
+      ],
+      "details": {
         "score": 84,
-        "scoreScale": "anilist",
-        "originalTitle": "ザ・ファブル",
-        "categories": [
-          "Action",
-          "Comedy",
-          "Drama",
-          "Romance",
-          "Yakuza",
-          "Seinen",
-          "Urban",
-          "Assassins",
-          "Crime",
-          "Guns"
-        ],
-        "idMal": 87844
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 240,
+        "volumeCount": 22
+      },
+      "originalTitle": "ザ・ファブル",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-94490"
+        },
+        {
+          "provider": "mal",
+          "externalId": "87844"
+        }
+      ]
     },
     "90125": {
       "title": "Kaguya-sama: Love is War",
@@ -3027,28 +3707,35 @@
       "source": "anilist",
       "sourceId": "manga-86635",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx86635-EdaLQmsn86Fy.png",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 281,
-        "volumes": 28,
+      "genres": [
+        "Comedy",
+        "Psychological",
+        "Romance",
+        "Slice of Life",
+        "School",
+        "Heterosexual",
+        "Tsundere",
+        "Female Protagonist",
+        "Primarily Teen Cast",
+        "School Club"
+      ],
+      "details": {
         "score": 87,
-        "scoreScale": "anilist",
-        "originalTitle": "Kaguya-sama wa Kokurasetai: Tensaitachi no Renai Zunousen",
-        "categories": [
-          "Comedy",
-          "Psychological",
-          "Romance",
-          "Slice of Life",
-          "School",
-          "Heterosexual",
-          "Tsundere",
-          "Female Protagonist",
-          "Primarily Teen Cast",
-          "School Club"
-        ],
-        "idMal": 90125
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 281,
+        "volumeCount": 28
+      },
+      "originalTitle": "Kaguya-sama wa Kokurasetai: Tensaitachi no Renai Zunousen",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-86635"
+        },
+        {
+          "provider": "mal",
+          "externalId": "90125"
+        }
+      ]
     },
     "99007": {
       "title": "Komi Can't Communicate",
@@ -3058,28 +3745,35 @@
       "source": "anilist",
       "sourceId": "manga-97852",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx97852-M7vlc2OGR2gp.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 537,
-        "volumes": 37,
+      "genres": [
+        "Comedy",
+        "Romance",
+        "Slice of Life",
+        "School",
+        "Coming of Age",
+        "Kuudere",
+        "Male Protagonist",
+        "Ensemble Cast",
+        "Episodic",
+        "Female Protagonist"
+      ],
+      "details": {
         "score": 77,
-        "scoreScale": "anilist",
-        "originalTitle": "Komi-san wa, Komyushou desu.",
-        "categories": [
-          "Comedy",
-          "Romance",
-          "Slice of Life",
-          "School",
-          "Coming of Age",
-          "Kuudere",
-          "Male Protagonist",
-          "Ensemble Cast",
-          "Episodic",
-          "Female Protagonist"
-        ],
-        "idMal": 99007
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 537,
+        "volumeCount": 37
+      },
+      "originalTitle": "Komi-san wa, Komyushou desu.",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-97852"
+        },
+        {
+          "provider": "mal",
+          "externalId": "99007"
+        }
+      ]
     },
     "99678": {
       "title": "Asobi Asobase",
@@ -3089,28 +3783,35 @@
       "source": "anilist",
       "sourceId": "manga-97418",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/nx97418-4vfXwsEGB7Rh.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 134,
-        "volumes": 15,
+      "genres": [
+        "Comedy",
+        "Drama",
+        "Slice of Life",
+        "Primarily Female Cast",
+        "School",
+        "School Club",
+        "Surreal Comedy",
+        "Female Protagonist",
+        "Seinen",
+        "Cute Girls Doing Cute Things"
+      ],
+      "details": {
         "score": 75,
-        "scoreScale": "anilist",
-        "originalTitle": "あそびあそばせ",
-        "categories": [
-          "Comedy",
-          "Drama",
-          "Slice of Life",
-          "Primarily Female Cast",
-          "School",
-          "School Club",
-          "Surreal Comedy",
-          "Female Protagonist",
-          "Seinen",
-          "Cute Girls Doing Cute Things"
-        ],
-        "idMal": 99678
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 134,
+        "volumeCount": 15
+      },
+      "originalTitle": "あそびあそばせ",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-97418"
+        },
+        {
+          "provider": "mal",
+          "externalId": "99678"
+        }
+      ]
     },
     "100128": {
       "title": "The Promised Neverland",
@@ -3120,28 +3821,35 @@
       "source": "anilist",
       "sourceId": "manga-87423",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx87423-gPNtu8QbGped.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 181,
-        "volumes": 20,
+      "genres": [
+        "Drama",
+        "Fantasy",
+        "Horror",
+        "Mystery",
+        "Psychological",
+        "Thriller",
+        "Primarily Child Cast",
+        "Body Horror",
+        "Found Family",
+        "Coming of Age"
+      ],
+      "details": {
         "score": 79,
-        "scoreScale": "anilist",
-        "originalTitle": "Yakusoku no Neverland",
-        "categories": [
-          "Drama",
-          "Fantasy",
-          "Horror",
-          "Mystery",
-          "Psychological",
-          "Thriller",
-          "Primarily Child Cast",
-          "Body Horror",
-          "Found Family",
-          "Coming of Age"
-        ],
-        "idMal": 100128
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 181,
+        "volumeCount": 20
+      },
+      "originalTitle": "Yakusoku no Neverland",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-87423"
+        },
+        {
+          "provider": "mal",
+          "externalId": "100128"
+        }
+      ]
     },
     "100448": {
       "title": "Three Days of Happiness",
@@ -3151,28 +3859,35 @@
       "source": "anilist",
       "sourceId": "manga-97553",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx97553-vqJj5DFS8v2p.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 18,
-        "volumes": 3,
+      "genres": [
+        "Drama",
+        "Psychological",
+        "Romance",
+        "Supernatural",
+        "Philosophy",
+        "Coming of Age",
+        "Male Protagonist",
+        "Kuudere",
+        "Cohabitation",
+        "Primarily Adult Cast"
+      ],
+      "details": {
         "score": 86,
-        "scoreScale": "anilist",
-        "originalTitle": "Jumyou wo Kaitotte Moratta. Ichinen ni Tsuki, Ichimanen de.",
-        "categories": [
-          "Drama",
-          "Psychological",
-          "Romance",
-          "Supernatural",
-          "Philosophy",
-          "Coming of Age",
-          "Male Protagonist",
-          "Kuudere",
-          "Cohabitation",
-          "Primarily Adult Cast"
-        ],
-        "idMal": 100448
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 18,
+        "volumeCount": 3
+      },
+      "originalTitle": "Jumyou wo Kaitotte Moratta. Ichinen ni Tsuki, Ichimanen de.",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-97553"
+        },
+        {
+          "provider": "mal",
+          "externalId": "100448"
+        }
+      ]
     },
     "104241": {
       "title": "Welcome to Demon School! Iruma-kun",
@@ -3182,28 +3897,33 @@
       "source": "anilist",
       "sourceId": "manga-99324",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/nx99324-huvqo1tmm4pl.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": null,
-        "volumes": null,
+      "genres": [
+        "Comedy",
+        "Fantasy",
+        "Demons",
+        "Found Family",
+        "Ensemble Cast",
+        "School",
+        "Male Protagonist",
+        "Adoption",
+        "Magic",
+        "Shounen"
+      ],
+      "details": {
         "score": 83,
-        "scoreScale": "anilist",
-        "originalTitle": "Mairimashita! Iruma-kun",
-        "categories": [
-          "Comedy",
-          "Fantasy",
-          "Demons",
-          "Found Family",
-          "Ensemble Cast",
-          "School",
-          "Male Protagonist",
-          "Adoption",
-          "Magic",
-          "Shounen"
-        ],
-        "idMal": 104241
-      }
+        "scoreScale": "anilist_100"
+      },
+      "originalTitle": "Mairimashita! Iruma-kun",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-99324"
+        },
+        {
+          "provider": "mal",
+          "externalId": "104241"
+        }
+      ]
     },
     "107931": {
       "title": "Blue Period",
@@ -3213,28 +3933,33 @@
       "source": "anilist",
       "sourceId": "manga-107237",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx107237-tyQXghsKmE0t.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": null,
-        "volumes": null,
+      "genres": [
+        "Drama",
+        "Slice of Life",
+        "Drawing",
+        "Coming of Age",
+        "Seinen",
+        "Male Protagonist",
+        "Educational",
+        "Philosophy",
+        "Primarily Adult Cast",
+        "School"
+      ],
+      "details": {
         "score": 86,
-        "scoreScale": "anilist",
-        "originalTitle": "ブルーピリオド",
-        "categories": [
-          "Drama",
-          "Slice of Life",
-          "Drawing",
-          "Coming of Age",
-          "Seinen",
-          "Male Protagonist",
-          "Educational",
-          "Philosophy",
-          "Primarily Adult Cast",
-          "School"
-        ],
-        "idMal": 107931
-      }
+        "scoreScale": "anilist_100"
+      },
+      "originalTitle": "ブルーピリオド",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-107237"
+        },
+        {
+          "provider": "mal",
+          "externalId": "107931"
+        }
+      ]
     },
     "112268": {
       "title": "My Dress-Up Darling",
@@ -3244,28 +3969,35 @@
       "source": "anilist",
       "sourceId": "manga-101583",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx101583-VI1PT2QGGT8W.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 119,
-        "volumes": 15,
+      "genres": [
+        "Comedy",
+        "Ecchi",
+        "Romance",
+        "Slice of Life",
+        "Cosplay",
+        "Otaku Culture",
+        "Fashion",
+        "Female Protagonist",
+        "Male Protagonist",
+        "Gyaru"
+      ],
+      "details": {
         "score": 79,
-        "scoreScale": "anilist",
-        "originalTitle": "Sono Bisque Doll wa Koi wo Suru",
-        "categories": [
-          "Comedy",
-          "Ecchi",
-          "Romance",
-          "Slice of Life",
-          "Cosplay",
-          "Otaku Culture",
-          "Fashion",
-          "Female Protagonist",
-          "Male Protagonist",
-          "Gyaru"
-        ],
-        "idMal": 112268
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 119,
+        "volumeCount": 15
+      },
+      "originalTitle": "Sono Bisque Doll wa Koi wo Suru",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-101583"
+        },
+        {
+          "provider": "mal",
+          "externalId": "112268"
+        }
+      ]
     },
     "113138": {
       "title": "Jujutsu Kaisen",
@@ -3275,28 +4007,35 @@
       "source": "anilist",
       "sourceId": "manga-101517",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx101517-H3TdM3g5ZUe9.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 272,
-        "volumes": 30,
+      "genres": [
+        "Action",
+        "Drama",
+        "Supernatural",
+        "Urban Fantasy",
+        "Demons",
+        "Super Power",
+        "Shounen",
+        "Curses",
+        "Male Protagonist",
+        "Youkai"
+      ],
+      "details": {
         "score": 80,
-        "scoreScale": "anilist",
-        "originalTitle": "呪術廻戦",
-        "categories": [
-          "Action",
-          "Drama",
-          "Supernatural",
-          "Urban Fantasy",
-          "Demons",
-          "Super Power",
-          "Shounen",
-          "Curses",
-          "Male Protagonist",
-          "Youkai"
-        ],
-        "idMal": 113138
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 272,
+        "volumeCount": 30
+      },
+      "originalTitle": "呪術廻戦",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-101517"
+        },
+        {
+          "provider": "mal",
+          "externalId": "113138"
+        }
+      ]
     },
     "116157": {
       "title": "Trapped in a Dating Sim: The World of Otome Games is Tough for Mobs",
@@ -3306,28 +4045,35 @@
       "source": "anilist",
       "sourceId": "manga-104503",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx104503-O9OmaU1sVCNW.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 72,
-        "volumes": 13,
+      "genres": [
+        "Action",
+        "Adventure",
+        "Comedy",
+        "Drama",
+        "Fantasy",
+        "Mecha",
+        "Romance",
+        "Male Protagonist",
+        "Isekai",
+        "Anti-Hero"
+      ],
+      "details": {
         "score": 73,
-        "scoreScale": "anilist",
-        "originalTitle": "Otomege Sekai wa Mob ni Kibishii Sekai desu",
-        "categories": [
-          "Action",
-          "Adventure",
-          "Comedy",
-          "Drama",
-          "Fantasy",
-          "Mecha",
-          "Romance",
-          "Male Protagonist",
-          "Isekai",
-          "Anti-Hero"
-        ],
-        "idMal": 116157
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 72,
+        "volumeCount": 13
+      },
+      "originalTitle": "Otomege Sekai wa Mob ni Kibishii Sekai desu",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-104503"
+        },
+        {
+          "provider": "mal",
+          "externalId": "116157"
+        }
+      ]
     },
     "116301": {
       "title": "Handyman Saitou in Another World",
@@ -3337,26 +4083,31 @@
       "source": "anilist",
       "sourceId": "manga-104730",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx104730-89vH0896A01d.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": null,
-        "volumes": null,
+      "genres": [
+        "Adventure",
+        "Comedy",
+        "Fantasy",
+        "Slice of Life",
+        "Male Protagonist",
+        "Seinen",
+        "Isekai",
+        "4-koma"
+      ],
+      "details": {
         "score": 68,
-        "scoreScale": "anilist",
-        "originalTitle": "Benriya Saitou-san, Isekai ni Iku",
-        "categories": [
-          "Adventure",
-          "Comedy",
-          "Fantasy",
-          "Slice of Life",
-          "Male Protagonist",
-          "Seinen",
-          "Isekai",
-          "4-koma"
-        ],
-        "idMal": 116301
-      }
+        "scoreScale": "anilist_100"
+      },
+      "originalTitle": "Benriya Saitou-san, Isekai ni Iku",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-104730"
+        },
+        {
+          "provider": "mal",
+          "externalId": "116301"
+        }
+      ]
     },
     "117332": {
       "title": "The Girl I Like Forgot Her Glasses",
@@ -3366,27 +4117,34 @@
       "source": "anilist",
       "sourceId": "manga-105641",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx105641-17QzwtypyRxU.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 120,
-        "volumes": 12,
+      "genres": [
+        "Comedy",
+        "Romance",
+        "Heterosexual",
+        "Iyashikei",
+        "School",
+        "Disability",
+        "Shounen",
+        "Male Protagonist",
+        "Kuudere"
+      ],
+      "details": {
         "score": 80,
-        "scoreScale": "anilist",
-        "originalTitle": "Suki na Ko ga Megane wo Wasureta",
-        "categories": [
-          "Comedy",
-          "Romance",
-          "Heterosexual",
-          "Iyashikei",
-          "School",
-          "Disability",
-          "Shounen",
-          "Male Protagonist",
-          "Kuudere"
-        ],
-        "idMal": 117332
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 120,
+        "volumeCount": 12
+      },
+      "originalTitle": "Suki na Ko ga Megane wo Wasureta",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-105641"
+        },
+        {
+          "provider": "mal",
+          "externalId": "117332"
+        }
+      ]
     },
     "119022": {
       "title": "The Eminence in Shadow",
@@ -3396,28 +4154,33 @@
       "source": "anilist",
       "sourceId": "manga-106758",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx106758-jtXpQYQqyNJv.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": null,
-        "volumes": null,
+      "genres": [
+        "Action",
+        "Comedy",
+        "Fantasy",
+        "Chuunibyou",
+        "Male Protagonist",
+        "Magic",
+        "Cult",
+        "Isekai",
+        "Parody",
+        "Anti-Hero"
+      ],
+      "details": {
         "score": 80,
-        "scoreScale": "anilist",
-        "originalTitle": "Kage no Jitsuryokusha ni Naritakute!",
-        "categories": [
-          "Action",
-          "Comedy",
-          "Fantasy",
-          "Chuunibyou",
-          "Male Protagonist",
-          "Magic",
-          "Cult",
-          "Isekai",
-          "Parody",
-          "Anti-Hero"
-        ],
-        "idMal": 119022
-      }
+        "scoreScale": "anilist_100"
+      },
+      "originalTitle": "Kage no Jitsuryokusha ni Naritakute!",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-106758"
+        },
+        {
+          "provider": "mal",
+          "externalId": "119022"
+        }
+      ]
     },
     "119161": {
       "title": "SPY x FAMILY",
@@ -3427,28 +4190,33 @@
       "source": "anilist",
       "sourceId": "manga-108556",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx108556-NHjkz0BNJhLx.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": null,
-        "volumes": null,
+      "genres": [
+        "Action",
+        "Comedy",
+        "Slice of Life",
+        "Supernatural",
+        "Family Life",
+        "Espionage",
+        "Found Family",
+        "War",
+        "Assassins",
+        "Female Protagonist"
+      ],
+      "details": {
         "score": 83,
-        "scoreScale": "anilist",
-        "originalTitle": "SPY×FAMILY",
-        "categories": [
-          "Action",
-          "Comedy",
-          "Slice of Life",
-          "Supernatural",
-          "Family Life",
-          "Espionage",
-          "Found Family",
-          "War",
-          "Assassins",
-          "Female Protagonist"
-        ],
-        "idMal": 119161
-      }
+        "scoreScale": "anilist_100"
+      },
+      "originalTitle": "SPY×FAMILY",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-108556"
+        },
+        {
+          "provider": "mal",
+          "externalId": "119161"
+        }
+      ]
     },
     "120251": {
       "title": "Saya no Uta",
@@ -3458,27 +4226,34 @@
       "source": "anilist",
       "sourceId": "manga-145924",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/b145924-DZnIH0Xjrcbm.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 5,
-        "volumes": 1,
+      "genres": [
+        "Drama",
+        "Horror",
+        "Psychological",
+        "Romance",
+        "Supernatural",
+        "Male Protagonist",
+        "Female Protagonist",
+        "Denpa",
+        "Gore"
+      ],
+      "details": {
         "score": 70,
-        "scoreScale": "anilist",
-        "originalTitle": "沙耶の唄",
-        "categories": [
-          "Drama",
-          "Horror",
-          "Psychological",
-          "Romance",
-          "Supernatural",
-          "Male Protagonist",
-          "Female Protagonist",
-          "Denpa",
-          "Gore"
-        ],
-        "idMal": 120251
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 5,
+        "volumeCount": 1
+      },
+      "originalTitle": "沙耶の唄",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-145924"
+        },
+        {
+          "provider": "mal",
+          "externalId": "120251"
+        }
+      ]
     },
     "120643": {
       "title": "TenPuru -No One Can Live on Loneliness-",
@@ -3488,28 +4263,33 @@
       "source": "anilist",
       "sourceId": "manga-109122",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx109122-86JvQEePvySE.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": null,
-        "volumes": null,
+      "genres": [
+        "Comedy",
+        "Drama",
+        "Ecchi",
+        "Romance",
+        "Slice of Life",
+        "Surreal Comedy",
+        "Female Harem",
+        "Slapstick",
+        "Nun",
+        "Primarily Female Cast"
+      ],
+      "details": {
         "score": 73,
-        "scoreScale": "anilist",
-        "originalTitle": "Temple",
-        "categories": [
-          "Comedy",
-          "Drama",
-          "Ecchi",
-          "Romance",
-          "Slice of Life",
-          "Surreal Comedy",
-          "Female Harem",
-          "Slapstick",
-          "Nun",
-          "Primarily Female Cast"
-        ],
-        "idMal": 120643
-      }
+        "scoreScale": "anilist_100"
+      },
+      "originalTitle": "Temple",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-109122"
+        },
+        {
+          "provider": "mal",
+          "externalId": "120643"
+        }
+      ]
     },
     "124085": {
       "title": "Mashle: Magic and Muscles",
@@ -3519,28 +4299,35 @@
       "source": "anilist",
       "sourceId": "manga-114960",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx114960-pivAwNQDdiBa.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 162,
-        "volumes": 18,
+      "genres": [
+        "Action",
+        "Comedy",
+        "Fantasy",
+        "Magic",
+        "Fitness",
+        "Surreal Comedy",
+        "Shounen",
+        "Parody",
+        "Male Protagonist",
+        "Primarily Teen Cast"
+      ],
+      "details": {
         "score": 75,
-        "scoreScale": "anilist",
-        "originalTitle": "MASHLE",
-        "categories": [
-          "Action",
-          "Comedy",
-          "Fantasy",
-          "Magic",
-          "Fitness",
-          "Surreal Comedy",
-          "Shounen",
-          "Parody",
-          "Male Protagonist",
-          "Primarily Teen Cast"
-        ],
-        "idMal": 124085
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 162,
+        "volumeCount": 18
+      },
+      "originalTitle": "MASHLE",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-114960"
+        },
+        {
+          "provider": "mal",
+          "externalId": "124085"
+        }
+      ]
     },
     "124845": {
       "title": "Sweet Home",
@@ -3550,28 +4337,35 @@
       "source": "anilist",
       "sourceId": "manga-100954",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx100954-xY0Vw2sRRo8t.png",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 141,
-        "volumes": 12,
+      "genres": [
+        "Drama",
+        "Horror",
+        "Psychological",
+        "Supernatural",
+        "Thriller",
+        "Survival",
+        "Coming of Age",
+        "Full Color",
+        "Gore",
+        "Philosophy"
+      ],
+      "details": {
         "score": 82,
-        "scoreScale": "anilist",
-        "originalTitle": "스위트홈",
-        "categories": [
-          "Drama",
-          "Horror",
-          "Psychological",
-          "Supernatural",
-          "Thriller",
-          "Survival",
-          "Coming of Age",
-          "Full Color",
-          "Gore",
-          "Philosophy"
-        ],
-        "idMal": 124845
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 141,
+        "volumeCount": 12
+      },
+      "originalTitle": "스위트홈",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-100954"
+        },
+        {
+          "provider": "mal",
+          "externalId": "124845"
+        }
+      ]
     },
     "126146": {
       "title": "[Oshi no Ko]",
@@ -3581,28 +4375,35 @@
       "source": "anilist",
       "sourceId": "manga-117195",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx117195-r3kf8eF0xkDJ.png",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 171,
-        "volumes": 16,
+      "genres": [
+        "Drama",
+        "Mystery",
+        "Psychological",
+        "Supernatural",
+        "Acting",
+        "Idol",
+        "Seinen",
+        "Male Protagonist",
+        "Twins",
+        "Female Protagonist"
+      ],
+      "details": {
         "score": 77,
-        "scoreScale": "anilist",
-        "originalTitle": "【推しの子】",
-        "categories": [
-          "Drama",
-          "Mystery",
-          "Psychological",
-          "Supernatural",
-          "Acting",
-          "Idol",
-          "Seinen",
-          "Male Protagonist",
-          "Twins",
-          "Female Protagonist"
-        ],
-        "idMal": 126146
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 171,
+        "volumeCount": 16
+      },
+      "originalTitle": "【推しの子】",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-117195"
+        },
+        {
+          "provider": "mal",
+          "externalId": "126146"
+        }
+      ]
     },
     "130740": {
       "title": "Mr. Paper Bag is in Love",
@@ -3612,28 +4413,35 @@
       "source": "anilist",
       "sourceId": "manga-123625",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx123625-cnje1Je1d03R.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 23,
-        "volumes": 2,
+      "genres": [
+        "Comedy",
+        "Romance",
+        "Slice of Life",
+        "Heterosexual",
+        "Primarily Adult Cast",
+        "Shoujo",
+        "Female Protagonist",
+        "College",
+        "Slapstick",
+        "Urban"
+      ],
+      "details": {
         "score": 76,
-        "scoreScale": "anilist",
-        "originalTitle": "Kamibukuro-kun wa Koishiteru",
-        "categories": [
-          "Comedy",
-          "Romance",
-          "Slice of Life",
-          "Heterosexual",
-          "Primarily Adult Cast",
-          "Shoujo",
-          "Female Protagonist",
-          "College",
-          "Slapstick",
-          "Urban"
-        ],
-        "idMal": 130740
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 23,
+        "volumeCount": 2
+      },
+      "originalTitle": "Kamibukuro-kun wa Koishiteru",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-123625"
+        },
+        {
+          "provider": "mal",
+          "externalId": "130740"
+        }
+      ]
     },
     "131334": {
       "title": "Sakamoto Days",
@@ -3643,28 +4451,33 @@
       "source": "anilist",
       "sourceId": "manga-125828",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx125828-p78Z8SflkfmO.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": null,
-        "volumes": null,
+      "genres": [
+        "Action",
+        "Comedy",
+        "Assassins",
+        "Family Life",
+        "Primarily Adult Cast",
+        "Crime",
+        "Urban Fantasy",
+        "Found Family",
+        "Konbini",
+        "Primarily Male Cast"
+      ],
+      "details": {
         "score": 79,
-        "scoreScale": "anilist",
-        "originalTitle": "SAKAMOTO DAYS",
-        "categories": [
-          "Action",
-          "Comedy",
-          "Assassins",
-          "Family Life",
-          "Primarily Adult Cast",
-          "Crime",
-          "Urban Fantasy",
-          "Found Family",
-          "Konbini",
-          "Primarily Male Cast"
-        ],
-        "idMal": 131334
-      }
+        "scoreScale": "anilist_100"
+      },
+      "originalTitle": "SAKAMOTO DAYS",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-125828"
+        },
+        {
+          "provider": "mal",
+          "externalId": "131334"
+        }
+      ]
     },
     "134099": {
       "title": "My Death Flags Show No Sign of Ending",
@@ -3674,28 +4487,33 @@
       "source": "anilist",
       "sourceId": "manga-123181",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx123181-ESAkvFOXXzso.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": null,
-        "volumes": null,
+      "genres": [
+        "Action",
+        "Adventure",
+        "Drama",
+        "Fantasy",
+        "Mystery",
+        "Romance",
+        "Anti-Hero",
+        "Male Protagonist",
+        "Isekai",
+        "Conspiracy"
+      ],
+      "details": {
         "score": 72,
-        "scoreScale": "anilist",
-        "originalTitle": "Ore no Shibou Flag ga Todomaru Tokoro wo Shiranai",
-        "categories": [
-          "Action",
-          "Adventure",
-          "Drama",
-          "Fantasy",
-          "Mystery",
-          "Romance",
-          "Anti-Hero",
-          "Male Protagonist",
-          "Isekai",
-          "Conspiracy"
-        ],
-        "idMal": 134099
-      }
+        "scoreScale": "anilist_100"
+      },
+      "originalTitle": "Ore no Shibou Flag ga Todomaru Tokoro wo Shiranai",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-123181"
+        },
+        {
+          "provider": "mal",
+          "externalId": "134099"
+        }
+      ]
     },
     "135496": {
       "title": "Dandadan",
@@ -3705,28 +4523,33 @@
       "source": "anilist",
       "sourceId": "manga-132029",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx132029-prGF4gePdSKv.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": null,
-        "volumes": null,
+      "genres": [
+        "Action",
+        "Comedy",
+        "Drama",
+        "Romance",
+        "Sci-Fi",
+        "Supernatural",
+        "Youkai",
+        "Urban Fantasy",
+        "Aliens",
+        "Ghost"
+      ],
+      "details": {
         "score": 82,
-        "scoreScale": "anilist",
-        "originalTitle": "ダンダダン",
-        "categories": [
-          "Action",
-          "Comedy",
-          "Drama",
-          "Romance",
-          "Sci-Fi",
-          "Supernatural",
-          "Youkai",
-          "Urban Fantasy",
-          "Aliens",
-          "Ghost"
-        ],
-        "idMal": 135496
-      }
+        "scoreScale": "anilist_100"
+      },
+      "originalTitle": "ダンダダン",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-132029"
+        },
+        {
+          "provider": "mal",
+          "externalId": "135496"
+        }
+      ]
     },
     "135545": {
       "title": "Blue Box",
@@ -3736,28 +4559,35 @@
       "source": "anilist",
       "sourceId": "manga-132182",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx132182-maXh2QzYPrqR.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 250,
-        "volumes": 28,
+      "genres": [
+        "Drama",
+        "Romance",
+        "Slice of Life",
+        "Sports",
+        "School Club",
+        "School",
+        "Athletics",
+        "Primarily Teen Cast",
+        "Heterosexual",
+        "Male Protagonist"
+      ],
+      "details": {
         "score": 81,
-        "scoreScale": "anilist",
-        "originalTitle": "Ao no Hako",
-        "categories": [
-          "Drama",
-          "Romance",
-          "Slice of Life",
-          "Sports",
-          "School Club",
-          "School",
-          "Athletics",
-          "Primarily Teen Cast",
-          "Heterosexual",
-          "Male Protagonist"
-        ],
-        "idMal": 135545
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 250,
+        "volumeCount": 28
+      },
+      "originalTitle": "Ao no Hako",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-132182"
+        },
+        {
+          "provider": "mal",
+          "externalId": "135545"
+        }
+      ]
     },
     "141760": {
       "title": "100 Ghost Stories That Will Lead to My Own Death",
@@ -3767,28 +4597,35 @@
       "source": "anilist",
       "sourceId": "manga-138347",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx138347-AMjXpzr8a7sN.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 100,
-        "volumes": 10,
+      "genres": [
+        "Horror",
+        "Mystery",
+        "Psychological",
+        "Supernatural",
+        "Anthology",
+        "Body Horror",
+        "Episodic",
+        "Youkai",
+        "Male Protagonist",
+        "Ghost"
+      ],
+      "details": {
         "score": 73,
-        "scoreScale": "anilist",
-        "originalTitle": "Boku ga Shinu Dake no Hyakumonogatari",
-        "categories": [
-          "Horror",
-          "Mystery",
-          "Psychological",
-          "Supernatural",
-          "Anthology",
-          "Body Horror",
-          "Episodic",
-          "Youkai",
-          "Male Protagonist",
-          "Ghost"
-        ],
-        "idMal": 141760
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 100,
+        "volumeCount": 10
+      },
+      "originalTitle": "Boku ga Shinu Dake no Hyakumonogatari",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-138347"
+        },
+        {
+          "provider": "mal",
+          "externalId": "141760"
+        }
+      ]
     },
     "142600": {
       "title": "Takopi's Original Sin",
@@ -3798,27 +4635,34 @@
       "source": "anilist",
       "sourceId": "manga-142568",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx142568-xPC5wQPxTV1s.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 16,
-        "volumes": 2,
+      "genres": [
+        "Drama",
+        "Psychological",
+        "Sci-Fi",
+        "Bullying",
+        "Aliens",
+        "Denpa",
+        "Primarily Child Cast",
+        "Female Protagonist",
+        "Shounen"
+      ],
+      "details": {
         "score": 77,
-        "scoreScale": "anilist",
-        "originalTitle": "Takopii no Genzai",
-        "categories": [
-          "Drama",
-          "Psychological",
-          "Sci-Fi",
-          "Bullying",
-          "Aliens",
-          "Denpa",
-          "Primarily Child Cast",
-          "Female Protagonist",
-          "Shounen"
-        ],
-        "idMal": 142600
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 16,
+        "volumeCount": 2
+      },
+      "originalTitle": "Takopii no Genzai",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-142568"
+        },
+        {
+          "provider": "mal",
+          "externalId": "142600"
+        }
+      ]
     },
     "142769": {
       "title": "Itsumo Shiotaiou na Osananajimi dakedo, Ore ni Kataomoi Shiteiru no ga Barebare de Kawaii.",
@@ -3828,23 +4672,29 @@
       "source": "anilist",
       "sourceId": "manga-145572",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx145572-wGFjUtaKTdHl.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 20,
-        "volumes": null,
+      "genres": [
+        "Comedy",
+        "Romance",
+        "Supernatural",
+        "Heterosexual",
+        "Tsundere"
+      ],
+      "details": {
         "score": 61,
-        "scoreScale": "anilist",
-        "originalTitle": "いっつも塩対応な幼なじみだけど、俺に片想いしているのがバレバレでかわいい。",
-        "categories": [
-          "Comedy",
-          "Romance",
-          "Supernatural",
-          "Heterosexual",
-          "Tsundere"
-        ],
-        "idMal": 142769
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 20
+      },
+      "originalTitle": "いっつも塩対応な幼なじみだけど、俺に片想いしているのがバレバレでかわいい。",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-145572"
+        },
+        {
+          "provider": "mal",
+          "externalId": "142769"
+        }
+      ]
     },
     "143113": {
       "title": "Ura Baito: Toubou Kinshi",
@@ -3854,25 +4704,32 @@
       "source": "anilist",
       "sourceId": "manga-125606",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx125606-qEyt7pkqs1Xg.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 264,
-        "volumes": 21,
+      "genres": [
+        "Drama",
+        "Horror",
+        "Mystery",
+        "Ghost",
+        "Body Horror",
+        "Episodic",
+        "Primarily Female Cast"
+      ],
+      "details": {
         "score": 65,
-        "scoreScale": "anilist",
-        "originalTitle": "裏バイト:逃亡禁止",
-        "categories": [
-          "Drama",
-          "Horror",
-          "Mystery",
-          "Ghost",
-          "Body Horror",
-          "Episodic",
-          "Primarily Female Cast"
-        ],
-        "idMal": 143113
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 264,
+        "volumeCount": 21
+      },
+      "originalTitle": "裏バイト:逃亡禁止",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-125606"
+        },
+        {
+          "provider": "mal",
+          "externalId": "143113"
+        }
+      ]
     },
     "146982": {
       "title": "Latna Saga: Survival of a Sword King",
@@ -3882,27 +4739,32 @@
       "source": "anilist",
       "sourceId": "manga-114605",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx114605-MYUWMsdjry6m.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": null,
-        "volumes": null,
+      "genres": [
+        "Action",
+        "Adventure",
+        "Fantasy",
+        "Male Protagonist",
+        "Swordplay",
+        "Isekai",
+        "Full Color",
+        "Magic",
+        "Virtual World"
+      ],
+      "details": {
         "score": 77,
-        "scoreScale": "anilist",
-        "originalTitle": "Igye Geomwang Saengjongi",
-        "categories": [
-          "Action",
-          "Adventure",
-          "Fantasy",
-          "Male Protagonist",
-          "Swordplay",
-          "Isekai",
-          "Full Color",
-          "Magic",
-          "Virtual World"
-        ],
-        "idMal": 146982
-      }
+        "scoreScale": "anilist_100"
+      },
+      "originalTitle": "Igye Geomwang Saengjongi",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-114605"
+        },
+        {
+          "provider": "mal",
+          "externalId": "146982"
+        }
+      ]
     },
     "147272": {
       "title": "The Greatest Estate Developer",
@@ -3912,28 +4774,34 @@
       "source": "anilist",
       "sourceId": "manga-140407",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx140407-fJQr0fmqq1IO.png",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 222,
-        "volumes": null,
+      "genres": [
+        "Adventure",
+        "Comedy",
+        "Fantasy",
+        "Surreal Comedy",
+        "Anachronism",
+        "Male Protagonist",
+        "Economics",
+        "Kingdom Management",
+        "Isekai",
+        "Long Strip"
+      ],
+      "details": {
         "score": 90,
-        "scoreScale": "anilist",
-        "originalTitle": "Yeokdaegeum Yeongji Seolgyesa",
-        "categories": [
-          "Adventure",
-          "Comedy",
-          "Fantasy",
-          "Surreal Comedy",
-          "Anachronism",
-          "Male Protagonist",
-          "Economics",
-          "Kingdom Management",
-          "Isekai",
-          "Long Strip"
-        ],
-        "idMal": 147272
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 222
+      },
+      "originalTitle": "Yeokdaegeum Yeongji Seolgyesa",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-140407"
+        },
+        {
+          "provider": "mal",
+          "externalId": "147272"
+        }
+      ]
     },
     "150007": {
       "title": "You're Under My Skin!",
@@ -3943,20 +4811,26 @@
       "source": "anilist",
       "sourceId": "manga-152584",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx152584-5IzEmkilPm1K.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 140,
-        "volumes": null,
+      "genres": [
+        "Romance",
+        "Slice of Life"
+      ],
+      "details": {
         "score": 72,
-        "scoreScale": "anilist",
-        "originalTitle": "Sokkupchinguga Jakku Goeropyeo!",
-        "categories": [
-          "Romance",
-          "Slice of Life"
-        ],
-        "idMal": 150007
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 140
+      },
+      "originalTitle": "Sokkupchinguga Jakku Goeropyeo!",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-152584"
+        },
+        {
+          "provider": "mal",
+          "externalId": "150007"
+        }
+      ]
     },
     "162964": {
       "title": "Tune In to the Midnight Heart",
@@ -3966,28 +4840,33 @@
       "source": "anilist",
       "sourceId": "manga-169272",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx169272-1a2RZ43tqOdw.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": null,
-        "volumes": null,
+      "genres": [
+        "Comedy",
+        "Romance",
+        "School Club",
+        "Male Protagonist",
+        "Acting",
+        "Heterosexual",
+        "Tsundere",
+        "Female Harem",
+        "Primarily Teen Cast",
+        "Cute Girls Doing Cute Things"
+      ],
+      "details": {
         "score": 83,
-        "scoreScale": "anilist",
-        "originalTitle": "Mayonaka Heart Tune",
-        "categories": [
-          "Comedy",
-          "Romance",
-          "School Club",
-          "Male Protagonist",
-          "Acting",
-          "Heterosexual",
-          "Tsundere",
-          "Female Harem",
-          "Primarily Teen Cast",
-          "Cute Girls Doing Cute Things"
-        ],
-        "idMal": 162964
-      }
+        "scoreScale": "anilist_100"
+      },
+      "originalTitle": "Mayonaka Heart Tune",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-169272"
+        },
+        {
+          "provider": "mal",
+          "externalId": "162964"
+        }
+      ]
     },
     "163630": {
       "title": "Hope You're Happy, Lemon",
@@ -3997,27 +4876,34 @@
       "source": "anilist",
       "sourceId": "manga-169922",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx169922-kd2WNbRBJqWA.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 106,
-        "volumes": 12,
+      "genres": [
+        "Comedy",
+        "Romance",
+        "Love Triangle",
+        "Primarily Adult Cast",
+        "College",
+        "Heterosexual",
+        "Female Protagonist",
+        "Male Protagonist",
+        "Shounen"
+      ],
+      "details": {
         "score": 73,
-        "scoreScale": "anilist",
-        "originalTitle": "Kuso Onna ni Sachi Are",
-        "categories": [
-          "Comedy",
-          "Romance",
-          "Love Triangle",
-          "Primarily Adult Cast",
-          "College",
-          "Heterosexual",
-          "Female Protagonist",
-          "Male Protagonist",
-          "Shounen"
-        ],
-        "idMal": 163630
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 106,
+        "volumeCount": 12
+      },
+      "originalTitle": "Kuso Onna ni Sachi Are",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-169922"
+        },
+        {
+          "provider": "mal",
+          "externalId": "163630"
+        }
+      ]
     },
     "164926": {
       "title": "Suyo Webtoon-ui Na Kang-Rim",
@@ -4027,28 +4913,34 @@
       "source": "anilist",
       "sourceId": "manga-138705",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx138705-zRSNhzP4U8zx.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 172,
-        "volumes": null,
+      "genres": [
+        "Comedy",
+        "Fantasy",
+        "Romance",
+        "Time Loop",
+        "Female Harem",
+        "Full Color",
+        "School",
+        "Heterosexual",
+        "Love Triangle",
+        "Yandere"
+      ],
+      "details": {
         "score": 83,
-        "scoreScale": "anilist",
-        "originalTitle": "수요웹툰의 나강림",
-        "categories": [
-          "Comedy",
-          "Fantasy",
-          "Romance",
-          "Time Loop",
-          "Female Harem",
-          "Full Color",
-          "School",
-          "Heterosexual",
-          "Love Triangle",
-          "Yandere"
-        ],
-        "idMal": 164926
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 172
+      },
+      "originalTitle": "수요웹툰의 나강림",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-138705"
+        },
+        {
+          "provider": "mal",
+          "externalId": "164926"
+        }
+      ]
     },
     "172903": {
       "title": "Multiverse no Watashi, Koi Shite ii desu ka?",
@@ -4058,22 +4950,29 @@
       "source": "anilist",
       "sourceId": "manga-180125",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx180125-XGmSYSCliuii.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 14,
-        "volumes": 2,
+      "genres": [
+        "Comedy",
+        "Romance",
+        "Sci-Fi",
+        "Heterosexual"
+      ],
+      "details": {
         "score": 64,
-        "scoreScale": "anilist",
-        "originalTitle": "マルチバースの私、恋していいですか？",
-        "categories": [
-          "Comedy",
-          "Romance",
-          "Sci-Fi",
-          "Heterosexual"
-        ],
-        "idMal": 172903
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 14,
+        "volumeCount": 2
+      },
+      "originalTitle": "マルチバースの私、恋していいですか？",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-180125"
+        },
+        {
+          "provider": "mal",
+          "externalId": "172903"
+        }
+      ]
     },
     "173231": {
       "title": "Ichiban Toukute, Chikai Aitsu. Kimi ni Koi wo Suru Nante, Arienai Hazu Datta",
@@ -4083,20 +4982,27 @@
       "source": "anilist",
       "sourceId": "manga-162180",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/b162180-C58Rt0H0Jwrt.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 45,
-        "volumes": 5,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
+      "details": {
         "score": 69,
-        "scoreScale": "anilist",
-        "originalTitle": "一番遠くて、近いあいつ。～君に恋をするなんて、ありえないはずだった～",
-        "categories": [
-          "Drama",
-          "Romance"
-        ],
-        "idMal": 173231
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 45,
+        "volumeCount": 5
+      },
+      "originalTitle": "一番遠くて、近いあいつ。～君に恋をするなんて、ありえないはずだった～",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-162180"
+        },
+        {
+          "provider": "mal",
+          "externalId": "173231"
+        }
+      ]
     },
     "176523": {
       "title": "Horror Story Club",
@@ -4106,25 +5012,31 @@
       "source": "anilist",
       "sourceId": "manga-181021",
       "imageUrl": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx181021-QaZL6rvVxLSE.jpg",
-      "metadata": {
-        "kind": "manga",
-        "format": null,
-        "chapters": 82,
-        "volumes": null,
+      "genres": [
+        "Action",
+        "Drama",
+        "Horror",
+        "Supernatural",
+        "Ghost",
+        "School Club",
+        "School"
+      ],
+      "details": {
         "score": 72,
-        "scoreScale": "anilist",
-        "originalTitle": "Goedam Dongari",
-        "categories": [
-          "Action",
-          "Drama",
-          "Horror",
-          "Supernatural",
-          "Ghost",
-          "School Club",
-          "School"
-        ],
-        "idMal": 176523
-      }
+        "scoreScale": "anilist_100",
+        "chapterCount": 82
+      },
+      "originalTitle": "Goedam Dongari",
+      "externalIds": [
+        {
+          "provider": "anilist",
+          "externalId": "manga-181021"
+        },
+        {
+          "provider": "mal",
+          "externalId": "176523"
+        }
+      ]
     }
   }
 }

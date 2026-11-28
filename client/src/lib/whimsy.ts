@@ -36,8 +36,8 @@ export const STATS_LINES = {
 } as const
 
 /** One data-driven line for the Stats page; null when there is nothing logged. */
-export function pickStatsLine(s: { total: number; completed: number; avgRating: number | null }): string | null {
-  if (s.total <= 0) return null
+export function pickStatsLine(s: { logged: number; completed: number; avgRating: number | null }): string | null {
+  if (s.logged <= 0) return null
   if (s.completed >= 50) return STATS_LINES.finisher
   if (s.avgRating !== null && s.avgRating >= 80) return STATS_LINES.generous
   return STATS_LINES.default

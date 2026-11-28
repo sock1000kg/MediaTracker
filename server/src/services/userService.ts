@@ -10,16 +10,22 @@ import {
     preferencesPatchSchema, preferencesSchema, readPreferences, updateProfileSchema,
 } from "@/schemas/userSchemas.js"
 import * as repo from "@/repositories/userRepository.js"
+import { sortEntriesNewestFirst } from "@/services/logEntries.js"
 
 type MediaLike = {
-    title: string; creator: string | null; year: number | null; source: string | null; sourceId: string | null
-    description: string | null; imageUrl: string | null; metadata: unknown; mediaType: { name: string } | null
+    title: string; creator: string | null; year: number | null; provider: string | null; providerId: string | null
+    description: string | null; imageUrl: string | null; details: unknown; subtype?: string | null; releaseDate?: Date | null; mediaType: { name: string } | null
 }
 
 const mediaJson = (m: MediaLike) => ({
     title: m.title, creator: m.creator, year: m.year, type: m.mediaType?.name ?? null,
-    source: m.source, sourceId: m.sourceId, description: m.description, imageUrl: m.imageUrl, metadata: m.metadata,
+    provider: m.provider, providerId: m.providerId, description: m.description, imageUrl: m.imageUrl,
+    details: m.details, subtype: m.subtype ?? null, releaseDate: m.releaseDate ?? null,
 })
+
+function parseEdition(value: unknown): { format?: string; language?: string } | null {
+    return value && typeof value === "object" && !Array.isArray(value) ? value as { format?: string; language?: string } : null
+}
 
 export class UserService {
     async getMe(userId: string) {
@@ -82,27 +88,36 @@ export class UserService {
         const disposition = (ext: string) => attachmentHeader(`${base}.${ext}`, `${realBase}.${ext}`)
 
         if (format === "csv") {
-            const header = ["title", "creator", "year", "type", "source", "source_id", "status", "rating", "notes", "logged_at", "started_at", "finished_at", "categories", "tags", "collections", "url"]
-            const rows = data.logs.map((l) => {
-                const meta = (l.media.metadata && typeof l.media.metadata === "object" ? l.media.metadata : {}) as Record<string, unknown>
+            const header = ["title", "creator", "year", "type", "provider", "provider_id", "status", "rating", "notes", "logged_at", "entry_name", "entry_started_at", "entry_finished_at", "entry_note", "edition_format", "edition_language", "categories", "tags", "collections", "url"]
+            const rows = data.logs.flatMap((l) => {
+                const details = (l.media.details && typeof l.media.details === "object" ? l.media.details : {}) as Record<string, unknown>
                 const mediaGenres = (l.media as { genres?: string[] }).genres
                 const cats = Array.isArray(mediaGenres) && mediaGenres.length > 0
                     ? mediaGenres.join("; ")
-                    : (Array.isArray(meta.categories) ? meta.categories.filter((c) => typeof c === "string").join("; ") : "")
+                    : (Array.isArray(details.categories) ? details.categories.filter((c) => typeof c === "string").join("; ") : "")
                 const logObj = l as { tags?: { tag?: { name: string }; name?: string }[]; collectionItems?: { collection?: { name: string } }[] }
                 const rawTags = logObj.tags ?? []
                 const tagsStr = rawTags.map((t) => t.tag?.name ?? t.name ?? "").filter(Boolean).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })).join("; ")
                 const rawCols = logObj.collectionItems ?? []
                 const colsStr = rawCols.map((c) => c.collection?.name ?? "").filter(Boolean).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })).join("; ")
-                const url = typeof meta.url === "string" ? meta.url : ""
-                return [
-                    l.media.title, l.media.creator, l.media.year, l.media.mediaType?.name ?? null,
-                    l.media.source, l.media.sourceId, l.status, l.rating, l.notes,
-                    l.logged_at.toISOString(),
-                    l.started_at ? l.started_at.toISOString() : null,
-                    l.finished_at ? l.finished_at.toISOString() : null,
-                    cats, tagsStr, colsStr, url,
-                ]
+                const url = typeof details.url === "string" ? details.url : ""
+                const entries = sortEntriesNewestFirst(l.entries)
+                // One row per entry with the log's fields repeated; a log without entries is one row with empty entry columns
+                const perEntry: (typeof entries[number] | null)[] = entries.length > 0 ? entries : [null]
+                return perEntry.map((e) => {
+                    const ed = e ? parseEdition(e.edition) : null
+                    return [
+                        l.media.title, l.media.creator, l.media.year, l.media.mediaType?.name ?? null,
+                        l.media.provider, l.media.providerId, l.status, l.rating, l.notes,
+                        l.logged_at.toISOString(),
+                        e?.name ?? null,
+                        e?.startedAt ? e.startedAt.toISOString().slice(0, 10) : null,
+                        e?.finishedAt ? e.finishedAt.toISOString().slice(0, 10) : null,
+                        e?.note ?? null,
+                        ed?.format ?? null, ed?.language ?? null,
+                        cats, tagsStr, colsStr, url,
+                    ]
+                })
             })
             return { body: toCsv([header, ...rows]), contentType: "text/csv; charset=utf-8", filename: `${base}.csv`, disposition: disposition("csv") }
         }
@@ -132,10 +147,26 @@ export class UserService {
                     status: l.status,
                     rating: l.rating,
                     notes: l.notes,
-                    started_at: l.started_at,
-                    finished_at: l.finished_at,
                     logged_at: l.logged_at,
+                    entries: sortEntriesNewestFirst(l.entries).map((entry) => ({
+                        startedAt: entry.startedAt,
+                        finishedAt: entry.finishedAt,
+                        progressEpisodes: entry.progressEpisodes,
+                        progressChapters: entry.progressChapters,
+                        progressVolumes: entry.progressVolumes,
+                        name: entry.name,
+                        note: entry.note,
+                        edition: parseEdition(entry.edition),
+                    })),
                     tags: tagNames,
+                    // Only opened letters carry their text: an export must not unseal anything
+                    letters: l.letters.map((letter) => ({
+                        created_at: letter.created_at,
+                        opensAt: letter.opensAt,
+                        opensOnRelog: letter.opensOnRelog,
+                        openedAt: letter.openedAt,
+                        ...(letter.openedAt ? { body: letter.body } : {}),
+                    })),
                     media: mediaJson(l.media),
                 }
             }),

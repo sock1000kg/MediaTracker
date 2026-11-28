@@ -69,7 +69,7 @@ describe('Media Routes', () => {
             mediaType: mediaType, 
             creator: 'Someone',
             year: 2024,
-            metadata: {}
+            details: {}
         })
         expect(res.statusCode).toBe(201)
         expect(res.body.title).toBe('GlobalTypeTest')
@@ -84,14 +84,14 @@ describe('Media Routes', () => {
                 mediaType: mediaType,
                 creator: 'Author',
                 year: 2024,
-                metadata: { foo: 'bar' }
+                details: { url: 'https://example.com' }
             })
         expect(res.statusCode).toBe(201)
         expect(res.body.title).toBe('Test Media')
         expect(res.body.creator).toBe('Author')
     })
 
-    test('Create media with null metadata succeeds', async () => {
+    test('Create media with null details succeeds', async () => {
     const res = await request(app)
         .post('/media')
         .set('Authorization', `Bearer ${token}`)
@@ -100,7 +100,7 @@ describe('Media Routes', () => {
             mediaType: mediaType,
             creator: 'X',
             year: 2024,
-            metadata: null
+            details: null
         })
         expect(res.statusCode).toBe(201)
         expect(res.body.title).toBe('MetaNull')
@@ -116,7 +116,7 @@ describe('Media Routes', () => {
                 mediaType: mediaType,
                 creator: 'Author',
                 year: 2024,
-                metadata: { foo: 'bar' }
+                details: { url: 'https://example.com' }
             })
         expect(res.statusCode).toBe(400)
     })
@@ -130,7 +130,7 @@ describe('Media Routes', () => {
             mediaType: mediaType,
             creator: 'Bad',
             year: 'abcd', // invalid
-            metadata: {}
+            details: {}
         })
         expect(res.statusCode).toBe(201)
         expect(res.body.year).toBe(null)
@@ -145,8 +145,7 @@ describe('Media Routes', () => {
                 mediaType: mediaType,
                 creator: 'Author',
                 year: 2024,
-                source: 'goodreads',
-                metadata: { foo: 'bar' }
+                details: { url: 'https://example.com' }
             })
         const res = await request(app)
             .post('/media')
@@ -156,11 +155,25 @@ describe('Media Routes', () => {
                 mediaType: mediaType,
                 creator: 'Author',
                 year: 2024,
-                source: 'goodreads',
-                metadata: { foo: 'bar' }
+                details: { url: 'https://example.com' }
             })
         expect(res.statusCode).toBe(409)
         expect(res.body.message).toMatch(/already exists/i)
+    })
+
+    test('Create media specifying provider fails with 400', async () => {
+        const res = await request(app)
+            .post('/media')
+            .set('Authorization', `Bearer ${token}`)
+            .send({
+                title: 'Provider Media',
+                mediaType: mediaType,
+                creator: 'Author',
+                year: 2024,
+                provider: 'tmdb',
+                details: {}
+            })
+        expect(res.statusCode).toBe(400)
     })
 
     test('Create media without token fails', async () => {
@@ -184,7 +197,7 @@ describe('Media Routes', () => {
                 mediaType: mediaType,
                 creator: 'Tester',
                 year: 2024,
-                metadata: { test: true }
+                details: { url: 'https://example.com' }
             })
 
         expect(res.body).toEqual(
@@ -193,7 +206,7 @@ describe('Media Routes', () => {
                 title: 'SchemaTest',
                 creator: 'Tester',
                 year: 2024,
-                metadata: expect.any(Object),
+                details: expect.any(Object),
                 mediaTypeId: expect.any(String)
             })
         )
@@ -209,7 +222,7 @@ describe('Media Routes', () => {
                 mediaType: mediaType,
                 creator: 'Author',
                 year: 2024,
-                metadata: { foo: 'bar' }
+                details: { url: 'https://example.com' }
             })
         const res = await request(app)
             .get('/media')
@@ -229,7 +242,7 @@ describe('Media Routes', () => {
                 mediaType: mediaType,
                 creator: 'Author',
                 year: 2024,
-                metadata: { foo: 'bar' }
+                details: { url: 'https://example.com' }
             })
         const mediaId = createRes.body.id
         const res = await request(app)
@@ -240,7 +253,7 @@ describe('Media Routes', () => {
                 mediaType: mediaType,
                 creator: 'New Author',
                 year: 2025,
-                metadata: { foo: 'baz' }
+                details: { url: 'https://example.com/updated' }
             })
         expect(res.statusCode).toBe(200)
         expect(res.body.title).toBe('Updated Media')
@@ -256,7 +269,7 @@ describe('Media Routes', () => {
                 mediaType: mediaType,
                 creator: 'Author',
                 year: 2024,
-                metadata: { foo: 'bar' }
+                details: { url: 'https://example.com' }
             })
         const mediaId = createRes.body.id
         const res = await request(app)
@@ -266,7 +279,7 @@ describe('Media Routes', () => {
                 mediaType: mediaType,
                 creator: 'New Author',
                 year: 2025,
-                metadata: { foo: 'baz' }
+                details: { url: 'https://example.com/updated' }
             })
         expect(res.statusCode).toBe(400)
         expect(res.body.message).toMatch(/required/i)
@@ -282,8 +295,7 @@ describe('Media Routes', () => {
                 mediaType: mediaType,
                 creator: 'A',
                 year: 2024,
-                source: 'goodreads',
-                metadata: {}
+                details: {}
             })
         const createRes = await request(app)
             .post('/media')
@@ -293,8 +305,7 @@ describe('Media Routes', () => {
                 mediaType: mediaType,
                 creator: 'B',
                 year: 2024,
-                source: 'goodreads',
-                metadata: {}
+                details: {}
             })
         const media2Id = createRes.body.id
         // Try to update Media2 to have same info as Media1
@@ -306,7 +317,7 @@ describe('Media Routes', () => {
                 mediaType: mediaType,
                 creator: 'A',
                 year: 2024,
-                metadata: {}
+                details: {}
             })
         expect(res.statusCode).toBe(409)
         expect(res.body.message).toMatch(/already exists/i)
@@ -322,7 +333,7 @@ describe('Media Routes', () => {
                 mediaType: mediaType,
                 creator: 'Author',
                 year: 2024,
-                metadata: {}
+                details: {}
             })
         const mediaId = createRes.body.id
         const res = await request(app)
@@ -352,7 +363,7 @@ describe('Media Routes', () => {
                 mediaType: mediaType,
                 creator: 'Author',
                 year: 2024,
-                metadata: {}
+                details: {}
             })
         const mediaId = createRes.body.id
         // Create a log for this media
@@ -360,7 +371,7 @@ describe('Media Routes', () => {
             data: {
                 userId: user.id,
                 mediaId,
-                status: 'Completed',
+                status: 'completed',
                 rating: 100,
                 notes: 'Test log'
             }
@@ -384,7 +395,7 @@ describe('Media Routes', () => {
                 mediaType: mediaType,
                 creator: 'Author',
                 year: 2024,
-                metadata: {}
+                details: {}
             })
         const mediaId = createRes.body.id
         const res = await request(app)

@@ -3,12 +3,31 @@ import { Routes, Route, useNavigate, Navigate } from "react-router-dom"
 import { setNavigate, setOnLogout } from "@/api/clientWrapper"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
-import { fetchConfig } from "@/api/config"
+import { fetchConfigQueryOptions } from "@/queryOptions/fetchConfigQueryOptions"
 
 
 import Login from "@/pages/auth/Login"
 import Register from "@/pages/auth/Register"
 import Homepage from "@/pages/Homepage"
+import Landing from "@/pages/Landing"
+
+function RootRoute() {
+  const token =
+    typeof window !== "undefined"
+      ? (() => {
+          try {
+            return localStorage.getItem("accessToken")
+          } catch {
+            return null
+          }
+        })()
+      : null
+
+  if (token) {
+    return <Navigate to="/homepage" replace />
+  }
+  return <Landing />
+}
 
 export default function App() {
   const navigate = useNavigate()
@@ -21,12 +40,7 @@ export default function App() {
 
   // Prefetch server limits once at app start
   useEffect(() => {
-    queryClient.prefetchQuery({
-      queryKey: ["config"],
-      queryFn: fetchConfig,
-      staleTime: Infinity,
-      gcTime: Infinity,
-    })
+    queryClient.prefetchQuery(fetchConfigQueryOptions())
   }, [queryClient])
 
   // Never show the previous user's cached data after a logout
@@ -38,6 +52,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Routes>
+        <Route path="/" element={<RootRoute />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 

@@ -15,7 +15,7 @@ import { useProviderSearch } from "@/hooks/useProviderSearch"
 import { useSearchLogging } from "@/hooks/useSearchLogging"
 import { useStoredView } from "@/hooks/useStoredView"
 import { isResultLogged } from "@/lib/utils"
-import { OPEN_LIBRARY_URL, OPEN_LIBRARY_ATTRIBUTION_TEXT } from "@/lib/bookFormat"
+import { CLIENT_PROVIDERS } from "@/lib/providers"
 import type { BookResult, BookSearchFilters, BookSort } from "@/types/search"
 
 const LANGUAGES: { value: string, label: string }[] = [
@@ -83,7 +83,7 @@ export default function BooksSearchSection() {
     fetchPage: (page) => searchBooks(query, page, appliedFilters),
     hideLogged,
   })
-  const { openLog, dialog } = useSearchLogging<BookResult>(search.logs)
+  const { openLog, dialog, entryCountFor } = useSearchLogging<BookResult>(search.logs)
 
   // Applies the panel's filters together with the typed query
   const handleSearch = () => {
@@ -109,7 +109,7 @@ export default function BooksSearchSection() {
     <SearchPageShell page="books">
       <SearchHeader
         title="Book search"
-        attribution={{ href: OPEN_LIBRARY_URL, text: OPEN_LIBRARY_ATTRIBUTION_TEXT }}
+        attribution={CLIENT_PROVIDERS.openlibrary.attribution}
         value={inputValue}
         onChange={setInputValue}
         onSearch={handleSearch}
@@ -191,6 +191,7 @@ export default function BooksSearchSection() {
           kindOf={() => "book"}
           isLogged={(item) => isResultLogged(search.logs, item)}
           onLog={(item) => openLog(item)}
+          entryCount={(item) => entryCountFor(item)}
         />
       </SearchResults>
 

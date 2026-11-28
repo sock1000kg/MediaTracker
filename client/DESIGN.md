@@ -1,9 +1,19 @@
 # MediaTracker: design direction
 
-> A quiet place to keep track of what you've read and listened to.
+> A quiet place to keep track of what you've read, watched, played and listened to.
 > Warm paper by day, lamplight by night, and a small blue guy who lives in the sidebar and has opinions.
 
-This document describes the redesign. **It is a reskin, not a rebuild.** The layout (content on the left, nav sidebar on the right, header strip above each section, list of cards) stays as it is. Most of the change happens in `src/index.css` tokens and in swapping hard-coded Tailwind colours for those tokens. The new bits are a theme toggle, one small mascot component and some copy.
+This document started as the spec for the reskin (§1–§11) and has grown a section per task since (§12 on). **When a later section disagrees with an earlier one, the later section wins.** §0 is a short map of how the app looks today.
+
+---
+
+## 0. The app today (current state, 2026-11)
+
+- **Shell:** left sidebar at ≥ 1024px, top bar + sheet below (§12). Sidebar dude, theme toggle, logout at the bottom.
+- **Pages:** Logs (§13), Your media (§13a), Collections (§15), Media types, Stats (§14), Settings, and six searches: Books, Music, Anime & manga, Movies, TV, Games with Video and Board game modes (§13a, §17, §18).
+- **Logged out:** the landing page (§16), then Login / Register.
+- **Type scale:** `html { font-size: 100% }` (was 120%). Page titles `text-3xl sm:text-4xl`, page padding `px-4 sm:px-6`, controls `h-8`–`h-10`.
+- **Copy lives in code:** dude lines, empty-state and loading lines are in `src/lib/whimsy.ts`. The tables in §5 describe intent; the file is the source of truth.
 
 ---
 
@@ -95,10 +105,10 @@ Loaded from Google Fonts with a `<link>` in `index.html` (`display=swap`), with 
 |---|---|---|---|
 | **Display** | **Fraunces** (variable; `opsz`, `SOFT 50`, `WONK 1`) | section titles ("Your Logs"), media-type group headings, dialog titles, the login card title | The "wonky" axis gives the slightly crooked, hand-set feel. Weight 500–600. Never for body text. |
 | **Body / UI** | **Figtree** 400/500/600 | everything else: card titles (600), metadata, buttons, inputs | Friendly but plain. Media titles stay in Figtree so lists stay readable. |
-| **Marginalia** | **Caveat** 500 | **only** the mascot's thought on the login page and the line in the delete dialog. Page headers no longer carry a handwritten subtitle (removed in Direction A, task 14) | Rotated, coloured `--muted-foreground`. At most one per screen. |
+| **Marginalia** | **Caveat** 500 | **only** the mascot's thought on the login page, the line in the delete dialog, and the landing page's aside (§16). Page headers no longer carry a handwritten subtitle (removed in Direction A, task 14) | Rotated, coloured `--muted-foreground`. At most one per screen. |
 | **Pixel** | **Silkscreen** 400 | **only** inside the mascot's speech bubble | Uppercase, small (0.65rem). It ties the mascot to the UI. |
 
-- Keep `html { font-size: 120% }`. The scale already works at that base.
+- `html { font-size: 100% }` (it was 120% until the "smaller type" pass; see §0).
 - Tailwind v4: add `--font-display`, `--font-sans`, `--font-hand` and `--font-pixel` in `@theme inline` so `font-display`, `font-hand` and `font-pixel` utilities exist. `--font-sans` becomes Figtree, so the default changes everywhere with no class edits.
 - Use tabular numbers (`tabular-nums`) for ratings, page counts and dates.
 
@@ -140,12 +150,17 @@ AACCCCAAAACCCCAA
 - Use `PNG` for the favicon only. The app header has no logo today, so don't add a header.
 
 ### Where he lives
-1. **Sidebar footer** (bottom of the right column, 48px, centred), above the new theme toggle. This is his home.
+1. **Sidebar** (32px in the logo row, 48px dude in the footer), the left column since Direction A (§12). This is his home.
 2. **Empty states** (64px) with a speech bubble.
 3. **Login / Register** (96px), standing on top of the card's top edge, as if he's peeking over it.
 4. **Delete confirm dialog** (32px, next to the title), with eyes looking away.
+5. **Page backdrops** (§5.9): one giant, still, faint dude behind Logs and the search pages.
+6. **Landing page** (§16): the only place he is the centrepiece, holding the two buttons.
 
-Nowhere else. He's a guest, not wallpaper.
+Nowhere else. He's a guest, not wallpaper (the landing page is his house, so it doesn't count).
+
+### The envelope (sealed letters)
+While a letter is ready to open, the sidebar dude holds a small envelope, drawn like him: an 11×8 pixel grid (`components/letters/PixelEnvelope.tsx`) as inline SVG, `crispEdges`, at the same integer pixel size as his (2px at 32), overlapping his lower right. Outline `#000`, paper `#efe6d6`, seal `--wax`. No animation of its own.
 
 ---
 
@@ -166,6 +181,8 @@ Every item here is cheap: CSS, copy, or a few lines of state. They're numbered s
   - "…"
 - **After 12 clicks in one session:** he says "ok that's enough" and falls asleep (sleep eyes) for 60s. Clicking him while he's asleep does nothing. That's the joke.
 - **Late night** (local time 01:00–04:59): the first time the app loads in that window each session, the bubble says "it's late. one more chapter?" without being clicked.
+
+- **A letter is ready** (once per session): "a letter just unsealed!" for 5s, and while he holds the envelope a click opens the letters list (no hop, no poke line, even if he was asleep).
 
 ### 5.2 Theme toggle (required)
 Under the dude: a small ghost button with lucide `Sun`/`Moon` and the label **"Daylight" / "Lamplight"**. Cycles light → dark → system. "System" shows as "Follow the window" with a `Monitor` icon. When switching to dark, the dude blinks once, slowly (400ms).
@@ -188,17 +205,18 @@ The tag input component (`TagInput`) provides an accessible combobox (`role="com
 | Where | Line |
 |---|---|
 | Logs, no logs | "nothing logged yet. go find something good." (+ existing hint about searching) |
-| Logs / Media, filters match nothing | "nothing matches. i looked under the couch too." |
+| Logs / Media, filters match nothing | "nothing matches. i looked under your bed too." |
 | Media, none created | "no media of your own yet. the shelf is very clean." |
-| Search, no results | "couldn't find that one. try fewer words?" |
+| Search, no results | "couldn't find that one. too niche?" |
 | Search, all results hidden by "Hide logged" | "you've logged all of these. impressive, honestly." (keep the "More …" button) |
 | Media types, none | "no types yet. books? records? rocks?" |
+| Collections, none / one is empty | "no collections yet. make a shelf of favourites?" / "this collection is empty. add some logs to get started." |
+| Stats, nothing logged | "no stats yet. log a few things and i'll start counting." |
 
 The dude's eyes look *down* at the line in every empty state. Keep the existing message text where it gives instructions, and put the dude's line in the bubble above it.
 
 ### 5.6 Loading copy
-Replace "Loading logs..." and similar with rotating lines (pick one per mount, don't cycle while loading):
-"dusting the shelves…", "finding your place…", "flipping through…", "putting the kettle on…".
+One line per mount from `LOADING_LINES` in `lib/whimsy.ts` (don't cycle while loading), e.g. "lotta dust on these shelves…", "flipping through…", "pray that the api have whatever niche you're into…".
 Keep `animate-pulse`, but under reduced motion show static text.
 
 ### 5.7 Small copy changes
@@ -213,22 +231,45 @@ Keep `animate-pulse`, but under reduced motion show static text.
 Keep all button labels and form labels plain. Whimsy never replaces function words.
 
 ### 5.9 Page backdrops
-A giant blue dude sits behind the Logs page and, since task 17, every search page (Books, Music, Anime, Movies, Games): the sidebar dude's pixel grid (`lib/dude.ts`, not duplicated) drawn as one SVG about 120vh tall, rotated -8 degrees and half off the bottom-right edge. It is `aria-hidden`, `pointer-events-none`, perfectly still (no animation, so it respects §5.8), at 7% opacity in light and 10% in dark, and hidden when printing. Log rows, tiles and group headings sit on `bg-card/80` or `bg-background/70` surfaces with a light blur so body text keeps at least 4.5:1 contrast over it (checked in `.relayer/contrast.logs-backdrop.py`: lowest ratio 5.1).
+A giant blue dude sits behind the Logs page and, since task 17, every search page (Books, Music, Anime, Movies, TV, Games): the sidebar dude's pixel grid (`lib/dude.ts`, not duplicated) drawn as one SVG about 120vh tall, rotated -8 degrees and half off the bottom-right edge. It is `aria-hidden`, `pointer-events-none`, perfectly still (no animation, so it respects §5.8), at 7% opacity in light and 10% in dark, and hidden when printing. Log rows, tiles and group headings sit on `bg-card/80` or `bg-background/70` surfaces with a light blur so body text keeps at least 4.5:1 contrast over it (checked in `.relayer/contrast.logs-backdrop.py`: lowest ratio 5.1).
 
-**Per-page placements.** `lib/backdropPlacements.ts` is the single table (anchor offsets in `%`/`vh`/`vw`, size in vh, rotation, optional `flipX`); `PageBackdrop` builds its CSS from it. **All page dudes are the same size (120vh)**, the Logs dude's size; the search placements were re-tuned for it (checked by `placements.check.ts`). Logs stays bottom-right, -8°. Books: peeking in from the left edge, +10°. Music: bottom-left corner, -14°. Anime: upside down (180°) from the top edge, right of centre (shifted further right at 120vh so both eyes fit at 375px). Movies: rising from the bottom edge, centred, top half only, 0°. Games: on his side at the right edge (-90°, `flipX`, facing into the page).
+**Per-page placements.** `lib/backdropPlacements.ts` is the single table (anchor offsets in `%`/`vh`/`vw`, size in vh, rotation, optional `flipX`); `PageBackdrop` builds its CSS from it. **All page dudes are the same size (120vh)**, the Logs dude's size; the search placements were re-tuned for it (checked by `placements.check.ts`). Logs stays bottom-right, -8°. Books: peeking in from the left edge, +10°. Music: bottom-left corner, -14°. Anime: upside down (180°) from the top edge, right of centre (shifted further right at 120vh so both eyes fit at 375px). Movies: rising from the bottom edge, centred, top half only, 0°. TV: peeking in from the right edge, higher, -6°, `flipX`. Games: on his side at the right edge (-90°, `flipX`, facing into the page).
 
 **Eyes-visible rule.** On every search placement both eye pixels (grid row 5, columns 5 and 10) must land inside the content area (viewport minus the 240px sidebar at ≥ 1024px, the full width below) at 1280×800, 1920×1080 and 375×667. `eyePointsOnScreen(placement, viewport)` composes the same transform as the CSS (flip, then rotate, about the centre) and is checked in `.relayer/placements.check.ts`. Retune the table, never the check. Roots using it are `relative isolate overflow-hidden`; the layer is `-z-10`, so content paints above it.
 
-**Use your own photo:** drop a file named `backdrop-<page>.jpg`, `.png` or `.webp` (page = `books`, `music`, `anime`, `movies`, `games`; Logs keeps `logs-backdrop.*`) into `client/src/assets/` and rebuild or restart the dev server. It replaces the dude on that page only, as a cover-fit, centred, 30% grayscale background at the same opacity. It is optional, resolved at build time (`import.meta.glob`), and not committed; don't add one to the repo.
+**Use your own photo:** drop a file named `backdrop-<page>.jpg`, `.png` or `.webp` (page = `books`, `music`, `anime`, `movies`, `tv`, `games`; Logs keeps `logs-backdrop.*`) into `client/src/assets/` and rebuild or restart the dev server. It replaces the dude on that page only, as a cover-fit, centred, 30% grayscale background at the same opacity. It is optional, resolved at build time (`import.meta.glob`), and not committed; don't add one to the repo.
 
 **Turn it off:** Settings → Preferences → "Page backdrops (the giant blue dude)" turns off Logs and all search pages. The choice is stored per device in `localStorage` (`logs.backdrop`, default on), not synced to the server.
+
+### 5.10 Letters to later (the wax seal)
+Whimsy at the edges: a small seal on a log, never a banner.
+
+| Token | Light | Dark | Use |
+|---|---|---|---|
+| `--wax` | `#a8391f` | `#d0603f` | the seal |
+| `--wax-dark` | `#6e2412` | `#8a3320` | the ring pressed into it |
+| `--gold` | `#a87a12` | `#e3b04b` | a letter that's ready to open |
+| `--gold-dark` | `#5e4208` | `#8a5f14` | the ring on the gold seal |
+
+`WaxSeal` has three tones:
+- **sealed:** `--wax` with a `--wax-dark` ring;
+- **ready:** `--gold` with a `--gold-dark` ring and a small white shine (the amber `--primary` was too close to the wax, `#a8481f` vs `#a8391f`);
+- **opened:** no fill, outline and ring in `--muted-foreground`, an empty broken seal that steps back so ready ones stand out.
+
+`--gold` against `--card` is 3.6 (light, `#fbf8f2`) and 8.0 (dark, `#26211d`), above 3:1.
+
+Contrast: `--wax` against `--card` is 6.1 (light) and 4.1 (dark), against `--tag` 5.1 and 3.4 (needs 3:1). Chip text is `--tag-foreground` on `--tag` (5.9 / 8.0); the "Letter ready" chip is `--primary` on `--card` (5.5 / 6.0). The mockup's dark wax `#b5462e` was lightened: 2.9:1 on the card.
+
+The seal is `components/letters/WaxSeal.tsx`. Rows: seal + "Letter sealed" / "2 letters sealed" beside the title; tiles: the seal alone with an accessible name. "Letter ready" is a button.
 
 ### 5.8 Things we will *not* do
 Confetti, sound, cursor trails, parallax, animated backgrounds, mascot walking around the screen, emoji, rainbow anything, achievement popups, dark-mode stars.
 
 ---
 
-## 6. Components: what changes
+## 6. Components: what changes (reskin record)
+
+> Historical: this is the reskin's change list. Some files named here have since been replaced (`components/cards/*` became `components/logs/LogRow|LogTile`, `components/media/*`, `components/search/Result*`), and the sidebar moved to the left (§12).
 
 Ordered by impact. "Tokenise" means replacing hard-coded Tailwind colours with token utilities, using the map in §7.
 
@@ -322,7 +363,7 @@ When this is done, `grep -rE "(bg|text|border)-(stone|gray|amber|blue|red)-[0-9]
 
 ---
 
-## 11. Suggested build order (fits 2 coding rounds)
+## 11. Reskin build order (done)
 
 1. **Round A: theme and tokens.** `index.css` tokens and fonts, `index.html` fonts and bootstrap script, `theme.ts` + `ThemeToggle`, `button.tsx` variants, the token map from §7 across `src/`, header/subtitle typography, delete `App.css`. Done when the grep in §7 is clean, both themes look right on every page, and lint and build pass.
 2. **Round B: the dude and whimsy.** `BlueDude`, `SpeechBubble`, sidebar home (5.1), empty states (5.5), stamp (5.3), tags (5.4), loading copy (5.6), copy changes (5.7), login/register/delete-dialog appearances.
@@ -344,6 +385,7 @@ Mockups: https://claude.ai/artifact/1T1tND4UjW7G6Qg7DPkaSU (Main.dc.html = A "Re
 - **Controls:** a List / Grid segmented pill (`aria-pressed`, labels at ≥ 640px) and a "Group: Month / Type / None" select. Defaults List + Month, stored in `localStorage` (`logs.view`, `logs.group`).
 - **Row (direction A):** `<li>` with a top border, no box. Cover (56×80 portrait, 64×64 music, 80×50 game), title in `font-display` with a muted "creator · year" byline, original title, type label + metadata, notes (italic, 3-line clamp, More/Less when long), category tags, "More info". Right column: rating (`/100`), "Status · 3 Nov 2026", and the "⋯" actions menu. Below 480px the right column drops under the content.
 - **Tile (direction B):** cover filling a `repeat(auto-fill, minmax(150px, 1fr))` cell with the aspect from the type, status badge top-left, title + rating, "type · creator", date, "⋯" menu.
+- **Expanded children:** expanding an album fetches and merges its full MusicBrainz tracklist (unlogged tracks show "–" with the same Edit button as logged ones); expanding a show lists every season 1…N from stored `seasonCount`.
 - **Covers:** without an image, a block in `--cover-1..6` (from the media id) with the title's first letter in `--cover-ink` (≥ 4.5:1 in both themes).
 
 ## 13a. Shared media-view pieces and the Media page (task 17)
@@ -359,7 +401,7 @@ Shared, in `components/media-view/`: `Cover` (id, title, imageUrl, aspect, size)
 - **Result row** (`components/search/ResultRow.tsx`, on `RowShell`): cover (portrait; square for music, wide for games), title in `font-display` with a muted "creator · year" byline, original title, a detail line (kind label in small caps `text-link`, then `resultDetailParts` from `lib/resultView.ts`: book publisher / pages, music Album / Track, or the anime / movie / game format helpers), description in `ClampText`, category tags, and the provider link ("View on Open Library / Google Books / Last.fm / MyAnimeList / TMDB / RAWG"). Aside: a "Logged" tag when logged, then the amber "+ Log" button, which reads "Edit log" when the item is already logged (it opens the existing log, as before).
 - **Result tile** (`ResultTile.tsx`, on `TileShell`): cover with a "Logged" badge, title, "kind · creator", compact "+ Log" / "Edit log". Grid is `repeat(auto-fill, minmax(150px, 1fr))`, same as Logs.
 - **Covers** without an image use the lettered block; the colour comes from `coverTokenFromKey("source:sourceId")`.
-- **Controls:** `ViewControls` without `groupOptions` shows only the List / Grid pill. It sits beside "Hide logged". The choice is stored per page as `search.view.books|music|anime|movies|games` (default List). Paging, Hide logged, empty / loading / error states and backdrops are unchanged.
+- **Controls:** `ViewControls` without `groupOptions` shows only the List / Grid pill. It sits beside "Hide logged". The choice is stored per page as `search.view.books|music|anime|movies|tv|games` (default List). Paging, Hide logged, empty / loading / error states and backdrops are unchanged.
 - **Load more…** (Logs and Your media, `hooks/useGroupReveal.ts`, `components/media-view/GroupFooter.tsx`, helpers in `lib/logView.ts`): each group shows its first 5 rows / 12 tiles (the unlabelled "None" group: 20 rows / 24 tiles). A pill under the group reads "Load more… (N more)", reveals the same number again, and disappears when everything is shown. Counts are kept per group key and reset when the search, filters, sorts, group mode or view change; editing or deleting an item keeps them. The button is a real `<button>` with `aria-label="Load more {group}, {N} more"`; after a reveal, focus moves to the first newly shown row or tile (`tabIndex={-1}` on `<li>` only for that).
 - **Load all and Collapse** (task 20): the footer is one `flex flex-wrap gap-2` row of pills. "Load all (N)" (N = the group's total) shows while items remain and more than one step remains (otherwise Load more already does it). "Collapse" (`ChevronsUp` + text) shows once the group is expanded (shown > initial) and resets only that group to its initial count. While expanded, the group's heading row is `sticky top-0 z-10` inside the page's `overflow-y-auto` scroll container (frosted `bg-background/70 backdrop-blur-sm`, full width) with a Collapse pill on the right; the group "None" gets a bar with only the pill. Collapsing scrolls the group's heading into view (`behavior: "auto"` under reduced motion, else `"smooth"`) and focuses it (`<h2 tabIndex={-1}>`; for "None", the first item). Rows, tiles and headings carry `scroll-mt-14` so focus and scrolling never hide them under the sticky row. Load more and Load all focus the first newly revealed item. `aria-label`s: "Load all {group}, {N} items", "Collapse {group}" (group name left out for None). Reset rules are unchanged.
 
@@ -387,9 +429,77 @@ Private, ordered lists of user logs (`pages/sections/CollectionsSection.tsx`, `c
   - In-place view managed via local state `selectedId` with "Back to collections" button.
   - Header: collection title in `font-display`, description, count badge, and actions: "Add logs", "Edit" (opens edit dialog: name, description, ranked flag), and "Delete" (confirm dialog noting logs are kept).
   - Empty collection: dashed card with BlueDude, `"this collection is empty. add some logs to get started."`, and an "Add logs" call to action.
-  - Items rendered as rows using `RowShell` and `Cover`, with bold position numbers (`1.`, `2.`, …) when ranked.
-  - Per-row controls: Move to top (`ChevronsUp`), Move up (`ChevronUp`), Move down (`ChevronDown`), Move to bottom (`ChevronsDown`), and Remove from collection (`Trash2`). All icon buttons carry explicit `aria-label`s and wrap cleanly at 375px.
+  - Items rendered as rows using `RowShell` and `Cover`. **Only ranked collections show positions.**
+  - Ranked: the position is a small number input (`RankInput`); type a rank and press Enter (or click away) to move the item there, Escape restores it, values clamp to 1..N. The up/down arrows are gone. Unranked collections show no numbers and no reorder controls.
+  - Every row keeps Remove from collection (`Trash2`, with an `aria-label`), wrapping cleanly at 375px.
   - **Reorder & Accessibility:** Optimistic list reordering with server sync (`PUT /collections/:id/order`) and rollback on failure. Focus is preserved on the moved item's active move button across re-renders. An always-mounted polite live region (`aria-live="polite"`) announces `"Moved {title} to position {n}"`.
   - **Add logs dialog (`AddLogsDialog.tsx`):** search logs by title or creator, checkbox selection with existing items checked, applying computes `membershipDiff` to add/remove diffs.
 - **Log actions integration:** `LogActions` includes "Add to collection…", which opens `AddToCollectionDialog` with checkboxes for user collections and an inline "New collection" creation form.
+
+
+## 16. Landing page (built)
+
+Mock: https://claude.ai/artifact/Fe1EhuNYSqMHGnQg3TCUWN . A one-screen, funny front door for people who aren't logged in. **Pattern:** minimal single column (one hero, one primary action, a footer; no feature grid, screenshots or testimonials).
+
+### Route and flow
+- **`/`** shows the landing page when logged out. Logged-in visitors go straight to `/homepage` (same check as today's redirect).
+- The catch-all `*` keeps redirecting to `/login` for unknown paths; only `/` changes. `/login` and `/register` are unchanged, and Register stays reachable from the Login card.
+- No nav bar. The page is `min-h-dvh`, centred, and never scrolls sideways.
+
+### Layout (top to bottom)
+1. **Top row:** wordmark "MediaTracker" (`font-display`, `text-2xl`, plain text) on the left; on the right the **theme switch as three icon buttons** in one pill (lucide `Sun` / `Moon` / `Monitor`, 32px each, `aria-label`s "Light theme" / "Dark theme" / "Follow the system theme", `aria-pressed` on the current one). Same `lib/theme.ts` as the app.
+2. **Headline** (`font-display`, `text-4xl sm:text-5xl`, `text-balance`): *"Log everything you read, watch, play and listen to."* One muted line under it: *"Books, music, anime, movies, TV, games and board games, in one journal you can host yourself."*
+3. **The offer** (the centrepiece): the dude at 160px (a multiple of 16) with **two hands held out palm-up**, one each side, in the "pick one" pose. Each palm holds a pill-shaped button: the buttons *are* the pills.
+   - **Left hand (blue):** "Check me out" → `https://sock1000kg.io.vn/`. A filled **blue** pill: `--dude` background with fixed dark ink text `#1d1916` in both themes (about 10:1; white on this cyan would fail contrast), 2px black outline like the red one, slightly smaller than "Try it out".
+   - **Right hand (red):** "Try it out" → `/login`. Filled `--primary`, slightly larger. Red is the rabbit hole, so it's the one we want people to take.
+   - **Hand art is the user's own**: a 32×32 pixel hand, palm up, fingers pointing outward, wrist toward the dude. `src/assets/landing/hand-right.png` is the user's drawing (white background made transparent, hand pixels made fully opaque, colours unchanged). `hand-left.png` is its mirror, recoloured to the dude's cyan with the painted shading kept. Render both `aria-hidden` with `image-rendering: pixelated`, the same size as the dude (32 art pixels in 16 dude pixels), **in front of** the dude (hands above him in stacking order, both of them), sitting a little lower than his middle, wrists overlapping his sides. Each pill sits on the palm (about 42% / 58% across, 36% down). No hand-coded pixel hands.
+   - No handwritten aside on this page.
+   - The dude's eyes glance toward whichever button is hovered or focused (§4 glance, 1px), and blink as usual.
+4. **Footer** (`text-xs text-muted-foreground`): a single "GitHub" link to the repository, and "Data from Open Library, Last.fm, AniList, TMDB, RAWG and BoardGameGeek."
+
+### Demo account card (on the Login page, not the landing)
+- A small card pinned to the **top-right corner of `/login`** (`absolute top-3 right-3`, `max-w-60`, `bg-card`, soft card shadow, `text-sm`). Title "Just looking?", then `user: demo` and `pass: …` in monospace. No copy buttons: the fill button below does the job.
+- A text button **"Fill in the form for me"** fills both login fields and moves focus to the password field; the user still presses Sign in.
+- Below 640px the card sits above the login card (normal flow, full width) instead of floating over it.
+- Not on `/register`.
+
+### Where the demo credentials come from
+- Not hard-coded in the client. `GET /config` (the limits endpoint) gains `demo: { username, password } | null`.
+- The server fills it only when **`PUBLIC_DEMO=true`** and `DEMO_USER_PASSWORD` is set. Default off, so a fresh self-hosted install never publishes a password it didn't mean to.
+- When `demo` is `null`, the card is not rendered at all.
+
+### Sizes and breakpoints
+- **≥ 768px:** hands sit left and right of the dude at palm height, buttons `h-12 px-6` (well over the 44px target).
+- **< 768px:** the dude shrinks to 80px and the hands come in close; the buttons stay side by side at 375px (they fit at `text-sm px-4`), otherwise they stack with red on top.
+- Backdrop: none (the dude is already the hero). Body grain and lamplight glow as on every page.
+
+### Motion
+- The hands may bob 2px with `steps(2)`, out of phase, once the art exists. Under `prefers-reduced-motion` they're still.
+- Press feedback on the pills is the normal `active:translate-y-px`. Nothing else moves; no entrance animation.
+
+### Accessibility
+- Tab order follows the picture: theme buttons → "Check me out" → "Try it out" → footer. DOM order = visual order; the primary stands out by fill and size, not by going first.
+- The dude + hands illustration is one `role="img"` with `aria-label="The blue guy holding out two buttons, one in each hand"`; hand images are `aria-hidden`. The buttons are real `<a>` elements layered on the palms.
+- "Check me out" opens in the same tab. If it later opens a new tab, add the `ExternalLink` icon and "(opens in a new tab)" for screen readers.
+- Contrast: `--primary-foreground` on `--primary` (5.5:1 light, 6.6:1 dark); `#1d1916` on `--dude` for the blue pill (about 10:1).
+- Both themes designed together: in Lamplight the outlines get the same 0.5px light drop shadow as the dude.
+
+### Out of scope
+Feature lists, screenshots, pricing, sign-up forms on the landing page itself, cookie banners, analytics.
+
+## 17. Search pages: shared structure (2026-11)
+
+All six search pages are thin: state + a `fetchPage` + their own controls. Everything else is shared, so a fix lands everywhere at once.
+- `components/search/SearchPageShell` (frame + backdrop), `SearchHeader` (title, attribution, the "Type a name..." input from `SEARCH_PLACEHOLDER`, the round Search button, **disabled while a search runs**, then page controls), `SearchResults` (loading line, errors, missing-key notice, toolbar with List/Grid + Hide logged, empty states, the "More" button), `SearchControls` (`FilterSelect` for header dropdowns, `YearInput`).
+- Hooks: `useProviderSearch` (paged query, de-duplicated by `sourceId`, hidden-logged split, `busy`), `useSearchLogging` (log dialog; create or edit; refreshes logs, media and tags), `useHideLogged(page)` (server pref, then device value).
+- `lib/searchQuery.ts`: the placeholder, `MISSING_KEY_PROVIDERS` (server error → "You'll need a TMDB / RAWG / Last.fm / BoardGameGeek key first"), `searchOnEnter`, `parseYear`.
+- Every provider that needs a key uses **the user's own key** (Settings → API Keys). The server's env keys only seed the demo account.
+
+## 18. Board games (task 40)
+
+- Games search includes a Board games mode powered by BoardGameGeek with square covers, player counts, playtime, and BGG ratings.
+
+## 19. The pile on the Stats page (task 59)
+
+The first block of the Stats page body (`components/stats/StatsPile.tsx`), shown once the user has any log in the selected period. It reflects the Stats controls (`filteredLogs` by period and type tab). The pile has no caption: the card is just the drawing, a column on the left of the six summary tiles (2 rows of 3) at `lg` and above, and above them below `lg`. It is drawn in a 480×200 area with the pile resting on the card's bottom edge. One decorative object per log, oldest first: every log on the All types tab, the newest 150 on a single type's tab, by media type: book (and custom types) a slab, wider with more pages; manga a thin slab; movie/TV a case with a dotted left edge; anime a grey disc edge-on with a dark bottom edge; music a record; game a cartridge; board game a box. Object dimensions scale by `s = max(0.2, min(1.35, sqrt(55 / n)))` where `n` is the number of objects drawn, so the total area stays about the same and the settled pile reaches near the top of the card. Up to 150 objects enter one every two physics steps; bigger piles enter faster (`n / 300` per step) so every drop takes about as long. Each Stats selection change (period or type) re-drops the pile, even when the drawn logs are the same. Colours show the log's rating (0–100): `--pile-low` (red, under 50), `--pile-mid` (amber, 50–79), `--pile-high` (yellow, 80+) and `--pile-unrated` (neutral warm grey), defined for both themes. Shape details stay: records keep the black ring around a rating-coloured label, discs stay grey with a rating-coloured edge strip, cartridges keep their grey body with a rating-coloured band, slabs and boxes keep the dark bottom edge. The ground is `--ground`. The layout (`lib/statsPile.ts`) is deterministic: spawn position, size and tilt are seeded from the log id, so the same logs settle the same way. Each time the selection changes the objects drop from above the card and fall into place under a real 2D physics world (matter-js, lazy-loaded in its own chunk), colliding with the ground and the side walls. With reduced motion the settled pile is shown at once. The SVG is `aria-hidden`, with no hover or click; the charts and tables below are the real UI.
 

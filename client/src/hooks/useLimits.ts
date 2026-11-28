@@ -1,10 +1,21 @@
 import { useQuery } from "@tanstack/react-query"
-import { fetchConfig, type PublicLimits } from "@/api/config"
+import type { PublicLimits } from "@/api/config"
+import { fetchConfigQueryOptions } from "@/queryOptions/fetchConfigQueryOptions"
 
 // The server stays the enforcer. DEFAULT_LIMITS is only a fallback for the moment before the fetch finishes, or if it fails.
 export const DEFAULT_LIMITS: PublicLimits = {
   notes: {
     maxLength: 50_000,
+  },
+  logs: {
+    maxEntriesPerLog: 100,
+    entryNoteMaxLength: 10_000,
+    entryNameMaxLength: 300,
+  },
+  letters: {
+    bodyMaxLength: 10_000,
+    maxSealedPerLog: 5,
+    maxPerUser: 500,
   },
   tags: {
     maxLength: 40,
@@ -26,12 +37,7 @@ export const DEFAULT_LIMITS: PublicLimits = {
 }
 
 export function useLimits(): PublicLimits {
-  const { data } = useQuery({
-    queryKey: ["config"],
-    queryFn: fetchConfig,
-    staleTime: Infinity,
-    gcTime: Infinity,
-  })
+  const { data } = useQuery(fetchConfigQueryOptions())
 
   const serverLimits = data?.limits
 
@@ -39,6 +45,14 @@ export function useLimits(): PublicLimits {
     notes: {
       ...DEFAULT_LIMITS.notes,
       ...(serverLimits?.notes ?? {}),
+    },
+    logs: {
+      ...DEFAULT_LIMITS.logs,
+      ...(serverLimits?.logs ?? {}),
+    },
+    letters: {
+      ...DEFAULT_LIMITS.letters,
+      ...(serverLimits?.letters ?? {}),
     },
     tags: {
       ...DEFAULT_LIMITS.tags,

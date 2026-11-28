@@ -7,11 +7,29 @@ import {
     MAX_NOTES_LENGTH,
     allowedStatuses,
     AllowedStatus,
-    toDayPrecision,
     normalizeTagName,
     tagKey,
     MAX_TAGS_PER_LOG,
 } from "@/utilities.js"
+import { entryInputSchema, entryWithIdSchema, ENTRY_ONLY_KEYS } from "@/schemas/entrySchemas.js"
+import { AppError } from "@/api/domain/error.js"
+
+/** Dates and progress live on entries; a log body carrying them is a client bug, not something to drop silently. */
+export function rejectEntryKeys(payload: unknown) {
+    if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+        const body = payload as Record<string, unknown>
+        if (ENTRY_ONLY_KEYS.some(k => body[k] !== undefined)) {
+            throw new AppError("Dates belong to an entry", 400)
+        }
+    }
+}
+
+/** A log has no name of its own (entries do): a body carrying `title` is a client bug. */
+export function rejectLogTitle(payload: unknown) {
+    if (payload && typeof payload === "object" && !Array.isArray(payload) && "title" in payload) {
+        throw new AppError("A log has no title; name its entries instead", 400)
+    }
+}
 
 // Sanitizers as transforms
 const statusSchema = z
@@ -74,16 +92,6 @@ const updateNotesSchema = z.preprocess((val: unknown) => {
 
 const mediaIdSchema = uuidSchema
 
-// Day-precision date schema: noon UTC of calendar day, or null, or undefined
-const dateInputSchema = z.preprocess((val: unknown) => {
-    if (val === undefined) return undefined
-    if (val === null || val === "") return null
-    const d = toDayPrecision(val)
-    return d ?? "invalid"
-}, z.union([z.date(), z.null(), z.undefined()]))
-
-export const progressSchema = z.record(z.string(), z.unknown()).nullable().optional()
-
 export const tagsSchema = z.array(z.string()).superRefine((items, ctx) => {
     for (let i = 0; i < items.length; i++) {
         const norm = normalizeTagName(items[i])
@@ -117,91 +125,38 @@ export const tagsSchema = z.array(z.string()).superRefine((items, ctx) => {
     }
 }).optional()
 
-function validateLogDateConstraints(
-    data: { startedAt?: Date | null; finishedAt?: Date | null },
-    ctx: z.RefinementCtx
-) {
-    const now = new Date()
-    // Neither more than 1 day in the future (allow up to tomorrow noon UTC for timezone differences)
-    const maxFuture = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 12, 0, 0, 0))
-
-    if (data.startedAt && data.startedAt.getTime() > maxFuture.getTime()) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Date cannot be more than 1 day in the future",
-            path: ["startedAt"]
-        })
-    }
-    if (data.finishedAt && data.finishedAt.getTime() > maxFuture.getTime()) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Date cannot be more than 1 day in the future",
-            path: ["finishedAt"]
-        })
-    }
-    if (data.startedAt && data.finishedAt && data.finishedAt.getTime() < data.startedAt.getTime()) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Finished date can't be before the start date",
-            path: ["finishedAt"]
-        })
-    }
-}
-
-const normalizeDateKeys = (val: unknown) => {
-    if (val && typeof val === "object" && !Array.isArray(val)) {
-        const obj = { ...(val as Record<string, unknown>) }
-        if (obj.started_at !== undefined && obj.startedAt === undefined) {
-            obj.startedAt = obj.started_at
-        }
-        if (obj.finished_at !== undefined && obj.finishedAt === undefined) {
-            obj.finishedAt = obj.finished_at
-        }
-        return obj
-    }
-    return val
-}
-
 //for when creating a log of a searched media (no mediaId cus its not in db yet)
-export const searchLogSchema = z.preprocess(
-    normalizeDateKeys,
-    z.object({ 
-        status: statusSchema,
-        rating: ratingSchema,
-        notes: notesSchema,
-        startedAt: dateInputSchema.optional(),
-        finishedAt: dateInputSchema.optional(),
-        progress: progressSchema,
-        tags: tagsSchema,
-    }).superRefine(validateLogDateConstraints)
-)
+export const searchLogSchema = z.object({
+    status: statusSchema,
+    rating: ratingSchema,
+    notes: notesSchema,
+    tags: tagsSchema,
+})
 
-export const createLogSchema = z.preprocess(
-    normalizeDateKeys,
-    z.object({
-        mediaId: mediaIdSchema,
-        status: statusSchema,
-        rating: ratingSchema,
-        notes: notesSchema,
-        startedAt: dateInputSchema.optional(),
-        finishedAt: dateInputSchema.optional(),
-        progress: progressSchema,
-        tags: tagsSchema,
-    }).superRefine(validateLogDateConstraints)
-)
+export const createLogSchema = z.object({
+    mediaId: mediaIdSchema,
+    status: statusSchema,
+    rating: ratingSchema,
+    notes: notesSchema,
+    tags: tagsSchema,
+    entry: entryInputSchema.optional(),
+})
 
-export const updateLogSchema = z.preprocess(
-    normalizeDateKeys,
-    z.object({
-        status: updateStatusSchema,
-        rating: updateRatingSchema,
-        notes: updateNotesSchema,
-        startedAt: dateInputSchema.optional(),
-        finishedAt: dateInputSchema.optional(),
-        progress: progressSchema,
-        tags: tagsSchema,
-    }).superRefine(validateLogDateConstraints)
-)
+/** The entries a log save adds, changes and removes together with the log fields. */
+export const logEntriesChangeSchema = z.object({
+    create: z.array(entryInputSchema).optional(),
+    update: z.array(entryWithIdSchema).optional(),
+    delete: z.array(uuidSchema).optional(),
+}).strict()
+export type LogEntriesChange = z.infer<typeof logEntriesChangeSchema>
+
+export const updateLogSchema = z.object({
+    status: updateStatusSchema,
+    rating: updateRatingSchema,
+    notes: updateNotesSchema,
+    tags: tagsSchema,
+    entries: logEntriesChangeSchema.optional(),
+})
 
 // schema for deletion (optional confirm flag)
 export const deleteLogSchema = z.object({

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DataTable, StatsFigure } from "@/components/stats/StatsFigure"
 import { Histogram, Legend, RankedList, TimeChart, TypeBars } from "@/components/stats/charts"
+import { StatsPile } from "@/components/stats/StatsPile"
 import { TypeStatsPanel, TypeSummaryRow } from "@/components/stats/TypeStatsCards"
 import { UNIT_HEAD, bucketLabel, fmtAvg, peakSummary, ratingSummary, typeLabel } from "@/lib/statsView"
 import { fetchLogsQueryOptions } from "@/queryOptions/fetchLogsQueryOptions"
@@ -58,12 +59,12 @@ export default function StatsSection() {
     [chosen, logs],
   )
   // Period select: a month range still shows its year
-  const periodValue = range.kind === "month" ? `y:${range.year}` : rangeToString(range)
-  const selectedYear = range.kind === "year" || range.kind === "month" ? range.year : null
+  const periodValue = range.mode === "month" ? `y:${range.year}` : rangeToString(range)
+  const selectedYear = range.mode === "year" || range.mode === "month" ? range.year : null
   const monthOpts = useMemo(() => (selectedYear === null ? [] : monthOptions(logs, selectedYear)), [logs, selectedYear])
   const setRange = (v: string) => { setChosen(v); writeStoredString(RANGE_KEY, v) }
   const setMonth = (v: string) => {
-    if (selectedYear !== null) setRange(v === "year" ? `y:${selectedYear}` : rangeToString({ kind: "month", year: selectedYear, month: Number(v) }))
+    if (selectedYear !== null) setRange(v === "year" ? `y:${selectedYear}` : rangeToString({ mode: "month", year: selectedYear, month: Number(v) }))
   }
 
   const [storedGran, setStoredGran] = useState<Granularity | null>(readStoredGranularity)
@@ -97,9 +98,9 @@ export default function StatsSection() {
   const filteredLogs = useMemo(() => filterByType(inRange, selectedType), [inRange, selectedType])
 
   const sum = useMemo(() => summary(filteredLogs), [filteredLogs])
-  const unit: Unit = range.kind === "month" ? "day" : range.kind === "all" && granularity === "year" ? "year" : "month"
+  const unit: Unit = range.mode === "month" ? "day" : range.mode === "all" && granularity === "year" ? "year" : "month"
   const months = useMemo(
-    () => range.kind === "month" ? perDay(filteredLogs, range.year, range.month)
+    () => range.mode === "month" ? perDay(filteredLogs, range.year, range.month)
       : unit === "year" ? perYear(filteredLogs)
       : perMonth(filteredLogs, range),
     [filteredLogs, range, unit],
@@ -112,7 +113,7 @@ export default function StatsSection() {
   const creators = useMemo(() => topCreators(filteredLogs), [filteredLogs])
   const tags = useMemo(() => topTags(filteredLogs), [filteredLogs])
   const hasTagsInRange = useMemo(() => filteredLogs.some((l) => (l.tags ?? []).length > 0), [filteredLogs])
-  const line = pickStatsLine({ total: sum.total, completed: sum.byStatus.completed, avgRating: sum.avgRating })
+  const line = pickStatsLine({ logged: sum.logged, completed: sum.byStatus.completed, avgRating: sum.avgRating })
 
   const lastLineSaid = useRef<string | null>(null)
   useEffect(() => {
@@ -232,7 +233,7 @@ export default function StatsSection() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Label htmlFor="stats-month" className="text-sm text-muted-foreground">Month</Label>
-                    <Select value={range.kind === "month" ? String(range.month) : "year"} onValueChange={setMonth} disabled={selectedYear === null}>
+                    <Select value={range.mode === "month" ? String(range.month) : "year"} onValueChange={setMonth} disabled={selectedYear === null}>
                       <SelectTrigger id="stats-month" className="w-40"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="year">Whole year</SelectItem>
@@ -291,108 +292,115 @@ export default function StatsSection() {
         </EmptyState>
       )}
 
-      {!isPending && hasLogs && inRange.length === 0 && (
-        <p className="text-sm text-muted-foreground">Nothing logged in this range. Pick another one above.</p>
-      )}
-
-      {!isPending && hasLogs && inRange.length > 0 && (
+      {!isPending && hasLogs && (
         <div className="flex flex-col gap-5">
-          <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-            <Tile label="Logged">{sum.total}</Tile>
-            <Tile label="Completed">{sum.byStatus.completed}</Tile>
-            <Tile label="In progress">{sum.byStatus["in progress"]}</Tile>
-            <Tile label="Wishlist">{sum.byStatus.wishlist}</Tile>
-            <Tile label="Average rating">
-              {fmtAvg(sum.avgRating)}{sum.avgRating !== null && <span className="text-base font-normal text-muted-foreground"> /100</span>}
-            </Tile>
-            <Tile label="Completion rate">{sum.completionRate === null ? "–" : `${Math.round(sum.completionRate * 100)}%`}</Tile>
-          </dl>
-
-          {/* Type stats panel when a single type is selected */}
-          {selectedTypeStats && (
-            <TypeStatsPanel type={selectedType} stats={selectedTypeStats} />
+          {inRange.length === 0 && (
+            <p className="text-sm text-muted-foreground">Nothing logged in this range. Pick another one above.</p>
           )}
 
-          <StatsFigure
-            title={`Logged over time${sectionSuffix}`}
-            summary={timeSummary}
-            controls={range.kind === "all" ? (
-              <div role="group" aria-label="Group the chart" className="inline-flex rounded-lg border border-border p-0.5 text-xs">
-                {(["month", "year"] as const).map((g) => (
-                  <button
-                    key={g}
-                    type="button"
-                    aria-pressed={granularity === g}
-                    onClick={() => setGranularity(g)}
-                    className={`rounded-md px-3 py-1 font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring ${granularity === g ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                  >
-                    By {g}
-                  </button>
-                ))}
-              </div>
-            ) : undefined}
-            chart={<TimeChart months={months} colorOf={colorOf} order={typeOrder} unit={unit} />}
-            footer={<Legend entries={legend} />}
-            table={
-              <DataTable
-                caption={selectedType === "all" ? `Logs per ${unit} by type` : `Logs per ${unit} · ${typeLabel(selectedType)}`}
-                head={[UNIT_HEAD[unit], "Total", ...typeKeys.map(typeLabel)]}
-                rows={months.map((m) => [bucketLabel(m, unit), m.total, ...typeKeys.map((t) => m.byType[t] ?? 0)])}
-              />
-            }
-          />
-
-          {selectedType === "all" ? (
+          {inRange.length > 0 && (
             <>
-              <div className="grid gap-5 lg:grid-cols-2">
+              <div className="grid gap-3 lg:grid-cols-2 lg:items-stretch">
+                <StatsPile logs={filteredLogs} dropKey={`${rangeToString(range)}|${selectedType}`} drawAll={selectedType === "all"} />
+                <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 content-start">
+                  <Tile label="Logged">{sum.logged}</Tile>
+                  <Tile label="Completed">{sum.byStatus.completed}</Tile>
+                  <Tile label="In progress">{sum.byStatus["in progress"]}</Tile>
+                  <Tile label="Wishlist">{sum.byStatus.wishlist}</Tile>
+                  <Tile label="Average rating">
+                    {fmtAvg(sum.avgRating)}{sum.avgRating !== null && <span className="text-base font-normal text-muted-foreground"> /100</span>}
+                  </Tile>
+                  <Tile label="Completion rate">{sum.completionRate === null ? "–" : `${Math.round(sum.completionRate * 100)}%`}</Tile>
+                </dl>
+              </div>
+
+              {/* Type stats panel when a single type is selected */}
+              {selectedTypeStats && (
+                <TypeStatsPanel type={selectedType} stats={selectedTypeStats} />
+              )}
+
+              <StatsFigure
+                title={`Logged over time${sectionSuffix}`}
+                summary={timeSummary}
+                controls={range.mode === "all" ? (
+                  <div role="group" aria-label="Group the chart" className="inline-flex rounded-lg border border-border p-0.5 text-xs">
+                    {(["month", "year"] as const).map((g) => (
+                      <button
+                        key={g}
+                        type="button"
+                        aria-pressed={granularity === g}
+                        onClick={() => setGranularity(g)}
+                        className={`rounded-md px-3 py-1 font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring ${granularity === g ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                      >
+                        By {g}
+                      </button>
+                    ))}
+                  </div>
+                ) : undefined}
+                chart={<TimeChart months={months} colorOf={colorOf} order={typeOrder} unit={unit} />}
+                footer={<Legend entries={legend} />}
+                table={
+                  <DataTable
+                    caption={selectedType === "all" ? `Logs per ${unit} by type` : `Logs per ${unit} · ${typeLabel(selectedType)}`}
+                    head={[UNIT_HEAD[unit], "Total", ...typeKeys.map(typeLabel)]}
+                    rows={months.map((m) => [bucketLabel(m, unit), m.total, ...typeKeys.map((t) => m.byType[t] ?? 0)])}
+                  />
+                }
+              />
+
+              {selectedType === "all" ? (
+                <>
+                  <div className="grid gap-5 lg:grid-cols-2">
+                    <StatsFigure
+                      title="By type"
+                      summary={typeSummary}
+                      chart={<TypeBars types={types} colorOf={colorOf} />}
+                      table={<DataTable caption="Logs by type" head={["Type", "Logs", "Avg rating"]} rows={types.map((t) => [typeLabel(t.type), t.count, fmtAvg(t.avgRating)])} />}
+                    />
+                    <StatsFigure
+                      title="Rating distribution"
+                      summary={histSummary}
+                      chart={<Histogram buckets={hist.buckets} unrated={hist.unrated} />}
+                      table={<DataTable caption="Logs per rating range" head={["Rating", "Logs"]} rows={[...hist.buckets.map((b) => [b.label, b.count]), ["Unrated", hist.unrated]]} />}
+                    />
+                  </div>
+
+                  {detailStats.length > 0 && (
+                    <section aria-labelledby="by-type-detail-heading" className="flex flex-col gap-3">
+                      <h2 id="by-type-detail-heading" className="font-display text-xl font-semibold">
+                        By type in detail
+                      </h2>
+                      <TypeSummaryRow items={detailStats} onSelectType={setType} />
+                    </section>
+                  )}
+                </>
+              ) : (
                 <StatsFigure
-                  title="By type"
-                  summary={typeSummary}
-                  chart={<TypeBars types={types} colorOf={colorOf} />}
-                  table={<DataTable caption="Logs by type" head={["Type", "Logs", "Avg rating"]} rows={types.map((t) => [typeLabel(t.type), t.count, fmtAvg(t.avgRating)])} />}
-                />
-                <StatsFigure
-                  title="Rating distribution"
+                  title={`Rating distribution${sectionSuffix}`}
                   summary={histSummary}
                   chart={<Histogram buckets={hist.buckets} unrated={hist.unrated} />}
-                  table={<DataTable caption="Logs per rating range" head={["Rating", "Logs"]} rows={[...hist.buckets.map((b) => [b.label, b.count]), ["Unrated", hist.unrated]]} />}
+                  table={<DataTable caption={`Logs per rating range${sectionSuffix}`} head={["Rating", "Logs"]} rows={[...hist.buckets.map((b) => [b.label, b.count]), ["Unrated", hist.unrated]]} />}
                 />
-              </div>
-
-              {detailStats.length > 0 && (
-                <section aria-labelledby="by-type-detail-heading" className="flex flex-col gap-3">
-                  <h2 id="by-type-detail-heading" className="font-display text-xl font-semibold">
-                    By type in detail
-                  </h2>
-                  <TypeSummaryRow items={detailStats} onSelectType={setType} />
-                </section>
               )}
-            </>
-          ) : (
-            <StatsFigure
-              title={`Rating distribution${sectionSuffix}`}
-              summary={histSummary}
-              chart={<Histogram buckets={hist.buckets} unrated={hist.unrated} />}
-              table={<DataTable caption={`Logs per rating range${sectionSuffix}`} head={["Rating", "Logs"]} rows={[...hist.buckets.map((b) => [b.label, b.count]), ["Unrated", hist.unrated]]} />}
-            />
-          )}
 
-          <div className="grid gap-5 lg:grid-cols-2">
-            <section className="min-w-0 rounded-xl border border-border bg-card p-4">
-              <h2 className="mb-3 font-display text-xl font-semibold">Top categories{sectionSuffix}</h2>
-              {cats.length > 0 ? <RankedList items={cats} asTag label={`Top categories${sectionSuffix}`} /> : <p className="text-sm text-muted-foreground">No categories on these logs.</p>}
-            </section>
-            <section className="min-w-0 rounded-xl border border-border bg-card p-4">
-              <h2 className="mb-3 font-display text-xl font-semibold">Top creators{sectionSuffix}</h2>
-              {creators.length > 0 ? <RankedList items={creators} label={`Top creators${sectionSuffix}`} /> : <p className="text-sm text-muted-foreground">No creator appears twice yet.</p>}
-            </section>
-            {hasTagsInRange && (
-              <section className="min-w-0 rounded-xl border border-border bg-card p-4">
-                <h2 className="mb-3 font-display text-xl font-semibold">Top tags{sectionSuffix}</h2>
-                {tags.length > 0 ? <RankedList items={tags} asUserTag label={`Top tags${sectionSuffix}`} /> : <p className="text-sm text-muted-foreground">No tags on these logs.</p>}
-              </section>
-            )}
-          </div>
+              <div className="grid gap-5 lg:grid-cols-2">
+                <section className="min-w-0 rounded-xl border border-border bg-card p-4">
+                  <h2 className="mb-3 font-display text-xl font-semibold">Top categories{sectionSuffix}</h2>
+                  {cats.length > 0 ? <RankedList items={cats} asTag label={`Top categories${sectionSuffix}`} /> : <p className="text-sm text-muted-foreground">No categories on these logs.</p>}
+                </section>
+                <section className="min-w-0 rounded-xl border border-border bg-card p-4">
+                  <h2 className="mb-3 font-display text-xl font-semibold">Top creators{sectionSuffix}</h2>
+                  {creators.length > 0 ? <RankedList items={creators} label={`Top creators${sectionSuffix}`} /> : <p className="text-sm text-muted-foreground">No creator appears twice yet.</p>}
+                </section>
+                {hasTagsInRange && (
+                  <section className="min-w-0 rounded-xl border border-border bg-card p-4">
+                    <h2 className="mb-3 font-display text-xl font-semibold">Top tags{sectionSuffix}</h2>
+                    {tags.length > 0 ? <RankedList items={tags} asUserTag label={`Top tags${sectionSuffix}`} /> : <p className="text-sm text-muted-foreground">No tags on these logs.</p>}
+                  </section>
+                )}
+              </div>
+            </>
+          )}
         </div>
       )}
     </PageShell>

@@ -1,0 +1,171 @@
+import { useEffect, useId, useMemo, useRef, useState } from "react"
+import type * as MatterModule from "matter-js"
+import {
+  PILE_GROUND, PILE_HEIGHT, PILE_MAX, PILE_WIDTH, createPileWorld, pileBodies, settlePile,
+  type PileBody, type PileTone,
+} from "@/lib/statsPile"
+import type { Log } from "@/types/mainTypes"
+
+type Matter = typeof MatterModule
+
+const EDGE = "rgb(0 0 0 / 0.28)"
+const TONES: PileTone[] = ["low", "mid", "high", "unrated"]
+const REDUCED_MOTION = "(prefers-reduced-motion: reduce)"
+
+function PileShapeSvg({ body, labelId }: { body: PileBody; labelId: string }) {
+  const { shape, width, height, tone } = body
+  const fill = `var(--pile-${tone})`
+  const halfW = width / 2
+  const halfH = height / 2
+
+  if (shape === "record") {
+    return <circle cx={0} cy={0} r={halfW} fill={`url(#${labelId}-${tone})`} />
+  }
+  if (shape === "cartridge") {
+    const band = Math.min(11, height * (11 / 26))
+    return (
+      <g>
+        {/* Rounder at the top than at the bottom */}
+        <path
+          d={`M${-halfW} ${-halfH + 4}q0-4 4-4h${width - 8}q4 0 4 4v${height - 6}q0 2-2 2h${4 - width}q-2 0-2-2z`}
+          fill="#5b5650"
+        />
+        <rect x={-halfW} y={halfH - band} width={width} height={band} rx={2} fill={fill} />
+      </g>
+    )
+  }
+  const edgeH = Math.min(3, height)
+  return (
+    <g>
+      <rect x={-halfW} y={-halfH} width={width} height={height} rx={2} fill={shape === "disc" ? "#c9c6c0" : fill} />
+      {(shape === "book" || shape === "manga" || shape === "box") && (
+        <rect x={-halfW} y={halfH - edgeH} width={width} height={edgeH} fill={EDGE} />
+      )}
+      {/* Discs stay grey; their edge strip carries the rating colour */}
+      {shape === "disc" && <rect x={-halfW} y={halfH - edgeH} width={width} height={edgeH} fill={fill} />}
+      {shape === "case" && (
+        <line x1={-halfW + 2} y1={-halfH + 1} x2={-halfW + 2} y2={halfH - 1} stroke="rgb(0 0 0 / 0.4)" strokeWidth={4} strokeDasharray="2 2" />
+      )}
+    </g>
+  )
+}
+
+function transformOf(x: number, y: number, angle: number) {
+  return `translate(${x} ${y}) rotate(${(angle * 180) / Math.PI})`
+}
+
+/**
+ * Filtered logs as a pile on the Stats page, one object per log: every log with `drawAll`
+ * (the All types tab), otherwise the newest 150.
+ * Each selection drops its objects from above the card and they settle under matter-js.
+ * `dropKey` names the selection (period + type): a new key re-drops the pile even when the
+ * drawn logs are the same (only the newest 150 are drawn, so big periods often share them).
+ * Decorative: the charts and tables below are the real UI.
+ */
+export function StatsPile({ logs, dropKey = "", drawAll = false }: {
+  logs: readonly Log[]
+  dropKey?: string
+  drawAll?: boolean
+}) {
+  const labelId = `pile-record-${useId().replace(/[^a-zA-Z0-9]/g, "")}`
+  const bodies = useMemo(() => pileBodies(logs, drawAll ? Infinity : PILE_MAX), [logs, drawAll])
+  const ids = useMemo(() => bodies.map((body) => body.id).join(","), [bodies])
+  const bodiesRef = useRef(bodies)
+  bodiesRef.current = bodies
+  const refs = useRef(new Map<string, SVGGElement>())
+  const [matter, setMatter] = useState<Matter | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    import("matter-js").then((module) => {
+      if (cancelled) return
+      const loaded = module as unknown as { default?: Matter }
+      setMatter(loaded.default ?? (module as unknown as Matter))
+    })
+    return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => {
+    if (!matter || !ids) return
+    const current = bodiesRef.current
+    const write = (id: string, x: number, y: number, angle: number) => {
+      const el = refs.current.get(id)
+      if (!el) return
+      el.setAttribute("transform", transformOf(x, y, angle))
+      el.setAttribute("visibility", "visible")
+    }
+
+    if (window.matchMedia?.(REDUCED_MOTION)?.matches) {
+      for (const position of settlePile(matter, current)) {
+        write(position.id, position.x, position.y, position.angle)
+      }
+      return
+    }
+
+    // A log in both selections keeps its node; hide it until its new body enters the world.
+    for (const body of current) {
+      refs.current.get(body.id)?.setAttribute("visibility", "hidden")
+    }
+
+    const world = createPileWorld(matter, current)
+    const writeWorld = () => {
+      for (const body of world.engine.world.bodies) {
+        if (body.isStatic) continue
+        write(body.label, body.position.x, body.position.y, body.angle)
+      }
+    }
+
+    let raf = 0
+    const frame = () => {
+      world.step()
+      writeWorld()
+      if (!world.done) raf = requestAnimationFrame(frame)
+    }
+    if (typeof requestAnimationFrame === "function") {
+      raf = requestAnimationFrame(frame)
+    } else {
+      writeWorld()
+    }
+
+    return () => {
+      if (typeof cancelAnimationFrame === "function") cancelAnimationFrame(raf)
+      matter.Engine.clear(world.engine)
+      matter.World.clear(world.engine.world, false)
+    }
+  }, [matter, ids, dropKey])
+
+  return (
+    <section aria-label="Your pile" className="relative h-full rounded-xl bg-card p-3 shadow-paper">
+      <svg viewBox={`0 0 ${PILE_WIDTH} ${PILE_HEIGHT}`} aria-hidden="true" className="block w-full lg:absolute lg:top-3 lg:left-3 lg:h-[calc(100%-1.5rem)] lg:w-[calc(100%-1.5rem)]" preserveAspectRatio="xMidYMax meet">
+        <defs>
+          {TONES.map((tone) => (
+            <radialGradient key={tone} id={`${labelId}-${tone}`}>
+              <stop offset="38%" style={{ stopColor: `var(--pile-${tone})` }} />
+              <stop offset="41%" stopColor="#0e0d0c" />
+            </radialGradient>
+          ))}
+        </defs>
+        <rect x={0} y={PILE_HEIGHT - PILE_GROUND} width={PILE_WIDTH} height={PILE_GROUND} fill="var(--ground)" />
+        {matter && bodies.map((body) => (
+          <g
+            key={body.id}
+            data-pile-body={body.id}
+            ref={(el) => {
+              if (!el) {
+                refs.current.delete(body.id)
+                return
+              }
+              refs.current.set(body.id, el)
+              if (!el.hasAttribute("transform")) {
+                el.setAttribute("transform", transformOf(body.spawnX, -20, body.spawnAngle))
+                el.setAttribute("visibility", "hidden")
+              }
+            }}
+          >
+            <PileShapeSvg body={body} labelId={labelId} />
+          </g>
+        ))}
+      </svg>
+    </section>
+  )
+}

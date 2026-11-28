@@ -2,6 +2,7 @@ import { describe, expect, it, beforeEach } from "@jest/globals"
 import request from "supertest"
 import app from "@/app.js"
 import { prisma } from "@/tests/jest.setup.js"
+import appPrisma from "@/prismaClient.js"
 import { findUserByUsername } from "@/repositories/authRepository.js"
 import { findMediaTypeForUserOrGlobal } from "@/repositories/mediaTypeRepository.js"
 import { jest } from "@jest/globals"
@@ -75,10 +76,8 @@ describe("Media Import Routes (Letterboxd)", () => {
                     source: "tmdb",
                     sourceId: "movie-27205",
                     imageUrl: "https://image.tmdb.org/t/p/w342/inception.jpg",
-                    metadata: {
-                        kind: "movie",
-                        categories: ["Action", "Science Fiction"],
-                    },
+                    genres: ["Action", "Science Fiction"],
+                    details: null,
                 })
             } else if (f.name.toLowerCase() === "dune: part two") {
                 map.set(key, {
@@ -91,10 +90,8 @@ describe("Media Import Routes (Letterboxd)", () => {
                     source: "tmdb",
                     sourceId: "movie-693134",
                     imageUrl: "https://image.tmdb.org/t/p/w342/dune2.jpg",
-                    metadata: {
-                        kind: "movie",
-                        categories: ["Science Fiction", "Adventure"],
-                    },
+                    genres: ["Science Fiction", "Adventure"],
+                    details: null,
                 })
             } else if (f.name.toLowerCase() === "fight club") {
                 map.set(key, {
@@ -106,10 +103,8 @@ describe("Media Import Routes (Letterboxd)", () => {
                     source: "tmdb",
                     sourceId: "movie-550",
                     imageUrl: "https://image.tmdb.org/t/p/w342/fightclub.jpg",
-                    metadata: {
-                        kind: "movie",
-                        categories: ["Drama"],
-                    },
+                    genres: ["Drama"],
+                    details: null,
                 })
             } else if (f.name.toLowerCase() === "interstellar") {
                 map.set(key, {
@@ -121,10 +116,21 @@ describe("Media Import Routes (Letterboxd)", () => {
                     source: "tmdb",
                     sourceId: "movie-157336",
                     imageUrl: "https://image.tmdb.org/t/p/w342/interstellar.jpg",
-                    metadata: {
-                        kind: "movie",
-                        categories: ["Adventure", "Drama", "Science Fiction"],
-                    },
+                    genres: ["Adventure", "Drama", "Science Fiction"],
+                    details: null,
+                })
+            } else if (f.name.toLowerCase() === "spirited away") {
+                map.set(key, {
+                    mediaType: "movie",
+                    title: "Sen to Chihiro no Kamikakushi",
+                    creator: "Hayao Miyazaki",
+                    year: "2001",
+                    description: "During her family's move to the suburbs...",
+                    source: "tmdb",
+                    sourceId: "movie-129",
+                    imageUrl: "https://image.tmdb.org/t/p/w342/spiritedaway.jpg",
+                    genres: ["Animation", "Family", "Fantasy"],
+                    details: null,
                 })
             } else {
                 map.set(key, null)
@@ -172,31 +178,34 @@ describe("Media Import Routes (Letterboxd)", () => {
 
         // Verify Inception log
         const inceptionMedia = await prisma.media.findFirst({
-            where: { source: "tmdb", sourceId: "movie-27205" },
+            where: { provider: "tmdb", providerId: "movie-27205" },
         })
         expect(inceptionMedia).not.toBeNull()
 
         const inceptionLog = await prisma.userLogs.findUnique({
             where: { userId_mediaId: { userId, mediaId: inceptionMedia!.id } },
+            include: { entries: true },
         })
         expect(inceptionLog).not.toBeNull()
         expect(inceptionLog!.status).toBe("completed")
         expect(inceptionLog!.rating).toBe(90) // 4.5 * 20
-        expect(inceptionLog!.finished_at).toEqual(new Date(Date.UTC(2024, 0, 10, 12)))
+        expect(inceptionLog!.entries).toHaveLength(1)
+        expect(inceptionLog!.entries[0].finishedAt?.toISOString().slice(0, 10)).toBe("2024-01-10")
 
-        // Verify Dune log (watchlist-only -> wishlist, no rating, no finished_at)
+        // Verify Dune log (watchlist-only -> wishlist, no rating, no entry)
         const duneMedia = await prisma.media.findFirst({
-            where: { source: "tmdb", sourceId: "movie-693134" },
+            where: { provider: "tmdb", providerId: "movie-693134" },
         })
         expect(duneMedia).not.toBeNull()
 
         const duneLog = await prisma.userLogs.findUnique({
             where: { userId_mediaId: { userId, mediaId: duneMedia!.id } },
+            include: { entries: true },
         })
         expect(duneLog).not.toBeNull()
         expect(duneLog!.status).toBe("wishlist")
         expect(duneLog!.rating).toBeNull()
-        expect(duneLog!.finished_at).toBeNull()
+        expect(duneLog!.entries).toHaveLength(0)
 
         // Verify director creator role was persisted
         const duneCreators = await prisma.mediaCreator.findMany({
@@ -257,8 +266,8 @@ describe("Media Import Routes (Letterboxd)", () => {
             data: {
                 title: "Fight Club",
                 year: 1999,
-                source: "tmdb",
-                sourceId: "movie-550",
+                provider: "tmdb",
+                providerId: "movie-550",
                 mediaTypeId: movieTypeId,
                 userId: systemUserId,
             },
@@ -326,10 +335,10 @@ describe("Media Import Routes (Letterboxd)", () => {
         )
 
         const unmatchedMedia = await prisma.media.findFirst({
-            where: { title: "Unmatched Film", source: "letterboxd" },
+            where: { title: "Unmatched Film", provider: "letterboxd" },
         })
         expect(unmatchedMedia).not.toBeNull()
-        expect(unmatchedMedia!.sourceId).toBe("boxd.it/unm1")
+        expect(unmatchedMedia!.providerId).toBe("boxd.it/unm1")
     })
 
     it("calls resolver with [] when re-importing a diary-only export", async () => {
@@ -446,8 +455,7 @@ describe("Media Import Routes (Letterboxd)", () => {
             data: {
                 title: "Existing Film",
                 mediaTypeId: movieTypeId,
-                source: "custom",
-                sourceId: "custom-1",
+                
             },
         })
         const existingLog = await prisma.userLogs.create({
@@ -489,5 +497,329 @@ describe("Media Import Routes (Letterboxd)", () => {
         expect(collAfter!.items).toHaveLength(2)
         expect(collAfter!.items[0].log.media.title).toBe("Existing Film")
         expect(collAfter!.items[1].log.media.title).toBe("Whiplash")
+    })
+
+    it("imports Letterboxd lists as collections, sets wishlist status for list-only films, ignores likes/lists.csv, and prevents duplicates on re-import", async () => {
+        const topSciFiCsv = [
+            "Letterboxd list export v7",
+            "Date,Name,Tags,URL,Description",
+            "2024-05-01,Top Sci-Fi,\"sci-fi\",https://boxd.it/list1,Top Sci-Fi movies",
+            "",
+            "Position,Name,Year,URL",
+            "1,Inception,2010,https://boxd.it/1sXg",
+            "2,Interstellar,2014,https://boxd.it/157336",
+        ].join("\n")
+
+        const cultClassicsCsv = [
+            "Date,Name,Tags,URL,Description",
+            "2024-05-02,Cult Classics,\"cult\",https://boxd.it/list2,Cult movies",
+            "",
+            "Position,Name,Year,URL",
+            "1,Fight Club,1999,https://boxd.it/550",
+        ].join("\n")
+
+        const zipBytes = zipSync({
+            "watched.csv": strToU8("Date,Name,Year,Letterboxd URI\n2024-01-10,Inception,2010,https://boxd.it/1sXg\n"),
+            "lists/top-sci-fi.csv": strToU8(topSciFiCsv),
+            "lists/cult-classics.csv": strToU8(cultClassicsCsv),
+            "likes/lists.csv": strToU8("Date,Name,URL\n2024-05-03,Ignored Liked List,https://boxd.it/ignored\n"),
+        })
+
+        jest.spyOn(letterboxdImportService, "importFromLetterboxd").mockImplementation(async (u, files, opts) => {
+            return LetterboxdImportService.prototype.importFromLetterboxd.call(
+                letterboxdImportService,
+                u,
+                files,
+                { ...opts, resolver: mockResolver }
+            )
+        })
+
+        // First import
+        const first = await importAndWait(token, Buffer.from(zipBytes))
+        expect(first.status).toBe(200)
+        expect(first.job.result.imported).toBe(3)
+        // (f) result has lists and note
+        expect(first.job.result.lists).toBe(2)
+        expect(first.job.result.notes).toContain("Imported 2 Letterboxd lists into collections (2 films added as Wishlist).")
+
+        // (a) both collections exist with right names, descriptions and order
+        const sciFiColl = await prisma.collection.findFirst({
+            where: { userId, nameKey: "top sci-fi" },
+            include: { items: { include: { log: { include: { media: true } } }, orderBy: { position: "asc" } } },
+        })
+        expect(sciFiColl).not.toBeNull()
+        expect(sciFiColl!.name).toBe("Top Sci-Fi")
+        expect(sciFiColl!.description).toBe("Top Sci-Fi movies")
+        expect(sciFiColl!.ranked).toBe(false)
+        expect(sciFiColl!.items).toHaveLength(2)
+        expect(sciFiColl!.items[0].log.media.title).toBe("Inception")
+        expect(sciFiColl!.items[1].log.media.title).toBe("Interstellar")
+
+        const cultColl = await prisma.collection.findFirst({
+            where: { userId, nameKey: "cult classics" },
+            include: { items: { include: { log: { include: { media: true } } }, orderBy: { position: "asc" } } },
+        })
+        expect(cultColl).not.toBeNull()
+        expect(cultColl!.name).toBe("Cult Classics")
+        expect(cultColl!.description).toBe("Cult movies")
+        expect(cultColl!.ranked).toBe(false)
+        expect(cultColl!.items).toHaveLength(1)
+        expect(cultColl!.items[0].log.media.title).toBe("Fight Club")
+
+        // (b) film only in list is wishlist, film also in watched stays completed
+        const inceptionLog = await prisma.userLogs.findFirst({
+            where: { userId, media: { title: "Inception" } },
+        })
+        expect(inceptionLog).not.toBeNull()
+        expect(inceptionLog!.status).toBe("completed")
+
+        const interstellarLog = await prisma.userLogs.findFirst({
+            where: { userId, media: { title: "Interstellar" } },
+        })
+        expect(interstellarLog).not.toBeNull()
+        expect(interstellarLog!.status).toBe("wishlist")
+
+        const fightClubLog = await prisma.userLogs.findFirst({
+            where: { userId, media: { title: "Fight Club" } },
+        })
+        expect(fightClubLog).not.toBeNull()
+        expect(fightClubLog!.status).toBe("wishlist")
+
+        // (d) likes/lists.csv creates nothing
+        const ignoredColl = await prisma.collection.findFirst({
+            where: { userId, nameKey: "ignored liked list" },
+        })
+        expect(ignoredColl).toBeNull()
+
+        // (c) importing the same zip again creates no duplicate collections or items and no extra logs
+        const initialLogCount = await prisma.userLogs.count({ where: { userId } })
+        const initialCollCount = await prisma.collection.count({ where: { userId } })
+
+        const second = await importAndWait(token, Buffer.from(zipBytes))
+        expect(second.status).toBe(200)
+        expect(second.job.result.imported).toBe(0)
+        expect(second.job.result.lists).toBe(0)
+
+        const logCountAfter = await prisma.userLogs.count({ where: { userId } })
+        expect(logCountAfter).toBe(initialLogCount)
+
+        const collCountAfter = await prisma.collection.count({ where: { userId } })
+        expect(collCountAfter).toBe(initialCollCount)
+
+        const sciFiCollAfter = await prisma.collection.findFirst({
+            where: { userId, nameKey: "top sci-fi" },
+            include: { items: true },
+        })
+        expect(sciFiCollAfter!.items).toHaveLength(2)
+    })
+
+    it("(e) a list longer than MAX_ITEMS_PER_COLLECTION is cut with the note", async () => {
+        const topSciFiCsv = [
+            "Date,Name,Tags,URL,Description",
+            "2024-05-01,Top Sci-Fi,,https://boxd.it/list1,Top Sci-Fi movies",
+            "",
+            "Position,Name,Year,URL",
+            "1,Inception,2010,https://boxd.it/1sXg",
+            "2,Interstellar,2014,https://boxd.it/157336",
+        ].join("\n")
+
+        const zipBytes = zipSync({
+            "lists/top-sci-fi.csv": strToU8(topSciFiCsv),
+        })
+
+        // Use test seam opts.maxItemsPerCollection: 1
+        jest.spyOn(letterboxdImportService, "importFromLetterboxd").mockImplementation(async (u, files, opts) => {
+            return LetterboxdImportService.prototype.importFromLetterboxd.call(
+                letterboxdImportService,
+                u,
+                files,
+                { ...opts, resolver: mockResolver, maxItemsPerCollection: 1 }
+            )
+        })
+
+        const res = await importAndWait(token, Buffer.from(zipBytes))
+        expect(res.status).toBe(200)
+        expect(res.job.result.notes).toContain("List 'Top Sci-Fi' was cut at 1 films")
+
+        const coll = await prisma.collection.findFirst({
+            where: { userId, nameKey: "top sci-fi" },
+            include: { items: true },
+        })
+        expect(coll).not.toBeNull()
+        expect(coll!.items).toHaveLength(1)
+    })
+
+    it("resolves list films whose TMDB title differs from Letterboxd name without external ID", async () => {
+        const animationCsv = [
+            "Date,Name,Tags,URL,Description",
+            "2024-05-01,Animation Favorites,,https://boxd.it/anim,Great animation",
+            "",
+            "Position,Name,Year,URL",
+            "1,Spirited Away,2001,",
+        ].join("\n")
+
+        const zipBytes = zipSync({
+            "lists/animation.csv": strToU8(animationCsv),
+        })
+
+        jest.spyOn(letterboxdImportService, "importFromLetterboxd").mockImplementation(async (u, files, opts) => {
+            return LetterboxdImportService.prototype.importFromLetterboxd.call(
+                letterboxdImportService,
+                u,
+                files,
+                { ...opts, resolver: mockResolver }
+            )
+        })
+
+        const res = await importAndWait(token, Buffer.from(zipBytes))
+        expect(res.status).toBe(200)
+        expect(res.job.result.imported).toBe(1)
+        expect(res.job.result.lists).toBe(1)
+
+        const coll = await prisma.collection.findFirst({
+            where: { userId, nameKey: "animation favorites" },
+            include: { items: { include: { log: { include: { media: true } } } } },
+        })
+        expect(coll).not.toBeNull()
+        expect(coll!.items).toHaveLength(1)
+        expect(coll!.items[0].log.media.title).toBe("Sen to Chihiro no Kamikakushi")
+    })
+
+    it("skips invalid list CSV and reports reason in notes", async () => {
+        const emptyListCsv = [
+            "Letterboxd list export v7",
+            "Date,Name,Tags,URL,Description",
+            "2024-05-01,Empty List,,https://boxd.it/empty,Empty list",
+            "",
+            "Position,Name,Year,URL",
+        ].join("\n")
+
+        const zipBytes = zipSync({
+            "lists/empty.csv": strToU8(emptyListCsv),
+            "watched.csv": strToU8("Date,Name,Year,Letterboxd URI\n2024-01-01,Inception,2010,https://boxd.it/1sXg\n"),
+        })
+
+        jest.spyOn(letterboxdImportService, "importFromLetterboxd").mockImplementation(async (u, files, opts) => {
+            return LetterboxdImportService.prototype.importFromLetterboxd.call(
+                letterboxdImportService,
+                u,
+                files,
+                { ...opts, resolver: mockResolver }
+            )
+        })
+
+        const res = await importAndWait(token, Buffer.from(zipBytes))
+        expect(res.status).toBe(200)
+        expect(res.job.result.notes).toContain("Skipped lists/empty.csv: no films")
+    })
+
+    it("aggregates note when list films cannot be resolved to logs", async () => {
+        const topSciFiCsv = [
+            "Date,Name,Tags,URL,Description",
+            "2024-05-01,Top Sci-Fi,,https://boxd.it/list1,Top Sci-Fi movies",
+            "",
+            "Position,Name,Year,URL",
+            "1,Inception,2010,https://boxd.it/1sXg",
+            "2,Interstellar,2014,https://boxd.it/157336",
+        ].join("\n")
+
+        const zipBytes = zipSync({
+            "lists/top-sci-fi.csv": strToU8(topSciFiCsv),
+        })
+
+        jest.spyOn(letterboxdImportService, "importFromLetterboxd").mockImplementation(async (u, files, opts) => {
+            return LetterboxdImportService.prototype.importFromLetterboxd.call(
+                letterboxdImportService,
+                u,
+                files,
+                { ...opts, resolver: mockResolver }
+            )
+        })
+
+        const realFindMany = appPrisma.userLogs.findMany.bind(appPrisma)
+        const spyFindMany = jest.spyOn(appPrisma.userLogs, "findMany").mockImplementation((async (args) => {
+            const res = await realFindMany(args)
+            if (args?.select?.media?.select?.externalIds) {
+                return (res as Array<{ media?: { title?: string } }>).filter((ul) => ul.media?.title !== "Interstellar")
+            }
+            return res
+        }) as unknown as typeof realFindMany)
+
+        try {
+            const res = await importAndWait(token, Buffer.from(zipBytes))
+            expect(res.status).toBe(200)
+            expect(res.job.result.notes).toContain("1 films from list 'Top Sci-Fi' couldn't be added")
+
+            const coll = await prisma.collection.findFirst({
+                where: { userId, nameKey: "top sci-fi" },
+                include: { items: { include: { log: { include: { media: true } } } } },
+            })
+            expect(coll).not.toBeNull()
+            expect(coll!.items).toHaveLength(1)
+            expect(coll!.items[0].log.media.title).toBe("Inception")
+        } finally {
+            spyFindMany.mockRestore()
+        }
+    })
+
+    it("one log per film with an entry per diary row; a re-import changes nothing; an old import upgrades", async () => {
+        const diaryHeader = "Date,Name,Year,Letterboxd URI,Rating,Rewatch,Tags,Watched Date"
+        const reviewHeader = "Date,Name,Year,Letterboxd URI,Rating,Rewatch,Review,Tags,Watched Date"
+        const uri = "https://boxd.it/fc1"
+        const zipBytes = zipSync({
+            "ratings.csv": strToU8(`Date,Name,Year,Letterboxd URI,Rating\n2024-01-11,Fight Club,1999,${uri},4.5\n`),
+            "diary.csv": strToU8([
+                diaryHeader,
+                `2024-01-11,Fight Club,1999,${uri},4,No,,2024-01-10`,
+                `2023-06-02,Fight Club,1999,${uri},4,Yes,,2023-06-01`,
+                `2022-03-05,Fight Club,1999,${uri},3,Yes,,2022-03-04`,
+            ].join("\n") + "\n"),
+            "reviews.csv": strToU8([
+                reviewHeader,
+                `2024-01-11,Fight Club,1999,${uri},4,No,Newest review,,2024-01-10`,
+                `2023-06-02,Fight Club,1999,${uri},4,Yes,Older review,,2023-06-01`,
+            ].join("\n") + "\n"),
+        })
+        jest.spyOn(letterboxdImportService, "importFromLetterboxd").mockImplementation(async (u, files, opts) => {
+            return LetterboxdImportService.prototype.importFromLetterboxd.call(
+                letterboxdImportService, u, files, { ...opts, resolver: mockResolver }
+            )
+        })
+        const day = (d: Date | null) => d?.toISOString().slice(0, 10)
+        const loadLog = async () => {
+            const media = await prisma.media.findFirstOrThrow({ where: { provider: "tmdb", providerId: "movie-550" } })
+            return prisma.userLogs.findUniqueOrThrow({
+                where: { userId_mediaId: { userId, mediaId: media.id } },
+                include: { entries: { orderBy: { finishedAt: "desc" } } },
+            })
+        }
+
+        // first import: one log, three entries, the review on its own date, the rating from ratings.csv
+        const first = await importAndWait(token, Buffer.from(zipBytes))
+        expect(first.job.result).toMatchObject({ imported: 1, updated: 0, skipped: 0, entriesAdded: 3 })
+        const log = await loadLog()
+        expect(log.rating).toBe(90)
+        expect(log.notes).toBe("Newest review")
+        expect(log.entries.map(e => day(e.finishedAt))).toEqual(["2024-01-10", "2023-06-01", "2022-03-04"])
+        // the newest review is the log's notes, so only the older one is an entry note
+        expect(log.entries.map(e => e.note)).toEqual([null, "Older review", null])
+
+        // re-import: nothing changes
+        const again = await importAndWait(token, Buffer.from(zipBytes))
+        expect(again.job.result).toMatchObject({ imported: 0, updated: 0, skipped: 1, entriesAdded: 0 })
+        expect(await prisma.logEntry.count({ where: { logId: log.id } })).toBe(3)
+
+        // upgrade path: an earlier import left one entry at the latest diary date (what the migration makes)
+        await prisma.logEntry.deleteMany({ where: { logId: log.id } })
+        await prisma.logEntry.create({ data: { logId: log.id, startedAt: new Date("2024-01-10"), finishedAt: new Date("2024-01-10") } })
+        const upgraded = await importAndWait(token, Buffer.from(zipBytes))
+        expect(upgraded.job.result).toMatchObject({ imported: 0, updated: 1, skipped: 0, entriesAdded: 2 })
+        const afterUpgrade = await loadLog()
+        expect(afterUpgrade.entries.map(e => day(e.finishedAt))).toEqual(["2024-01-10", "2023-06-01", "2022-03-04"])
+        expect(afterUpgrade.entries[0].id).toBe((await prisma.logEntry.findFirstOrThrow({ where: { logId: log.id }, orderBy: { created_at: "asc" } })).id)
+
+        // and a second re-import after the upgrade changes nothing
+        const settled = await importAndWait(token, Buffer.from(zipBytes))
+        expect(settled.job.result).toMatchObject({ imported: 0, updated: 0, skipped: 1, entriesAdded: 0 })
     })
 })

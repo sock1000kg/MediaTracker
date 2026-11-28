@@ -1,7 +1,7 @@
-import { useCallback, useState } from "react"
+import { useState } from "react"
 import { useMutation, useQueryClient, type QueryKey } from "@tanstack/react-query"
-import EntityDialog from "@/components/dialogs/EntityDialog"
-import { MediaSearchLogForm } from "@/forms/MediaSearchLogForm"
+import { LogJournalDialog, type JournalSave } from "@/components/logs/LogJournalDialog"
+import { initialEntryOfResult, journalMediaOfResult } from "@/lib/journalDraft"
 import { editLog } from "@/api/logs"
 import { createMediaAndLog } from "@/api/media"
 import { fetchLogsQueryOptions } from "@/queryOptions/fetchLogsQueryOptions"
@@ -30,14 +30,17 @@ export function useSearchLogging<T extends MediaResult>(logs: Log[], extraInvali
   }
 
   const createMutation = useMutation({
-    mutationFn: ({ media, logData, parent }: { media: T; logData: Partial<Log>; parent?: MediaResult }) =>
-      createMediaAndLog(media, logData, parent),
+    mutationFn: ({ media, save, parent }: { media: T; save: JournalSave; parent?: MediaResult }) =>
+      createMediaAndLog(media, save.log, parent, save.entry ?? null),
     onSuccess: refresh,
   })
 
-  const editMutation = useMutation({ mutationFn: editLog, onSuccess: refresh })
+  const editMutation = useMutation({
+    mutationFn: ({ log, save }: { log: Log; save: JournalSave }) => editLog({ id: log.id, ...save.log }, save.entries),
+    onSuccess: refresh,
+  })
 
-  /** Opens the dialog for `item`; `existing` overrides the log lookup, `parentItem` is the album/show it belongs to. */
+  /** Opens the dialog for `item`; `existing` overrides the log lookup, `parent` is the album/show it belongs to. */
   const openLog = (item: T, opts: { parent?: MediaResult; existing?: Log | null } = {}) => {
     setTarget(item)
     setParent(opts.parent)
@@ -45,28 +48,25 @@ export function useSearchLogging<T extends MediaResult>(logs: Log[], extraInvali
     setOpen(true)
   }
 
-  const handleSubmit = async (formData: Partial<Log>) => {
-    if (targetLog) return editMutation.mutateAsync({ ...targetLog, ...formData })
+  /** How many entries the user's log of `item` has (0 when it isn't logged). */
+  const entryCountFor = (item: T): number => findLogForResult(logs, item)?.entryCount ?? 0
+
+  const handleSubmit = async (save: JournalSave) => {
+    if (targetLog) return editMutation.mutateAsync({ log: targetLog, save })
     if (!target) throw new Error("Cannot create log: Target media data is missing.")
-    return createMutation.mutateAsync({ media: target, logData: formData, parent })
+    return createMutation.mutateAsync({ media: target, save, parent })
   }
 
-  const renderForm = useCallback(
-    (formData: Partial<Log>, setFormData: React.Dispatch<React.SetStateAction<Partial<Log>>>) =>
-      target ? <MediaSearchLogForm targetMedia={target} formData={formData} setFormData={setFormData} /> : null,
-    [target]
-  )
-
-  const dialog = (
-    <EntityDialog
-      mode={targetLog ? "edit" : "create"}
+  const dialog = target ? (
+    <LogJournalDialog
       open={open}
       onOpenChange={setOpen}
-      target={targetLog ?? undefined}
-      onSubmit={handleSubmit}
-      renderForm={renderForm}
+      media={journalMediaOfResult(target, targetLog?.media.id)}
+      log={targetLog}
+      initialEntry={initialEntryOfResult(target)}
+      onSave={handleSubmit}
     />
-  )
+  ) : null
 
-  return { openLog, dialog }
+  return { openLog, dialog, entryCountFor }
 }

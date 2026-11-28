@@ -11,7 +11,7 @@ import { useProviderSearch } from "@/hooks/useProviderSearch"
 import { useSearchLogging } from "@/hooks/useSearchLogging"
 import { useStoredView } from "@/hooks/useStoredView"
 import { isResultLogged } from "@/lib/utils"
-import { LASTFM_URL, LASTFM_ATTRIBUTION_TEXT } from "@/lib/musicFormat"
+import { CLIENT_PROVIDERS } from "@/lib/providers"
 import type { MusicResult, MusicTrackResult } from "@/types/search"
 
 type MusicMode = "albums" | "tracks"
@@ -42,7 +42,7 @@ export function MusicSearchSection() {
     fetchPage: (page) => (searchMode === "tracks" ? searchTracks(query, page) : searchAlbums(query, page)),
     hideLogged,
   })
-  const { openLog, dialog } = useSearchLogging<MusicResult | MusicTrackResult>(search.logs, [["albumTracks"]])
+  const { openLog, dialog, entryCountFor } = useSearchLogging<MusicResult | MusicTrackResult>(search.logs, [["albumTracks"]])
 
   const handleSearch = () => {
     if (inputValue.trim()) setQuery(inputValue.trim())
@@ -69,7 +69,7 @@ export function MusicSearchSection() {
     <SearchPageShell page="music">
       <SearchHeader
         title="Music search"
-        attribution={{ href: LASTFM_URL, text: LASTFM_ATTRIBUTION_TEXT }}
+        attribution={CLIENT_PROVIDERS.lastfm.attribution}
         value={inputValue}
         onChange={setInputValue}
         onSearch={handleSearch}
@@ -94,6 +94,7 @@ export function MusicSearchSection() {
             kindOf={() => "music"}
             isLogged={(item) => isResultLogged(search.logs, item)}
             onLog={(item) => openLog(item)}
+            entryCount={(item) => entryCountFor(item)}
           />
         )}
       </SearchResults>

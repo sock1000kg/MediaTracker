@@ -1,5 +1,3 @@
-import type { GameResult } from "@/types/search"
-
 export const RAWG_URL = "https://rawg.io"
 export const RAWG_ATTRIBUTION_TEXT = "Data from RAWG"
 
@@ -26,8 +24,14 @@ export function formatRawgScore(score: number | null | undefined): string | null
   return `RAWG ${score.toFixed(1)}/5`
 }
 
-/** Parts of the card's metadata line: platforms, then Metacritic (or the RAWG score when there is none). Empty parts are skipped. */
-export function gameMetaParts(m: GameResult["metadata"] | undefined): string[] {
+/** Parts of the card's details line: platforms, then Metacritic (or the RAWG score when there is none). Empty parts are skipped. */
+export function gameMetaParts(
+  m?: {
+    platforms?: string[] | null
+    metacritic?: number | null
+    score?: number | null
+  } | null
+): string[] {
   if (!m) return []
   const parts: string[] = []
   const platforms = formatGamePlatforms(m.platforms)

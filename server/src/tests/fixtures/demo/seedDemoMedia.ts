@@ -4,6 +4,8 @@ import { fileURLToPath } from "url"
 import prisma from "@/prismaClient.js"
 import { DbClient } from "@/db.js"
 import { createImportedMedia } from "@/api/domain/media.js"
+import { findMediaByProviderId } from "@/repositories/mediaRepository.js"
+import { normalizeDescription } from "@/schemas/search/searchSchemas.js"
 import {
     findCollectionByNameKey,
     createCollection,
@@ -16,6 +18,8 @@ import type { SearchResult } from "@/schemas/search/searchSchemas.js"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
+
+type ImportInput = Parameters<typeof createImportedMedia>[0]
 
 export interface DemoFixtureItem {
     mediaTypeName: string
@@ -86,6 +90,13 @@ export async function seedDemoMedia(
     // 2. Insert items and logs
     for (const item of fixture.items) {
         try {
+            // Logging an item again adds an entry, so a re-seed must not pass the fixture's dates again
+            const existingMedia = item.media.sourceId
+                ? await findMediaByProviderId(item.media.source, item.media.sourceId, db)
+                : null
+            const alreadyLogged = existingMedia
+                ? await db.userLogs.findUnique({ where: { userId_mediaId: { userId: demoUserId, mediaId: existingMedia.id } } })
+                : null
             const { log } = await createImportedMedia(
                 {
                     userId: demoUserId,
@@ -96,25 +107,43 @@ export async function seedDemoMedia(
                         year: item.media.year ? Number(item.media.year) : null,
                         source: item.media.source,
                         sourceId: item.media.sourceId,
-                        description: item.media.description ?? null,
+                        description: normalizeDescription(item.media.source, item.media.description),
                         imageUrl: item.media.imageUrl ?? null,
-                        metadata: item.media.metadata ?? null,
-                    },
+                        subtype: item.media.subtype ?? null,
+                        releaseDate: item.media.releaseDate ? new Date(item.media.releaseDate) : null,
+                        genres: item.media.genres ?? undefined,
+                        externalIds: item.media.externalIds ?? [],
+                        details: item.media.details ?? null,
+                        syncedAt: item.media.source === "tmdb" ? new Date() : undefined,
+                        syncCheckedAt: item.media.source === "tmdb" ? new Date() : undefined,
+                    } as ImportInput["mediaData"],
                     parent: item.parent
-                        ? {
+                        ? ({
                               ...item.parent,
+                              description: normalizeDescription(item.parent.source, item.parent.description),
+                              subtype: item.parent.subtype ?? null,
                               year: item.parent.year ? Number(item.parent.year) : null,
-                          }
+                              releaseDate: item.parent.releaseDate ? new Date(item.parent.releaseDate) : null,
+                              genres: item.parent.genres ?? undefined,
+                              details: item.parent.details ?? null,
+                              syncedAt: item.parent.source === "tmdb" ? new Date() : undefined,
+                              syncCheckedAt: item.parent.source === "tmdb" ? new Date() : undefined,
+                          } as NonNullable<ImportInput["parent"]>)
                         : undefined,
                     logData: {
                         status: item.log.status,
                         rating: item.log.rating ?? null,
                         notes: item.log.notes ?? null,
                         loggedAt: item.log.loggedAt ? new Date(item.log.loggedAt) : null,
-                        startedAt: item.log.startedAt ? new Date(item.log.startedAt) : null,
-                        finishedAt: item.log.finishedAt ? new Date(item.log.finishedAt) : null,
                         tags: item.log.tags,
                     },
+                    // The fixture's dates are the log's one dated experience
+                    entry: !alreadyLogged && (item.log.startedAt || item.log.finishedAt)
+                        ? {
+                              startedAt: item.log.startedAt ? new Date(item.log.startedAt) : null,
+                              finishedAt: item.log.finishedAt ? new Date(item.log.finishedAt) : null,
+                          }
+                        : null,
                 },
                 db
             )

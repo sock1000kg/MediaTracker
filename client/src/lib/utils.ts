@@ -8,15 +8,15 @@ export function cn(...inputs: ClassValue[]) {
 // ---- Logs / search helpers ----
 
 export const SOURCE_LABELS: Record<string, string> = {
-  open_library: "Open Library",
+  openlibrary: "Open Library",
   lastfm: "Last.fm",
   goodreads: "Goodreads",
   google_books: "Google Books",
-  jikan: "MyAnimeList",
   mal: "MyAnimeList",
   anilist: "AniList",
   tmdb: "TMDB",
   rawg: "RAWG",
+  bgg: "BoardGameGeek",
 }
 
 export function sourceLabel(source?: string | null): string {
@@ -33,28 +33,74 @@ export function ratingBucket(rating?: number | null): string {
   return "Below 50"
 }
 
-// Reads metadata.categories defensively (it is `string[]` or missing)
-export function getCategories(metadata?: { categories?: unknown } | null): string[] {
-  const cats = metadata?.categories
+// Reads details.categories defensively (it is `string[]` or missing)
+export function getCategories(details?: { categories?: unknown } | null): string[] {
+  const cats = details?.categories
   return Array.isArray(cats) ? cats.filter((c): c is string => typeof c === "string") : []
 }
 
-type LoggedLike = { media: { source?: string | null; sourceId: string | null } }
+type LoggedLike = {
+  media: {
+    provider?: string | null
+    providerId?: string | null
+    externalIds?: Array<{ provider: string; externalId: string }> | null
+  }
+}
 
-// A search result counts as logged if a log has the same source + sourceId,
-// or if an AniList result has idMal matching an existing Jikan media with "<kind>-<idMal>"
+export type SearchMatchItem = {
+  source: string
+  sourceId: string | null
+  details?: Record<string, unknown> | null
+  subtype?: string | null
+  externalIds?: Array<{ provider: string; id?: string; externalId?: string }> | null
+}
+
+// A search result counts as logged if a log has matching externalIds,
+// the same provider + providerId,
+// or if an AniList result has idMal matching an existing MAL media with "<subtype>-<idMal>"
 export function findLogForResult<L extends LoggedLike>(
   logs: L[],
-  item: { source: string; sourceId: string | null; metadata?: Record<string, unknown> | null }
+  item: SearchMatchItem
 ): L | undefined {
   return logs.find(l => {
-    if (!l.media.source && !l.media.sourceId) return false
-    if (l.media.sourceId === item.sourceId && l.media.source === item.source) return true
-    if (item.source === "anilist" && l.media.source === "jikan") {
-      const meta = item.metadata as { kind?: string; idMal?: number | null } | null | undefined
-      const kind = meta?.kind ?? item.sourceId?.split("-")[0]
-      if (meta?.idMal != null && kind) {
-        if (l.media.sourceId === `${kind}-${meta.idMal}`) return true
+    if (!l.media) return false
+
+    // 1. Match through externalIds if present
+    if (l.media.externalIds && l.media.externalIds.length > 0) {
+      if (item.sourceId && l.media.externalIds.some(e => e.provider === item.source && e.externalId === item.sourceId)) {
+        return true
+      }
+      if (item.externalIds && item.externalIds.length > 0) {
+        if (l.media.externalIds.some(e => item.externalIds?.some(ie => ie.provider === e.provider && ((ie.id && ie.id === e.externalId) || (ie.externalId && ie.externalId === e.externalId))))) {
+          return true
+        }
+      }
+      const itemDetails = item.details as Record<string, unknown> | undefined
+      const mbRel = itemDetails?.mbReleaseGroupId as string | undefined
+      if (mbRel && l.media.externalIds.some(e => e.provider === "musicbrainz" && e.externalId === mbRel)) {
+        return true
+      }
+      const mbRec = itemDetails?.mbRecordingId as string | undefined
+      if (mbRec && l.media.externalIds.some(e => e.provider === "musicbrainz" && e.externalId === mbRec)) {
+        return true
+      }
+      const malId = itemDetails?.idMal
+      if (malId != null && l.media.externalIds.some(e => e.provider === "mal" && (e.externalId === String(malId) || e.externalId === `anime-${malId}` || e.externalId === `manga-${malId}`))) {
+        return true
+      }
+    }
+
+    const provider = l.media.provider
+    const providerId = l.media.providerId
+    if (!provider && !providerId) return false
+    if (providerId === item.sourceId && provider === item.source) return true
+
+    if (item.source === "anilist" && provider === "mal") {
+      const malExt = item.externalIds?.find(e => e.provider === "mal")
+      const malId = malExt?.id ?? (item.details as Record<string, unknown> | undefined)?.idMal
+      const typeOrSubtype = item.subtype ?? item.sourceId?.split("-")[0]
+      if (malId != null && typeOrSubtype) {
+        if (providerId === `${typeOrSubtype}-${malId}` || providerId === String(malId)) return true
       }
     }
     return false
@@ -63,7 +109,7 @@ export function findLogForResult<L extends LoggedLike>(
 
 export function isResultLogged(
   logs: LoggedLike[],
-  item: { source: string; sourceId: string | null; metadata?: Record<string, unknown> | null }
+  item: SearchMatchItem
 ): boolean {
   return findLogForResult(logs, item) !== undefined
 }

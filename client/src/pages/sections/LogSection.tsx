@@ -18,15 +18,18 @@ import { groupLogs, type GroupMode } from "@/lib/logView"
 import { GroupFooter } from "@/components/media-view/GroupFooter"
 import { useGroupReveal } from "@/hooks/useGroupReveal"
 import { step } from "@/lib/logView"
-import EntityDialog from "@/components/dialogs/EntityDialog"
-import { LogForm } from "@/forms/LogForm"
+import { LogJournalDialog, type JournalSave } from "@/components/logs/LogJournalDialog"
 import { ConfirmDeleteDialog } from "@/components/dialogs/ConfirmDeleteDialog"
+import { LettersDialog } from "@/components/letters/LettersDialog"
+import { WaxSeal } from "@/components/letters/WaxSeal"
+import { letterSummaryQueryOptions } from "@/queryOptions/letterQueryOptions"
 
 // --- NEW IMPORTS ---
 import { DataControls } from "@/components/ui/DataControls" 
 import { useDataFilter } from "@/hooks/useDataFilter"
 import { AVAILABLE_SORT_FIELDS_LOGS, type SortCriterion, type SortField } from "@/types/sort"
-import type { DialogName, Log, MediaMetadata } from "@/types/mainTypes"
+import type { DialogName, Log } from "@/types/mainTypes"
+import { logDateOf } from "@/lib/logEntries"
 import { RATING_BUCKETS, getCategories, ratingBucket, readStoredString, sourceLabel, writeStoredString } from "@/lib/utils"
 
 const VIEWS = ["list", "grid"] as const
@@ -39,10 +42,10 @@ const getLogSortValue = (log: Log, field: SortField) => {
       case "title": return log.media.title
       case "creator": return log.media.creator
       case "rating": return log.rating ?? null // missing ratings sort last in both directions
-      case "date": return new Date(log.logged_at).getTime()
-      case "pageCount": return Number((log.media.metadata as MediaMetadata)?.pageCount ?? 0)
+      case "date": return new Date(logDateOf(log)).getTime()
+      case "pageCount": return Number((log.media.details as Record<string, unknown> | undefined)?.pageCount ?? 0)
       case "categories": {
-          const cats = log.media.genres ?? (log.media.metadata as MediaMetadata)?.categories
+          const cats = log.media.genres ?? (log.media.details as Record<string, unknown> | undefined)?.categories
           return Array.isArray(cats) ? cats.join(", ") : String(cats || "")
       }
       default: return ""
@@ -71,17 +74,23 @@ export default function LogsSection() {
   // Fetch Data
   const { data: logs = [], error, isPending } = useQuery(fetchLogsQueryOptions())
 
+  const [lettersOpen, setLettersOpen] = useState(false)
+  const { data: letterSummary } = useQuery(letterSummaryQueryOptions())
+  const readyLetters = letterSummary?.ready ?? 0
+
   // Mutations
   const deleteMutation = useMutation({
     mutationFn: deleteLog,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: fetchLogsQueryOptions().queryKey })
       queryClient.invalidateQueries({ queryKey: ["tags"] })
+      // Its letters went with it
+      queryClient.invalidateQueries({ queryKey: ["letters"] })
     },
   })
 
   const editMutation = useMutation({
-    mutationFn: editLog,
+    mutationFn: ({ log, save }: { log: Log; save: JournalSave }) => editLog({ id: log.id, ...save.log }, save.entries),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: fetchLogsQueryOptions().queryKey })
       queryClient.invalidateQueries({ queryKey: ["tags"] })
@@ -91,7 +100,7 @@ export default function LogsSection() {
   // Case-insensitive unique categories, first spelling seen wins
   const uniqueCategories = useMemo(() => {
     const seen = new Map<string, string>()
-    logs.forEach(l => (l.media.genres ?? getCategories(l.media.metadata)).forEach(c => {
+    logs.forEach(l => (l.media.genres ?? getCategories(l.media.details)).forEach(c => {
       const key = c.toLowerCase()
       if (!seen.has(key)) seen.set(key, c)
     }))
@@ -122,7 +131,7 @@ export default function LogsSection() {
     return [
       { id: "type", field: (log: Log) => log.media.mediaType.name },
       { id: "status", field: (log: Log) => log.status?.trim().toLowerCase() ?? null },
-      { id: "category", field: (log: Log) => (log.media.genres ?? getCategories(log.media.metadata)).map(c => canonicalCat.get(c.toLowerCase()) ?? c) },
+      { id: "category", field: (log: Log) => (log.media.genres ?? getCategories(log.media.details)).map(c => canonicalCat.get(c.toLowerCase()) ?? c) },
       {
         id: "tag",
         field: (log: Log) => {
@@ -131,7 +140,7 @@ export default function LogsSection() {
           return userTags.map(t => canonicalTag.get(t.name.toLowerCase()) ?? t.name)
         }
       },
-      { id: "source", field: (log: Log) => sourceLabel(log.media.source) },
+      { id: "source", field: (log: Log) => sourceLabel(log.media.provider) },
       { id: "rating", field: (log: Log) => ratingBucket(log.rating) },
     ]
   }, [uniqueCategories, uniqueTags])
@@ -182,7 +191,7 @@ export default function LogsSection() {
   [logs])
 
   const uniqueSources = useMemo(() =>
-    Array.from(new Set(logs.map(l => sourceLabel(l.media.source)))).sort(),
+    Array.from(new Set(logs.map(l => sourceLabel(l.media.provider)))).sort(),
   [logs])
 
   const presentRatings = useMemo(() => {
@@ -244,15 +253,6 @@ export default function LogsSection() {
     return logs.filter((l) => new Date(l.logged_at).getFullYear() === year).length
   }, [logs])
 
-  // --- Form Render ---
-  const renderLogForm = useCallback((
-    formData: Partial<Log>,
-    setFormData: React.Dispatch<React.SetStateAction<Partial<Log>>>
-  ) => {
-    if (!targetLog) return null
-    return <LogForm formData={formData} setFormData={setFormData} targetMedia={targetLog.media}/>
-  }, [targetLog])
-
   return (
     <div className="relative isolate flex flex-col h-full overflow-hidden">
       <PageBackdrop page="logs" />
@@ -263,11 +263,26 @@ export default function LogsSection() {
           {/* Title */}
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
              <h1 className="font-display text-3xl sm:text-4xl font-semibold">Your logs</h1>
-             {logs.length > 0 && (
-               <p className="text-sm text-muted-foreground">
-                 {logs.length} {logs.length === 1 ? "log" : "logs"} · {logsThisYear} this year
-               </p>
-             )}
+             <div className="flex items-center gap-3">
+               {logs.length > 0 && (
+                 <p className="text-sm text-muted-foreground">
+                   {logs.length} {logs.length === 1 ? "log" : "logs"} · {logsThisYear} this year
+                 </p>
+               )}
+               <button
+                 type="button"
+                 onClick={() => setLettersOpen(true)}
+                 className="inline-flex h-8 items-center gap-1.5 self-center rounded-full border border-border-strong bg-card px-3 text-sm font-medium hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+               >
+                 <WaxSeal />
+                 Letters
+                 {readyLetters > 0 && (
+                   <span className="min-w-5 rounded-full bg-primary px-1.5 text-xs leading-5 text-primary-foreground tabular-nums">
+                     {readyLetters}<span className="sr-only"> ready</span>
+                   </span>
+                 )}
+               </button>
+             </div>
           </div>
 
           {/* Controls Area */}
@@ -364,14 +379,17 @@ export default function LogsSection() {
       </div>
 
       {/* Dialogs */}
-      <EntityDialog
-        mode="edit"
-        open={openDialog === "logForm"}
-        onOpenChange={(isOpen) => setOpenDialog(isOpen ? "logForm" : null)}
-        target={targetLog}
-        onSubmit={(formData) => editMutation.mutateAsync(formData)}
-        renderForm={renderLogForm}
-      />
+      {targetLog && (
+        <LogJournalDialog
+          open={openDialog === "logForm"}
+          onOpenChange={(isOpen) => setOpenDialog(isOpen ? "logForm" : null)}
+          media={targetLog.media}
+          log={targetLog}
+          onSave={(save) => editMutation.mutateAsync({ log: targetLog, save })}
+        />
+      )}
+
+      {lettersOpen && <LettersDialog onClose={() => setLettersOpen(false)} />}
 
       <ConfirmDeleteDialog
         open={openDialog === "deleteConfirm"}

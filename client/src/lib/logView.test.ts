@@ -3,10 +3,9 @@ import {
   coverAspect, coverToken, daysToFinish, displayRating, formatLogDate, groupLogs, initialCount, logDateLine, revealState, statusLabel, step, visibleSlice,
 } from "./logView"
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mk = (id: number, type: string, at: string, rating: any = 50, meta: any = {}) => ({
+const mk = (id: number, type: string, at: string, rating: unknown = 50, details: Record<string, unknown> = {}) => ({
   id, status: "completed", rating, notes: "", logged_at: at,
-  media: { id, title: "T" + id, mediaType: { name: type }, metadata: meta },
+  media: { id, title: "T" + id, mediaType: { name: type }, subtype: details.subtype, details },
 }) as never
 
 describe("formatLogDate / statusLabel", () => {
@@ -27,60 +26,58 @@ describe("formatLogDate / statusLabel", () => {
 
 describe("daysToFinish / logDateLine", () => {
   it("daysToFinish returns 0 on same calendar day, exact days when different", () => {
-    expect(daysToFinish({ started_at: "2026-11-01T12:00:00Z", finished_at: "2026-11-01T12:00:00Z" })).toBe(0)
-    expect(daysToFinish({ started_at: "2026-11-01T12:00:00Z", finished_at: "2026-11-02T12:00:00Z" })).toBe(1)
-    expect(daysToFinish({ started_at: "2026-11-01T12:00:00Z", finished_at: "2026-11-06T12:00:00Z" })).toBe(5)
+    expect(daysToFinish({ startedAt: "2026-11-01T12:00:00Z", finishedAt: "2026-11-01T12:00:00Z" })).toBe(0)
+    expect(daysToFinish({ startedAt: "2026-11-01T12:00:00Z", finishedAt: "2026-11-02T12:00:00Z" })).toBe(1)
+    expect(daysToFinish({ startedAt: "2026-11-01T12:00:00Z", finishedAt: "2026-11-06T12:00:00Z" })).toBe(5)
   })
 
   it("handles day-precision and time-zone differences cleanly", () => {
     // 2026-11-01 23:00+02:00 is 21:00 UTC (Nov 1); 2026-11-02 02:00-05:00 is 07:00 UTC (Nov 2)
-    expect(daysToFinish({ started_at: "2026-11-01T23:00:00+02:00", finished_at: "2026-11-02T02:00:00-05:00" })).toBe(1)
+    expect(daysToFinish({ startedAt: "2026-11-01T23:00:00+02:00", finishedAt: "2026-11-02T02:00:00-05:00" })).toBe(1)
     // Noon UTC day precision
-    expect(daysToFinish({ started_at: "2026-05-10T12:00:00.000Z", finished_at: "2026-05-10T12:00:00.000Z" })).toBe(0)
-    expect(daysToFinish({ started_at: "2026-05-10T12:00:00.000Z", finished_at: "2026-05-11T12:00:00.000Z" })).toBe(1)
+    expect(daysToFinish({ startedAt: "2026-05-10T12:00:00.000Z", finishedAt: "2026-05-10T12:00:00.000Z" })).toBe(0)
+    expect(daysToFinish({ startedAt: "2026-05-10T12:00:00.000Z", finishedAt: "2026-05-11T12:00:00.000Z" })).toBe(1)
   })
 
   it("daysToFinish returns null for missing, invalid, or backwards dates", () => {
     expect(daysToFinish({})).toBeNull()
-    expect(daysToFinish({ started_at: "2026-11-01T12:00:00Z" })).toBeNull()
-    expect(daysToFinish({ finished_at: "2026-11-01T12:00:00Z" })).toBeNull()
-    expect(daysToFinish({ started_at: "garbage", finished_at: "2026-11-01T12:00:00Z" })).toBeNull()
-    expect(daysToFinish({ started_at: "2026-11-05T12:00:00Z", finished_at: "2026-11-01T12:00:00Z" })).toBeNull()
+    expect(daysToFinish({ startedAt: "2026-11-01T12:00:00Z" })).toBeNull()
+    expect(daysToFinish({ finishedAt: "2026-11-01T12:00:00Z" })).toBeNull()
+    expect(daysToFinish({ startedAt: "garbage", finishedAt: "2026-11-01T12:00:00Z" })).toBeNull()
+    expect(daysToFinish({ startedAt: "2026-11-05T12:00:00Z", finishedAt: "2026-11-01T12:00:00Z" })).toBeNull()
   })
 
-  it("logDateLine formats completed logs with finished_at and took days", () => {
+  it("logDateLine formats completed logs from the newest entry, with took days", () => {
     expect(logDateLine({
+      entries: [{ startedAt: "2026-11-01T12:00:00Z", finishedAt: "2026-11-01T12:00:00Z" }],
       status: "completed",
       logged_at: "2026-11-10T12:00:00Z",
-      started_at: "2026-11-01T12:00:00Z",
-      finished_at: "2026-11-01T12:00:00Z",
     })).toBe("Completed · Finished 1 Nov 2026 · same day")
 
     expect(logDateLine({
+      entries: [{ startedAt: "2026-11-01T12:00:00Z", finishedAt: "2026-11-02T12:00:00Z" }],
       status: "completed",
       logged_at: "2026-11-10T12:00:00Z",
-      started_at: "2026-11-01T12:00:00Z",
-      finished_at: "2026-11-02T12:00:00Z",
     })).toBe("Completed · Finished 2 Nov 2026 · took 1 day")
 
     expect(logDateLine({
+      entries: [{ startedAt: "2026-11-01T12:00:00Z", finishedAt: "2026-11-05T12:00:00Z" }],
       status: "completed",
       logged_at: "2026-11-10T12:00:00Z",
-      started_at: "2026-11-01T12:00:00Z",
-      finished_at: "2026-11-05T12:00:00Z",
     })).toBe("Completed · Finished 5 Nov 2026 · took 4 days")
   })
 
   it("logDateLine without started_at shows Finished date only", () => {
     expect(logDateLine({
+      entries: [{ finishedAt: "2026-11-05T12:00:00Z" }],
       status: "completed",
       logged_at: "2026-11-10T12:00:00Z",
-      finished_at: "2026-11-05T12:00:00Z",
     })).toBe("Completed · Finished 5 Nov 2026")
   })
 
   it("logDateLine without finished_at keeps {status} · {logged date}", () => {
     expect(logDateLine({
+      entries: [{  }],
       status: "in progress",
       logged_at: "2026-11-10T12:00:00Z",
     })).toBe("In progress · 10 Nov 2026")
@@ -88,10 +85,10 @@ describe("daysToFinish / logDateLine", () => {
 })
 
 describe("coverAspect / coverToken", () => {
-  it("picks the aspect from type and kind", () => {
+  it("picks the aspect from type and subtype", () => {
     expect(coverAspect(mk(1, "music", "x"))).toBe("square")
-    expect(coverAspect(mk(1, "book", "x", 1, { kind: "album" }))).toBe("square")
-    expect(coverAspect(mk(1, "book", "x", 1, { kind: "track" }))).toBe("square")
+    expect(coverAspect(mk(1, "book", "x", 1, { subtype: "album" }))).toBe("square")
+    expect(coverAspect(mk(1, "book", "x", 1, { subtype: "track" }))).toBe("square")
     expect(coverAspect(mk(1, "game", "x"))).toBe("wide")
     expect(coverAspect(mk(1, "book", "x"))).toBe("portrait")
   })

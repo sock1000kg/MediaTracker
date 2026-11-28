@@ -1,7 +1,6 @@
 import { jest } from '@jest/globals'
 import type { SpiedFunction } from 'jest-mock'
 import {
-    tmdbAuth,
     buildTmdbTvSearchUrl,
     buildTmdbTvDetailsUrl,
     mapTmdbShow,
@@ -15,45 +14,33 @@ import {
 } from '@/schemas/search/tvSchemas.js'
 import { searchResultsSchema } from '@/schemas/search/searchSchemas.js'
 
-const JWT = (() => {
-    const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString('base64url')
-    const header = b64({ alg: 'HS256', typ: 'JWT' })
-    const payload = b64({
-        aud: 'a'.repeat(32),
-        nbf: 1700000000,
-        sub: '6'.repeat(24),
-        scopes: ['api_read'],
-        version: 1,
-    })
-    return `${header}.${payload}.${'s'.repeat(43)}`
-})()
 
 const V3 = '0123456789abcdef0123456789abcdef'
 
 describe('buildTmdbTvSearchUrl', () => {
-    it('sets base params and v3 api_key', () => {
-        const u = buildTmdbTvSearchUrl({ q: 'rick and morty', page: 2 }, tmdbAuth(V3))
+    it('sets base params and never a key', () => {
+        const u = buildTmdbTvSearchUrl({ q: 'rick and morty', page: 2 })
         expect(u.origin + u.pathname).toBe('https://api.themoviedb.org/3/search/tv')
         expect(u.searchParams.get('query')).toBe('rick and morty')
         expect(u.searchParams.get('page')).toBe('2')
         expect(u.searchParams.get('include_adult')).toBe('false')
         expect(u.searchParams.get('language')).toBe('en-US')
-        expect(u.searchParams.get('api_key')).toBe(V3)
+        expect(u.searchParams.has('api_key')).toBe(false)
         expect(u.searchParams.has('first_air_date_year')).toBe(false)
     })
 
-    it('first_air_date_year only when set; no api_key for JWT', () => {
-        const u = buildTmdbTvSearchUrl({ q: 'severance', year: 2022 }, tmdbAuth(JWT))
+    it('first_air_date_year only when set', () => {
+        const u = buildTmdbTvSearchUrl({ q: 'severance', year: 2022 })
         expect(u.searchParams.get('first_air_date_year')).toBe('2022')
         expect(u.searchParams.get('page')).toBe('1')
         expect(u.searchParams.has('api_key')).toBe(false)
     })
 
     it('details url sets language and path', () => {
-        const u = buildTmdbTvDetailsUrl(60625, tmdbAuth(V3))
+        const u = buildTmdbTvDetailsUrl(60625)
         expect(u.pathname).toBe('/3/tv/60625')
         expect(u.searchParams.get('language')).toBe('en-US')
-        expect(u.searchParams.get('api_key')).toBe(V3)
+        expect(u.searchParams.has('api_key')).toBe(false)
     })
 })
 
@@ -82,27 +69,27 @@ describe('mapTmdbShow', () => {
             sourceId: 'tv:60625',
             imageUrl: 'https://image.tmdb.org/t/p/w342/cvhNj9eoRBe5SxjqiY7RBeJ959f.jpg',
         })
-        expect(r.metadata).toEqual({
-            url: 'https://www.themoviedb.org/tv/60625',
-            kind: 'show',
-            tmdbId: 60625,
-            firstAirDate: '2013-12-02',
-            categories: ['Animation', 'Comedy', 'Sci-Fi & Fantasy'],
-            originCountry: ['US'],
+        expect(r.details).toEqual({
+            country: 'US',
+            score: 8.7,
+            scoreScale: 'tmdb_10',
         })
-        expect(searchResultsSchema.parse([r])[0].metadata).toMatchObject({ kind: 'show' })
+        expect(r.releaseDate).toBe('2013-12-02')
+        expect(r.genres).toEqual(['Animation', 'Comedy', 'Sci-Fi & Fantasy'])
+        expect(r.externalIds).toEqual([{ provider: 'tmdb', id: '60625' }])
+        expect(searchResultsSchema.parse([r])[0].subtype).toBe('show')
     })
 
     it('originalTitle only when it differs', () => {
         const r = mapTmdbShow({ ...item, name: 'Attack on Titan', original_name: '進撃の巨人' })
-        expect(r.metadata).toMatchObject({ originalTitle: '進撃の巨人' })
+        expect(r.originalTitle).toBe('進撃の巨人')
     })
 
     it('empty air date and null poster', () => {
         const r = mapTmdbShow({ ...item, first_air_date: '', poster_path: null, genre_ids: [] })
         expect(r.year).toBeNull()
         expect(r.imageUrl).toBeNull()
-        expect(r.metadata).toMatchObject({ categories: null })
+        expect(r.genres).toBeUndefined()
     })
 
     it('genre map has 16 entries', () => {
@@ -192,10 +179,8 @@ describe('fetchTvSeasons mapping logic', () => {
             title: 'Rick and Morty',
             creator: 'Dan Harmon, Justin Roiland',
         })
-        expect(result.show.metadata).toMatchObject({
+        expect(result.show.details).toMatchObject({
             seasonCount: 7,
-            episodeCount: 71,
-            status: 'Returning Series',
             networks: ['Adult Swim'],
         })
 
@@ -211,13 +196,10 @@ describe('fetchTvSeasons mapping logic', () => {
             imageUrl: 'https://image.tmdb.org/t/p/w342/s1_poster.jpg',
             creator: 'Dan Harmon, Justin Roiland',
         })
-        expect(result.seasons[0].metadata).toMatchObject({
-            kind: 'season',
-            tmdbId: 60625,
-            showTitle: 'Rick and Morty',
-            seasonNumber: 1,
+        expect(result.seasons[0].subtype).toBe('season')
+        expect(result.seasons[0].releaseDate).toBe('2013-12-02')
+        expect(result.seasons[0].details).toMatchObject({
             episodeCount: 11,
-            airDate: '2013-12-02',
         })
 
         // Season 2: sorted second
@@ -234,8 +216,7 @@ describe('fetchTvSeasons mapping logic', () => {
             title: 'Rick and Morty: Specials',
             imageUrl: 'https://image.tmdb.org/t/p/w342/show_poster.jpg', // fallback to show poster
         })
-        expect(result.seasons[2].metadata).toMatchObject({
-            seasonNumber: 0,
+        expect(result.seasons[2].details).toMatchObject({
             episodeCount: 5,
         })
     })

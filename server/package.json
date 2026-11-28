@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "cross-env CHOKIDAR_USEPOLLING=true CHOKIDAR_INTERVAL=1000 tsx watch src/server.ts",
     "prebuild": "prisma generate",
-    "build": "tsc && tsc-alias && copyfiles -u 2 \"src/tests/**/*csv\" \"src/tests/**/*json\" \"src/tests/**/*xml\" \"src/tests/**/*zip\" dist/tests/",
+    "build": "tsc && tsc-alias && copyfiles -u 2 \"src/tests/**/*csv\" \"src/tests/**/*json\" \"src/tests/**/*xml\" \"src/tests/**/*zip\" -e \"src/tests/fixtures/demo/exports/letterboxd-*-utc.zip\" dist/tests/",
     "lint": "eslint .",
+    "backfill": "node dist/scripts/backfill.js",
     "start": "node dist/server.js",
     "test": "npm run build && cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand --coverage",
     "seed": "npm run build && node dist/tests/seed.js",
@@ -35,7 +36,7 @@
     "bullmq": "^5.81.5",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
-    "csv-parse": "^6.1.0",
+    "csv-parse": "^7.0.3",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "express-rate-limit": "^8.7.4",
@@ -44,7 +45,6 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.5.0",
-    "p-throttle": "^8.1.1",
     "pg": "^8.16.3",
     "prisma": "^7.10.1",
     "zod": "^4.6.7"
@@ -71,5 +71,8 @@
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.50.1"
+  },
+  "overrides": {
+    "effect": "3.22.4"
   }
 }

@@ -4,6 +4,16 @@ export interface PublicLimits {
   notes: {
     maxLength: number
   }
+  logs: {
+    maxEntriesPerLog: number
+    entryNoteMaxLength: number
+    entryNameMaxLength: number
+  }
+  letters: {
+    bodyMaxLength: number
+    maxSealedPerLog: number
+    maxPerUser: number
+  }
   tags: {
     maxLength: number
     maxPerLog: number
@@ -25,6 +35,10 @@ export interface PublicLimits {
 
 export interface PublicConfig {
   limits: PublicLimits
+  demo: {
+    username: string
+    password: string
+  } | null
 }
 
 export async function fetchConfig(): Promise<PublicConfig> {

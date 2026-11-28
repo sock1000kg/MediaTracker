@@ -124,13 +124,18 @@ describe("User settings routes", () => {
         const me = await prisma.user.findUniqueOrThrow({ where: { username: "UserExpE" } })
         const type = await prisma.mediaType.findFirst({ where: { name: "book" } })
         for (const [title, notes] of [["=HYPERLINK(\"http://x\",\"y\")", "line1, with comma\nline2"], ["Plain Title", "ok"]]) {
-            const m = await prisma.media.create({ data: { title, creator: "Someone", userId: me.id, mediaTypeId: type?.id ?? null, source: "custom" } })
+            const m = await prisma.media.create({ data: { title, creator: "Someone", userId: me.id, mediaTypeId: type?.id ?? null } })
             await prisma.userLogs.create({ data: { userId: me.id, mediaId: m.id, status: "completed", rating: 80, notes } })
         }
         const logCount = await prisma.userLogs.count({ where: { userId: me.id } })
         const firstLog = await prisma.userLogs.findFirstOrThrow({ where: { userId: me.id } })
         const tag = await prisma.tag.create({ data: { userId: me.id, name: "=cmd", nameKey: "=cmd" } })
         await prisma.logTag.create({ data: { logId: firstLog.id, tagId: tag.id } })
+        // two entries on the first log: the CSV gets a row per entry, a log without entries stays one row
+        await prisma.logEntry.createMany({ data: [
+            { logId: firstLog.id, startedAt: new Date("2024-01-01"), finishedAt: new Date("2024-01-09"), name: "L'étranger", edition: { format: "Paperback" } },
+            { logId: firstLog.id, finishedAt: new Date("2025-03-02"), note: "second read" },
+        ] })
 
         const j = await request(app).get("/users/me/export").set(auth(token))
         expect(j.statusCode).toBe(200)
@@ -139,8 +144,11 @@ describe("User settings routes", () => {
         const data = JSON.parse(j.text)
         expect(data.version).toBe(1)
         expect(data.logs).toHaveLength(logCount)
-        expect(data.logs[0]).toHaveProperty("started_at")
-        expect(data.logs[0]).toHaveProperty("finished_at")
+        expect(data.logs[0]).toHaveProperty("entries")
+        expect(data.logs[0]).not.toHaveProperty("displayTitle")
+        expect(data.logs[0]).not.toHaveProperty("title")
+        const withEntries = data.logs.find((l: { entries: unknown[] }) => l.entries.length === 2)
+        expect(withEntries.entries.map((e: { name: unknown; edition: unknown }) => [e.name, e.edition])).toEqual([[null, null], ["L'étranger", { format: "Paperback" }]])
         expect(data.logs[0]).toHaveProperty("tags")
         expect(data.logs.some((l: { tags?: string[] }) => Array.isArray(l.tags) && l.tags.includes("=cmd"))).toBe(true)
         expect(data.logs[0].media).toHaveProperty("title")
@@ -153,8 +161,12 @@ describe("User settings routes", () => {
         expect(c.headers["content-type"]).toMatch(/text\/csv; charset=utf-8/)
         expect(c.headers["content-disposition"]).toMatch(/\.csv"; filename\*=UTF-8''/)
         const rows = parse(c.text.replace(/^\uFEFF/, ""), { columns: true }) as Record<string, string>[]
-        expect(Object.keys(rows[0])).toEqual(["title", "creator", "year", "type", "source", "source_id", "status", "rating", "notes", "logged_at", "started_at", "finished_at", "categories", "tags", "collections", "url"])
-        expect(rows).toHaveLength(logCount)
+        expect(Object.keys(rows[0])).toEqual(["title", "creator", "year", "type", "provider", "provider_id", "status", "rating", "notes", "logged_at", "entry_name", "entry_started_at", "entry_finished_at", "entry_note", "edition_format", "edition_language", "categories", "tags", "collections", "url"])
+        expect(rows).toHaveLength(logCount + 1)
+        const entryRows = rows.filter((r) => r.entry_name === "L'étranger" || r.entry_note === "second read")
+        expect(entryRows).toHaveLength(2)
+        expect(entryRows.find((r) => r.entry_name === "L'étranger")).toMatchObject({ edition_format: "Paperback", entry_started_at: "2024-01-01", entry_finished_at: "2024-01-09" })
+        expect(rows[0]).not.toHaveProperty("log_title")
         expect(rows.some((r) => r.title.startsWith("'=HYPERLINK"))).toBe(true)
         expect(rows.some((r) => r.tags === "'=cmd")).toBe(true)
         expect(rows.some((r) => r.notes === "line1, with comma\nline2")).toBe(true)
@@ -178,12 +190,12 @@ describe("User settings routes", () => {
     test("delete account", async () => {
         const { token, userId } = await registerAndLogin("UserDelF")
         const me = await prisma.user.findUniqueOrThrow({ where: { id: userId } })
-        await prisma.userAPIKey.create({ data: { userId, service: "google_books", key: "enc" } })
+        await prisma.userAPIKey.create({ data: { userId, service: "lastfm", key: "enc" } })
         const type = await prisma.mediaType.create({ data: { name: "mytype", userId } })
-        const mine = await prisma.media.create({ data: { title: "Mine", userId, mediaTypeId: type.id, source: "custom" } })
+        const mine = await prisma.media.create({ data: { title: "Mine", userId, mediaTypeId: type.id } })
         await prisma.userLogs.create({ data: { userId, mediaId: mine.id } })
         const sys = await prisma.user.findUniqueOrThrow({ where: { username: "system" } })
-        const shared = await prisma.media.create({ data: { title: "Shared for delete test", userId: sys.id, source: "custom" } })
+        const shared = await prisma.media.create({ data: { title: "Shared for delete test", userId: sys.id } })
         await prisma.userLogs.create({ data: { userId, mediaId: shared.id } })
 
         const wrong = await request(app).delete("/users/me").set(auth(token)).send({ password: "WrongPass1!", confirmUsername: me.username })

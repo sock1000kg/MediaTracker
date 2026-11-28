@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals'
 import type { SpiedFunction } from 'jest-mock'
 import {
-    tmdbAuth, buildTmdbSearchUrl, buildTmdbDetailsUrl, mapTmdbMovie, parseTmdbDetails, TmdbSearchService, TMDB_MOVIE_GENRES
+    buildTmdbSearchUrl, buildTmdbDetailsUrl, mapTmdbMovie, parseTmdbDetails, TmdbSearchService, TMDB_MOVIE_GENRES
 } from '@/services/search/tmdbSearchService.js'
 import { tmdbMovieItemSchema, movieSearchQuerySchema } from '@/schemas/search/movieSchemas.js'
 import { searchResultsSchema } from '@/schemas/search/searchSchemas.js'
@@ -15,43 +15,30 @@ const JWT = (() => {
 it('test JWT is realistic in length', () => { expect(JWT.length).toBeGreaterThanOrEqual(240) })
 const V3 = '0123456789abcdef0123456789abcdef'
 
-describe('tmdbAuth', () => {
-    it('JWT -> Bearer header, no api_key', () => {
-        expect(tmdbAuth(JWT)).toEqual({ headers: { Authorization: `Bearer ${JWT}` } })
-        expect(tmdbAuth(` ${JWT} `).params).toBeUndefined()
-    })
-    it('v3 key -> api_key param', () => {
-        expect(tmdbAuth(V3)).toEqual({ params: { api_key: V3 } })
-    })
-    it('eyJ without two dots is a v3 key', () => {
-        expect(tmdbAuth('eyJabc').params).toEqual({ api_key: 'eyJabc' })
-    })
-})
-
 describe('buildTmdbSearchUrl', () => {
-    it('sets base params and v3 api_key', () => {
-        const u = buildTmdbSearchUrl({ q: 'alien', page: 2 }, tmdbAuth(V3))
+    it('sets base params and never a key', () => {
+        const u = buildTmdbSearchUrl({ q: 'alien', page: 2 })
         expect(u.origin + u.pathname).toBe('https://api.themoviedb.org/3/search/movie')
         expect(u.searchParams.get('query')).toBe('alien')
         expect(u.searchParams.get('page')).toBe('2')
         expect(u.searchParams.get('include_adult')).toBe('false')
         expect(u.searchParams.get('language')).toBe('en-US')
-        expect(u.searchParams.get('api_key')).toBe(V3)
+        expect(u.searchParams.has('api_key')).toBe(false)
         expect(u.searchParams.has('primary_release_year')).toBe(false)
     })
-    it('year only when set; no api_key for JWT', () => {
-        const u = buildTmdbSearchUrl({ q: 'alien', year: 1979 }, tmdbAuth(JWT))
+    it('year only when set', () => {
+        const u = buildTmdbSearchUrl({ q: 'alien', year: 1979 })
         expect(u.searchParams.get('primary_release_year')).toBe('1979')
         expect(u.searchParams.get('page')).toBe('1')
         expect(u.searchParams.has('api_key')).toBe(false)
     })
     it('anyReleaseYear filters on a release in any country instead', () => {
-        const u = buildTmdbSearchUrl({ q: 'the cabin in the woods', year: 2011, anyReleaseYear: true }, tmdbAuth(V3))
+        const u = buildTmdbSearchUrl({ q: 'the cabin in the woods', year: 2011, anyReleaseYear: true })
         expect(u.searchParams.get('year')).toBe('2011')
         expect(u.searchParams.has('primary_release_year')).toBe(false)
     })
     it('details url appends credits', () => {
-        const u = buildTmdbDetailsUrl(348, tmdbAuth(V3))
+        const u = buildTmdbDetailsUrl(348)
         expect(u.pathname).toBe('/3/movie/348')
         expect(u.searchParams.get('append_to_response')).toBe('credits')
     })
@@ -68,21 +55,23 @@ describe('mapTmdbMovie', () => {
             title: 'Alien', creator: null, year: '1979', description: 'In space.', source: 'tmdb', sourceId: 'movie-348',
             imageUrl: 'https://image.tmdb.org/t/p/w342/p.jpg',
         })
-        expect(r.metadata).toEqual({
-            url: 'https://www.themoviedb.org/movie/348', kind: 'movie', originalLanguage: 'en', score: 8.2,
-            categories: ['Horror', 'Science Fiction'],
+        expect(r.details).toEqual({
+            language: 'en', score: 8.2, scoreScale: 'tmdb_10',
         })
-        expect(searchResultsSchema.parse([r])[0].metadata).toMatchObject({ kind: 'movie' })
+        expect(r.releaseDate).toBe('1979-05-25')
+        expect(r.genres).toEqual(['Horror', 'Science Fiction'])
+        expect(r.externalIds).toEqual([{ provider: 'tmdb', id: '348' }])
+        expect(searchResultsSchema.parse([r])[0].mediaType).toBe('movie')
     })
     it('originalTitle only when it differs', () => {
         const r = mapTmdbMovie({ ...item, title: 'Spirited Away', original_title: '千と千尋の神隠し' })
-        expect(r.metadata).toMatchObject({ originalTitle: '千と千尋の神隠し' })
+        expect(r.originalTitle).toBe('千と千尋の神隠し')
     })
     it('empty release_date / null poster / unknown genres', () => {
         const r = mapTmdbMovie({ ...item, release_date: '', poster_path: null, genre_ids: [999999] })
         expect(r.year).toBeNull()
         expect(r.imageUrl).toBeNull()
-        expect(r.metadata).toMatchObject({ categories: null })
+        expect(r.genres).toBeUndefined()
     })
     it('all-null fields do not throw', () => {
         const r = mapTmdbMovie(tmdbMovieItemSchema.parse({ id: 1 }))
