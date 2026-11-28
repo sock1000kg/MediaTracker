@@ -52,8 +52,11 @@ describe("Media Import Routes (Goodreads)", () => {
 
     beforeAll(async () => {
         registerAllHandlers()
-        // No network: enrichment lookups find nothing
+        // No network: enrichment lookups find nothing. Each import queues an Open Library sync,
+        // which looks books up by ISBN and by title/author.
         jest.spyOn(openLibraryService, "searchBooksOpenLib").mockRejectedValue(new Error("offline"))
+        jest.spyOn(openLibraryService, "findByIsbns").mockResolvedValue(new Map())
+        jest.spyOn(openLibraryService, "findByTitleAuthor").mockResolvedValue(null)
         // Setup specific prerequisites for Import Service
         // Ensure System user exists (Case sensitive: matches your service code "System")
         const sysUser = await findUserByUsername("system", prisma)
@@ -139,7 +142,6 @@ The Never Seeded Mystery,Arthur Conan Mystery,5,1984,read,99999991,"=""099999999
         expect(media.externalIds.some(e => e.provider === "goodreads" && e.externalId === "99999991")).toBe(true)
         expect(media.externalIds.some(e => e.provider === "isbn13" && e.externalId === "9780999999991")).toBe(true)
 
-        openLibSpy.mockRestore()
         syncSpy.mockRestore()
     })
 
