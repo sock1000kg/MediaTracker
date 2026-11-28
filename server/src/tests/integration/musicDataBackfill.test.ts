@@ -200,6 +200,7 @@ describe("Music data backfill (M4)", () => {
         })
         await setMediaGenres(album.id, ["shoegaze", "dream pop"], "music", prisma)
         expect(await prisma.mediaGenre.count({ where: { mediaId: album.id } })).toBe(2)
+        jest.spyOn(musicBrainzClient, "resolveReleaseGroupForRelease").mockResolvedValue({ status: "none" })
 
         await backfillMusicData(prisma)
         const after1 = await prisma.media.findUniqueOrThrow({ where: { id: album.id }, include: { genres: true } })

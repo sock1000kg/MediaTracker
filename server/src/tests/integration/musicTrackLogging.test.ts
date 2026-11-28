@@ -41,6 +41,11 @@ describe("Music track cover logging", () => {
         await prisma.user.deleteMany({ where: { username } })
     })
 
+    beforeEach(() => {
+        // No network: the recording search after the cover lookup finds nothing
+        jest.spyOn(musicBrainzClient, "resolveTrackRecording").mockResolvedValue({ status: "none" })
+    })
+
     afterEach(() => {
         jest.restoreAllMocks()
     })
